@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role{
+  ADMIN
+  SUPERADMIN
+  TEACHER
+  TEAMLEAD
+}
+
+// [ Admin Schema ]
+
+model AdminUser {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId String @unique
+  email     String   @unique
+  username String @unique
+  password  String
+  name      String
+  role      Role
+  phoneNumber String
+
+  department    Department @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  departmentId  String     @db.ObjectId 
+
+  createdCategory Category[] @relation("CategoryAuthor")
+
+  createdDepartments Department[] @relation("DepartmentAuthor")
+  updatedDepartments Department[] @relation("DepartmentUpdater")
+
+  location  String?  @default("Philippines")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions Question[]
+}
+
+model Department {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+
+  author   AdminUser @relation("DepartmentAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  authorId String    @db.ObjectId
+
+  updater AdminUser? @relation("DepartmentUpdater", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedBy String?  @db.ObjectId
+
+  members AdminUser[] @relation("DepartmentMembers")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Question {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  question      String
+  choices       String[]
+  correctAnswer String
+  state         String?  @default("For approval")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id])
+  categoryId String? @db.ObjectId
+
+  author   AdminUser @relation(fields: [authorId], references: [id])
+  authorId String    @db.ObjectId
+}
+
+model Category {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  questions Question[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  author   AdminUser @relation("CategoryAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  authorId String    @db.ObjectId
+}
+
+// [ Review Center Schema ]
+
+model ReviewCenterRepresentativeUser {
+  id String   @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId String
+  name String
+  email String @unique
+  companyName String
+  phonenumber String
+  password String
+  location  String?  @default("Philippines")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// [ User Schema ]
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String
+  level     Int      @default(1)
+  xp        Int      @default(0)
+  streak    Int      @default(0)
+  location  String?  @default("Philippines")
+  createdAt DateTime @default(now())
+
+  studyPlans         StudyPlan[]
+  mastery            SubjectMastery[]
+  achievements       Achievement[]
+  examResults        ExamResult[]
+  lessonCompletions  LessonCompletion[]
+}
+
+model SubjectMastery {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  subject     String
+  proficiency Int      @default(0)
+  minScore    Int      @default(0)
+  status      String   @default("In Training")
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subject])
+}
+
+model LessonCompletion {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  subject   String   // Subject category (e.g., 'Clinical Chemistry')
+  lessonId  String   // Lesson ID (e.g., 'cc1')
+  status    String   // 'completed' | 'in-progress' | 'not-started'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model StudyPlan {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  subject    String
+  targetDate DateTime
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subject])
+}
+
+model Achievement {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
+  task             String
+  type             String   // 'quest' | 'exam'
+  badge            String?  // Badge ID earned (e.g., 'gold', 'bronze', 'speed')
+  xp               Int
+  confidenceLevel  String?  // 'Shaky' | 'Steady' | 'Unyielding'
+  accuracy         Float?   // Percentage accuracy (0-100)
+  questMode        String?  // 'learning' | 'test'
+  subject          String?  // Subject for quest tracking (e.g., 'Clinical Chemistry')
+  timestamp        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ExamResult {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  score     Int
+  total     Int
+  accuracy  Float
+  subject   String?  // Subject for quest tracking (e.g., 'Clinical Chemistry')
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

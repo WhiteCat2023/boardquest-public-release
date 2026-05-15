@@ -1,0 +1,30 @@
+export const demoAdminUsers = [
+  {
+    id: "507f1f77bcf86cd799439011",
+    employeeId: "EMP001",
+    email: "admin1@example.com",
+    username: "adminuser1",
+    password: "hashed_password_1",
+    name: "Admin User One",
+    role: "ADMIN" as const,
+    phoneNumber: "+63-2-1234-5678",
+    departmentId: "507f1f77bcf86cd799439020", // Link to a Department
+    location: "Philippines",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "507f1f77bcf86cd799439012",
+    employeeId: "EMP002",
+    email: "admin2@example.com",
+    username: "adminuser2",
+    password: "hashed_password_2",
+    name: "Admin User Two",
+    role: "TEACHER" as const,
+    phoneNumber: "+63-2-2345-6789",
+    departmentId: "507f1f77bcf86cd799439020",
+    location: "Metro Manila",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
