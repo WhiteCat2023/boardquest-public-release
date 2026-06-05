@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import departmentRoutes from "./routes/admin/department.routes";
 import questionRoutes from "./routes/admin/question.routes";
+import studentRoutes from "./routes/admin/student.routes";
+// import gameRoutes from "./routes/admin/game_module/game.routes";
 // import { seedAdminUserDb } from "./services/prisma";
 
 const app = express();
@@ -17,6 +19,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/questions", questionRoutes);
+app.use("/api/students", studentRoutes);
+// app.use("/api/game", gameRoutes);
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
