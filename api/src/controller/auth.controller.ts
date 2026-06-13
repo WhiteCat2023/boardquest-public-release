@@ -19,7 +19,7 @@ export const login = asyncHandler(async (req, res) => {
     sameSite: "lax",
     maxAge: 24 * 60 * 60 * 1000,
   });
-  return new ApiResponse(200, { user }, "User login successfully" + `token: ${token}` ).send(res);
+  return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
 
 export const signup = asyncHandler(async (req, res) => {
