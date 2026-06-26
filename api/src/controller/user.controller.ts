@@ -5,9 +5,9 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/apiResponse";
 
 export const me = asyncHandler(async (req, res) => {
-  const { token } = req.cookies;
+  const token = req.cookies?.accessToken || req.cookies?.token;
   if (!token) {
-    return new ApiResponse(401, "No token provided").send(res);
+    return new ApiResponse(401, null, "No token provided").send(res);
   }
 
   const id = decodedId(token);
@@ -23,8 +23,8 @@ export const me = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    return new ApiResponse(404, "User not found").send(res);
+    return new ApiResponse(404, null, "User not found").send(res);
   }
 
-  return new ApiResponse(200, user).send(res);
+  return new ApiResponse(200, { user }, "User retrieved successfully").send(res);
 });

@@ -4,21 +4,51 @@ import * as authService from "../services/auth.services";
 import { generateToken } from "../utils/generateToken";
 import { ApiResponse } from "../utils/apiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
+import {signJWT, verifyJWT} from "../utils/jwt.utils";
+
+// export const login = asyncHandler(async (req, res) => {
+//   const user = await authService.login(req.body);
+//   var accesstoken = "";
+
+//   if(user){
+//     accesstoken = generateToken(user.id);
+
+//   }
+
+//   res.cookie("token", accesstoken, {
+//     httpOnly: true,
+//     secure: false,
+//     sameSite: "lax",
+//     maxAge: 24 * 60 * 60 * 1000,
+//   });
+//   return new ApiResponse(200, { user }, "User login successfully").send(res);
+// });
 
 export const login = asyncHandler(async (req, res) => {
   const user = await authService.login(req.body);
-  var token = "";
-
-  if(user){
-    token = generateToken(user.id);
+  
+  if (!user) {
+    return new ApiResponse(401, null, "Invalid email or password").send(res);
   }
 
-  res.cookie("token", token, {
+  const accesstoken = signJWT({ id: user.id, email: user.email, role: user.role }, "10s");
+
+  const refreshtoken = signJWT({ id: user.id, email: user.email, role: user.role }, "1y");
+
+  res.cookie("accessToken", accesstoken, {
     httpOnly: true,
-    secure: false,
+    secure: true,
     sameSite: "lax",
     maxAge: 24 * 60 * 60 * 1000,
   });
+
+    res.cookie("refreshToken", refreshtoken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
   return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
 
@@ -28,11 +58,44 @@ export const signup = asyncHandler(async (req, res) => {
 });
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("token", {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax" as const,
+  };
+
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
+  res.clearCookie("token", cookieOptions);
+
+  res.status(200).json({ message: "User logged out successfully" });
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    return new ApiResponse(401, null, "Refresh token not found").send(res);
+  }
+
+  const { payload, expired } = verifyJWT(refreshToken);
+
+  if (expired || !payload) {
+    return new ApiResponse(401, null, "Invalid or expired refresh token").send(res);
+  }
+
+  const tokenPayload = payload as { id: string; email: string; role: string };
+
+  const newAccessToken = signJWT(
+    { id: tokenPayload.id, email: tokenPayload.email, role: tokenPayload.role },
+    "1d"
+  );
+
+  res.cookie("accessToken", newAccessToken, {
     httpOnly: true,
     secure: false,
     sameSite: "lax",
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
-  res.status(200).json({ message: "User logged out successfully" });
+  return new ApiResponse(200, { id: tokenPayload.id, role: tokenPayload.role, accessToken: newAccessToken }, "Token refreshed successfully").send(res);
 };

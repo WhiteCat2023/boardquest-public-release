@@ -1,9 +1,12 @@
-import jwt from "jsonwebtoken";
+import { verifyJWT } from "../utils/jwt.utils";
 
 export const decodedId = (token: string) => {
   try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET as string);
-    const userId = (decodedToken as { id: string }).id;
+    const { payload, expired } = verifyJWT(token);
+    if (expired || !payload) {
+      throw new Error("InvalidToken");
+    }
+    const userId = (payload as { id: string }).id;
     return userId;
   } catch (error) {
     throw new Error("InvalidToken");

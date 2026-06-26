@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
 import prisma from "../services/prisma";
+import { verifyJWT } from "../utils/jwt.utils";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -18,14 +18,7 @@ export const authenticateToken = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-
-    const JWT_SECRET = process.env.JWT_SECRET;
-
-    if (!JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined in environment variables");
-    }
-
-    let token = req.cookies?.token;
+    let token = req.cookies?.accessToken || req.cookies?.token;
     if (!token) {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -40,7 +33,17 @@ export const authenticateToken = async (
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    const { payload, expired } = verifyJWT(token);
+
+    if (expired || !payload) {
+      res.status(401).json({
+        message: "Invalid or expired token",
+        error: "INVALID_TOKEN",
+      });
+      return;
+    }
+
+    const decoded = payload as { id: string };
 
     // Fetch user details from database
     const user = await prisma.adminUser.findUnique({
@@ -105,21 +108,20 @@ export const optionalAuth = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-
-    const JWT_SECRET = process.env.JWT_SECRET;
-
-    if (!JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined in environment variables");
-    }
-
-    const token = req.cookies.token;
+    const token = req.cookies?.accessToken || req.cookies?.token;
 
     if (!token) {
       next();
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    const { payload, expired } = verifyJWT(token);
+    if (expired || !payload) {
+      next();
+      return;
+    }
+
+    const decoded = payload as { id: string };
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
