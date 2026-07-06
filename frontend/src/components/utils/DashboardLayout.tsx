@@ -1,16 +1,19 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import useAuth from '../../hooks/useAuth';
+import { navItem } from '../../utils/list/adminSiderbarMenuList';
 
 function DashboardLayout() {
-  return (
-    <div className='flex'>
-        <div className='sticky w-80'>
-            <Sidebar />
-        </div>
-        
-        <Outlet />
-    </div>
+    const { logout } = useAuth();
+    return (
+      <div className='flex'>
+          <div className='sticky w-80'>
+              <Sidebar navItem={navItem} logout={logout} />
+          </div>
+          
+          <Outlet />
+      </div>
   )
 }
 
