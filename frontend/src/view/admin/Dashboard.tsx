@@ -1,6 +1,6 @@
-import { Button } from "../../ui/button";
+import { Button } from "../../components/ui/button";
 // import { paraphraseQuestion } from "../../../utils/ParaphraseQuestion";
-import type { ParaphraseQuestionProps } from "../../../utils/ParaphraseQuestion";
+import type { ParaphraseQuestionProps } from "../../utils/ParaphraseQuestion";
 import axios from "axios";
 function Dashboard() {
 

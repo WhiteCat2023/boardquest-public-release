@@ -1,19 +1,19 @@
 import {Route, Routes} from "react-router-dom";
-import LandingPage from "./components/pages/LandingPage";
-import LoginPage from "./components/pages/LoginPage";
-import Dashboard from "./components/pages/admin/Dashboard";
+import LandingPage from "./view/LandingPage";
+import LoginPage from "./view/LoginPage";
+import Dashboard from "./view/admin/Dashboard";
 import MainLayout from "./layout/MainLayout";
-import RequireAuth from "./components/utils/RequireAuth";
-import PersistentSession from "./components/utils/PersistentSession";
-import DashboardLayout from "./components/utils/DashboardLayout";
-import FacultyManagement from "./components/pages/admin/FacultyManagement";
-import ReviewCenter from "./components/pages/admin/ReviewCenter";
-import QuestionBank from "./components/pages/admin/question_bank/QuestionBank";
-import Analytics from "./components/pages/admin/Analytics";
-import Settings from "./components/pages/admin/Settings";
-import ProfileSettings from "./components/pages/admin/ProfileSettings";
-import Missing from "./components/pages/admin/Missing";
-import Unauthorized from "./components/pages/admin/Unauthorized";
+import RequireAuth from "./components/RequireAuth";
+import PersistentSession from "./components/PersistentSession";
+import DashboardLayout from "./layout/DashboardLayout";
+import FacultyManagement from "./view/admin/FacultyManagement";
+import ReviewCenter from "./view/admin/ReviewCenter";
+import QuestionBank from "./view/admin/question_bank/QuestionBank";
+import Analytics from "./view/admin/Analytics";
+import Settings from "./view/admin/Settings";
+import ProfileSettings from "./view/admin/ProfileSettings";
+import Missing from "./view/admin/Missing";
+import Unauthorized from "./view/admin/Unauthorized";
 
 function App() {
 

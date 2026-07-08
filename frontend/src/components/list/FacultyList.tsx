@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { DataTable } from "@/components/ui/data-table";
-import { QuestionBankColumn } from "@/components/pages/admin/question_bank/QuestionBankColumn";
+import { QuestionBankColumn } from "@/components/list/columns/questionBankColumn";
 import type { Question } from "@/types/question";
 import { AlertCircle, RefreshCcw, FileQuestion } from "lucide-react";
 
