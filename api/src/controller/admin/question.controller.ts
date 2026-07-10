@@ -2,6 +2,7 @@ import * as QuesitonServices from "../../services/admin/question.services";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Request, Response } from "express";
+import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../../generated/prisma/enums";
 
 export const createQuestion = asyncHandler(async (req: Request, res: Response) => {
     const question = await QuesitonServices.createNewQuestion(req.body);
@@ -15,6 +16,29 @@ export const updateQuestion = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getQuestions = asyncHandler(async (req: Request, res: Response) => {
+    const { search, difficulty, category, type, status } = req.query;
+
+    if(search) {
+        const questions = await QuesitonServices.getQuestionBySearch(search as string);
+        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    }
+    if(difficulty) {
+        const questions = await QuesitonServices.getQuestionByDifficulty(difficulty as QuestionDifficulty);
+        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    }
+    if(category) {
+        const questions = await QuesitonServices.getQuestionsByCategory(category as string);
+        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    }
+    if(type) {
+        const questions = await QuesitonServices.getQuestionByType(type as QuestionType);
+        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    }
+    if(status) {
+        const questions = await QuesitonServices.getQuestionByStatus(status as QuestionStatus);
+        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    }
+
     const questions = await QuesitonServices.getAllQuestions();
     return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
 });             

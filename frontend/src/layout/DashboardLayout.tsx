@@ -1,19 +1,36 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import useAuth from '../hooks/useAuth';
-import { navItem } from '../utils/list/adminSiderbarMenuList';
+import { adminNavItem } from '../utils/list/adminSiderbarMenuList';
+import { teacherNavItem } from '../utils/list/teacherSidebarMenulist';
+import { teamLeadNavItem } from '../utils/list/teamLeadSidebarMenuList';
+import { superAdminNavItem } from '../utils/list/superAdminSidebarMenuList';
+import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
+
+const sidebarMenuMap: Record<string, any[]> = {
+  superadmin: superAdminNavItem,
+  admin: adminNavItem,
+  teacher: teacherNavItem,
+  teamlead: teamLeadNavItem,
+};
 
 function DashboardLayout() {
-    const { logout } = useAuth();
+    const { auth, logout } = useAuth();
+    const currentNavItems = sidebarMenuMap[auth?.data?.user?.role?.toLowerCase() as string] || [];
+
     return (
-      <div className='flex'>
-          <div className='sticky w-80'>
-              <Sidebar navItem={navItem} logout={logout} />
+      <SidebarProvider style={{ '--sidebar-width': '300px' } as React.CSSProperties}>
+        <Sidebar navItem={currentNavItems} logout={logout} />
+        <main className="flex flex-col flex-1 w-full bg-slate-50 min-h-screen">
+          <div className="p-4 border-b bg-white border-slate-100 flex items-center">
+            <SidebarTrigger />
           </div>
-          
-          <Outlet />
-      </div>
-  )
+          <div className="flex-1 overflow-auto">
+            <Outlet />
+          </div>
+        </main>
+      </SidebarProvider>
+    )
 }
 
 export default DashboardLayout

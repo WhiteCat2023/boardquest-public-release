@@ -21,6 +21,25 @@ enum Role{
   TEAMLEAD
 }
 
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum QuestionStatus {
+  APPROVED
+  PENDING_REVIEW
+  NEEDS_REVISION
+  DRAFT
+}
+
 // [ Admin Schema ]
 
 model AdminUser {
@@ -45,7 +64,7 @@ model AdminUser {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  questions Question[]
+  questions Question[] @relation("QuestionAuthor")
 }
 
 model Department {
@@ -69,16 +88,23 @@ model Question {
   question      String
   choices       String[]
   correctAnswer String
-  state         String?  @default("For approval")
+  status        QuestionStatus
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  category Category? @relation(fields: [categoryId], references: [id])
-  categoryId String? @db.ObjectId
+  category Category @relation(fields: [categoryId], references: [id])
+  categoryId String @db.ObjectId
+  topic String
 
-  author   AdminUser @relation(fields: [authorId], references: [id])
+  difficulty QuestionDifficulty
+
+  type QuestionType
+
+  author   AdminUser @relation("QuestionAuthor", fields: [authorId], references: [id])
   authorId String    @db.ObjectId
+
+  feedback String? @default("")
 }
 
 model Category {

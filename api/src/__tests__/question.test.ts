@@ -3,10 +3,13 @@ import request from 'supertest';
 import express, { Express } from 'express';
 import questionRouter from '../routes/admin/question.routes';
 import * as questionService from '../services/admin/question.services';
+import * as categoryService from '../services/admin/category.services';
 import { ApiError } from '../utils/apiError';
 
 // Mock question services
 jest.mock('../services/admin/question.services');
+// Mock category services
+jest.mock('../services/admin/category.services');
 
 let app: Express;
 
@@ -282,6 +285,112 @@ describe('Question Routes', () => {
       await request(app).delete('/api/questions/question-1');
 
       expect(questionService.deleteQuestion).toHaveBeenCalledWith('question-1');
+    });
+  });
+
+  // ── Category routes ────────────────────────────────────────────────────────
+
+  describe('POST /api/questions/category/create', () => {
+    it('should create a new category and return 201', async () => {
+      const mockNewCategory = {
+        id: 'category-1',
+        name: 'Clinical Chemistry',
+        authorId: 'author-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      (categoryService.createNewCategory as jest.Mock).mockResolvedValue(mockNewCategory);
+
+      const response = await request(app)
+        .post('/api/questions/category/create')
+        .send({
+          name: 'Clinical Chemistry',
+          authorId: 'author-1',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.category).toBeDefined();
+      expect(response.body.data.category.id).toBe('category-1');
+      expect(response.body.message).toContain('created successfully');
+    });
+  });
+
+  describe('GET /api/questions/category/get', () => {
+    it('should return all categories and 200', async () => {
+      const mockCategoriesList = [
+        {
+          id: 'category-1',
+          name: 'Clinical Chemistry',
+          authorId: 'author-1',
+        },
+      ];
+      (categoryService.getAllCategories as jest.Mock).mockResolvedValue(mockCategoriesList);
+
+      const response = await request(app).get('/api/questions/category/get');
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.categories).toBeDefined();
+      expect(response.body.data.categories.length).toBe(1);
+      expect(response.body.message).toContain('retrieved successfully');
+    });
+  });
+
+  describe('GET /api/questions/category/single/:categoryId', () => {
+    it('should return category by ID and 200', async () => {
+      const mockCat = {
+        id: 'category-1',
+        name: 'Clinical Chemistry',
+        authorId: 'author-1',
+      };
+      (categoryService.getCategoryById as jest.Mock).mockResolvedValue(mockCat);
+
+      const response = await request(app).get('/api/questions/category/single/category-1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.category).toBeDefined();
+      expect(response.body.data.category.id).toBe('category-1');
+      expect(response.body.message).toContain('retrieved successfully');
+    });
+  });
+
+  describe('PUT /api/questions/category/single/:categoryId', () => {
+    it('should update a category and return 200', async () => {
+      const mockUpdatedCategory = {
+        id: 'category-1',
+        name: 'Clinical Chemistry Updated',
+        authorId: 'author-1',
+      };
+      (categoryService.updateCategory as jest.Mock).mockResolvedValue(mockUpdatedCategory);
+
+      const response = await request(app)
+        .put('/api/questions/category/single/category-1')
+        .send({
+          name: 'Clinical Chemistry Updated',
+          categoryId: 'category-1',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.category).toBeDefined();
+      expect(response.body.data.category.name).toBe('Clinical Chemistry Updated');
+      expect(response.body.message).toContain('updated successfully');
+    });
+  });
+
+  describe('DELETE /api/questions/category/single/:categoryId', () => {
+    it('should delete category and return 200', async () => {
+      const mockDeletedCat = {
+        id: 'category-1',
+        name: 'Clinical Chemistry',
+        authorId: 'author-1',
+      };
+      (categoryService.deleteCategory as jest.Mock).mockResolvedValue(mockDeletedCat);
+
+      const response = await request(app).delete('/api/questions/category/single/category-1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.category).toBeDefined();
+      expect(response.body.data.category.id).toBe('category-1');
+      expect(response.body.message).toContain('deleted successfully');
     });
   });
 });

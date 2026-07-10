@@ -1,6 +1,7 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
+import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../../generated/prisma/enums";
 
 export const CreateQuestionSchema = z.object({
     question: z.string().min(1, "Question title is required"),
@@ -8,6 +9,10 @@ export const CreateQuestionSchema = z.object({
     correctAnswer: z.string().min(1, "Correct answer is required"),
     categoryId: z.string().min(1, "Question category is required"),
     authorId: z.string().min(1, "Author ID is required"),
+    topic: z.string().min(1, "Topic is required"),
+    difficulty: z.nativeEnum(QuestionDifficulty),
+    type: z.nativeEnum(QuestionType),
+    status: z.nativeEnum(QuestionStatus).optional().default(QuestionStatus.DRAFT),
 });
 
 export const UpdateQuestionSchema = z.object({
@@ -17,6 +22,10 @@ export const UpdateQuestionSchema = z.object({
     correctAnswer: z.string().min(1, "Correct answer is required"),
     categoryId: z.string().min(1, "Question category is required"),
     authorId: z.string().min(1, "Author ID is required"),
+    topic: z.string().min(1, "Topic is required"),
+    difficulty: z.nativeEnum(QuestionDifficulty),
+    type: z.nativeEnum(QuestionType),
+    status: z.nativeEnum(QuestionStatus),
 });
 
 type CreateNewQuestionInput = z.infer<typeof CreateQuestionSchema>;
@@ -30,7 +39,7 @@ export const createNewQuestion = async (data: CreateNewQuestionInput) => {
         throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId } = parsed.data;
+    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
 
     const newQuestion = await prisma.question.create({
         data: {
@@ -39,6 +48,10 @@ export const createNewQuestion = async (data: CreateNewQuestionInput) => {
             correctAnswer: correctAnswer.toLowerCase().trim(),
             categoryId: categoryId.trim(),
             authorId,
+            topic: topic.trim(),
+            difficulty,
+            type,
+            status,
         },
     });
 
@@ -53,7 +66,7 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
         throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]   );
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId } = parsed.data;
+    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
 
     const updatedQuestion = await prisma.question.update({
         where: {
@@ -65,6 +78,10 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
             correctAnswer: correctAnswer.toLowerCase().trim(),
             categoryId: categoryId.trim(),
             authorId,
+            topic: topic.trim(),
+            difficulty,
+            type,
+            status,
         },
     });
 
@@ -74,7 +91,12 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
 export const getAllQuestions = async () => {
     const questions = await prisma.question.findMany({
         include: {
-            category: true,     
+            category: true,
+            author: {
+                select: {
+                    name: true,
+                }
+            }
         },
     });
     return questions;
@@ -138,3 +160,41 @@ export const getQuestionsByCategory = async (categoryId: string) => {
 
     return questions;
 };
+
+export const getQuestionByDifficulty = async (difficulty: QuestionDifficulty) => {
+    const questions = await prisma.question.findMany({
+        where: {
+            difficulty,
+        },
+    });
+    return questions;
+};
+
+export const getQuestionByType = async (type: QuestionType) => {
+    const questions = await prisma.question.findMany({
+        where: {
+            type,
+        },
+    });
+    return questions;
+};
+
+export const getQuestionByStatus = async (status: QuestionStatus) => {
+    const questions = await prisma.question.findMany({
+        where: {
+            status,
+        },
+    });
+    return questions;
+};
+
+export const getQuestionBySearch = async (search: string) => {
+    const questions = await prisma.question.findMany({
+        where: {
+            question: {
+                contains: search,
+            },
+        },
+    });
+    return questions;
+};  

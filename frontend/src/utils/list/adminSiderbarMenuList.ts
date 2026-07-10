@@ -1,15 +1,6 @@
-export interface NavItemProps {
-    sideBarCategoryName: string;
-    content: NavContentProps[];
-}
+import type { NavItemProps } from "../../types/sidebarMenuItems";
 
-export interface NavContentProps {
-    title: string;
-    path: string;
-    icon: string;
-}
-
-export const navItem: NavItemProps[] = [
+export const adminNavItem: NavItemProps[] = [
         {
             sideBarCategoryName: "OVERVIEW",
             content: [

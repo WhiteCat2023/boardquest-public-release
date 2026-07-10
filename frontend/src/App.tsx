@@ -8,7 +8,7 @@ import PersistentSession from "./components/PersistentSession";
 import DashboardLayout from "./layout/DashboardLayout";
 import FacultyManagement from "./view/admin/FacultyManagement";
 import ReviewCenter from "./view/admin/ReviewCenter";
-import QuestionBank from "./view/admin/question_bank/QuestionBank";
+import QuestionBank from "./view/admin/QuestionBank";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/Settings";
 import ProfileSettings from "./view/admin/ProfileSettings";
