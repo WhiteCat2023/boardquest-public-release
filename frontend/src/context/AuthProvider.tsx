@@ -5,7 +5,7 @@ import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { type LoginRequest } from "@/types/types";
 import { ValidateLoginInput } from "../utils/ValidateInput";
 
-type AuthContextType = {
+export type AuthContextType = {
   auth: object;
   setAuth: React.Dispatch<React.SetStateAction<object>>;
   login: (userData: LoginRequest) => Promise<void>;

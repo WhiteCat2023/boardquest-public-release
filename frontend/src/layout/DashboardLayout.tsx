@@ -6,6 +6,7 @@ import { teacherNavItem } from '../utils/list/teacherSidebarMenulist';
 import { teamLeadNavItem } from '../utils/list/teamLeadSidebarMenuList';
 import { superAdminNavItem } from '../utils/list/superAdminSidebarMenuList';
 import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
+import type { AuthContextType } from '../context/AuthProvider';
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
