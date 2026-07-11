@@ -25,7 +25,11 @@ export function useQuestionBank(filters?: QuestionFilters) {
         const response = await axiosPrivate.get("/questions/get", {
             params: cleanParams,
         });
-        return (response.data?.data?.questions ?? []) as Question[];
+        return {
+            questions: (response.data?.data?.questions ?? []) as Question[],
+            nextCursor: response.data?.data?.nextCursor as string | null,
+            hasNextPage: !!response.data?.data?.hasNextPage,
+        };
     };
 
     return useQuery({

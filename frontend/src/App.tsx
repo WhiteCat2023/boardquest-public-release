@@ -8,12 +8,13 @@ import PersistentSession from "./components/PersistentSession";
 import DashboardLayout from "./layout/DashboardLayout";
 import FacultyManagement from "./view/admin/FacultyManagement";
 import ReviewCenter from "./view/admin/ReviewCenter";
-import QuestionBank from "./view/admin/QuestionBank";
+import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/Settings";
 import ProfileSettings from "./view/admin/ProfileSettings";
 import Missing from "./view/admin/Missing";
 import Unauthorized from "./view/admin/Unauthorized";
+import AddQuestion from "./view/admin/question_bank/AddQuestion";
 
 function App() {
 
@@ -41,6 +42,7 @@ function App() {
 
             <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
               <Route path="question-bank" element={<QuestionBank />} />
+              <Route path="question-bank/create" element={<AddQuestion />} />
             </Route>
 
             <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>

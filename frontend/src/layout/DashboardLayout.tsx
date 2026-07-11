@@ -6,7 +6,8 @@ import { teacherNavItem } from '../utils/list/teacherSidebarMenulist';
 import { teamLeadNavItem } from '../utils/list/teamLeadSidebarMenuList';
 import { superAdminNavItem } from '../utils/list/superAdminSidebarMenuList';
 import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
-import type { AuthContextType } from '../context/AuthProvider';
+import HeaderBreadcrumb from '../components/HeaderBreadcrumb';
+import UserProfileWidget from '../components/UserProfileWidget';
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
@@ -23,10 +24,15 @@ function DashboardLayout() {
       <SidebarProvider style={{ '--sidebar-width': '300px' } as React.CSSProperties}>
         <Sidebar navItem={currentNavItems} logout={logout} />
         <main className="flex flex-col flex-1 w-full bg-slate-50 min-h-screen">
-          <div className="p-4 border-b bg-white border-slate-100 flex items-center">
-            <SidebarTrigger />
+          <div className="p-4 border-b bg-white border-slate-100 flex items-center justify-between sticky top-0 z-10">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="h-4 w-px bg-slate-200" />
+              <HeaderBreadcrumb />
+            </div>
+            <UserProfileWidget />
           </div>
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto ">
             <Outlet />
           </div>
         </main>
