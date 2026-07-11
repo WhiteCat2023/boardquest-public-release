@@ -16,31 +16,32 @@ export const updateQuestion = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getQuestions = asyncHandler(async (req: Request, res: Response) => {
-    const { search, difficulty, category, type, status } = req.query;
+    const { search, difficulty, category, type, status, cursor, limit } = req.query;
 
-    if(search) {
-        const questions = await QuesitonServices.getQuestionBySearch(search as string);
-        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
-    }
-    if(difficulty) {
-        const questions = await QuesitonServices.getQuestionByDifficulty(difficulty as QuestionDifficulty);
-        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
-    }
-    if(category) {
-        const questions = await QuesitonServices.getQuestionsByCategory(category as string);
-        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
-    }
-    if(type) {
-        const questions = await QuesitonServices.getQuestionByType(type as QuestionType);
-        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
-    }
-    if(status) {
-        const questions = await QuesitonServices.getQuestionByStatus(status as QuestionStatus);
-        return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+    const hasFilter = !!(search || difficulty || category || type || status);
+
+    let result;
+    if (hasFilter) {
+        result = await QuesitonServices.getFilteredQuestions(
+            search as string,
+            difficulty as QuestionDifficulty,
+            category as string,
+            type as QuestionType,
+            status as QuestionStatus,
+            cursor as string,
+            limitNum
+        );
+    } else {
+        result = await QuesitonServices.getAllQuestions(cursor as string, limitNum);
     }
 
-    const questions = await QuesitonServices.getAllQuestions();
-    return new ApiResponse(200, { questions }, "Questions retrieved successfully").send(res);
+    if (Array.isArray(result)) {
+        return new ApiResponse(200, { questions: result }, "Questions retrieved successfully").send(res);
+    } else {
+        return new ApiResponse(200, result, "Questions retrieved successfully").send(res);
+    }
 });             
 
 export const getQuestionById = asyncHandler(async (req: Request, res: Response) => {        

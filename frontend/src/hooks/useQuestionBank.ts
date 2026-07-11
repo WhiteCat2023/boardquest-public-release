@@ -7,6 +7,8 @@ export interface QuestionFilters {
     difficulty?: string;
     type?: string;
     status?: string;
+    cursor?: string;
+    limit?: number;
 }
 
 export function useQuestionBank(filters?: QuestionFilters) {

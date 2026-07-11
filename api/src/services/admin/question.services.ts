@@ -88,8 +88,31 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
     return updatedQuestion;
 };
 
-export const getAllQuestions = async () => {
+export const getAllQuestions = async (cursor?: string, limit?: number) => {
+    if (cursor === undefined && limit === undefined) {
+        const questions = await prisma.question.findMany({
+            include: {
+                category: true,
+                author: {
+                    select: {
+                        name: true,
+                    }
+                }
+            },
+            orderBy: {
+                id: "asc",
+            },
+        });
+        return questions;
+    }
+
+    const limitNum = limit || 20;
     const questions = await prisma.question.findMany({
+        take: limitNum + 1,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? {
+            id: cursor,
+        } : undefined,
         include: {
             category: true,
             author: {
@@ -98,8 +121,97 @@ export const getAllQuestions = async () => {
                 }
             }
         },
+        orderBy: {
+            id: "asc",
+        },
     });
-    return questions;
+
+    const hasNextPage = questions.length > limitNum;
+    if (hasNextPage) {
+        questions.pop();
+    }
+
+    const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+
+    return {
+        questions,
+        nextCursor,
+        hasNextPage,
+    };
+};
+
+export const getFilteredQuestions = async (
+    search?: string,
+    difficulty?: QuestionDifficulty,
+    category?: string,
+    type?: QuestionType,
+    status?: QuestionStatus,
+    cursor?: string,
+    limit?: number
+) => {
+    const whereClause = {
+        question: search ? {
+            contains: search,
+            mode: 'insensitive' as const,
+        } : undefined,
+        difficulty,
+        categoryId: category,
+        type,
+        status,
+    };
+
+    if (cursor === undefined && limit === undefined) {
+        const questions = await prisma.question.findMany({
+            where: whereClause,
+            include: {
+                category: true,
+                author: {
+                    select: {
+                        name: true,
+                    }
+                }
+            },
+            take: 20,
+            orderBy: {
+                id: "asc",
+            },
+        });
+        return questions;
+    }
+
+    const limitNum = limit || 20;
+    const questions = await prisma.question.findMany({
+        where: whereClause,
+        take: limitNum + 1,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? {
+            id: cursor,
+        } : undefined,
+        include: {
+            category: true,
+            author: {
+                select: {
+                    name: true,
+                }
+            }
+        },
+        orderBy: {
+            id: "asc",
+        },
+    });
+
+    const hasNextPage = questions.length > limitNum;
+    if (hasNextPage) {
+        questions.pop();
+    }
+
+    const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+
+    return {
+        questions,
+        nextCursor,
+        hasNextPage,
+    };
 };
 
 export const getQuestionById = async (questionId: string) => {
@@ -194,7 +306,7 @@ export const getQuestionBySearch = async (search: string) => {
             question: {
                 contains: search,
             },
-        },
+        }, 
     });
     return questions;
 };  
