@@ -1,34 +1,52 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
 import { 
   ArrowLeft, 
-  BookOpen, 
   HelpCircle, 
   Sparkles, 
-  CheckCircle2, 
   PlusCircle, 
-  XCircle,
-  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SelectItem } from "@/components/ui/select";
+import { toast } from "sonner";
+import CustomSelectWithLabel from "../../../components/custom/select/Select";
+import CardButton from "./components/buttons/CardButton";
+import TrueOrFalseInput from "./components/TOFInput";
+import ShortAnswerInput from "./components/ShortAnswerInput";
+import MultipleChoiceInput from "./components/MCQInput";
+import QuestionInput from "./components/QuestionInput";
+import { useQuestionFormStore } from "../../../store/QuestionBankStore";
 
 type QuestionFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
 
 export default function AddQuestion() {
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
+  const { questionId } = useParams();
   const { auth } = useAuth();
 
-  // Form States
-  const [categoryId, setCategoryId] = useState("");
-  const [topic, setTopic] = useState("");
-  const [difficulty, setDifficulty] = useState("MEDIUM");
-  const [format, setFormat] = useState<QuestionFormat>("MCQ");
-  const [questionWording, setQuestionWording] = useState("");
+  const isEditMode = !!questionId;
+  const currentUserRole = (auth as any)?.data?.user?.role;
+
+  const {
+    categoryId,
+    setCategoryId,
+    topic,
+    setTopic,
+    difficulty,
+    setDifficulty,
+    format,
+    setFormat,
+    questionWording,
+    setQuestionWording,
+    status,
+    setStatus,
+  } = useQuestionFormStore();
   
   // MCQ States
   const [mcqChoices, setMcqChoices] = useState<string[]>(["", "", "", ""]);
@@ -41,18 +59,71 @@ export default function AddQuestion() {
   const [saCorrectAnswer, setSaCorrectAnswer] = useState("");
 
   // Visual/Feedback States
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Question Format Options
+  const QuestionFormatOptions: {
+    value: QuestionFormat;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      value: "MCQ",
+      label: "MCQ",
+      description: "Multiple Option Keys",
+    },
+    {
+      value: "TRUE_FALSE",
+      label: "True/False",
+      description: "Binary Key",
+    },
+    {
+      value: "SHORT_ANSWER",
+      label: "Short Answer",
+      description: "Descriptive Wording",
+    },
+  ];
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await axiosPrivate.get("/questions/category/get");
-      return response.data?.data?.categories ?? [];
+      return response.data?.data?.categories ?? response.data?.data ?? [];
     },
   });
+
+  // Fetch existing question details (only when editing)
+  const { data: existingQuestion } = useQuery({
+    queryKey: ["questionDetail", questionId],
+    queryFn: async () => {
+      const response = await axiosPrivate.get(`/questions/get/${questionId}`);
+      return response.data?.data?.question || response.data?.data;
+    },
+    enabled: isEditMode,
+  });
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (existingQuestion) {
+      setCategoryId(existingQuestion.categoryId || existingQuestion.category?.id || "");
+      setTopic(existingQuestion.topic || "");
+      setDifficulty(existingQuestion.difficulty || "MEDIUM");
+      setFormat(existingQuestion.type || "MCQ");
+      setQuestionWording(existingQuestion.question || "");
+      setStatus(existingQuestion.status || "DRAFT");
+      
+      if (existingQuestion.type === "MCQ") {
+        setMcqChoices(existingQuestion.choices || ["", "", "", ""]);
+        const correctIdx = existingQuestion.choices.indexOf(existingQuestion.correctAnswer);
+        setMcqCorrectIndex(correctIdx >= 0 ? correctIdx : 0);
+      } else if (existingQuestion.type === "TRUE_FALSE") {
+        setTfCorrect(existingQuestion.correctAnswer === "True" ? "True" : "False");
+      } else {
+        setSaCorrectAnswer(existingQuestion.correctAnswer || "");
+      }
+    }
+  }, [existingQuestion]);
 
   // Set default category when loaded
   useEffect(() => {
@@ -75,23 +146,21 @@ export default function AddQuestion() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
     setIsSubmitting(true);
 
     // Validations
     if (!categoryId) {
-      setErrorMsg("Please select an academic subject category.");
+      toast.error("Please select an academic subject category.");
       setIsSubmitting(false);
       return;
     }
     if (!topic.trim()) {
-      setErrorMsg("Please enter a benchmark topic.");
+      toast.error("Please enter a benchmark topic.");
       setIsSubmitting(false);
       return;
     }
     if (!questionWording.trim()) {
-      setErrorMsg("Please write the question wording prompt.");
+      toast.error("Please write the question wording prompt.");
       setIsSubmitting(false);
       return;
     }
@@ -100,9 +169,8 @@ export default function AddQuestion() {
     let finalCorrectAnswer = "";
 
     if (format === "MCQ") {
-      // Validate choices
       if (mcqChoices.some((choice) => !choice.trim())) {
-        setErrorMsg("All MCQ options must be written.");
+        toast.error("All MCQ options must be written.");
         setIsSubmitting(false);
         return;
       }
@@ -112,47 +180,77 @@ export default function AddQuestion() {
       finalChoices = ["True", "False"];
       finalCorrectAnswer = tfCorrect;
     } else {
-      // SHORT_ANSWER
       if (!saCorrectAnswer.trim()) {
-        setErrorMsg("Please provide the correct answer wording.");
+        toast.error("Please provide the correct answer wording.");
         setIsSubmitting(false);
         return;
       }
-      finalChoices = [saCorrectAnswer.trim()]; // satisfying choices: z.array(z.string()).min(1)
+      finalChoices = [saCorrectAnswer.trim()];
       finalCorrectAnswer = saCorrectAnswer.trim();
     }
 
     const authorId = (auth as any)?.data?.user?.id;
     if (!authorId) {
-      setErrorMsg("User authentication lost. Please log in again.");
+      toast.error("User authentication lost. Please log in again.");
       setIsSubmitting(false);
       return;
     }
 
+    // Forced status constraints based on roles
+    let finalStatus = status;
+    if (currentUserRole === "TEACHER") {
+      finalStatus = "DRAFT"; // Teachers can only save questions as DRAFT
+    }
+
     const payload = {
+      id: questionId, // required for UpdateQuestionSchema validation
       question: questionWording.trim(),
       choices: finalChoices,
       correctAnswer: finalCorrectAnswer,
       categoryId,
-      authorId,
+      authorId: existingQuestion?.authorId || authorId,
       topic: topic.trim(),
       difficulty,
       type: format,
-      status: "DRAFT", // Default to draft as per flow
+      status: finalStatus,
     };
 
     try {
-      await axiosPrivate.post("/questions/create", payload);
-      setSuccessMsg("Question draft created successfully!");
+      if (isEditMode) {
+        await axiosPrivate.put(`/questions/${questionId}`, payload);
+        toast.success("Question updated successfully!");
+      } else {
+        await axiosPrivate.post("/questions/create", payload);
+        toast.success("Question draft created successfully!");
+      }
       setTimeout(() => {
         navigate("/question-bank");
       }, 1500);
     } catch (err: any) {
       const serverMsg = err.response?.data?.message || "Failed to save question.";
-      setErrorMsg(serverMsg);
+      toast.error(serverMsg);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getStatusOptions = () => {
+    if (currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN") {
+      return [
+        { value: "DRAFT", label: "Draft" },
+        { value: "PENDING_REVIEW", label: "Pending Review" },
+        { value: "NEEDS_REVISION", label: "Needs Revision" },
+        { value: "APPROVED", label: "Approved" },
+      ];
+    }
+    if (currentUserRole === "TEAMLEAD") {
+      return [
+        { value: "DRAFT", label: "Draft" },
+        { value: "PENDING_REVIEW", label: "Pending Review" },
+        { value: "NEEDS_REVISION", label: "Needs Revision" },
+      ];
+    }
+    return [{ value: "DRAFT", label: "Draft" }];
   };
 
   return (
@@ -176,7 +274,9 @@ export default function AddQuestion() {
               <PlusCircle size={22} className="stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">Curriculum Drafting Desk</h2>
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+                {isEditMode ? "Curriculum Revision Desk" : "Curriculum Drafting Desk"}
+              </h2>
               <p className="text-xs text-slate-400 font-medium">Formulate evaluation questions linked to standard benchmarks</p>
             </div>
           </div>
@@ -189,138 +289,97 @@ export default function AddQuestion() {
 
         {/* Form Body */}
         <div className="p-6 md:p-8 flex flex-col gap-6">
-          
-          {/* Feedback Messages */}
-          {errorMsg && (
-            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-red-50 text-[#A70202] border border-red-100 text-sm font-medium">
-              <XCircle size={18} className="shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-          {successMsg && (
-            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-100 text-sm font-medium">
-              <CheckCircle2 size={18} className="shrink-0 animate-bounce" />
-              <span>{successMsg}</span>
-            </div>
-          )}
 
-          {/* Section 1: Subject, Topic, Difficulty */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Section 1: Subject, Topic, Difficulty, Status */}
+          <div className={`grid grid-cols-1 ${currentUserRole !== 'TEACHER' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             
             {/* Category selection */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Academic Subject
-              </label>
-              <select
+              <CustomSelectWithLabel
+                label="Academic Subject"
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm text-slate-700 transition-all duration-150"
+                onValueChange={setCategoryId}
               >
-                {categories.length === 0 && <option value="">Loading Subjects...</option>}
+                {categories.length === 0 && (
+                  <SelectItem value="loading" disabled>Loading Subjects...</SelectItem>
+                )}
                 {categories.map((cat: any) => (
-                  <option key={cat.id} value={cat.id}>
+                  <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
+              </CustomSelectWithLabel>
             </div>
 
             {/* Benchmark Topic */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Benchmark Topic
-              </label>
+              </Label>
               <Input
                 type="text"
-                placeholder="e.g. Clinical Chemistry, Immunology"
+                placeholder="e.g. Clinical Chemistry"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className="h-11 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm"
+                className=" bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm"
               />
             </div>
 
             {/* Difficulty Level */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Curriculum Difficulty
-              </label>
-              <select
+              <CustomSelectWithLabel
+                label="Curriculum Difficulty"
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm text-slate-700 transition-all duration-150"
+                onValueChange={setDifficulty}
               >
-                <option value="EASY">Easy Level</option>
-                <option value="MEDIUM">Medium Level</option>
-                <option value="HARD">Hard Level</option>
-              </select>
+                <SelectItem value="EASY">Easy Level</SelectItem>
+                <SelectItem value="MEDIUM">Medium Level</SelectItem>
+                <SelectItem value="HARD">Hard Level</SelectItem>
+              </CustomSelectWithLabel>
             </div>
+
+            {/* Status Selection (only for non-teachers) */}
+            {currentUserRole !== "TEACHER" && (
+              <div className="flex flex-col gap-1.5">
+                <CustomSelectWithLabel
+                  label="Review Status"
+                  value={status}
+                  onValueChange={setStatus}
+                >
+                  {getStatusOptions().map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </CustomSelectWithLabel>
+              </div>
+            )}
 
           </div>
 
           {/* Section 2: Question Format */}
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Question Format
-            </label>
+            </Label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* MCQ CARD */}
-              <button
-                type="button"
-                onClick={() => setFormat("MCQ")}
-                className={`flex flex-col items-center justify-center p-4 border rounded-2xl cursor-pointer text-center transition-all duration-200 ${
-                  format === "MCQ"
-                    ? "bg-[#A70202]/5 border-[#A70202] text-[#A70202] shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <span className="text-sm font-extrabold tracking-wide">MCQ</span>
-                <span className="text-[10px] opacity-70 mt-0.5">Multiple Option Keys</span>
-              </button>
-
-              {/* TRUE/FALSE CARD */}
-              <button
-                type="button"
-                onClick={() => setFormat("TRUE_FALSE")}
-                className={`flex flex-col items-center justify-center p-4 border rounded-2xl cursor-pointer text-center transition-all duration-200 ${
-                  format === "TRUE_FALSE"
-                    ? "bg-[#A70202]/5 border-[#A70202] text-[#A70202] shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <span className="text-sm font-extrabold tracking-wide">True/False</span>
-                <span className="text-[10px] opacity-70 mt-0.5">Binary Key</span>
-              </button>
-
-              {/* SHORT ANSWER CARD */}
-              <button
-                type="button"
-                onClick={() => setFormat("SHORT_ANSWER")}
-                className={`flex flex-col items-center justify-center p-4 border rounded-2xl cursor-pointer text-center transition-all duration-200 ${
-                  format === "SHORT_ANSWER"
-                    ? "bg-[#A70202]/5 border-[#A70202] text-[#A70202] shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <span className="text-sm font-extrabold tracking-wide">Short Answer</span>
-                <span className="text-[10px] opacity-70 mt-0.5">Descriptive Wording</span>
-              </button>
-
+              {QuestionFormatOptions.map((opt) => (
+                <CardButton
+                  key={opt.value}
+                  title={opt.label}
+                  description={opt.description}
+                  selected={format === opt.value}
+                  onClick={() => setFormat(opt.value)}
+                />
+              ))}
             </div>
           </div>
 
           {/* Section 3: Question Wording / Prompt */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Question Wording / Prompt
-            </label>
-            <textarea
-              rows={4}
-              placeholder="Formulate the complete problem statement or testing prompt. Support Markdown formatting if needed."
-              value={questionWording}
-              onChange={(e) => setQuestionWording(e.target.value)}
-              className="w-full p-4 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 resize-y"
+            <QuestionInput
+              questionWording={questionWording}
+              setQuestionWording={setQuestionWording}
             />
           </div>
 
@@ -339,94 +398,22 @@ export default function AddQuestion() {
             </div>
 
             <div className="p-6 flex flex-col gap-4">
-              
               {/* MCQ LAYOUT */}
-              {format === "MCQ" && (
-                <div className="flex flex-col gap-3.5">
-                  {mcqChoices.map((choice, index) => {
-                    const label = String.fromCharCode(65 + index); // A, B, C, D
-                    const isCorrect = mcqCorrectIndex === index;
-                    return (
-                      <div key={index} className="flex items-center gap-3 w-full">
-                        {/* Custom radio button */}
-                        <button
-                          type="button"
-                          onClick={() => setMcqCorrectIndex(index)}
-                          className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-150 ${
-                            isCorrect 
-                              ? "border-[#A70202] bg-white text-[#A70202]" 
-                              : "border-slate-300 hover:border-slate-400 bg-white"
-                          }`}
-                        >
-                          {isCorrect && (
-                            <div className="w-3 h-3 rounded-full bg-[#A70202]" />
-                          )}
-                        </button>
-                        
-                        {/* Option Wording Input */}
-                        <Input
-                          type="text"
-                          placeholder={`Wording for Option ${label}`}
-                          value={choice}
-                          onChange={(e) => handleMcqChoiceChange(index, e.target.value)}
-                          className="h-11 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm flex-1"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
 
-              {/* TRUE/FALSE LAYOUT */}
-              {format === "TRUE_FALSE" && (
-                <div className="flex flex-col gap-3.5">
-                  {(["True", "False"] as const).map((option) => {
-                    const isSelected = tfCorrect === option;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => setTfCorrect(option)}
-                        className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all duration-150 ${
-                          isSelected
-                            ? "bg-[#A70202]/5 border-[#A70202] text-[#A70202] font-semibold"
-                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          isSelected ? "border-[#A70202]" : "border-slate-300"
-                        }`}>
-                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#A70202]" />}
-                        </div>
-                        <span className="text-sm">{option}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              {format === "MCQ" ?(
+                <MultipleChoiceInput
+                  mcqChoices={mcqChoices}
+                  mcqCorrectIndex={mcqCorrectIndex}
+                  handleChange={handleMcqChoiceChange}
+                  setMcqCorrectIndex={setMcqCorrectIndex}
+                />
+              ) : format === "TRUE_FALSE" ? (
+                <TrueOrFalseInput tfCorrect={tfCorrect} setTfCorrect={setTfCorrect} />
+              ) : (
+                <ShortAnswerInput saCorrectAnswer={saCorrectAnswer} setSaCorrectAnswer={setSaCorrectAnswer} />
               )}
-
-              {/* SHORT ANSWER LAYOUT */}
-              {format === "SHORT_ANSWER" && (
-                <div className="flex flex-col gap-1.5 w-full">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Correct Answer Wording
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <FileText size={16} className="text-slate-400 shrink-0" />
-                    <Input
-                      type="text"
-                      placeholder="Type the exact expected answer text..."
-                      value={saCorrectAnswer}
-                      onChange={(e) => setSaCorrectAnswer(e.target.value)}
-                      className="h-11 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm flex-1"
-                    />
-                  </div>
-                </div>
-              )}
-
             </div>
           </div>
-
         </div>
 
         {/* Bottom Actions Bar */}
@@ -454,7 +441,6 @@ export default function AddQuestion() {
             Save & Submit Draft
           </Button>
         </div>
-
       </form>
     </div>
   );

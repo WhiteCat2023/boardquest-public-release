@@ -1,6 +1,6 @@
 import {Route, Routes} from "react-router-dom";
 import LandingPage from "./view/LandingPage";
-import LoginPage from "./view/LoginPage";
+import LoginPage from "./view/login/LoginPage";
 import Dashboard from "./view/admin/Dashboard";
 import MainLayout from "./layout/MainLayout";
 import RequireAuth from "./components/RequireAuth";
@@ -15,54 +15,60 @@ import ProfileSettings from "./view/admin/ProfileSettings";
 import Missing from "./view/admin/Missing";
 import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
 
   return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        {/* public routes */}
-        <Route path="home" element={<LandingPage />} />
-        <Route path="login" element={<LoginPage />} />
+    <>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {/* public routes */}
+          <Route path="home" element={<LandingPage />} />
+          <Route path="login" element={<LoginPage />} />
 
-        {/* private routes */}
-        <Route element={<PersistentSession />}>
-          <Route element={<DashboardLayout />}>
-            <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
-              <Route path="/" element={<Dashboard />} />
+          {/* private routes */}
+          <Route element={<PersistentSession />}>
+            <Route element={<DashboardLayout />}>
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]} />}>
+                <Route path="/" element={<Dashboard />} />
+              </Route>
+
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
+                <Route path="faculty-management" element={<FacultyManagement />} />
+              </Route>
+
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
+                <Route path="review-center" element={<ReviewCenter />} />
+              </Route>
+
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]} />}>
+                <Route path="question-bank" element={<QuestionBank />} />
+                <Route path="question-bank/create" element={<AddQuestion />} />
+                <Route path="question-bank/edit/:questionId" element={<AddQuestion />} />
+              </Route>
+
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
+                <Route path="analytics" element={<Analytics />} />
+              </Route>
+
+              <Route element={<RequireAuth allowedRoles={["SUPERADMIN"]} />}>
+                <Route path="settings" element={<Settings />} />
+              </Route>
+
+              <Route path="profile-settings" element={<ProfileSettings />} />
             </Route>
-
-            <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
-              <Route path="faculty-management" element={<FacultyManagement />} />
-            </Route>
-
-            <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
-              <Route path="review-center" element={<ReviewCenter />} />
-            </Route>
-
-            <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
-              <Route path="question-bank" element={<QuestionBank />} />
-              <Route path="question-bank/create" element={<AddQuestion />} />
-            </Route>
-
-            <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
-              <Route path="analytics" element={<Analytics />} />
-            </Route>
-
-            <Route element={<RequireAuth allowedRoles={["SUPERADMIN"]} />}>
-              <Route path="settings" element={<Settings />} />
-            </Route>
-
-            <Route path="profile-settings" element={<ProfileSettings />} />
           </Route>
-        </Route>
 
-        {/* catch all route */}
-        <Route path="*" element={<Missing />} />
-        <Route path="unauthorized" element={<Unauthorized />} />
-      </Route>
-    </Routes>
+          {/* catch all route */}
+          <Route path="*" element={<Missing />} />
+          <Route path="unauthorized" element={<Unauthorized />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </>
   );
 }
 
 export default App
+

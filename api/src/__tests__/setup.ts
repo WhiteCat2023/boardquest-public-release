@@ -79,6 +79,15 @@ jest.mock('../middleware/auth.middleware', () => ({
     next();
   }),
   requireAdmin: jest.fn((req: any, res: any, next: any) => next()),
+  requireRoles: jest.fn((roles: string[]) => (req: any, res: any, next: any) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Insufficient privileges",
+        error: "INSUFFICIENT_PRIVILEGES",
+      });
+    }
+    next();
+  }),
   optionalAuth: jest.fn((req: any, res: any, next: any) => next()),
 }));
 

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { AlertCircle, FileQuestion, SlidersHorizontal } from "lucide-react";
 import { useQuestionBank, type QuestionFilters } from "@/hooks/useQuestionBank";
-import SkeletonCard from "@/components/SkeletonCard";
-import AdminQuestionCard from "../AdminQuestionCardView";
-import QuestionListPagination from "@/components/QuestionListPagination";
-import { QuestionFilter } from "@/components/list/QuestionFilter";
-import CustomDrawer from "../Drawer";
+import SkeletonCard from "@/components/custom/skeleton/SkeletonCard";
+import AdminQuestionCard from "@/components/custom/card/AdminQuestionCardView";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
+import CustomDrawer from "@/components/custom/drawer/Drawer";
 
 interface QuestionListProps {
     filters?: QuestionFilters;

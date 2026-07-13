@@ -1,12 +1,12 @@
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import Sidebar from '../components/custom/sidebar/Sidebar'
 import useAuth from '../hooks/useAuth';
 import { adminNavItem } from '../utils/list/adminSiderbarMenuList';
 import { teacherNavItem } from '../utils/list/teacherSidebarMenulist';
 import { teamLeadNavItem } from '../utils/list/teamLeadSidebarMenuList';
 import { superAdminNavItem } from '../utils/list/superAdminSidebarMenuList';
 import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
-import HeaderBreadcrumb from '../components/HeaderBreadcrumb';
+import HeaderBreadcrumb from '../components/custom/breadcrumb/HeaderBreadcrumb';
 import UserProfileWidget from '../components/UserProfileWidget';
 
 const sidebarMenuMap: Record<string, any[]> = {

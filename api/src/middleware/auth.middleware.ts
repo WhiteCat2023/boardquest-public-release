@@ -101,6 +101,33 @@ export const requireAdmin = (
   next();
 };
 
+export const requireRoles = (roles: string[]) => {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): void => {
+    if (!req.user) {
+      res.status(401).json({
+        message: "Authentication required",
+        error: "AUTHENTICATION_REQUIRED",
+      });
+      return;
+    }
+
+    if (!req.user.role || !roles.includes(req.user.role)) {
+      res.status(403).json({
+        message: "Insufficient privileges",
+        error: "INSUFFICIENT_PRIVILEGES",
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+
 // Optional authentication - user can be authenticated or not
 export const optionalAuth = async (
   req: AuthenticatedRequest,

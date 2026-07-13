@@ -1,9 +1,10 @@
 import { ArrowRight } from "lucide-react";
+import { Button } from "../../ui/button";
 
 function LoginButton({ loginMutation}: { loginMutation: any }) {
 
     return (
-        <button
+        <Button
         type="submit"
         disabled={loginMutation.isPending}
         className="w-full bg-[#801313] hover:bg-[#680f0f] text-white font-bold py-3.5 rounded-xl flex items-center justify-center transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
@@ -12,7 +13,7 @@ function LoginButton({ loginMutation}: { loginMutation: any }) {
             {loginMutation.isPending ? "LOGGING IN..." : "LOG IN"}
         </span>
         <ArrowRight className="h-4 w-4 stroke-[3]" />
-        </button>
+        </Button>
     );
 }
 

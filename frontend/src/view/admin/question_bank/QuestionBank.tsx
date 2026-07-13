@@ -1,10 +1,8 @@
-import QuestionList from "@/components/list/QuestionList";
-import { QuestionFilter } from "@/components/list/QuestionFilter";
+import QuestionList from "./components/list/QuestionList";
+import { QuestionFilter } from "./components/QuestionFilter";
 import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
 import { FilterIcon, PlusCircleIcon, RefreshCw, SlidersHorizontal } from "lucide-react";
-import FilterDrawer from "@/components/Drawer";
-import { Button } from "../../../components/ui/button";
-import AddQuestionButton from "@/components/AddQuestionButton";
+import AddQuestionButton from "@/components/custom/button/AddQuestionButton";
 
 function QuestionBank() {
     const {

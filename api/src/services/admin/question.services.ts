@@ -88,9 +88,12 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
     return updatedQuestion;
 };
 
-export const getAllQuestions = async (cursor?: string, limit?: number) => {
+export const getAllQuestions = async (cursor?: string, limit?: number, authorId?: string) => {
+    const whereClause = authorId ? { authorId } : undefined;
+
     if (cursor === undefined && limit === undefined) {
         const questions = await prisma.question.findMany({
+            where: whereClause,
             include: {
                 category: true,
                 author: {
@@ -108,6 +111,7 @@ export const getAllQuestions = async (cursor?: string, limit?: number) => {
 
     const limitNum = limit || 20;
     const questions = await prisma.question.findMany({
+        where: whereClause,
         take: limitNum + 1,
         skip: cursor ? 1 : undefined,
         cursor: cursor ? {
@@ -147,7 +151,8 @@ export const getFilteredQuestions = async (
     type?: QuestionType,
     status?: QuestionStatus,
     cursor?: string,
-    limit?: number
+    limit?: number,
+    authorId?: string
 ) => {
     const whereClause = {
         question: search ? {
@@ -158,6 +163,7 @@ export const getFilteredQuestions = async (
         categoryId: category,
         type,
         status,
+        authorId,
     };
 
     if (cursor === undefined && limit === undefined) {

@@ -3,9 +3,9 @@ import { type LoginRequest } from "@/types/types";
 import { Link } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { Mail, Lock, EyeClosed, Eye } from "lucide-react";
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "../components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "../components/ui/input-group"
-import { Button } from "../components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "../../components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../../components/ui/input-group"
+import { Button } from "../../components/ui/button";
 
 function LoginPage() {
 

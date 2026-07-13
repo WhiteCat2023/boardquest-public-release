@@ -11,12 +11,15 @@ export default {
     '!src/scripts/**',
   ],
   coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/generated/'],
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+        },
       },
-    },
+    ],
   },
 };

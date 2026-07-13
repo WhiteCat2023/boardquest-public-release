@@ -208,6 +208,7 @@ describe('Question Routes', () => {
         ...mockQuestion,
         question: 'what is the updated normal range of blood glucose?',
       };
+      (questionService.getQuestionById as jest.Mock).mockResolvedValue(mockQuestion);
       (questionService.updateQuestion as jest.Mock).mockResolvedValue(updatedQuestion);
 
       const response = await request(app)
@@ -228,6 +229,7 @@ describe('Question Routes', () => {
     });
 
     it('should return 400 when required fields are missing', async () => {
+      (questionService.getQuestionById as jest.Mock).mockResolvedValue(mockQuestion);
       (questionService.updateQuestion as jest.Mock).mockRejectedValue(
         new ApiError(400, 'Validation failed')
       );
@@ -240,7 +242,7 @@ describe('Question Routes', () => {
     });
 
     it('should return 404 when question to update does not exist', async () => {
-      (questionService.updateQuestion as jest.Mock).mockRejectedValue(
+      (questionService.getQuestionById as jest.Mock).mockRejectedValue(
         new ApiError(404, 'Question not found')
       );
 
@@ -259,6 +261,7 @@ describe('Question Routes', () => {
 
   describe('DELETE /api/questions/:questionId', () => {
     it('should delete a question and return 200 with the deleted question', async () => {
+      (questionService.getQuestionById as jest.Mock).mockResolvedValue(mockQuestion);
       (questionService.deleteQuestion as jest.Mock).mockResolvedValue(mockQuestion);
 
       const response = await request(app).delete('/api/questions/question-1');
@@ -270,7 +273,7 @@ describe('Question Routes', () => {
     });
 
     it('should return 404 when question to delete does not exist', async () => {
-      (questionService.deleteQuestion as jest.Mock).mockRejectedValue(
+      (questionService.getQuestionById as jest.Mock).mockRejectedValue(
         new ApiError(404, 'Question not found')
       );
 
@@ -280,6 +283,7 @@ describe('Question Routes', () => {
     });
 
     it('should call deleteQuestion service with the correct questionId', async () => {
+      (questionService.getQuestionById as jest.Mock).mockResolvedValue(mockQuestion);
       (questionService.deleteQuestion as jest.Mock).mockResolvedValue(mockQuestion);
 
       await request(app).delete('/api/questions/question-1');

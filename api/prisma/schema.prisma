@@ -52,8 +52,8 @@ model AdminUser {
   role      Role
   phoneNumber String
 
-  department    Department @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  departmentId  String     @db.ObjectId 
+  department    Department? @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  departmentId  String?     @db.ObjectId 
 
   createdCategory Category[] @relation("CategoryAuthor")
 
@@ -221,3 +221,12 @@ model ExamResult {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model AiAnalysis {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  analysis  String   // JSON string of the analysis
+  hash      String   // Hash of the data used to generate the analysis
+  updatedAt DateTime @updatedAt
+}
+
