@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { AlertCircle, FileQuestion, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, FileQuestion, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { useQuestionBank, type QuestionFilters } from "@/hooks/useQuestionBank";
 import SkeletonCard from "@/components/custom/skeleton/SkeletonCard";
 import AdminQuestionCard from "@/components/custom/card/AdminQuestionCardView";
+import QuestionTable from "./QuestionTable";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
@@ -14,6 +15,7 @@ interface QuestionListProps {
 function QuestionList({ filters }: QuestionListProps) {
     const [cursorsStack, setCursorsStack] = useState<(string | undefined)[]>([undefined]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
     // Reset pagination when search filters change
     useEffect(() => {
@@ -77,27 +79,58 @@ function QuestionList({ filters }: QuestionListProps) {
             )}
 
             {/* ── Data layout ── */}
-            
-                <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
+            <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
                     {/* Summary bar */}
-                    <div className="flex items-center justify-between w-full">
-                        {questions.length > 0 && !loading && !error && (
-                        <span className="rounded-full px-3 py-0.5 text-sm font-medium text-gray-500">
-                            Showing {questions.length} question{questions.length !== 1 ? "s" : ""}
-                        </span>
+                    <div className="flex items-center justify-between w-full border-b border-slate-100 pb-4">
+                        {questions.length > 0 && !loading && !error ? (
+                            <span className="rounded-full px-3 py-1 text-xs font-semibold text-slate-500 bg-slate-100/80 border border-slate-200/50">
+                                Showing {questions.length} question{questions.length !== 1 ? "s" : ""}
+                            </span>
+                        ) : (
+                            <div />
                         )}
 
-                        {/* Mobile Filters Trigger */}
-                        <div className="lg:hidden">
-                            <CustomDrawer
-                                drawerTriggerIcon={<SlidersHorizontal size={14} />}
-                                drawerTitleIcon={<SlidersHorizontal size={14} />}
-                                drawerTriggerName="Filters"
-                                drawerDescription="Refine the list of exam questions."
-                                buttonClassName="bg-[#A70202] text-white hover:bg-white hover:text-[#A70202] hover:border-[#A70202] "
-                            >
-                                <QuestionFilter />
-                            </CustomDrawer>
+                        <div className="flex items-center gap-3">
+                            {/* View Switcher Toggle */}
+                            {questions.length > 0 && !loading && !error && (
+                                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+                                    <button
+                                        onClick={() => setViewMode("table")}
+                                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                            viewMode === "table"
+                                                ? "bg-white text-[#A70202] shadow-sm"
+                                                : "text-slate-400 hover:text-slate-600"
+                                        }`}
+                                        title="Table View"
+                                    >
+                                        <List size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode("grid")}
+                                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                            viewMode === "grid"
+                                                ? "bg-white text-[#A70202] shadow-sm"
+                                                : "text-slate-400 hover:text-slate-600"
+                                        }`}
+                                        title="Grid View"
+                                    >
+                                        <LayoutGrid size={14} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Mobile Filters Trigger */}
+                            <div className="lg:hidden">
+                                <CustomDrawer
+                                    drawerTriggerIcon={<SlidersHorizontal size={14} />}
+                                    drawerTitleIcon={<SlidersHorizontal size={14} />}
+                                    drawerTriggerName="Filters"
+                                    drawerDescription="Refine the list of exam questions."
+                                    buttonClassName="bg-[#A70202] text-white hover:bg-white hover:text-[#A70202] hover:border-[#A70202] h-9 px-3 rounded-xl text-xs font-semibold"
+                                >
+                                    <QuestionFilter />
+                                </CustomDrawer>
+                            </div>
                         </div>
                     </div>
 
@@ -110,17 +143,27 @@ function QuestionList({ filters }: QuestionListProps) {
                         </div>
                     )}
 
-                    {/* List grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                        {questions.map((question) => (
-                            <AdminQuestionCard 
-                                key={question.id} 
-                                item={question} 
-                                onView={(id) => console.log('View', id)} 
-                                onDelete={(id) => console.log('Delete', id)} 
+                    {/* Data display grid / table */}
+                    {questions.length > 0 && !loading && !error && (
+                        viewMode === "grid" ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                {questions.map((question) => (
+                                    <AdminQuestionCard 
+                                        key={question.id} 
+                                        item={question} 
+                                        onView={(id) => console.log('View', id)} 
+                                        onDelete={(id) => console.log('Delete', id)} 
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <QuestionTable 
+                                questions={questions}
+                                onView={(id) => console.log('View', id)}
+                                onDelete={(id) => console.log('Delete', id)}
                             />
-                        ))}
-                    </div>
+                        )
+                    )}
 
                     {/* Pagination */}
                     <QuestionListPagination

@@ -6,6 +6,12 @@ import CustomeDrawer from "../drawer/Drawer";
 import CustomDialog from "../dialog/Dialog";
 import MarronButton from "./MarronButton";
 
+interface AddQuestionButtonProps {
+  label: string,
+  onClick: () => void,
+  className?: string
+}
+
 export default function AddQuestionButton() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -21,9 +27,24 @@ export default function AddQuestionButton() {
     // Placeholder for AI workflow trigger
   };
 
+  const addQuestionOptions: AddQuestionButtonProps[] = [
+    {
+      label: "Add Question",
+      onClick: handleAddManual,
+    },
+    {
+      label: "Add Question using CSV",
+      onClick: () => {
+        setOpen(false);
+        navigate("/question-bank/import");
+      },
+      className: "w-full py-6 bg-[#A70202] hover:bg-white hover:text-[#A70202] border border-[#A70202] text-white cursor-pointer font-semibold rounded-xl transition-all duration-150"
+    }
+  ]
+
   const triggerButton = (
     <MarronButton
-      icon={PlusCircleIcon}
+      icon={<PlusCircleIcon />}
       label="Add Question"
       onClick={() => setOpen(true)}
     />
@@ -34,15 +55,14 @@ export default function AddQuestionButton() {
 
   const content = (
     <div className="flex flex-col gap-2 w-full mt-2">
-      <MarronButton
-        label="Add Question"
-        onClick={handleAddManual}
-      />
-      <MarronButton
-        label="Add Question using AI"
-        onClick={handleAddAI}
-        className="w-full py-6 bg-[#A70202] hover:bg-white hover:text-[#A70202] border border-[#A70202] text-white cursor-pointer font-semibold rounded-xl transition-all duration-150"
-      />
+      {addQuestionOptions.map((option, index) => (
+        <MarronButton
+          key={index}
+          label={option.label}
+          onClick={option.onClick}
+          className={option.className}
+        />
+      ))}
     </div>
   );
 

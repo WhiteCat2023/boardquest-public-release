@@ -14,9 +14,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 
-
-
-export function QuestionFilter() {
+export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } = {}) {
     const axiosPrivate = useAxiosPrivate();
     const { 
         search, 
@@ -48,46 +46,63 @@ export function QuestionFilter() {
     };
 
     return (
-        
         <FieldGroup>
-            {/* Search Input */}
-            <Field>
-                <div className="flex items-center justify-between w-full">
-                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Search
-                    </FieldLabel>
+            {!showSearch && (
+                <div className="flex items-center justify-between w-full pb-1">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filters</span>
                     {(search || selectedCategory || selectedDifficulty || selectedType || selectedStatus) && (
                         <Button
                             variant="link"
                             size="sm"
                             onClick={clearFilters}
-                            className="text-[10px] font-bold text-[#A70202] hover:text-[#c40303] uppercase tracking-wider transition-all duration-150 cursor-pointer"
+                            className="text-[10px] font-bold text-[#A70202] hover:text-[#c40303] uppercase tracking-wider transition-all duration-150 cursor-pointer p-0 h-auto"
                         >
                             Reset Filters
                         </Button>
                     )}
                 </div>
-                <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        type="text"
-                        placeholder="Search text, topic, ID..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-8 h-10 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150"
-                    />
-                    {search && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSearch("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                            <X size={14} />
-                        </Button>
-                    )}
-                </div>
-            </Field>
+            )}
+
+            {/* Search Input */}
+            {showSearch && (
+                <Field>
+                    <div className="flex items-center justify-between w-full">
+                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Search
+                        </FieldLabel>
+                        {(search || selectedCategory || selectedDifficulty || selectedType || selectedStatus) && (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="text-[10px] font-bold text-[#A70202] hover:text-[#c40303] uppercase tracking-wider transition-all duration-150 cursor-pointer"
+                            >
+                                Reset Filters
+                            </Button>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                            type="text"
+                            placeholder="Search text, topic, ID..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-8 h-10 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150"
+                        />
+                        {search && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSearch("")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X size={14} />
+                            </Button>
+                        )}
+                    </div>
+                </Field>
+            )}
 
             {/* Category Select */}
             <Field>

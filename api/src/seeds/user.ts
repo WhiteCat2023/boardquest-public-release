@@ -27,4 +27,18 @@ export const demoAdminUsers = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    id: "507f1f77bcf86cd799439013",
+    employeeId: "EMP003",
+    email: "teamlead1@example.com",
+    username: "teamlead1",
+    password: "hashed_password_3",
+    name: "Team Lead User One",
+    role: "TEAMLEAD" as const,
+    phoneNumber: "+63-2-3456-7890",
+    departmentId: "507f1f77bcf86cd799439020",
+    location: "Metro Manila",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];

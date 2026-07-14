@@ -315,4 +315,50 @@ export const getQuestionBySearch = async (search: string) => {
         }, 
     });
     return questions;
-};  
+};
+
+export interface ImportedQuestion {
+  question: string;
+  choices: string[];
+  correctAnswer: string;
+  topic: string;
+  difficulty: QuestionDifficulty;
+  type: QuestionType;
+  feedback?: string;
+}
+
+export const importQuestions = async (
+  questions: ImportedQuestion[],
+  categoryId: string,
+  authorId: string,
+  status: QuestionStatus = QuestionStatus.DRAFT
+) => {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new ApiError(400, "No questions provided for import");
+  }
+
+  const queries = questions.map((q) => {
+    let choices = q.choices || [];
+    if (q.type === QuestionType.TRUE_FALSE && choices.length === 0) {
+      choices = ["True", "False"];
+    }
+
+    return prisma.question.create({
+      data: {
+        question: q.question.toLowerCase().trim(),
+        choices: choices.map(c => c.trim()),
+        correctAnswer: q.correctAnswer.toLowerCase().trim(),
+        categoryId: categoryId.trim(),
+        authorId,
+        topic: q.topic.trim(),
+        difficulty: q.difficulty,
+        type: q.type,
+        status,
+        feedback: q.feedback?.trim() || "",
+      },
+    });
+  });
+
+  const createdQuestions = await prisma.$transaction(queries);
+  return createdQuestions;
+};

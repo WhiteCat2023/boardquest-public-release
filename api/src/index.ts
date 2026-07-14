@@ -11,7 +11,7 @@ import facultyRoutes from "./routes/admin/faculty.routes";
 import analyticsRoutes from "./routes/admin/analytics.routes";
 import cors from "cors";
 // import gameRoutes from "./routes/admin/game_module/game.routes";
-// import { seedAdminUserDb } from "./services/prisma";
+import { seedAdminUserDb } from "./services/prisma";
 
 const app = express();
 app.use(cors({
@@ -21,7 +21,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// await seedAdminUserDb();
+await seedAdminUserDb();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/departments", departmentRoutes);

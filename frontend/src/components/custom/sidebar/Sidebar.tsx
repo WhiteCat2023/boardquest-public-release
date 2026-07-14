@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import type { NavItemProps, NavContentProps } from '@/utils/list/adminSiderbarMenuList';
-
 import {
   Sidebar as UISidebar,
   SidebarContent,
@@ -26,7 +25,7 @@ function DynamicIcon({ name, size = 18, className }: { name: string; size?: numb
 
 interface SidebarContentProps {
   navItem: NavItemProps[];
-  logout: () => void;
+  logout?: () => void;
 }
 
 function Sidebar({ navItem, logout }: SidebarContentProps) {

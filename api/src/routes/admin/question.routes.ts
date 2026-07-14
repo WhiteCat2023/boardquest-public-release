@@ -11,6 +11,8 @@ import {
     getQuestions,
     getQuestionsByCategory, 
     updateQuestion,
+    bulkUploadQuestions,
+    extractQuestions,
 } from "../../controller/admin/question.controller";
 import {
   createCategory,
@@ -23,6 +25,8 @@ import {
 const router = Router();
 
 router.post("/create", authenticateToken, createQuestion);
+router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
+router.post("/extract", authenticateToken, extractQuestions);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.put("/:questionId", authenticateToken, updateQuestion);

@@ -1,10 +1,10 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/custom/sidebar/Sidebar'
 import useAuth from '../hooks/useAuth';
-import { adminNavItem } from '../utils/list/adminSiderbarMenuList';
-import { teacherNavItem } from '../utils/list/teacherSidebarMenulist';
-import { teamLeadNavItem } from '../utils/list/teamLeadSidebarMenuList';
-import { superAdminNavItem } from '../utils/list/superAdminSidebarMenuList';
+import { adminNavItem } from '../utils/menu-list/adminSiderbarMenuList';
+import { teacherNavItem } from '../utils/menu-list/teacherSidebarMenulist';
+import { teamLeadNavItem } from '../utils/menu-list/teamLeadSidebarMenuList';
+import { superAdminNavItem } from '../utils/menu-list/superAdminSidebarMenuList';
 import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import HeaderBreadcrumb from '../components/custom/breadcrumb/HeaderBreadcrumb';
 import UserProfileWidget from '../components/UserProfileWidget';

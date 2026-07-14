@@ -46,8 +46,13 @@ export const adminNavItem: NavItemProps[] = [
         content: [
             {
                 title: "Profile Settings",
-                path: "/profile-settings",   
+                path: "/profile-settings",
                 icon: "UserCircle"
+            },
+            {
+                title: "System Settings",
+                path: "/settings",
+                icon: "Settings"
             },
         ]
     },

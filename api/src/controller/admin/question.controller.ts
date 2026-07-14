@@ -5,6 +5,8 @@ import { Response } from "express";
 import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../../generated/prisma/enums";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
+import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
+import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
 
 export const createQuestion = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user;
@@ -122,4 +124,61 @@ export const deleteQuestion = asyncHandler(async (req: AuthenticatedRequest, res
 
     const question = await QuesitonServices.deleteQuestion(questionId as string);
     return new ApiResponse(200, { question }, "Question deleted successfully").send(res);
+});
+
+export const bulkUploadQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    const { questions, categoryId, status } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+        throw new ApiError(400, "Questions list is required");
+    }
+    if (!categoryId) {
+        throw new ApiError(400, "Category ID is required");
+    }
+
+    const defaultStatus = user.role === "TEACHER" ? QuestionStatus.DRAFT : (status || QuestionStatus.PENDING_REVIEW);
+
+    const imported = await QuesitonServices.importQuestions(
+        questions,
+        categoryId,
+        user.id,
+        defaultStatus
+    );
+
+    return new ApiResponse(201, { count: imported.length, questions: imported }, `${imported.length} questions imported successfully`).send(res);
+});
+
+export const extractQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    const { fileContent, fileType } = req.body;
+    if (!fileContent) {
+        throw new ApiError(400, "File content is required");
+    }
+    if (!fileType) {
+        throw new ApiError(400, "File type is required");
+    }
+
+    let questions: any[] = [];
+    try {
+        if (fileType === "csv") {
+            questions = extractQuestionsFromCSV(fileContent);
+        } else if (fileType === "excel" || fileType === "xlsx") {
+            const buffer = Buffer.from(fileContent, "base64");
+            questions = extractQuestionsFromExcel(buffer);
+        } else {
+            throw new ApiError(400, "Unsupported file type. Use 'csv' or 'excel'");
+        }
+    } catch (err: any) {
+        throw new ApiError(400, err.message || "Failed to parse file");
+    }
+
+    return new ApiResponse(200, { questions }, `${questions.length} questions extracted successfully`).send(res);
 });
