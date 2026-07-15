@@ -11,22 +11,35 @@ const useAxiosPrivate = () => {
     const requestIntercept = AxiosInstance.interceptors.request.use(
       (config) => {
         if (!config.headers["Authorization"]) {
-          config.headers["Authorization"] = `Bearer ${auth?.accessToken}`;
+          config.headers["Authorization"] =
+            `Bearer ${(auth as any)?.accessToken}`;
         }
         return config;
       },
-      (error) => Promise.reject(error),
+      (error) => {
+        return Promise.reject(error);
+      },
     );
 
     const responseIntercept = AxiosInstance.interceptors.response.use(
-      (response: object) => response,
+      (response) => response,
       async (error: any) => {
         const prevRequest = error?.config;
-        if (error?.response?.status === 401 && !prevRequest?.sent) {
+        const isAuthRequest =
+          prevRequest?.url?.includes("/auth/login") ||
+          prevRequest?.url?.includes("/auth/refresh");
+
+        if (
+          error?.response?.status === 401 &&
+          !prevRequest?.sent &&
+          !isAuthRequest
+        ) {
           prevRequest.sent = true;
           const newAccessToken = await refresh();
-          prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-          return AxiosInstance(prevRequest);
+          if (newAccessToken) {
+            prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+            return AxiosInstance(prevRequest);
+          }
         }
         return Promise.reject(error);
       },

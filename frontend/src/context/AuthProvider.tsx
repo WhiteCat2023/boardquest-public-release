@@ -42,13 +42,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!validateLoginInput.success) {
         return console.error("Login failed:", validateLoginInput.error.flatten().fieldErrors);
       }
-      const { isError, data } = await loginMutation.mutateAsync(userData);
-      if (isError) return console.error("Login failed:", loginMutation.error);
-      setAuth(data);
-      console.log("Login successful:", data);
+      const response = await loginMutation.mutateAsync(userData);
+      setAuth(response);
+      console.log("Login successful:", response);
       navigate(from, { replace: true });
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (error: any) {
+      console.error("Login failed:", error?.response?.data?.message || error);
     }
   }
 

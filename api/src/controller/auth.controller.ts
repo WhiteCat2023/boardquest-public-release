@@ -89,7 +89,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     { id: tokenPayload.id, email: tokenPayload.email, role: tokenPayload.role },
     "1d"
   );
-
+ 
   res.cookie("accessToken", newAccessToken, {
     httpOnly: true,
     secure: false,

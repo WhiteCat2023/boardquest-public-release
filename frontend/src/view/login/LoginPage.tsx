@@ -10,7 +10,7 @@ import { Button } from "../../components/ui/button";
 function LoginPage() {
 
   const { login, loginMutation } = useAuth();
-
+  const isLoginInvalid = loginMutation.isError;
   const [loginInputs, setLoginInputs] = useState<LoginRequest>({
     email: "",
     password: "",
@@ -51,12 +51,16 @@ function LoginPage() {
                 ENTER YOUR CREDENTIALS TO CONTINUE THE REVIEW
               </FieldDescription>
               <FieldGroup>
-                <Field>
-                  <FieldLabel className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">
+                <Field data-invalid={isLoginInvalid || undefined}>
+                  <FieldLabel
+                    className="text-[11px] font-bold text-gray-800 uppercase tracking-wide"
+                    htmlFor="input-invalid"
+                  >
                     EMAIL ADRESS
                   </FieldLabel>
                   <InputGroup>
                     <InputGroupInput
+                      aria-invalid={isLoginInvalid || undefined}
                       type="email"
                       required
                       placeholder="username@gmail.com"
@@ -67,7 +71,7 @@ function LoginPage() {
                           email: e.target.value,
                         })
                       }
-                      className="w-full bg-[#f8f9fa rounded-xl text-sm transition-colors placeholder:text-gray-400"
+                      className="w-full h-auto bg-[#f8f9fa rounded-xl text-sm transition-colors placeholder:text-gray-400"
                     />
                     <InputGroupAddon align="inline-start">
                       <Mail />
@@ -78,9 +82,10 @@ function LoginPage() {
                   <FieldLabel className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">
                     PASSWORD
                   </FieldLabel>
-                  <InputGroup>
+                  <InputGroup data-invalid={isLoginInvalid || undefined}>
                     <InputGroupInput
                       type={togglePassword ? "text" : "password"}
+                      aria-invalid={isLoginInvalid || undefined}
                       required
                       placeholder="**********"
                       value={loginInputs.password}
@@ -96,7 +101,7 @@ function LoginPage() {
                       <Lock />
                     </InputGroupAddon>
 
-                    <InputGroupAddon align="inline-end" >
+                    <InputGroupAddon align="inline-end">
                       <Button
                         type="button"
                         variant="ghost"
@@ -106,7 +111,6 @@ function LoginPage() {
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>
-
                 </Field>
                 <Button
                   className="w-full bg-[#a60b0b] text-white rounded-xl hover:bg-[#a60b0b]/90"
@@ -128,11 +132,11 @@ function LoginPage() {
                   </p>
                 </div>
 
-                {loginMutation.isError && (
+                {isLoginInvalid && (
                   <div className="mt-4 text-xs font-bold text-red-500 text-center">
-                    {loginMutation.error instanceof Error
-                      ? loginMutation.error.message
-                      : "Login failed"}
+                    {(loginMutation.error as any)?.response?.data?.message ||
+                      loginMutation.error?.message ||
+                      "Login failed"}
                   </div>
                 )}
               </FieldGroup>

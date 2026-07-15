@@ -6,20 +6,25 @@ const useRefreshToken = () => {
   const { setAuth } = useAuth();
 
   const refresh = async () => {
-    const response = await AxiosInstance.get("/auth/refresh");
-    setAuth((prev) => {
-      return { 
-        ...prev, 
-        data: {
-          user: {
-            ...prev?.data?.user,
-            id: response.data.data.id,
-            role: response.data.data.role
-          }
-        },
-        accessToken: response.data.data.accessToken };
+    return AxiosInstance.get("/auth/refresh").then((res) => {
+      setAuth((prev) => {
+        return { 
+          ...prev, 
+          data: {
+            user: {
+              ...prev?.data?.user,
+              id: res.data.data.id,
+              role: res.data.data.role
+            }
+          }, 
+          accessToken: res.data.data.accessToken 
+        };
+      });
+      return res.data.data.accessToken;
+    }).catch((err) => {
+      console.log(err);
+      return;
     });
-    return response.data.data.accessToken;
   };
   return refresh;
 };
