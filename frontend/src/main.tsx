@@ -5,6 +5,8 @@ import App from './App.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthProvider.tsx';
 import { BrowserRouter } from 'react-router-dom';
+import "@aejkatappaja/phantom-ui";
+
 
 const queryClient = new QueryClient();
 

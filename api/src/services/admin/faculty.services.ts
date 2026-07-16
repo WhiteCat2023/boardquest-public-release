@@ -4,6 +4,8 @@ import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
 import { Role } from "../../../generated/prisma/enums";
 
+// ============ Validation Schemas ============
+
 export const createFacultySchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   name: z.string().min(1, "Name is required"),
@@ -25,97 +27,112 @@ export const updateFacultySchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
+// ============ Type Definitions ============
+
 export type CreateFacultyInput = z.infer<typeof createFacultySchema>;
 export type UpdateFacultyInput = z.infer<typeof updateFacultySchema>;
 
-export const isAllowedToManageRole = (creatorRole: string, targetRole: string): boolean => {
-  if (creatorRole === "SUPERADMIN") return true;
-  if (creatorRole === "ADMIN") {
-    // ADMIN can add new CO-ADMIN(TEAMLEAD) and TEACHER
-    return targetRole === "TEAMLEAD" || targetRole === "TEACHER";
-  }
-  if (creatorRole === "TEAMLEAD") {
-    // CO-ADMIN(TEAMLEAD) can add TEACHERS
-    return targetRole === "TEACHER";
-  }
-  return false;
-};
+// ============ Faculty Services ============
 
-export const getAllFaculty = async () => {
-  return await prisma.adminUser.findMany({
-    include: {
-      department: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-};
+export class FacultyService {
+  constructor(private readonly db: typeof prisma = prisma) {}
 
-export const createFaculty = async (data: CreateFacultyInput, creatorRole: string) => {
-  const parsed = createFacultySchema.safeParse(data);
-  if (!parsed.success) {
-    const errors = parsed.error.flatten().fieldErrors;
-    throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
-  }
-
-  const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
-
-  // Role hierarchy validation
-  if (!isAllowedToManageRole(creatorRole, role)) {
-    throw new ApiError(403, `You are not authorized to create a user with the role of ${role}`);
-  }
-
-  // Check unique constraints
-  const existing = await prisma.adminUser.findFirst({
-    where: {
-      OR: [
-        { email },
-        { username },
-        { employeeId }
-      ]
+  isAllowedToManageRole(creatorRole: string, targetRole: string): boolean {
+    if (creatorRole === "SUPERADMIN") return true;
+    if (creatorRole === "ADMIN") {
+      // ADMIN can add new CO-ADMIN(TEAMLEAD) and TEACHER
+      return targetRole === "TEAMLEAD" || targetRole === "TEACHER";
     }
-  });
-
-  if (existing) {
-    if (existing.email === email) throw new ApiError(409, "Email is already in use");
-    if (existing.username === username) throw new ApiError(409, "Username is already in use");
-    if (existing.employeeId === employeeId) throw new ApiError(409, "Employee ID is already in use");
-  }
-
-  const hash = await hashedPassword(password);
-
-  return await prisma.adminUser.create({
-    data: {
-      employeeId,
-      name,
-      email,
-      role,
-      phoneNumber,
-      departmentId,
-      username,
-      password: hash,
-    },
-    include: {
-      department: true,
+    if (creatorRole === "TEAMLEAD") {
+      // CO-ADMIN(TEAMLEAD) can add TEACHERS
+      return targetRole === "TEACHER";
     }
-  });
-};
-
-export const deleteFaculty = async (id: string, creatorRole: string) => {
-  const userToDelete = await prisma.adminUser.findUnique({
-    where: { id },
-  });
-
-  if (!userToDelete) {
-    throw new ApiError(404, "Faculty member not found");
+    return false;
   }
 
-  if (!isAllowedToManageRole(creatorRole, userToDelete.role)) {
-    throw new ApiError(403, `You are not authorized to delete a user with the role of ${userToDelete.role}`);
+  async getAllFaculty() {
+    return await this.db.adminUser.findMany({
+      include: {
+        department: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 
-  return await prisma.adminUser.delete({
-    where: { id },
-  });
-};
+  async createFaculty(data: CreateFacultyInput, creatorRole: string) {
+    const parsed = createFacultySchema.safeParse(data);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+    }
+
+    const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
+
+    // Role hierarchy validation
+    if (!this.isAllowedToManageRole(creatorRole, role)) {
+      throw new ApiError(403, `You are not authorized to create a user with the role of ${role}`);
+    }
+
+    // Check unique constraints
+    const existing = await this.db.adminUser.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username },
+          { employeeId }
+        ]
+      }
+    });
+
+    if (existing) {
+      if (existing.email === email) throw new ApiError(409, "Email is already in use");
+      if (existing.username === username) throw new ApiError(409, "Username is already in use");
+      if (existing.employeeId === employeeId) throw new ApiError(409, "Employee ID is already in use");
+    }
+
+    const hash = await hashedPassword(password);
+
+    return await this.db.adminUser.create({
+      data: {
+        employeeId,
+        name,
+        email,
+        role,
+        phoneNumber,
+        departmentId,
+        username,
+        password: hash,
+      },
+      include: {
+        department: true,
+      }
+    });
+  }
+
+  async deleteFaculty(id: string, creatorRole: string) {
+    const userToDelete = await this.db.adminUser.findUnique({
+      where: { id },
+    });
+
+    if (!userToDelete) {
+      throw new ApiError(404, "Faculty member not found");
+    }
+
+    if (!this.isAllowedToManageRole(creatorRole, userToDelete.role)) {
+      throw new ApiError(403, `You are not authorized to delete a user with the role of ${userToDelete.role}`);
+    }
+
+    return await this.db.adminUser.delete({
+      where: { id },
+    });
+  }
+}
+
+export const facultyService = new FacultyService();
+
+export const isAllowedToManageRole = facultyService.isAllowedToManageRole.bind(facultyService);
+export const getAllFaculty = facultyService.getAllFaculty.bind(facultyService);
+export const createFaculty = facultyService.createFaculty.bind(facultyService);
+export const deleteFaculty = facultyService.deleteFaculty.bind(facultyService);

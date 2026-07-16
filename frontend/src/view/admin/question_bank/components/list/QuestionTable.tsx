@@ -28,7 +28,7 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
   return (
     <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden font-sans">
       <Table>
-        <TableHeader className="bg-slate-50/50">
+        <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
           <TableRow className="border-b border-slate-100 hover:bg-transparent">
             <TableHead className="w-[100px] text-xs font-bold text-slate-400 uppercase tracking-wider pl-6 py-4">ID</TableHead>
             <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Question</TableHead>

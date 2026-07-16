@@ -8,12 +8,14 @@ import { z } from "zod";
 addNewAdminUser = Functionality for super admin to send sign up link to new admin users
 
 */
-export const addNewAdminUser = z.object({
+export const addNewAdminUserSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   email: z.string().email("Invalid email"),
   role: z.enum(["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"], "Role required"),
 });
 
+// Alias for backward compatibility
+export const addNewAdminUser = addNewAdminUserSchema;
 
 export const createAdminUserSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
@@ -49,112 +51,122 @@ export const createReviewCenterRepUserSchema = z
     message: "Passwords do not match",
   });
 
-type addNewAdminUserInput = z.infer<typeof addNewAdminUser>;
+type addNewAdminUserInput = z.infer<typeof addNewAdminUserSchema>;
 type createAdminUserInput = z.infer<typeof createAdminUserSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
 type createReviewCenterRepUserInput = z.infer<typeof createReviewCenterRepUserSchema>;
 
-export const login = async (data: LoginInput) => {
-  const parsed = loginSchema.safeParse(data);
+export class AuthService {
+  constructor(private readonly db: typeof prisma = prisma) {}
 
-  if (!parsed.success) {
-    const errors = parsed.error.flatten().fieldErrors;
+  async login(data: LoginInput) {
+    const parsed = loginSchema.safeParse(data);
 
-    throw new ApiError(400, "Email or Password is not valid", [
-      JSON.stringify(errors),
-    ]);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+
+      throw new ApiError(400, "Email or Password is not valid", [
+        JSON.stringify(errors),
+      ]);
+    }
+
+    const { email, password } = parsed.data;
+
+    const user = await this.db.adminUser.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    const isValid =
+      (await verifyPassword(user.password, password)) ||
+      user.password === password;
+
+    if (!isValid) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    return user;
   }
 
-  const { email, password } = parsed.data;
+  async createNewAdminUser(data: addNewAdminUserInput) {
+    const parsed = addNewAdminUserSchema.safeParse(data);
 
-  const user = await prisma.adminUser.findUnique({ where: { email } });
+    if (!parsed.success) {
+      const errors = parsed.error.flatten();
+      throw new ApiError(400, "Email or Password is not valid", [
+        JSON.stringify(errors),
+      ]);
+    }
 
-  if (!user) {
-    throw new ApiError(401, "Invalid email or password");
+    //sends email with sign up link to the new admin user
   }
 
-  const isValid =
-    (await verifyPassword(user.password, password)) ||
-    user.password === password;
+  createNewStudent() {}
+  createNewPartner() {}
 
-  if (!isValid) {
-    throw new ApiError(401, "Invalid email or password");
+  async signupAdmin(data: createAdminUserInput) {
+    const parsed = createAdminUserSchema.safeParse(data);
+
+    if (!parsed.success) {
+      const errors = parsed.error.flatten();
+      throw new ApiError(400, "Email or Password is not valid", [
+        JSON.stringify(errors),
+      ]);
+    }
+
+    const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
+
+    const existingUser = await this.db.adminUser.findFirst({
+      where: { OR: [{ email }, { username }, { employeeId }] },
+    });
+
+    if (existingUser) {
+      throw new ApiError(409, "Email already in use");
+    }
+
+    const hash = await hashedPassword(password);
+    const user = await this.db.adminUser.create({
+      data: {
+        employeeId,
+        username,
+        email,
+        name,
+        role,
+        phoneNumber,
+        departmentId,
+        password: hash,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+      },
+    });
+
+    return user;
   }
 
-  return user;
-};
+  async signupReviewCenterRep(data: createReviewCenterRepUserInput) {
+    const parsed = createReviewCenterRepUserSchema.safeParse(data);
 
+    if (!parsed.success) {
+      const errors = parsed.error.flatten();
+      throw new ApiError(400, "Email or Password is not valid", [
+        JSON.stringify(errors),
+      ]);
+    }
 
-export const addAdminUser = async (data: addNewAdminUserInput) => {
-  const parsed = addNewAdminUser.safeParse(data);
-
-  if (!parsed.success) {
-    const errors = parsed.error.flatten();
-    throw new ApiError(400, "Email or Password is not valid", [
-      JSON.stringify(errors),
-    ]);
+    // SEND SIGN UP LINK TO REVIEW CENTER REPRESENTATIVE
   }
+}
 
-  //sends email with sign up link to the new admin user
-};
+export const authService = new AuthService();
 
-export const signupAdmin = async (data: createAdminUserInput) => {
-  const parsed = createAdminUserSchema.safeParse(data);
-
-  if (!parsed.success) {
-    const errors = parsed.error.flatten();
-    throw new ApiError(400, "Email or Password is not valid", [
-      JSON.stringify(errors),
-    ]);
-  }
-
-  const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
-
-  const existingUser = await prisma.adminUser.findFirst({
-    where: { OR: [{ email }, { username }, { employeeId }] },
-  });
-
-  if (existingUser) {
-    throw new ApiError(409, "Email already in use");
-  }
-
-  const hash = await hashedPassword(password);
-  const user = await prisma.adminUser.create({
-    data: {
-      employeeId,
-      username,
-      email,
-      name,
-      role,
-      phoneNumber,
-      departmentId,
-      password: hash,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      username: true,
-    },
-  });
-
-  return user;
-};
-
-export const signupReviewCenterRep = async (
-  data: createReviewCenterRepUserInput,
-) => {
-  const parsed = createReviewCenterRepUserSchema.safeParse(data);
-
-  if (!parsed.success) {
-    const errors = parsed.error.flatten();
-    throw new ApiError(400, "Email or Password is not valid", [
-      JSON.stringify(errors),
-    ]);
-  }
-
-  // SEND SIGN UP LINK TO REVIEW CENTER REPRESENTATIVE
-};
-
-
-
+export const login = authService.login.bind(authService);
+export const createNewAdminUser = authService.createNewAdminUser.bind(authService);
+export const createNewStudent = authService.createNewStudent.bind(authService);
+export const createNewPartner = authService.createNewPartner.bind(authService);
+export const signupAdmin = authService.signupAdmin.bind(authService);
+export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(authService);

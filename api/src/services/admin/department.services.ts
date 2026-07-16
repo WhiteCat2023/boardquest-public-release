@@ -2,6 +2,8 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 
+// ============ Validation Schemas ============
+
 export const createNewDepartmentSchema = z.object({
     name: z.string().min(1, "Department name is required"),
     authorId: z.string().min(1, "Author ID is required"),
@@ -12,10 +14,17 @@ export const updateDepartmentSchema = z.object({
     departmentId: z.string().min(1, "Department ID is required"),
 });
 
-type CreateNewDepartmentInput = z.infer<typeof createNewDepartmentSchema>;
-type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+// ============ Type Definitions ============
 
-export const createNewDepartment = async (data: CreateNewDepartmentInput) => {
+export type CreateNewDepartmentInput = z.infer<typeof createNewDepartmentSchema>;
+export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+
+// ============ Department Services ============
+
+export class DepartmentService {
+  constructor(private readonly db: typeof prisma = prisma) {}
+
+  async createNewDepartment(data: CreateNewDepartmentInput) {
     const parsed = createNewDepartmentSchema.safeParse(data);
 
     if (!parsed.success) {
@@ -25,7 +34,7 @@ export const createNewDepartment = async (data: CreateNewDepartmentInput) => {
 
     const { name, authorId } = parsed.data;
 
-    const existingDepartment = await prisma.department.findUnique({
+    const existingDepartment = await this.db.department.findUnique({
         where: { name },
     });
 
@@ -33,7 +42,7 @@ export const createNewDepartment = async (data: CreateNewDepartmentInput) => {
         throw new ApiError(400, "Department with this name already exists");
     }
 
-    const newDepartment = await prisma.department.create({
+    const newDepartment = await this.db.department.create({
         data: {
             name: name.toLowerCase().trim(),
             authorId,
@@ -41,19 +50,19 @@ export const createNewDepartment = async (data: CreateNewDepartmentInput) => {
     });
 
     return newDepartment;
-};
+  }
 
-export const getAllDepartments = async () => {
-    const departments = await prisma.department.findMany({
+  async getAllDepartments() {
+    const departments = await this.db.department.findMany({
         include: {
             members: true
         },
     }); 
     return departments;
-}
+  }
 
-export const getDepartmentById = async (departmentId: string) => {
-    const department = await prisma.department.findUnique({
+  async getDepartmentById(departmentId: string) {
+    const department = await this.db.department.findUnique({
         where: { id: departmentId },
         include: {
             members: true
@@ -65,9 +74,9 @@ export const getDepartmentById = async (departmentId: string) => {
     }
 
     return department;
-};
+  }
 
-export const updateDepartment = async (data: UpdateDepartmentInput) => {
+  async updateDepartment(data: UpdateDepartmentInput) {
     const parsed = updateDepartmentSchema.safeParse(data);
 
     if (!parsed.success) {
@@ -77,7 +86,7 @@ export const updateDepartment = async (data: UpdateDepartmentInput) => {
 
     const { name, departmentId } = parsed.data;
 
-    const existingDepartment = await prisma.department.findUnique({
+    const existingDepartment = await this.db.department.findUnique({
         where: { id: departmentId },
     });
 
@@ -85,7 +94,7 @@ export const updateDepartment = async (data: UpdateDepartmentInput) => {
         throw new ApiError(404, "Department not found");
     }
 
-    const updatedDepartment = await prisma.department.update({
+    const updatedDepartment = await this.db.department.update({
         where: { id: departmentId },
         data: {
             name: name.toLowerCase().trim(),
@@ -93,10 +102,10 @@ export const updateDepartment = async (data: UpdateDepartmentInput) => {
     });
 
     return updatedDepartment;
-};
+  }
 
-export const deleteDepartment = async (departmentId: string) => {
-    const existingDepartment = await prisma.department.findUnique({
+  async deleteDepartment(departmentId: string) {
+    const existingDepartment = await this.db.department.findUnique({
         where: { id: departmentId },
     });
 
@@ -104,7 +113,18 @@ export const deleteDepartment = async (departmentId: string) => {
         throw new ApiError(404, "Department not found");
     }
 
-    const deletedDepartment = await prisma.department.delete({
+    const deletedDepartment = await this.db.department.delete({
         where: { id: departmentId },
     });
-};
+
+    return deletedDepartment;
+  }
+}
+
+export const departmentService = new DepartmentService();
+
+export const createNewDepartment = departmentService.createNewDepartment.bind(departmentService);
+export const getAllDepartments = departmentService.getAllDepartments.bind(departmentService);
+export const getDepartmentById = departmentService.getDepartmentById.bind(departmentService);
+export const updateDepartment = departmentService.updateDepartment.bind(departmentService);
+export const deleteDepartment = departmentService.deleteDepartment.bind(departmentService);

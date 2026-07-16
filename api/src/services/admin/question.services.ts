@@ -3,6 +3,8 @@ import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../../generated/prisma/enums";
 
+// ============ Validation Schemas ============
+
 export const CreateQuestionSchema = z.object({
     question: z.string().min(1, "Question title is required"),
     choices: z.array(z.string()).min(1, "Question choices is required"),
@@ -28,10 +30,27 @@ export const UpdateQuestionSchema = z.object({
     status: z.nativeEnum(QuestionStatus),
 });
 
-type CreateNewQuestionInput = z.infer<typeof CreateQuestionSchema>;
-type UpdateQuestionInput = z.infer<typeof UpdateQuestionSchema>;
+// ============ Type Definitions ============
 
-export const createNewQuestion = async (data: CreateNewQuestionInput) => {
+export type CreateNewQuestionInput = z.infer<typeof CreateQuestionSchema>;
+export type UpdateQuestionInput = z.infer<typeof UpdateQuestionSchema>;
+
+export interface ImportedQuestion {
+  question: string;
+  choices: string[];
+  correctAnswer: string;
+  topic: string;
+  difficulty: QuestionDifficulty;
+  type: QuestionType;
+  feedback?: string;
+}
+
+// ============ Question Services ============
+
+export class QuestionService {
+  constructor(private readonly db: typeof prisma = prisma) {}
+
+  async createNewQuestion(data: CreateNewQuestionInput) {
     const parsed = CreateQuestionSchema.safeParse(data);
 
     if (!parsed.success) {
@@ -41,7 +60,7 @@ export const createNewQuestion = async (data: CreateNewQuestionInput) => {
 
     const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
 
-    const newQuestion = await prisma.question.create({
+    const newQuestion = await this.db.question.create({
         data: {
             question: question.toLowerCase().trim(),
             choices,
@@ -56,19 +75,19 @@ export const createNewQuestion = async (data: CreateNewQuestionInput) => {
     });
 
     return newQuestion;
-};
+  }
 
-export const updateQuestion = async (questionId: string, data: UpdateQuestionInput) => {
+  async updateQuestion(questionId: string, data: UpdateQuestionInput) {
     const parsed = UpdateQuestionSchema.safeParse(data);
 
     if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
-        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]   );
+        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
     const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
 
-    const updatedQuestion = await prisma.question.update({
+    const updatedQuestion = await this.db.question.update({
         where: {
             id: questionId,
         },
@@ -86,13 +105,13 @@ export const updateQuestion = async (questionId: string, data: UpdateQuestionInp
     });
 
     return updatedQuestion;
-};
+  }
 
-export const getAllQuestions = async (cursor?: string, limit?: number, authorId?: string) => {
+  async getAllQuestions(cursor?: string, limit?: number, authorId?: string) {
     const whereClause = authorId ? { authorId } : undefined;
 
     if (cursor === undefined && limit === undefined) {
-        const questions = await prisma.question.findMany({
+        const questions = await this.db.question.findMany({
             where: whereClause,
             include: {
                 category: true,
@@ -110,7 +129,7 @@ export const getAllQuestions = async (cursor?: string, limit?: number, authorId?
     }
 
     const limitNum = limit || 20;
-    const questions = await prisma.question.findMany({
+    const questions = await this.db.question.findMany({
         where: whereClause,
         take: limitNum + 1,
         skip: cursor ? 1 : undefined,
@@ -142,9 +161,9 @@ export const getAllQuestions = async (cursor?: string, limit?: number, authorId?
         nextCursor,
         hasNextPage,
     };
-};
+  }
 
-export const getFilteredQuestions = async (
+  async getFilteredQuestions(
     search?: string,
     difficulty?: QuestionDifficulty,
     category?: string,
@@ -153,7 +172,7 @@ export const getFilteredQuestions = async (
     cursor?: string,
     limit?: number,
     authorId?: string
-) => {
+  ) {
     const whereClause = {
         question: search ? {
             contains: search,
@@ -167,7 +186,7 @@ export const getFilteredQuestions = async (
     };
 
     if (cursor === undefined && limit === undefined) {
-        const questions = await prisma.question.findMany({
+        const questions = await this.db.question.findMany({
             where: whereClause,
             include: {
                 category: true,
@@ -186,7 +205,7 @@ export const getFilteredQuestions = async (
     }
 
     const limitNum = limit || 20;
-    const questions = await prisma.question.findMany({
+    const questions = await this.db.question.findMany({
         where: whereClause,
         take: limitNum + 1,
         skip: cursor ? 1 : undefined,
@@ -218,10 +237,10 @@ export const getFilteredQuestions = async (
         nextCursor,
         hasNextPage,
     };
-};
+  }
 
-export const getQuestionById = async (questionId: string) => {
-    const question = await prisma.question.findUnique({
+  async getQuestionById(questionId: string) {
+    const question = await this.db.question.findUnique({
         where: {
             id: questionId,
         },
@@ -235,11 +254,11 @@ export const getQuestionById = async (questionId: string) => {
     }
 
     return question;
-};
+  }
 
-export const deleteQuestion = async (questionId: string) => {
-    try{
-        const existingQuestion = await prisma.question.findUnique({
+  async deleteQuestion(questionId: string) {
+    try {
+        const existingQuestion = await this.db.question.findUnique({
                 where: {
                     id: questionId.trim(),
                 },
@@ -249,21 +268,21 @@ export const deleteQuestion = async (questionId: string) => {
                 throw new ApiError(404, "Question not found");
             }
 
-            const deletedQuestion = await prisma.question.delete({
+            const deletedQuestion = await this.db.question.delete({
                 where: {
                     id: questionId.trim(),
                 },
-            })
+            });
 
             return deletedQuestion;
-    }catch(error) {
+    } catch(error) {
         console.error("Error deleting question:", error);
         throw error;
     }
-};
+  }
 
-export const getQuestionsByCategory = async (categoryId: string) => {
-    const questions = await prisma.question.findMany({
+  async getQuestionsByCategory(categoryId: string) {
+    const questions = await this.db.question.findMany({
         where: {
             categoryId,
         },
@@ -277,37 +296,37 @@ export const getQuestionsByCategory = async (categoryId: string) => {
     }
 
     return questions;
-};
+  }
 
-export const getQuestionByDifficulty = async (difficulty: QuestionDifficulty) => {
-    const questions = await prisma.question.findMany({
+  async getQuestionByDifficulty(difficulty: QuestionDifficulty) {
+    const questions = await this.db.question.findMany({
         where: {
             difficulty,
         },
     });
     return questions;
-};
+  }
 
-export const getQuestionByType = async (type: QuestionType) => {
-    const questions = await prisma.question.findMany({
+  async getQuestionByType(type: QuestionType) {
+    const questions = await this.db.question.findMany({
         where: {
             type,
         },
     });
     return questions;
-};
+  }
 
-export const getQuestionByStatus = async (status: QuestionStatus) => {
-    const questions = await prisma.question.findMany({
+  async getQuestionByStatus(status: QuestionStatus) {
+    const questions = await this.db.question.findMany({
         where: {
             status,
         },
     });
     return questions;
-};
+  }
 
-export const getQuestionBySearch = async (search: string) => {
-    const questions = await prisma.question.findMany({
+  async getQuestionBySearch(search: string) {
+    const questions = await this.db.question.findMany({
         where: {
             question: {
                 contains: search,
@@ -315,50 +334,56 @@ export const getQuestionBySearch = async (search: string) => {
         }, 
     });
     return questions;
-};
-
-export interface ImportedQuestion {
-  question: string;
-  choices: string[];
-  correctAnswer: string;
-  topic: string;
-  difficulty: QuestionDifficulty;
-  type: QuestionType;
-  feedback?: string;
-}
-
-export const importQuestions = async (
-  questions: ImportedQuestion[],
-  categoryId: string,
-  authorId: string,
-  status: QuestionStatus = QuestionStatus.DRAFT
-) => {
-  if (!Array.isArray(questions) || questions.length === 0) {
-    throw new ApiError(400, "No questions provided for import");
   }
 
-  const queries = questions.map((q) => {
-    let choices = q.choices || [];
-    if (q.type === QuestionType.TRUE_FALSE && choices.length === 0) {
-      choices = ["True", "False"];
+  async importQuestions(
+    questions: ImportedQuestion[],
+    categoryId: string,
+    authorId: string,
+    status: QuestionStatus = QuestionStatus.DRAFT
+  ) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new ApiError(400, "No questions provided for import");
     }
 
-    return prisma.question.create({
-      data: {
-        question: q.question.toLowerCase().trim(),
-        choices: choices.map(c => c.trim()),
-        correctAnswer: q.correctAnswer.toLowerCase().trim(),
-        categoryId: categoryId.trim(),
-        authorId,
-        topic: q.topic.trim(),
-        difficulty: q.difficulty,
-        type: q.type,
-        status,
-        feedback: q.feedback?.trim() || "",
-      },
-    });
-  });
+    const queries = questions.map((q) => {
+      let choices = q.choices || [];
+      if (q.type === QuestionType.TRUE_FALSE && choices.length === 0) {
+        choices = ["True", "False"];
+      }
 
-  const createdQuestions = await prisma.$transaction(queries);
-  return createdQuestions;
-};
+      return this.db.question.create({
+        data: {
+          question: q.question.toLowerCase().trim(),
+          choices: choices.map(c => c.trim()),
+          correctAnswer: q.correctAnswer.toLowerCase().trim(),
+          categoryId: categoryId.trim(),
+          authorId,
+          topic: q.topic.trim(),
+          difficulty: q.difficulty,
+          type: q.type,
+          status,
+          feedback: q.feedback?.trim() || "",
+        },
+      });
+    });
+
+    const createdQuestions = await this.db.$transaction(queries);
+    return createdQuestions;
+  }
+}
+
+export const questionService = new QuestionService();
+
+export const createNewQuestion = questionService.createNewQuestion.bind(questionService);
+export const updateQuestion = questionService.updateQuestion.bind(questionService);
+export const getAllQuestions = questionService.getAllQuestions.bind(questionService);
+export const getFilteredQuestions = questionService.getFilteredQuestions.bind(questionService);
+export const getQuestionById = questionService.getQuestionById.bind(questionService);
+export const deleteQuestion = questionService.deleteQuestion.bind(questionService);
+export const getQuestionsByCategory = questionService.getQuestionsByCategory.bind(questionService);
+export const getQuestionByDifficulty = questionService.getQuestionByDifficulty.bind(questionService);
+export const getQuestionByType = questionService.getQuestionByType.bind(questionService);
+export const getQuestionByStatus = questionService.getQuestionByStatus.bind(questionService);
+export const getQuestionBySearch = questionService.getQuestionBySearch.bind(questionService);
+export const importQuestions = questionService.importQuestions.bind(questionService);
