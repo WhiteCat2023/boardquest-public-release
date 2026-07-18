@@ -89,6 +89,7 @@ model Question {
   choices       String[]
   correctAnswer String
   status        QuestionStatus
+  isPublished   Boolean  @default(false)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

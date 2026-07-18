@@ -1,4 +1,4 @@
-import type { Question } from '@/types/question';
+import { UserRole, type Question } from '@/types/question';
 import { Eye, Trash2, Edit, Tag } from 'lucide-react';
 import { getDifficultyColor, getInitials, getStatusColor } from '@/utils/style';
 import { useNavigate } from 'react-router-dom';
@@ -51,8 +51,8 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
               : (item as any)?.authorId;
 
             const isAuthor = authorId === currentUserId;
-            const canEdit = currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN' || currentUserRole === 'TEAMLEAD' || (currentUserRole === 'TEACHER' && isAuthor);
-            const canDelete = currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'TEACHER' && isAuthor);
+            const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item.isPublished;
+            const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item.isPublished;
 
             // Handle text or question property variation
             const questionContent = (item as any)?.question || item?.text || '';
@@ -119,9 +119,16 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
 
                 {/* Status Column */}
                 <TableCell className="py-4">
-                  <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(item?.status)}`}>
-                    {item?.status}
-                  </span>
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(item?.status)}`}>
+                      {item?.status}
+                    </span>
+                    {item.isPublished && (
+                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-700">
+                        Published
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
 
                 {/* Actions Column */}

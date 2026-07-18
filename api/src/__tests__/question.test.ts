@@ -303,6 +303,35 @@ describe('Question Routes', () => {
     });
   });
 
+  // ── PUT /publish/:questionId ──────────────────────────────────────────────
+
+  describe('PUT /api/questions/publish/:questionId', () => {
+    it('should toggle a question publish state and return 200', async () => {
+      const mockPublishedQuestion = {
+        ...mockQuestion,
+        isPublished: true,
+      };
+      (questionService.togglePublishState as jest.Mock).mockResolvedValue(mockPublishedQuestion);
+
+      const response = await request(app)
+        .put('/api/questions/publish/question-1')
+        .send({ isPublished: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.question.isPublished).toBe(true);
+      expect(response.body.message).toContain('published successfully');
+      expect(questionService.togglePublishState).toHaveBeenCalledWith('question-1', true);
+    });
+
+    it('should return 400 if isPublished is not a boolean', async () => {
+      const response = await request(app)
+        .put('/api/questions/publish/question-1')
+        .send({ isPublished: "invalid-type" });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   // ── Category routes ────────────────────────────────────────────────────────
 
   describe('POST /api/questions/category/create', () => {

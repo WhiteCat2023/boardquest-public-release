@@ -13,6 +13,7 @@ import {
     updateQuestion,
     bulkUploadQuestions,
     extractQuestions,
+    publishQuestion,
 } from "../../controller/admin/question.controller";
 import {
   createCategory,
@@ -29,6 +30,7 @@ router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
 router.post("/extract", authenticateToken, extractQuestions);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
+router.put("/publish/:questionId", authenticateToken, publishQuestion);
 router.put("/:questionId", authenticateToken, updateQuestion);
 router.delete("/:questionId", authenticateToken, deleteQuestion);
 

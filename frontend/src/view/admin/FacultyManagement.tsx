@@ -18,7 +18,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type RoleType = "SUPERADMIN" | "ADMIN" | "TEAMLEAD" | "TEACHER";
+import { UserRole } from "@/types/question";
+
+type RoleType = UserRole;
 
 interface FacultyMember {
   id: string;
@@ -91,12 +93,12 @@ export default function FacultyManagement() {
 
   // Set default role based on current user permissions
   useEffect(() => {
-    if (currentUserRole === "SUPERADMIN") {
-      setFormData(prev => ({ ...prev, role: "ADMIN" }));
-    } else if (currentUserRole === "ADMIN") {
-      setFormData(prev => ({ ...prev, role: "TEAMLEAD" }));
+    if (currentUserRole === UserRole.SUPERADMIN) {
+      setFormData(prev => ({ ...prev, role: UserRole.ADMIN }));
+    } else if (currentUserRole === UserRole.ADMIN) {
+      setFormData(prev => ({ ...prev, role: UserRole.TEAMLEAD }));
     } else {
-      setFormData(prev => ({ ...prev, role: "TEACHER" }));
+      setFormData(prev => ({ ...prev, role: UserRole.TEACHER }));
     }
   }, [currentUserRole, isOpen]);
 
@@ -166,46 +168,46 @@ export default function FacultyManagement() {
 
   // Roles filtering logic based on accessibility guidelines
   const getAllowedRolesToCreate = (): { value: RoleType; label: string }[] => {
-    if (currentUserRole === "SUPERADMIN") {
+    if (currentUserRole === UserRole.SUPERADMIN) {
       return [
-        { value: "ADMIN", label: "Admin" },
-        { value: "TEAMLEAD", label: "Co-Admin (Team Lead)" },
-        { value: "TEACHER", label: "Teacher" },
+        { value: UserRole.ADMIN, label: "Admin" },
+        { value: UserRole.TEAMLEAD, label: "Co-Admin (Team Lead)" },
+        { value: UserRole.TEACHER, label: "Teacher" },
       ];
     }
-    if (currentUserRole === "ADMIN") {
+    if (currentUserRole === UserRole.ADMIN) {
       return [
-        { value: "TEAMLEAD", label: "Co-Admin (Team Lead)" },
-        { value: "TEACHER", label: "Teacher" },
+        { value: UserRole.TEAMLEAD, label: "Co-Admin (Team Lead)" },
+        { value: UserRole.TEACHER, label: "Teacher" },
       ];
     }
-    if (currentUserRole === "TEAMLEAD") {
+    if (currentUserRole === UserRole.TEAMLEAD) {
       return [
-        { value: "TEACHER", label: "Teacher" },
+        { value: UserRole.TEACHER, label: "Teacher" },
       ];
     }
     return [];
   };
 
   const isAllowedToManageRole = (creatorRole: RoleType, targetRole: RoleType): boolean => {
-    if (creatorRole === "SUPERADMIN") return true;
-    if (creatorRole === "ADMIN") {
+    if (creatorRole === UserRole.SUPERADMIN) return true;
+    if (creatorRole === UserRole.ADMIN) {
       // ADMIN can manage CO-ADMIN(TEAMLEAD) and TEACHER
-      return targetRole === "TEAMLEAD" || targetRole === "TEACHER";
+      return targetRole === UserRole.TEAMLEAD || targetRole === UserRole.TEACHER;
     }
-    if (creatorRole === "TEAMLEAD") {
+    if (creatorRole === UserRole.TEAMLEAD) {
       // CO-ADMIN(TEAMLEAD) can manage TEACHERS
-      return targetRole === "TEACHER";
+      return targetRole === UserRole.TEACHER;
     }
     return false;
   };
 
   const getRoleBadgeColor = (role: RoleType) => {
     switch (role) {
-      case "SUPERADMIN": return "bg-red-50 text-red-700 border-red-200";
-      case "ADMIN": return "bg-orange-50 text-orange-700 border-orange-200";
-      case "TEAMLEAD": return "bg-indigo-50 text-indigo-700 border-indigo-200";
-      case "TEACHER": return "bg-green-50 text-green-700 border-green-200";
+      case UserRole.SUPERADMIN: return "bg-red-50 text-red-700 border-red-200";
+      case UserRole.ADMIN: return "bg-orange-50 text-orange-700 border-orange-200";
+      case UserRole.TEAMLEAD: return "bg-indigo-50 text-indigo-700 border-indigo-200";
+      case UserRole.TEACHER: return "bg-green-50 text-green-700 border-green-200";
       default: return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };

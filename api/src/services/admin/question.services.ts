@@ -15,6 +15,7 @@ export const CreateQuestionSchema = z.object({
     difficulty: z.nativeEnum(QuestionDifficulty),
     type: z.nativeEnum(QuestionType),
     status: z.nativeEnum(QuestionStatus).optional().default(QuestionStatus.DRAFT),
+    isPublished: z.boolean().optional().default(false),
 });
 
 export const UpdateQuestionSchema = z.object({
@@ -28,6 +29,7 @@ export const UpdateQuestionSchema = z.object({
     difficulty: z.nativeEnum(QuestionDifficulty),
     type: z.nativeEnum(QuestionType),
     status: z.nativeEnum(QuestionStatus),
+    isPublished: z.boolean().optional(),
 });
 
 // ============ Type Definitions ============
@@ -58,7 +60,7 @@ export class QuestionService {
         throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
+    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, isPublished } = parsed.data;
 
     const newQuestion = await this.db.question.create({
         data: {
@@ -71,6 +73,7 @@ export class QuestionService {
             difficulty,
             type,
             status,
+            isPublished,
         },
     });
 
@@ -85,7 +88,12 @@ export class QuestionService {
         throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status } = parsed.data;
+    const existing = await this.getQuestionById(questionId);
+    if (existing.isPublished) {
+        throw new ApiError(400, "Published questions cannot be modified.");
+    }
+
+    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, isPublished } = parsed.data;
 
     const updatedQuestion = await this.db.question.update({
         where: {
@@ -101,6 +109,7 @@ export class QuestionService {
             difficulty,
             type,
             status,
+            isPublished,
         },
     });
 
@@ -268,6 +277,10 @@ export class QuestionService {
                 throw new ApiError(404, "Question not found");
             }
 
+            if (existingQuestion.isPublished) {
+                throw new ApiError(400, "Published questions cannot be deleted.");
+            }
+
             const deletedQuestion = await this.db.question.delete({
                 where: {
                     id: questionId.trim(),
@@ -371,6 +384,21 @@ export class QuestionService {
     const createdQuestions = await this.db.$transaction(queries);
     return createdQuestions;
   }
+
+  async togglePublishState(questionId: string, isPublished: boolean) {
+    const question = await this.getQuestionById(questionId);
+
+    // Enforce business logic: only APPROVED questions can be published
+    if (isPublished && question.status !== QuestionStatus.APPROVED) {
+      throw new ApiError(400, "Only approved questions can be published.");
+    }
+
+    const updated = await this.db.question.update({
+      where: { id: questionId },
+      data: { isPublished },
+    });
+    return updated;
+  }
 }
 
 export const questionService = new QuestionService();
@@ -387,3 +415,4 @@ export const getQuestionByType = questionService.getQuestionByType.bind(question
 export const getQuestionByStatus = questionService.getQuestionByStatus.bind(questionService);
 export const getQuestionBySearch = questionService.getQuestionBySearch.bind(questionService);
 export const importQuestions = questionService.importQuestions.bind(questionService);
+export const togglePublishState = questionService.togglePublishState.bind(questionService);

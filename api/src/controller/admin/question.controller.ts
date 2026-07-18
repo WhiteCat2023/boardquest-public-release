@@ -184,3 +184,25 @@ export const extractQuestions = asyncHandler(async (req: AuthenticatedRequest, r
 
     return new ApiResponse(200, { questions }, `${questions.length} questions extracted successfully`).send(res);
 });
+
+export const publishQuestion = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { questionId } = req.params;
+    const { isPublished } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    // Only Admin, Superadmin, and Teamleads can publish/unpublish questions
+    if (user.role === "TEACHER") {
+        throw new ApiError(403, "Teachers are not authorized to publish questions");
+    }
+
+    if (typeof isPublished !== "boolean") {
+        throw new ApiError(400, "isPublished must be a boolean");
+    }
+
+    const updated = await QuesitonServices.togglePublishState(questionId as string, isPublished);
+    return new ApiResponse(200, { question: updated }, `Question ${isPublished ? "published" : "unpublished"} successfully`).send(res);
+});

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getDifficultyColor } from "@/utils/style";
+import { UserRole } from "@/types/question";
 
 interface Question {
   id: string;
@@ -44,7 +45,7 @@ export default function ReviewCenter() {
   
   // Current user info
   const userRole = (auth as any)?.data?.user?.role;
-  const isApprover = userRole === "ADMIN" || userRole === "SUPERADMIN";
+  const isApprover = userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN;
 
   // Selected question for reviewing
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);

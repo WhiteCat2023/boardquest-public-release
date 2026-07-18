@@ -1,4 +1,4 @@
-import type { Question } from '../../../types/question';
+import { QuestionStatus, UserRole, type Question } from '../../../types/question';
 import { Tag, Eye, Trash2, Edit } from 'lucide-react';
 import { getDifficultyColor, getInitials, getStatusColor } from '@/utils/style';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -30,8 +30,8 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
   // - Admins, Superadmins, and Teamleads can edit any question.
   // - Teachers can only edit/delete their own questions.
   const isAuthor = authorId === currentUserId;
-  const canEdit = currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN' || currentUserRole === 'TEAMLEAD' || (currentUserRole === 'TEACHER' && isAuthor);
-  const canDelete = currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'TEACHER' && isAuthor);
+  const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item?.isPublished;
+  const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item?.isPublished;
 
   return (
     <Card className="w-full border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] font-sans bg-white overflow-hidden flex flex-col">
@@ -46,12 +46,19 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
               {item?.category?.name || 'Subject'}
             </span>
           </div>
-          <div
-            className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(
-              item?.status
-            )}`}
-          >
-            {item?.status}
+          <div className="flex flex-col gap-1 items-end">
+            <div
+              className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(
+                item?.status
+              )}`}
+            >
+              {item?.status}
+            </div>
+            {item?.isPublished && (
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-700">
+                Published
+              </span>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -64,7 +71,7 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
           </h3>
 
           {/* Revision Feedback Banner */}
-          {item?.status === 'NEEDS_REVISION' && item?.feedback && (
+          {item?.status === QuestionStatus.NEEDS_REVISION && item?.feedback && (
             <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-100 text-xs font-medium text-[#A70202] animate-in fade-in duration-200">
               <span className="font-bold uppercase text-[9px] tracking-wider block mb-0.5">Revision Comments:</span>
               {item.feedback}

@@ -11,11 +11,14 @@ import {
   Check,
   GraduationCap,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Globe,
+  EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
+import { QuestionStatus, UserRole } from "@/types/question";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 
 export default function ViewQuestion() {
@@ -79,6 +82,26 @@ export default function ViewQuestion() {
     });
   };
 
+  // Publish/Unpublish Mutation
+  const publishMutation = useMutation({
+    mutationFn: async (isPublished: boolean) => {
+      await axiosPrivate.put(`/questions/publish/${questionId}`, { isPublished });
+    },
+    onSuccess: (data: any, isPublished) => {
+      toast.success(`Question successfully ${isPublished ? "published" : "unpublished"}!`);
+      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to update publish state.");
+    }
+  });
+
+  const handleTogglePublish = () => {
+    const nextState = !question.isPublished;
+    publishMutation.mutate(nextState);
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
@@ -115,8 +138,9 @@ export default function ViewQuestion() {
     : question?.authorId;
 
   const isAuthor = authorId === currentUserId;
-  const canEdit = currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN" || currentUserRole === "TEAMLEAD" || (currentUserRole === "TEACHER" && isAuthor);
-  const canDelete = currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN" || (currentUserRole === "TEACHER" && isAuthor);
+  const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !question?.isPublished;
+  const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !question?.isPublished;
+  const canPublish = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-300">
@@ -143,6 +167,11 @@ export default function ViewQuestion() {
           </div>
 
           <div className="flex items-center gap-3">
+            {question.isPublished && (
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
+                Published
+              </span>
+            )}
             <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest ${getStatusColor(question.status)}`}>
               {question.status}
             </span>
@@ -152,6 +181,16 @@ export default function ViewQuestion() {
         {/* Question Details Section */}
         <div className="p-6 md:p-8 flex flex-col gap-8">
           
+          {/* Question is published warning banner */}
+          {question.isPublished && (
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-sm font-medium text-emerald-800 flex items-center gap-2">
+              <Globe size={16} className="shrink-0 text-emerald-600" />
+              <span>
+                This question is <strong>published</strong>. To edit or delete this question, you must unpublish it first.
+              </span>
+            </div>
+          )}
+
           {/* Question text */}
           <div className="flex flex-col gap-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Question Prompt</span>
@@ -161,7 +200,7 @@ export default function ViewQuestion() {
           </div>
 
           {/* Revision Comments (if status is NEEDS_REVISION) */}
-          {question.status === "NEEDS_REVISION" && question.feedback && (
+          {question.status === QuestionStatus.NEEDS_REVISION && question.feedback && (
             <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-sm font-medium text-rose-700">
               <span className="font-extrabold uppercase text-[10px] tracking-wider block mb-1">Revision Comments / Notes:</span>
               {question.feedback}
@@ -316,6 +355,38 @@ export default function ViewQuestion() {
             >
               <Edit size={16} />
               Edit Question
+            </Button>
+          )}
+
+          {canPublish && (
+            <Button
+              type="button"
+              onClick={handleTogglePublish}
+              disabled={publishMutation.isPending || (question.status !== QuestionStatus.APPROVED && !question.isPublished)}
+              className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
+                question.isPublished
+                  ? "border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-800"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              }`}
+              title={
+                question.status !== QuestionStatus.APPROVED && !question.isPublished
+                  ? "Question must be approved before publishing."
+                  : ""
+              }
+            >
+              {publishMutation.isPending ? (
+                <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+              ) : question.isPublished ? (
+                <>
+                  <EyeOff size={16} />
+                  Unpublish Question
+                </>
+              ) : (
+                <>
+                  <Globe size={16} />
+                  Publish Question
+                </>
+              )}
             </Button>
           )}
         </div>
