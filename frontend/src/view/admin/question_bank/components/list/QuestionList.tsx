@@ -1,8 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertCircle, FileQuestion, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { useQuestionBank, type QuestionFilters } from "@/hooks/useQuestionBank";
 import AdminQuestionCard from "@/components/custom/card/AdminQuestionCardView";
 import QuestionTable from "./QuestionTable";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import { toast } from "sonner";
+import { showUndoToast } from "@/utils/toast";
 
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
@@ -16,6 +21,78 @@ function QuestionList({ filters }: QuestionListProps) {
     const [cursorsStack, setCursorsStack] = useState<(string | undefined)[]>([undefined]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+
+    const navigate = useNavigate();
+    const axiosPrivate = useAxiosPrivate();
+    const queryClient = useQueryClient();
+    const pendingDeletes = useRef<{ [id: string]: NodeJS.Timeout }>({});
+
+    // Clean up timeouts on unmount and execute any pending deletes
+    useEffect(() => {
+        return () => {
+            Object.keys(pendingDeletes.current).forEach((id) => {
+                const tId = pendingDeletes.current[id];
+                clearTimeout(tId);
+                axiosPrivate.delete(`/questions/${id}`).catch((err) => {
+                    console.error("Failed to execute pending delete on unmount:", err);
+                });
+            });
+        };
+    }, [axiosPrivate]);
+
+    const handleDelete = (id: string) => {
+        const queryKey = ["questions", { ...filters, cursor: currentCursor, limit: 9 }];
+        
+        // Save the previous state for potential rollback
+        const previousData = queryClient.getQueryData<any>(queryKey);
+        if (!previousData) return;
+
+        const questionObj = previousData.questions.find((q: any) => q.id === id);
+        const questionText = questionObj?.question || "Selected question";
+
+        // Optimistically update local cache
+        const updatedQuestions = previousData.questions.filter((q: any) => q.id !== id);
+        queryClient.setQueryData(queryKey, {
+            ...previousData,
+            questions: updatedQuestions,
+        });
+
+        // Set a timeout of 4 seconds to execute the delete API request
+        const timeoutId = setTimeout(async () => {
+            delete pendingDeletes.current[id];
+            try {
+                await axiosPrivate.delete(`/questions/${id}`);
+                queryClient.invalidateQueries({ queryKey: ["questions"] });
+            } catch (err: any) {
+                toast.error(err.response?.data?.message || "Failed to delete question permanently.");
+                // Rollback on error
+                queryClient.setQueryData(queryKey, previousData);
+            }
+        }, 4000);
+
+        pendingDeletes.current[id] = timeoutId;
+
+        // Trigger Sonner toast with the reusable showUndoToast helper
+        showUndoToast({
+            title: "Question Deleted",
+            message: questionText,
+            onUndo: () => {
+                const tId = pendingDeletes.current[id];
+                if (tId) {
+                    clearTimeout(tId);
+                    delete pendingDeletes.current[id];
+                }
+                // Restore previous cache data
+                queryClient.setQueryData(queryKey, previousData);
+                toast.success("Delete action undone.");
+            },
+            duration: 4000,
+        });
+    };
+
+    const handleView = (id: string) => {
+        navigate(`/question-bank/view/${id}`);
+    };
 
     // Reset pagination when search filters change
     useEffect(() => {
@@ -154,16 +231,16 @@ function QuestionList({ filters }: QuestionListProps) {
                     <AdminQuestionCard
                       key={question.id}
                       item={question}
-                      onView={(id) => console.log("View", id)}
-                      onDelete={(id) => console.log("Delete", id)}
+                      onView={handleView}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </div>
               ) : (
                 <QuestionTable
                   questions={questions}
-                  onView={(id) => console.log("View", id)}
-                  onDelete={(id) => console.log("Delete", id)}
+                  onView={handleView}
+                  onDelete={handleDelete}
                 />
               ))}
 

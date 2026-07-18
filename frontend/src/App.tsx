@@ -16,6 +16,7 @@ import Missing from "./view/admin/Missing";
 import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
 import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
+import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
 import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -48,6 +49,7 @@ function App() {
                 <Route path="question-bank" element={<QuestionBank />} />
                 <Route path="question-bank/create" element={<AddQuestion />} />
                 <Route path="question-bank/edit/:questionId" element={<AddQuestion />} />
+                <Route path="question-bank/view/:questionId" element={<ViewQuestion />} />
                 <Route path="question-bank/import" element={<AddedQuestionUsingCSV />} />
               </Route>
 
