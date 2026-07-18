@@ -172,7 +172,23 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
   const canManageBulk = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full flex flex-col gap-0">
+      {/* Bulk Actions Top Toolbar */}
+      {selectedIds.length > 0 && (
+        <BulkActionsToolbar
+          selectedCount={selectedIds.length}
+          canManageBulk={canManageBulk}
+          onPublish={() => handleBulkPublish(true)}
+          onUnpublish={() => handleBulkPublish(false)}
+          onFeedback={handleBulkFeedbackOpen}
+          onDelete={handleBulkDelete}
+          onClear={() => setRowSelection({})}
+          isPublishPending={bulkPublishMutation.isPending}
+          isFeedbackPending={bulkFeedbackMutation.isPending}
+          isDeletePending={bulkDeleteMutation.isPending}
+        />
+      )}
+
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden font-sans">
         <Table>
           <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
@@ -214,23 +230,6 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
           </TableBody>
         </Table>
       </div>
-
-      {/* Bulk Actions Floating Toolbar */}
-      {selectedIds.length > 0 && (
-        <BulkActionsToolbar
-          selectedCount={selectedIds.length}
-          canManageBulk={canManageBulk}
-          onPublish={() => handleBulkPublish(true)}
-          onUnpublish={() => handleBulkPublish(false)}
-          onFeedback={handleBulkFeedbackOpen}
-          onDelete={handleBulkDelete}
-          onClear={() => setRowSelection({})}
-          isPublishPending={bulkPublishMutation.isPending}
-          isFeedbackPending={bulkFeedbackMutation.isPending}
-          isDeletePending={bulkDeleteMutation.isPending}
-        />
-      )}
-
       {/* Bulk Revision Feedback Dialog */}
       <BulkFeedbackDialog
         open={isFeedbackOpen}

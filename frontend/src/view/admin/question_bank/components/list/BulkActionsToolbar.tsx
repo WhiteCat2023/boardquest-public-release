@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Globe, EyeOff, MessageSquare, Trash2, X } from "lucide-react";
+import { Globe, EyeOff, MessageSquare, Trash2, X, CheckSquare } from "lucide-react";
 
 interface BulkActionsToolbarProps {
   selectedCount: number;
@@ -12,6 +11,38 @@ interface BulkActionsToolbarProps {
   isPublishPending: boolean;
   isFeedbackPending: boolean;
   isDeletePending: boolean;
+}
+
+interface ToolbarActionProps {
+  onClick: () => void;
+  disabled?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  variant: "emerald" | "amber" | "neutral" | "rose";
+}
+
+const variantStyles: Record<ToolbarActionProps["variant"], string> = {
+  emerald:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 disabled:opacity-50",
+  amber:
+    "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 disabled:opacity-50",
+  neutral:
+    "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50",
+  rose:
+    "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50",
+};
+
+function ToolbarAction({ onClick, disabled, icon, label, variant }: ToolbarActionProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-all duration-150 cursor-pointer disabled:cursor-not-allowed ${variantStyles[variant]}`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
 }
 
 export default function BulkActionsToolbar({
@@ -27,62 +58,68 @@ export default function BulkActionsToolbar({
   isDeletePending,
 }: BulkActionsToolbarProps) {
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md border border-slate-800 text-white rounded-2xl px-6 py-4 flex items-center gap-6 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-2xl w-[90%] md:w-auto">
-      <div className="flex items-center gap-2 border-r border-slate-800 pr-5">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#A70202] text-[10px] font-bold">
+    <div className="flex items-center justify-between rounded-xl border border-[#A70202]/20 bg-[#A70202]/[0.04] px-4 py-2.5 mb-2 animate-in fade-in slide-in-from-top-1 duration-200">
+      {/* Left — selection count */}
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#A70202] text-[10px] font-bold text-white">
           {selectedCount}
         </span>
-        <span className="text-xs font-bold tracking-wide text-slate-300 whitespace-nowrap">
-          selected
+        <span className="text-xs font-semibold text-[#A70202]">
+          {selectedCount === 1 ? "1 question selected" : `${selectedCount} questions selected`}
         </span>
-      </div>
-
-      <div className="flex items-center gap-2.5">
-        {canManageBulk && (
-          <>
-            <Button
-              onClick={onPublish}
-              disabled={isPublishPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 h-auto rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-            >
-              <Globe size={13} />
-              Publish
-            </Button>
-            <Button
-              onClick={onUnpublish}
-              disabled={isPublishPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 h-auto rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-            >
-              <EyeOff size={13} />
-              Unpublish
-            </Button>
-            <Button
-              onClick={onFeedback}
-              disabled={isFeedbackPending}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold px-4 py-2 h-auto rounded-xl flex items-center gap-1.5 cursor-pointer border border-slate-700 transition-colors shadow-xs"
-            >
-              <MessageSquare size={13} />
-              Feedback
-            </Button>
-          </>
-        )}
-
-        <Button
-          onClick={onDelete}
-          disabled={isDeletePending}
-          className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2 h-auto rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-        >
-          <Trash2 size={13} />
-          Delete
-        </Button>
 
         <button
           onClick={onClear}
-          className="text-slate-400 hover:text-white transition-colors ml-2 cursor-pointer"
+          className="ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           title="Clear selection"
         >
-          <X size={16} />
+          <X size={11} />
+          Clear
         </button>
+      </div>
+
+      {/* Right — action buttons */}
+      <div className="flex items-center gap-2">
+        {canManageBulk && (
+          <>
+            <ToolbarAction
+              onClick={onPublish}
+              disabled={isPublishPending}
+              icon={<Globe size={12} />}
+              label="Publish"
+              variant="emerald"
+            />
+            <ToolbarAction
+              onClick={onUnpublish}
+              disabled={isPublishPending}
+              icon={<EyeOff size={12} />}
+              label="Unpublish"
+              variant="amber"
+            />
+
+            {/* Divider */}
+            <div className="h-4 w-px bg-slate-200" />
+
+            <ToolbarAction
+              onClick={onFeedback}
+              disabled={isFeedbackPending}
+              icon={<MessageSquare size={12} />}
+              label="Request Revision"
+              variant="neutral"
+            />
+          </>
+        )}
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-slate-200" />
+
+        <ToolbarAction
+          onClick={onDelete}
+          disabled={isDeletePending}
+          icon={<Trash2 size={12} />}
+          label="Delete"
+          variant="rose"
+        />
       </div>
     </div>
   );
