@@ -1,4 +1,4 @@
-import { Globe, EyeOff, MessageSquare, Trash2, X, CheckSquare } from "lucide-react";
+import { Globe, EyeOff, MessageSquare, Trash2, X} from "lucide-react";
 
 interface BulkActionsToolbarProps {
   selectedCount: number;
