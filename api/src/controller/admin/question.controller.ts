@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
+import { agenda } from "../../services/queue.service";
 
 export const createQuestion = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user;
@@ -142,14 +143,15 @@ export const bulkUploadQuestions = asyncHandler(async (req: AuthenticatedRequest
 
     const defaultStatus = user.role === "TEACHER" ? QuestionStatus.DRAFT : (status || QuestionStatus.PENDING_REVIEW);
 
-    const imported = await QuesitonServices.importQuestions(
+    // Dispatch the bulk upload task to Agenda background queue
+    await agenda.now("bulk-question-upload", {
         questions,
         categoryId,
-        user.id,
-        defaultStatus
-    );
+        authorId: user.id,
+        status: defaultStatus
+    });
 
-    return new ApiResponse(201, { count: imported.length, questions: imported }, `${imported.length} questions imported successfully`).send(res);
+    return new ApiResponse(202, { message: "Bulk question upload job has been queued in the background." }).send(res);
 });
 
 export const extractQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

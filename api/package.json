@@ -15,19 +15,23 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "@agendajs/mongo-backend": "^4.0.2",
     "@prisma/client": "^6.19.3",
+    "agenda": "^6.2.5",
     "argon2": "^0.44.0",
     "axios": "^1.17.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.2.0",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/agenda": "^3.0.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

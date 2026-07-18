@@ -10,6 +10,17 @@ import { ApiError } from '../utils/apiError';
 jest.mock('../services/admin/question.services');
 // Mock category services
 jest.mock('../services/admin/category.services');
+// Mock background queue service to avoid DB connection leaks during tests
+jest.mock('../services/queue.service', () => ({
+  agenda: {
+    now: jest.fn().mockResolvedValue({}),
+    define: jest.fn(),
+    start: jest.fn().mockResolvedValue({}),
+    stop: jest.fn().mockResolvedValue({}),
+  },
+  startQueue: jest.fn().mockResolvedValue({}),
+  stopQueue: jest.fn().mockResolvedValue({}),
+}));
 
 let app: Express;
 
