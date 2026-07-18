@@ -180,7 +180,8 @@ export class QuestionService {
     status?: QuestionStatus,
     cursor?: string,
     limit?: number,
-    authorId?: string
+    authorId?: string,
+    isPublished?: boolean
   ) {
     const whereClause = {
         question: search ? {
@@ -192,6 +193,7 @@ export class QuestionService {
         type,
         status,
         authorId,
+        isPublished,
     };
 
     if (cursor === undefined && limit === undefined) {
@@ -399,6 +401,76 @@ export class QuestionService {
     });
     return updated;
   }
+
+  async bulkDeleteQuestions(ids: string[], user: any) {
+    const questions = await this.db.question.findMany({
+      where: { id: { in: ids } }
+    });
+
+    for (const question of questions) {
+      const isAuthor = question.authorId === user.id;
+      const canDelete = user.role === "SUPERADMIN" || user.role === "ADMIN" || (user.role === "TEACHER" && isAuthor);
+      if (!canDelete) {
+        throw new ApiError(403, `You do not have permission to delete question Q-${question.id.slice(-4).toUpperCase()}`);
+      }
+      if (question.isPublished) {
+        throw new ApiError(400, `Cannot delete published question Q-${question.id.slice(-4).toUpperCase()}`);
+      }
+    }
+
+    await this.db.question.deleteMany({
+      where: { id: { in: ids } }
+    });
+  }
+
+  async bulkPublishQuestions(ids: string[], isPublished: boolean, user: any) {
+    const canPublish = user.role === "SUPERADMIN" || user.role === "ADMIN" || user.role === "TEAMLEAD";
+    if (!canPublish) {
+      throw new ApiError(403, "You do not have permission to publish/unpublish questions.");
+    }
+
+    const questions = await this.db.question.findMany({
+      where: { id: { in: ids } }
+    });
+
+    if (isPublished) {
+      for (const question of questions) {
+        if (question.status !== QuestionStatus.APPROVED) {
+          throw new ApiError(400, `Only approved questions can be published (Q-${question.id.slice(-4).toUpperCase()} is not approved).`);
+        }
+      }
+    }
+
+    await this.db.question.updateMany({
+      where: { id: { in: ids } },
+      data: { isPublished }
+    });
+  }
+
+  async bulkFeedbackQuestions(ids: string[], feedback: string, user: any) {
+    const canFeedback = user.role === "SUPERADMIN" || user.role === "ADMIN" || user.role === "TEAMLEAD";
+    if (!canFeedback) {
+      throw new ApiError(403, "You do not have permission to request revision on questions.");
+    }
+
+    const questions = await this.db.question.findMany({
+      where: { id: { in: ids } }
+    });
+
+    for (const question of questions) {
+      if (question.isPublished) {
+        throw new ApiError(400, `Cannot request revision on published question Q-${question.id.slice(-4).toUpperCase()}.`);
+      }
+    }
+
+    await this.db.question.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        status: QuestionStatus.NEEDS_REVISION,
+        feedback
+      }
+    });
+  }
 }
 
 export const questionService = new QuestionService();
@@ -416,3 +488,6 @@ export const getQuestionByStatus = questionService.getQuestionByStatus.bind(ques
 export const getQuestionBySearch = questionService.getQuestionBySearch.bind(questionService);
 export const importQuestions = questionService.importQuestions.bind(questionService);
 export const togglePublishState = questionService.togglePublishState.bind(questionService);
+export const bulkDeleteQuestions = questionService.bulkDeleteQuestions.bind(questionService);
+export const bulkPublishQuestions = questionService.bulkPublishQuestions.bind(questionService);
+export const bulkFeedbackQuestions = questionService.bulkFeedbackQuestions.bind(questionService);

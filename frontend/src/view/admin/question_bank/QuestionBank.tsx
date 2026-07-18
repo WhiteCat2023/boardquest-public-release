@@ -5,31 +5,73 @@ import AddQuestionButton from "../../../components/custom/button/AddQuestionButt
 import { Input } from "../../../components/ui/input";
 import FilterDropdown from "./components/dropdown/Filter";
 import { Separator } from "../../../components/ui/separator";
+import { useSearchParams } from "react-router-dom";
+import useAuth from "@/hooks/useAuth";
 
 function QuestionBank() {
+    const [searchParams] = useSearchParams();
+    const view = searchParams.get("view") || "bank";
+    const { auth } = useAuth();
+    const currentUserId = (auth as any)?.data?.user?.id;
+
     const {
         search,
         setSearch,
         selectedCategory,
         selectedDifficulty,
         selectedType,
-        selectedStatus,
     } = useQuestionBankFilterStore();
 
-    const filters = {
+    // Compile dynamic filters based on active sidebar view
+    const filters: any = {
         search,
         category: selectedCategory,
         difficulty: selectedDifficulty,
         type: selectedType,
-        status: selectedStatus,
     };
 
-    const activeFilterCount = [
-        selectedCategory,
-        selectedDifficulty,
-        selectedType,
-        selectedStatus,
-    ].filter(Boolean).length;
+    if (view === "my-questions") {
+        filters.authorId = currentUserId;
+    } else if (view === "published") {
+        filters.isPublished = true;
+    } else if (view === "revisions") {
+        filters.status = "NEEDS_REVISION";
+        // Teachers are restricted to their own revisions
+        if ((auth as any)?.data?.user?.role === "TEACHER") {
+            filters.authorId = currentUserId;
+        }
+    } else {
+        // Default: display general APPROVED question bank pool
+        filters.status = "APPROVED";
+    }
+
+    const getViewTitleAndDesc = () => {
+        switch (view) {
+            case "my-questions":
+                return {
+                    title: "My Questions",
+                    desc: "Browse and manage draft questions authored by you."
+                };
+            case "published":
+                return {
+                    title: "Published Questions",
+                    desc: "Questions currently active and visible to students."
+                };
+            case "revisions":
+                return {
+                    title: "Revision Desk",
+                    desc: "Questions flagged by administrators requiring review edits."
+                };
+            case "bank":
+            default:
+                return {
+                    title: "Question Bank Pool",
+                    desc: "Browse and manage all approved evaluation questions."
+                };
+        }
+    };
+
+    const header = getViewTitleAndDesc();
 
     return (
         <div className="flex flex-col gap-6 p-8 w-full min-h-full">
@@ -37,10 +79,10 @@ function QuestionBank() {
             <div className="flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-md pb-4 pt-8 -mt-8 -mx-8 px-8 transition-colors duration-200">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                        Question Bank
+                        {header.title}
                     </h1>
                     <p className="text-sm text-gray-400 mt-0.5">
-                        Browse and manage all exam questions.
+                        {header.desc}
                     </p>
                 </div>
 

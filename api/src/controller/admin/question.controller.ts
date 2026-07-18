@@ -55,20 +55,23 @@ export const updateQuestion = asyncHandler(async (req: AuthenticatedRequest, res
 });
 
 export const getQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { search, difficulty, category, type, status, cursor, limit } = req.query;
+    const { search, difficulty, category, type, status, cursor, limit, isPublished, authorId } = req.query;
     const user = req.user;
     if (!user) {
         throw new ApiError(401, "Authentication required");
     }
 
     const limitNum = limit ? parseInt(limit as string, 10) : undefined;
-    const hasFilter = !!(search || difficulty || category || type || status);
+    const isPublishedBool = isPublished === "true" ? true : isPublished === "false" ? false : undefined;
 
-    // If teacher, they can only see their own questions
-    const authorIdFilter = user.role === "TEACHER" ? user.id : undefined;
+    // If teacher, they can only see their own questions.
+    // Admin/Co-Admin can filter specifically by any authorId.
+    const authorIdFilter = user.role === "TEACHER" ? user.id : (authorId as string || undefined);
+
+    const hasFilter = !!(search || difficulty || category || type || status || isPublishedBool !== undefined || authorIdFilter);
 
     let result;
-    if (hasFilter || authorIdFilter) {
+    if (hasFilter) {
         result = await QuesitonServices.getFilteredQuestions(
             search as string,
             difficulty as QuestionDifficulty,
@@ -77,7 +80,8 @@ export const getQuestions = asyncHandler(async (req: AuthenticatedRequest, res: 
             status as QuestionStatus,
             cursor as string,
             limitNum,
-            authorIdFilter
+            authorIdFilter,
+            isPublishedBool
         );
     } else {
         result = await QuesitonServices.getAllQuestions(cursor as string, limitNum, authorIdFilter);
@@ -205,4 +209,60 @@ export const publishQuestion = asyncHandler(async (req: AuthenticatedRequest, re
 
     const updated = await QuesitonServices.togglePublishState(questionId as string, isPublished);
     return new ApiResponse(200, { question: updated }, `Question ${isPublished ? "published" : "unpublished"} successfully`).send(res);
+});
+
+export const bulkDeleteQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { ids } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    await QuesitonServices.bulkDeleteQuestions(ids, user);
+    return new ApiResponse(200, null, `${ids.length} questions deleted successfully`).send(res);
+});
+
+export const bulkPublishQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, isPublished } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    if (typeof isPublished !== "boolean") {
+        throw new ApiError(400, "isPublished must be a boolean");
+    }
+
+    await QuesitonServices.bulkPublishQuestions(ids, isPublished, user);
+    return new ApiResponse(200, null, `${ids.length} questions ${isPublished ? "published" : "unpublished"} successfully`).send(res);
+});
+
+export const bulkFeedbackQuestions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, feedback } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    if (typeof feedback !== "string" || !feedback.trim()) {
+        throw new ApiError(400, "feedback must be a non-empty string");
+    }
+
+    await QuesitonServices.bulkFeedbackQuestions(ids, feedback, user);
+    return new ApiResponse(200, null, `Feedback sent successfully for ${ids.length} questions`).send(res);
 });

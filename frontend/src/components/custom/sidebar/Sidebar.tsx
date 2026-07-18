@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
-import { LogOut } from 'lucide-react';
-import type { NavItemProps, NavContentProps } from '@/utils/list/adminSiderbarMenuList';
+import { LogOut, ChevronDown, ChevronRight } from 'lucide-react';
+import type { NavItemProps, NavContentProps } from '@/types/sidebarMenuItems';
+import { useState, useEffect } from 'react';
 import {
   Sidebar as UISidebar,
   SidebarContent,
@@ -28,6 +29,101 @@ interface SidebarContentProps {
   logout?: () => void;
 }
 
+function SidebarItem({ content, location }: { content: NavContentProps; location: any }) {
+  const hasSubItems = !!content.subItems && content.subItems.length > 0;
+  
+  // Check if any sub-item is currently active (pathname + query search match)
+  const isAnySubActive = hasSubItems && content.subItems!.some(
+    sub => location.pathname + location.search === sub.path
+  );
+  
+  const [isOpen, setIsOpen] = useState(isAnySubActive);
+
+  // Sync open state with location changes
+  useEffect(() => {
+    if (isAnySubActive) {
+      setIsOpen(true);
+    }
+  }, [location.pathname, location.search, isAnySubActive]);
+
+  if (!hasSubItems) {
+    const isActive = location.pathname === content.path;
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton 
+          asChild 
+          isActive={isActive} 
+          tooltip={content.title}
+          className={`
+            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10
+            transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
+            ${isActive
+              ? '!bg-[#E9B0B0] !text-[#A70202]'
+              : '!text-gray-500 hover:!bg-gray-100 hover:!text-gray-800 hover:!text-[#A70202]'
+            }
+          `}
+        >
+          <Link to={content.path}>
+            <DynamicIcon name={content.icon} size={18} className="shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  const isParentActive = location.pathname === content.path || isAnySubActive;
+
+  return (
+    <SidebarMenuItem className="flex flex-col w-full">
+      <SidebarMenuButton 
+        onClick={() => setIsOpen(!isOpen)}
+        tooltip={content.title}
+        className={`
+          flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer
+          transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
+          ${isParentActive
+            ? 'bg-slate-100/80 text-gray-800 font-semibold'
+            : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202]'
+          }
+        `}
+      >
+        <div className="flex items-center gap-3">
+          <DynamicIcon name={content.icon} size={18} className="shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
+        </div>
+        <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 transition-colors">
+          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </div>
+      </SidebarMenuButton>
+
+      {/* Sub-items block */}
+      {isOpen && (
+        <div className="pl-6 mt-1 flex flex-col gap-1 border-l border-slate-100 ml-5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
+          {content.subItems!.map((sub, idx) => {
+            const isSubActive = location.pathname + location.search === sub.path;
+            return (
+              <Link
+                key={idx}
+                to={sub.path}
+                className={`
+                  text-xs py-1.5 px-3 rounded-lg font-medium transition-all duration-150
+                  ${isSubActive
+                    ? 'text-[#A70202] bg-[#E9B0B0]/40 font-semibold'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                  }
+                `}
+              >
+                {sub.title}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </SidebarMenuItem>
+  );
+}
+
 function Sidebar({ navItem, logout }: SidebarContentProps) {
   const location = useLocation();
 
@@ -50,31 +146,13 @@ function Sidebar({ navItem, logout }: SidebarContentProps) {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-2">
-                {item.content.map((content: NavContentProps, contentIndex: number) => {
-                  const isActive = location.pathname === content.path;
-                  return (
-                    <SidebarMenuItem key={contentIndex} >
-                      <SidebarMenuButton 
-                        asChild 
-                        isActive={isActive} 
-                        tooltip={content.title}
-                        className={`
-                          flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10
-                          transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
-                          ${isActive
-                            ? '!bg-[#E9B0B0] !text-[#A70202]'
-                            : '!text-gray-500 hover:!bg-gray-100 hover:!text-gray-800 hover:!text-[#A70202]'
-                          }
-                        `}
-                      >
-                        <Link to={content.path}>
-                          <DynamicIcon name={content.icon} size={18} className="shrink-0" />
-                          <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {item.content.map((content: NavContentProps, contentIndex: number) => (
+                  <SidebarItem 
+                    key={contentIndex} 
+                    content={content} 
+                    location={location} 
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -14,6 +14,9 @@ import {
     bulkUploadQuestions,
     extractQuestions,
     publishQuestion,
+  bulkDeleteQuestions,
+  bulkPublishQuestions,
+  bulkFeedbackQuestions,
 } from "../../controller/admin/question.controller";
 import {
   createCategory,
@@ -28,6 +31,9 @@ const router = Router();
 router.post("/create", authenticateToken, createQuestion);
 router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
 router.post("/extract", authenticateToken, extractQuestions);
+router.post("/bulk/delete", authenticateToken, bulkDeleteQuestions);
+router.post("/bulk/publish", authenticateToken, bulkPublishQuestions);
+router.post("/bulk/feedback", authenticateToken, bulkFeedbackQuestions);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.put("/publish/:questionId", authenticateToken, publishQuestion);

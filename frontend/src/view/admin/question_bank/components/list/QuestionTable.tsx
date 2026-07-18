@@ -1,8 +1,15 @@
+import { useState, useMemo } from 'react';
 import { UserRole, type Question } from '@/types/question';
-import { Eye, Trash2, Edit, Tag } from 'lucide-react';
-import { getDifficultyColor, getInitials, getStatusColor } from '@/utils/style';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
+import useAxiosPrivate from '@/hooks/useAxiosPrivate';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from '@tanstack/react-table';
 import {
   Table,
   TableHeader,
@@ -11,6 +18,9 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
+import BulkFeedbackDialog from '../dialog/BulkFeedbackDialog';
+import { getQuestionColumns } from './columns';
+import BulkActionsToolbar from './BulkActionsToolbar';
 
 interface QuestionTableProps {
   questions: Question[];
@@ -21,153 +31,214 @@ interface QuestionTableProps {
 export default function QuestionTable({ questions, onView, onDelete }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
 
   const currentUserId = (auth as any)?.data?.user?.id;
   const currentUserRole = (auth as any)?.data?.user?.role;
 
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+  // Mutations
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await axiosPrivate.post("/questions/bulk/delete", { ids });
+    },
+    onSuccess: (_, ids) => {
+      toast.success(`Successfully deleted ${ids.length} questions.`);
+      setRowSelection({});
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to bulk delete questions.");
+    }
+  });
+
+  const bulkPublishMutation = useMutation({
+    mutationFn: async ({ ids, isPublished }: { ids: string[]; isPublished: boolean }) => {
+      await axiosPrivate.post("/questions/bulk/publish", { ids, isPublished });
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`Successfully ${variables.isPublished ? "published" : "unpublished"} ${variables.ids.length} questions.`);
+      setRowSelection({});
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to bulk update publish state.");
+    }
+  });
+
+  const bulkFeedbackMutation = useMutation({
+    mutationFn: async ({ ids, feedback }: { ids: string[]; feedback: string }) => {
+      await axiosPrivate.post("/questions/bulk/feedback", { ids, feedback });
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`Sent revision feedback for ${variables.ids.length} questions.`);
+      setRowSelection({});
+      setIsFeedbackOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to bulk send feedback.");
+    }
+  });
+
+  // Get Columns
+  const columns = useMemo(() => getQuestionColumns({
+    currentUserId,
+    currentUserRole,
+    onView,
+    onDelete,
+    navigate,
+  }), [currentUserId, currentUserRole, onView, onDelete, navigate]);
+
+  const table = useReactTable({
+    data: questions,
+    columns,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
+
+  const selectedRows = table.getSelectedRowModel().rows;
+  const selectedQuestions = selectedRows.map(row => row.original);
+  const selectedIds = selectedQuestions.map(q => q.id);
+
+  // Bulk actions handlers
+  const handleBulkDelete = () => {
+    const hasPublished = selectedQuestions.some(q => q.isPublished);
+    if (hasPublished) {
+      toast.error("Cannot delete published questions. Please unpublish them first.");
+      return;
+    }
+
+    const canDeleteAll = selectedQuestions.every(q => {
+      const authorId = typeof q.author === 'object' ? (q.author as any).id : q.authorId;
+      return currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || authorId === currentUserId;
+    });
+
+    if (!canDeleteAll) {
+      toast.error("You do not have permission to delete one or more of the selected questions.");
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete the ${selectedIds.length} selected questions?`)) {
+      bulkDeleteMutation.mutate(selectedIds);
+    }
+  };
+
+  const handleBulkPublish = (isPublished: boolean) => {
+    const canPublishAll = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
+    if (!canPublishAll) {
+      toast.error("Only administrators can publish/unpublish questions.");
+      return;
+    }
+
+    if (isPublished) {
+      const hasUnapproved = selectedQuestions.some(q => q.status !== "APPROVED");
+      if (hasUnapproved) {
+        toast.error("Only approved questions can be published. Please check your selection.");
+        return;
+      }
+    }
+
+    bulkPublishMutation.mutate({ ids: selectedIds, isPublished });
+  };
+
+  const handleBulkFeedbackSubmit = async (feedback: string) => {
+    await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
+  };
+
+  const handleBulkFeedbackOpen = () => {
+    const canFeedbackAll = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
+    if (!canFeedbackAll) {
+      toast.error("Only administrators can request question revisions.");
+      return;
+    }
+
+    const hasPublished = selectedQuestions.some(q => q.isPublished);
+    if (hasPublished) {
+      toast.error("Cannot request revision on published questions. Please unpublish them first.");
+      return;
+    }
+
+    setIsFeedbackOpen(true);
+  };
+
+  const canManageBulk = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
+
   return (
-    <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden font-sans">
-      <Table>
-        <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
-          <TableRow className="border-b border-slate-100 hover:bg-transparent">
-            <TableHead className="w-[100px] text-xs font-bold text-slate-400 uppercase tracking-wider pl-6 py-4">ID</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Question</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Topic</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Type</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Difficulty</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Author</TableHead>
-            <TableHead className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">Status</TableHead>
-            <TableHead className="w-[120px] text-right text-xs font-bold text-slate-400 uppercase tracking-wider pr-6 py-4">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {questions.map((item) => {
-            const authorName = typeof item?.author === 'object' 
-              ? item?.author?.name 
-              : item?.author;
-
-            const authorId = typeof item?.author === 'object'
-              ? (item?.author as any).id
-              : (item as any)?.authorId;
-
-            const isAuthor = authorId === currentUserId;
-            const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item.isPublished;
-            const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item.isPublished;
-
-            // Handle text or question property variation
-            const questionContent = (item as any)?.question || item?.text || '';
-
-            return (
-              <TableRow key={item.id} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
-                {/* ID Column */}
-                <TableCell className="pl-6 py-4">
-                  <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold tracking-wide text-slate-600">
-                    Q-{item.id.slice(-4)}
-                  </span>
-                </TableCell>
-
-                {/* Question & Category Column */}
-                <TableCell className="py-4 max-w-[280px]">
-                  <div className="flex flex-col gap-1.5">
-                    <span 
-                      className="text-sm font-semibold text-slate-800 line-clamp-2 leading-relaxed" 
-                      title={questionContent}
-                    >
-                      {questionContent}
-                    </span>
-                    <div className="flex">
-                      <span className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 tracking-wide">
-                        {item?.category?.name || 'Subject'}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-
-                {/* Topic Column */}
-                <TableCell className="py-4">
-                  <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
-                    <Tag size={10} className="text-slate-400" />
-                    {item?.topic || 'Topic'}
-                  </span>
-                </TableCell>
-
-                {/* Type Column */}
-                <TableCell className="py-4">
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                    {item?.type}
-                  </span>
-                </TableCell>
-
-                {/* Difficulty Column */}
-                <TableCell className="py-4">
-                  <span className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(item?.difficulty)}`}>
-                    {item?.difficulty}
-                  </span>
-                </TableCell>
-
-                {/* Author Column */}
-                <TableCell className="py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-700 shrink-0">
-                      {getInitials(authorName)}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]" title={authorName}>
-                      {authorName || 'Unknown'}
-                    </span>
-                  </div>
-                </TableCell>
-
-                {/* Status Column */}
-                <TableCell className="py-4">
-                  <div className="flex flex-col gap-1 items-start">
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(item?.status)}`}>
-                      {item?.status}
-                    </span>
-                    {item.isPublished && (
-                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-700">
-                        Published
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-
-                {/* Actions Column */}
-                <TableCell className="pr-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <button
-                      onClick={() => onView?.(item.id)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700 focus:outline-none cursor-pointer"
-                      title="View Details"
-                    >
-                      <Eye size={14} />
-                    </button>
-                    
-                    {canEdit && (
-                      <button
-                        onClick={() => navigate(`/question-bank/edit/${item.id}`)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700 focus:outline-none cursor-pointer"
-                        title="Edit Question"
-                      >
-                        <Edit size={14} />
-                      </button>
-                    )}
-
-                    {canDelete && (
-                      <button
-                        onClick={() => onDelete?.(item.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-200 bg-white text-rose-500 shadow-sm transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none cursor-pointer"
-                        title="Delete Question"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+    <div className="relative w-full">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden font-sans">
+        <Table>
+          <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
+            {table.getHeaderGroups().map(headerGroup => (
+              <TableRow key={headerGroup.id} className="border-b border-slate-100 hover:bg-transparent">
+                {headerGroup.headers.map(header => (
+                  <TableHead key={header.id} className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map(row => (
+                <TableRow 
+                  key={row.id} 
+                  className={`border-b border-slate-100 hover:bg-slate-50/40 transition-colors ${
+                    row.getIsSelected() ? 'bg-slate-50/80' : ''
+                  }`}
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id} className="py-4">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 font-medium">
+                  No questions found.
                 </TableCell>
               </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Bulk Actions Floating Toolbar */}
+      {selectedIds.length > 0 && (
+        <BulkActionsToolbar
+          selectedCount={selectedIds.length}
+          canManageBulk={canManageBulk}
+          onPublish={() => handleBulkPublish(true)}
+          onUnpublish={() => handleBulkPublish(false)}
+          onFeedback={handleBulkFeedbackOpen}
+          onDelete={handleBulkDelete}
+          onClear={() => setRowSelection({})}
+          isPublishPending={bulkPublishMutation.isPending}
+          isFeedbackPending={bulkFeedbackMutation.isPending}
+          isDeletePending={bulkDeleteMutation.isPending}
+        />
+      )}
+
+      {/* Bulk Revision Feedback Dialog */}
+      <BulkFeedbackDialog
+        open={isFeedbackOpen}
+        onOpenChange={setIsFeedbackOpen}
+        onSubmit={handleBulkFeedbackSubmit}
+        isPending={bulkFeedbackMutation.isPending}
+        selectedCount={selectedIds.length}
+      />
     </div>
   );
 }

@@ -14,8 +14,13 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 
+import { useSearchParams } from "react-router-dom";
+
 export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } = {}) {
     const axiosPrivate = useAxiosPrivate();
+    const [searchParams] = useSearchParams();
+    const view = searchParams.get("view") || "bank";
+
     const { 
         search, 
         setSearch, 
@@ -176,27 +181,29 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
             </Field>
 
             {/* Status Select */}
-            <Field>
-                <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Status
-                </FieldLabel>
-                <Select
-                    value={selectedStatus || "all"}
-                    onValueChange={(value) => setSelectedStatus(value === "all" ? "" : value)}
-                >
-                    <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 text-slate-600">
-                        <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false} position="popper" align="start">
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        {Object.values(QUESTION_STATUS).map((status) => (
-                            <SelectItem key={status} value={status}>
-                                {status}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </Field>
+            {(view === "bank" || view === "my-questions") && (
+                <Field>
+                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Status
+                    </FieldLabel>
+                    <Select
+                        value={selectedStatus || "all"}
+                        onValueChange={(value) => setSelectedStatus(value === "all" ? "" : value)}
+                    >
+                        <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 text-slate-600">
+                            <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent alignItemWithTrigger={false} position="popper" align="start">
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            {Object.values(QUESTION_STATUS).map((status) => (
+                                <SelectItem key={status} value={status}>
+                                    {status}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </Field>
+            )}
         </FieldGroup>
     );
 }

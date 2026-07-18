@@ -7,4 +7,8 @@ export interface NavContentProps {
     title: string;
     path: string;
     icon: string;
+    subItems?: {
+        title: string;
+        path: string;
+    }[];
 }

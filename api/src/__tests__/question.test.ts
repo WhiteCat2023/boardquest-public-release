@@ -332,6 +332,78 @@ describe('Question Routes', () => {
     });
   });
 
+  // ── POST /bulk/delete ─────────────────────────────────────────────────────
+
+  describe('POST /api/questions/bulk/delete', () => {
+    it('should bulk delete questions and return 200', async () => {
+      (questionService.bulkDeleteQuestions as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await request(app)
+        .post('/api/questions/bulk/delete')
+        .send({ ids: ['question-1', 'question-2'] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('deleted successfully');
+      expect(questionService.bulkDeleteQuestions).toHaveBeenCalled();
+    });
+
+    it('should return 400 if ids is not a non-empty array', async () => {
+      const response = await request(app)
+        .post('/api/questions/bulk/delete')
+        .send({ ids: [] });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  // ── POST /bulk/publish ────────────────────────────────────────────────────
+
+  describe('POST /api/questions/bulk/publish', () => {
+    it('should bulk publish questions and return 200', async () => {
+      (questionService.bulkPublishQuestions as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await request(app)
+        .post('/api/questions/bulk/publish')
+        .send({ ids: ['question-1', 'question-2'], isPublished: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('published successfully');
+      expect(questionService.bulkPublishQuestions).toHaveBeenCalled();
+    });
+
+    it('should return 400 if isPublished is not a boolean', async () => {
+      const response = await request(app)
+        .post('/api/questions/bulk/publish')
+        .send({ ids: ['question-1'], isPublished: 'not-a-boolean' });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  // ── POST /bulk/feedback ───────────────────────────────────────────────────
+
+  describe('POST /api/questions/bulk/feedback', () => {
+    it('should bulk send revision feedback and return 200', async () => {
+      (questionService.bulkFeedbackQuestions as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await request(app)
+        .post('/api/questions/bulk/feedback')
+        .send({ ids: ['question-1', 'question-2'], feedback: 'Please update grammar' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('Feedback sent successfully');
+      expect(questionService.bulkFeedbackQuestions).toHaveBeenCalled();
+    });
+
+    it('should return 400 if feedback is empty', async () => {
+      const response = await request(app)
+        .post('/api/questions/bulk/feedback')
+        .send({ ids: ['question-1'], feedback: '   ' });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   // ── Category routes ────────────────────────────────────────────────────────
 
   describe('POST /api/questions/category/create', () => {
