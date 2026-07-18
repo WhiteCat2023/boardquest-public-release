@@ -30,9 +30,10 @@ export async function seedAdminUserDb() {
 
     console.log("Seeding questions...");
     for (const question of demoQuestions) {
+        const { id, ...updateData } = question;
         await prisma.question.upsert({
-          where: { id: question.id },
-          update: {},
+          where: { id },
+          update: updateData,
           create: question,
         });
     }
