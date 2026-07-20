@@ -190,7 +190,11 @@ export class AuthService {
     const { email } = parsed.data;
     const user = await this.db.adminUser.findUnique({ where: { email } });
 
-    if (user) {
+    if (!user) {
+      console.log(`\n[AuthService] Password reset requested for: ${email}`);
+      console.log(`⚠️  User with email "${email}" was NOT found in the database. No email sent.`);
+    } else {
+      console.log(`\n[AuthService] Password reset requested for: ${email} (User: ${user.name})`);
       const resetToken = signJWT(
         { id: user.id, email: user.email, type: "password_reset" },
         "1h"

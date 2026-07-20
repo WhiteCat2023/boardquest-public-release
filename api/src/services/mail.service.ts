@@ -6,18 +6,38 @@ interface SendPasswordResetMailOptions {
   userName?: string;
 }
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
-  auth:
-    process.env.SMTP_USER && process.env.SMTP_PASS
-      ? {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        }
-      : undefined,
-});
+let testTransporter: nodemailer.Transporter | null = null;
+
+async function getTransporter() {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: Number(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
+  // Fallback to Ethereal Email for instant development testing
+  if (!testTransporter) {
+    console.log("[MailService] No SMTP_USER/SMTP_PASS found in .env. Creating Ethereal test mailer...");
+    const testAccount = await nodemailer.createTestAccount();
+    console.log(`[MailService] Ethereal account created: ${testAccount.user}`);
+    testTransporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  }
+  return testTransporter;
+}
 
 export async function sendPasswordResetEmail({
   toEmail,
@@ -108,12 +128,22 @@ export async function sendPasswordResetEmail({
   };
 
   try {
+    const transporter = await getTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[MailService] Password reset email sent to ${toEmail} (Message ID: ${info.messageId})`);
+    
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`\n==================================================`);
+      console.log(`📧 [BOARDQUEST MAIL SENT TO: ${toEmail}]`);
+      console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
+      console.log(`==================================================\n`);
+    } else {
+      console.log(`[MailService] Email sent successfully to ${toEmail} (Message ID: ${info.messageId})`);
+    }
     return info;
   } catch (error) {
-    console.error(`[MailService] Error sending email to ${toEmail}:`, error);
-    console.log(`[MailService Fallback Reset Link]: ${resetUrl}`);
+    console.error(`[MailService Error] Failed to send email to ${toEmail}:`, error);
+    console.log(`[MailService Direct Reset Link for testing]: ${resetUrl}`);
     return null;
   }
 }

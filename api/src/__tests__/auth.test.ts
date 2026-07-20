@@ -227,4 +227,66 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(401);
     });
   });
+
+  describe('POST /api/auth/forgot-password', () => {
+    it('should process password reset request successfully', async () => {
+      (authService.forgotPassword as jest.Mock).mockResolvedValue({
+        message: 'If an account with that email exists, password reset instructions have been sent.',
+      });
+
+      const response = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'user@example.com' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('processed successfully');
+    });
+
+    it('should handle invalid email or service error', async () => {
+      (authService.forgotPassword as jest.Mock).mockRejectedValue(
+        new ApiError(400, 'Valid email address is required')
+      );
+
+      const response = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'invalid-email' });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe('POST /api/auth/reset-password', () => {
+    it('should reset password successfully with valid token', async () => {
+      (authService.resetPassword as jest.Mock).mockResolvedValue({
+        message: 'Password has been reset successfully.',
+      });
+
+      const response = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          token: 'valid_reset_token',
+          newPassword: 'newpassword123',
+          confirmPassword: 'newpassword123',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('reset');
+    });
+
+    it('should return 400 for invalid token or password mismatch', async () => {
+      (authService.resetPassword as jest.Mock).mockRejectedValue(
+        new ApiError(400, 'Invalid or expired password reset token')
+      );
+
+      const response = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          token: 'invalid_token',
+          newPassword: 'newpassword123',
+          confirmPassword: 'newpassword123',
+        });
+
+      expect(response.status).toBe(400);
+    });
+  });
 });

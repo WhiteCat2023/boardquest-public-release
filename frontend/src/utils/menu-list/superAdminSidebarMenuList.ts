@@ -29,9 +29,9 @@ export const superAdminNavItem: NavItemProps[] = [
                     path: "/question-bank",
                     icon: "ClipboardList",
                     subItems: [
-                        { title: "My Questions", path: "/question-bank?view=my-questions" },
-                        { title: "Published", path: "/question-bank?view=published" },
-                        { title: "Bank", path: "/question-bank?view=bank" },
+                    { title: "My Questions", path: "/question-bank?view=my-questions" },
+                    { title: "Live Questions", path: "/question-bank?view=published" },
+                    { title: "Shared Library", path: "/question-bank?view=bank" },
                         { title: "Revisions", path: "/question-bank?view=revisions" }
                     ]
                 },
