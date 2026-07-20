@@ -1,6 +1,7 @@
 import {Route, Routes} from "react-router-dom";
 import LandingPage from "./view/LandingPage";
 import LoginPage from "./view/login/LoginPage";
+import ForgotPasswordPage from "./view/login/ForgotPasswordPage";
 import Dashboard from "./view/admin/Dashboard";
 import MainLayout from "./layout/MainLayout";
 import RequireAuth from "./components/RequireAuth";
@@ -29,6 +30,7 @@ function App() {
           {/* public routes */}
           <Route path="home" element={<LandingPage />} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
 
           {/* private routes */}
           <Route element={<PersistentSession />}>

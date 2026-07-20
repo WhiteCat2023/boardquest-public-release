@@ -82,6 +82,7 @@ function LoginPage() {
                   <FieldLabel className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">
                     PASSWORD
                   </FieldLabel>
+
                   <InputGroup data-invalid={isLoginInvalid || undefined}>
                     <InputGroupInput
                       type={togglePassword ? "text" : "password"}
@@ -111,6 +112,14 @@ function LoginPage() {
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>
+                  <div className="flex justify-end w-full mt-1.5">
+                    <Link
+                      to="/forgot-password"
+                      className="text-[11px] font-bold text-[#a60b0b] hover:underline uppercase tracking-wide transition-colors"
+                    >
+                      FORGOT PASSWORD?
+                    </Link>
+                  </div>
                 </Field>
                 <Button
                   className="w-full bg-[#a60b0b] text-white rounded-xl hover:bg-[#a60b0b]/90"

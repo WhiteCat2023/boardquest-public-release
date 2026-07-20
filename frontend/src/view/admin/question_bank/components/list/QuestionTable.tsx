@@ -26,63 +26,44 @@ interface QuestionTableProps {
   questions: Question[];
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
+  rowSelection: Record<string, boolean>;
+  onRowSelectionChange: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  itemsPerPage: number;
+  onItemsPerPageChange: (val: number) => void;
+  canManageBulk: boolean;
+  onPublish: () => void;
+  onUnpublish: () => void;
+  onFeedback: () => void;
+  onBulkDelete: () => void;
+  onClear: () => void;
+  isPublishPending: boolean;
+  isFeedbackPending: boolean;
+  isDeletePending: boolean;
 }
 
-export default function QuestionTable({ questions, onView, onDelete }: QuestionTableProps) {
+export default function QuestionTable({
+  questions,
+  onView,
+  onDelete,
+  rowSelection,
+  onRowSelectionChange,
+  itemsPerPage,
+  onItemsPerPageChange,
+  canManageBulk,
+  onPublish,
+  onUnpublish,
+  onFeedback,
+  onBulkDelete,
+  onClear,
+  isPublishPending,
+  isFeedbackPending,
+  isDeletePending,
+}: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
-  const axiosPrivate = useAxiosPrivate();
-  const queryClient = useQueryClient();
 
   const currentUserId = (auth as any)?.data?.user?.id;
   const currentUserRole = (auth as any)?.data?.user?.role;
-
-  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-
-  // Mutations
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await axiosPrivate.post("/questions/bulk/delete", { ids });
-    },
-    onSuccess: (_, ids) => {
-      toast.success(`Successfully deleted ${ids.length} questions.`);
-      setRowSelection({});
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to bulk delete questions.");
-    }
-  });
-
-  const bulkPublishMutation = useMutation({
-    mutationFn: async ({ ids, isPublished }: { ids: string[]; isPublished: boolean }) => {
-      await axiosPrivate.post("/questions/bulk/publish", { ids, isPublished });
-    },
-    onSuccess: (_, variables) => {
-      toast.success(`Successfully ${variables.isPublished ? "published" : "unpublished"} ${variables.ids.length} questions.`);
-      setRowSelection({});
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to bulk update publish state.");
-    }
-  });
-
-  const bulkFeedbackMutation = useMutation({
-    mutationFn: async ({ ids, feedback }: { ids: string[]; feedback: string }) => {
-      await axiosPrivate.post("/questions/bulk/feedback", { ids, feedback });
-    },
-    onSuccess: (_, variables) => {
-      toast.success(`Sent revision feedback for ${variables.ids.length} questions.`);
-      setRowSelection({});
-      setIsFeedbackOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to bulk send feedback.");
-    }
-  });
 
   // Get Columns
   const columns = useMemo(() => getQuestionColumns({
@@ -99,97 +80,33 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
     state: {
       rowSelection,
     },
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
   });
 
   const selectedRows = table.getSelectedRowModel().rows;
-  const selectedQuestions = selectedRows.map(row => row.original);
-  const selectedIds = selectedQuestions.map(q => q.id);
-
-  // Bulk actions handlers
-  const handleBulkDelete = () => {
-    const hasPublished = selectedQuestions.some(q => q.isPublished);
-    if (hasPublished) {
-      toast.error("Cannot delete published questions. Please unpublish them first.");
-      return;
-    }
-
-    const canDeleteAll = selectedQuestions.every(q => {
-      const authorId = typeof q.author === 'object' ? (q.author as any).id : q.authorId;
-      return currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || authorId === currentUserId;
-    });
-
-    if (!canDeleteAll) {
-      toast.error("You do not have permission to delete one or more of the selected questions.");
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to delete the ${selectedIds.length} selected questions?`)) {
-      bulkDeleteMutation.mutate(selectedIds);
-    }
-  };
-
-  const handleBulkPublish = (isPublished: boolean) => {
-    const canPublishAll = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
-    if (!canPublishAll) {
-      toast.error("Only administrators can publish/unpublish questions.");
-      return;
-    }
-
-    if (isPublished) {
-      const hasUnapproved = selectedQuestions.some(q => q.status !== "APPROVED");
-      if (hasUnapproved) {
-        toast.error("Only approved questions can be published. Please check your selection.");
-        return;
-      }
-    }
-
-    bulkPublishMutation.mutate({ ids: selectedIds, isPublished });
-  };
-
-  const handleBulkFeedbackSubmit = async (feedback: string) => {
-    await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
-  };
-
-  const handleBulkFeedbackOpen = () => {
-    const canFeedbackAll = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
-    if (!canFeedbackAll) {
-      toast.error("Only administrators can request question revisions.");
-      return;
-    }
-
-    const hasPublished = selectedQuestions.some(q => q.isPublished);
-    if (hasPublished) {
-      toast.error("Cannot request revision on published questions. Please unpublish them first.");
-      return;
-    }
-
-    setIsFeedbackOpen(true);
-  };
-
-  const canManageBulk = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
 
   return (
-    <div className="relative w-full flex flex-col gap-0">
-      {/* Bulk Actions Top Toolbar */}
-      {selectedIds.length > 0 && (
+    <div className="relative w-full flex flex-col gap-0 font-sans">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Datagrid Top Header Toolbar */}
         <BulkActionsToolbar
-          selectedCount={selectedIds.length}
+          totalCount={questions.length}
+          selectedCount={selectedRows.length}
           canManageBulk={canManageBulk}
-          onPublish={() => handleBulkPublish(true)}
-          onUnpublish={() => handleBulkPublish(false)}
-          onFeedback={handleBulkFeedbackOpen}
-          onDelete={handleBulkDelete}
-          onClear={() => setRowSelection({})}
-          isPublishPending={bulkPublishMutation.isPending}
-          isFeedbackPending={bulkFeedbackMutation.isPending}
-          isDeletePending={bulkDeleteMutation.isPending}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={onItemsPerPageChange}
+          onPublish={onPublish}
+          onUnpublish={onUnpublish}
+          onFeedback={onFeedback}
+          onDelete={onBulkDelete}
+          onClear={onClear}
+          isPublishPending={isPublishPending}
+          isFeedbackPending={isFeedbackPending}
+          isDeletePending={isDeletePending}
         />
-      )}
 
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden font-sans">
         <Table>
           <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
             {table.getHeaderGroups().map(headerGroup => (
@@ -230,14 +147,6 @@ export default function QuestionTable({ questions, onView, onDelete }: QuestionT
           </TableBody>
         </Table>
       </div>
-      {/* Bulk Revision Feedback Dialog */}
-      <BulkFeedbackDialog
-        open={isFeedbackOpen}
-        onOpenChange={setIsFeedbackOpen}
-        onSubmit={handleBulkFeedbackSubmit}
-        isPending={bulkFeedbackMutation.isPending}
-        selectedCount={selectedIds.length}
-      />
     </div>
   );
 }

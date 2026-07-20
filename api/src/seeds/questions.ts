@@ -1,4 +1,8 @@
-import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../generated/prisma/client";
+import {
+  QuestionDifficulty,
+  QuestionType,
+  QuestionStatus,
+} from "../../generated/prisma/client";
 
 export const demoQuestions = [
   // =========================================================================
@@ -34,7 +38,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439024",
-    question: "Which enzyme is responsible for breaking down proteins in the stomach?",
+    question:
+      "Which enzyme is responsible for breaking down proteins in the stomach?",
     choices: ["Amylase", "Pepsin", "Lipase", "Maltase"],
     correctAnswer: "Pepsin",
     topic: "Biology",
@@ -49,7 +54,12 @@ export const demoQuestions = [
   {
     id: "507f1f77bcf86cd799439025",
     question: "What is the normal range for fasting blood glucose?",
-    choices: ["50 - 100 mg/dL", "70 - 100 mg/dL", "100 - 150 mg/dL", "80 - 120 mg/dL"],
+    choices: [
+      "50 - 100 mg/dL",
+      "70 - 100 mg/dL",
+      "100 - 150 mg/dL",
+      "80 - 120 mg/dL",
+    ],
     correctAnswer: "70 - 100 mg/dL",
     topic: "Anatomy",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -62,7 +72,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439027",
-    question: "Which of the following lipids is referred to as the 'good cholesterol'?",
+    question:
+      "Which of the following lipids is referred to as the 'good cholesterol'?",
     choices: ["LDL", "HDL", "VLDL", "Chylomicrons"],
     correctAnswer: "HDL",
     topic: "Lipid Profile",
@@ -95,7 +106,12 @@ export const demoQuestions = [
   {
     id: "507f1f77bcf86cd799439029",
     question: "Which of the following is a Gram-positive bacterium?",
-    choices: ["Escherichia coli", "Pseudomonas aeruginosa", "Staphylococcus aureus", "Neisseria gonorrhoeae"],
+    choices: [
+      "Escherichia coli",
+      "Pseudomonas aeruginosa",
+      "Staphylococcus aureus",
+      "Neisseria gonorrhoeae",
+    ],
     correctAnswer: "Staphylococcus aureus",
     topic: "Bacteriology",
     difficulty: QuestionDifficulty.EASY,
@@ -108,8 +124,14 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd79943902a",
-    question: "Which stain is commonly used to identify Mycobacterium tuberculosis?",
-    choices: ["Gram stain", "Acid-fast stain (Ziehl-Neelsen)", "Wright's stain", "Crystal violet"],
+    question:
+      "Which stain is commonly used to identify Mycobacterium tuberculosis?",
+    choices: [
+      "Gram stain",
+      "Acid-fast stain (Ziehl-Neelsen)",
+      "Wright's stain",
+      "Crystal violet",
+    ],
     correctAnswer: "Acid-fast stain (Ziehl-Neelsen)",
     topic: "Bacteriology",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -123,7 +145,12 @@ export const demoQuestions = [
   {
     id: "507f1f77bcf86cd79943902b",
     question: "What is the primary function of the bacterial endospore?",
-    choices: ["Reproduction", "Survival under adverse conditions", "Toxin production", "Motility"],
+    choices: [
+      "Reproduction",
+      "Survival under adverse conditions",
+      "Toxin production",
+      "Motility",
+    ],
     correctAnswer: "Survival under adverse conditions",
     topic: "Bacteriology",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -137,7 +164,12 @@ export const demoQuestions = [
   {
     id: "507f1f77bcf86cd79943902c",
     question: "Which virus is the primary cause of shingles?",
-    choices: ["Varicella-Zoster Virus", "Herpes Simplex Virus 1", "Epstein-Barr Virus", "Cytomegalovirus"],
+    choices: [
+      "Varicella-Zoster Virus",
+      "Herpes Simplex Virus 1",
+      "Epstein-Barr Virus",
+      "Cytomegalovirus",
+    ],
     correctAnswer: "Varicella-Zoster Virus",
     topic: "Virology",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -155,7 +187,12 @@ export const demoQuestions = [
   {
     id: "507f1f77bcf86cd799439023",
     question: "What is the primary function of red blood cells?",
-    choices: ["Fight infections", "Transport oxygen", "Produce antibodies", "Regulate blood pressure"],
+    choices: [
+      "Fight infections",
+      "Transport oxygen",
+      "Produce antibodies",
+      "Regulate blood pressure",
+    ],
     correctAnswer: "Transport oxygen",
     topic: "Biology",
     difficulty: QuestionDifficulty.EASY,
@@ -168,7 +205,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd79943902d",
-    question: "What is the normal lifespan of a mature red blood cell in circulation?",
+    question:
+      "What is the normal lifespan of a mature red blood cell in circulation?",
     choices: ["30 days", "60 days", "90 days", "120 days"],
     correctAnswer: "120 days",
     topic: "Erythrocytes",
@@ -182,8 +220,14 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd79943902e",
-    question: "Which type of anemia is characterized by a deficiency in Vitamin B12 or folate?",
-    choices: ["Iron deficiency anemia", "Megaloblastic anemia", "Aplastic anemia", "Hemolytic anemia"],
+    question:
+      "Which type of anemia is characterized by a deficiency in Vitamin B12 or folate?",
+    choices: [
+      "Iron deficiency anemia",
+      "Megaloblastic anemia",
+      "Aplastic anemia",
+      "Hemolytic anemia",
+    ],
     correctAnswer: "Megaloblastic anemia",
     topic: "Anemia",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -214,8 +258,14 @@ export const demoQuestions = [
   // =========================================================================
   {
     id: "507f1f77bcf86cd799439030",
-    question: "Which of the following crystals found in acidic urine is shaped like a double-ended envelope or octahedron?",
-    choices: ["Calcium oxalate", "Triple phosphate", "Amorphous urates", "Uric acid"],
+    question:
+      "Which of the following crystals found in acidic urine is shaped like a double-ended envelope or octahedron?",
+    choices: [
+      "Calcium oxalate",
+      "Triple phosphate",
+      "Amorphous urates",
+      "Uric acid",
+    ],
     correctAnswer: "Calcium oxalate",
     topic: "Urinalysis",
     difficulty: QuestionDifficulty.MEDIUM,
@@ -242,8 +292,14 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439032",
-    question: "Which of the following is commonly referred to as the 'giant intestinal roundworm'?",
-    choices: ["Enterobius vermicularis", "Ascaris lumbricoides", "Necator americanus", "Trichuris trichiura"],
+    question:
+      "Which of the following is commonly referred to as the 'giant intestinal roundworm'?",
+    choices: [
+      "Enterobius vermicularis",
+      "Ascaris lumbricoides",
+      "Necator americanus",
+      "Trichuris trichiura",
+    ],
     correctAnswer: "Ascaris lumbricoides",
     topic: "Helminths",
     difficulty: QuestionDifficulty.EASY,
@@ -256,8 +312,14 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439033",
-    question: "What is the significance of finding cast-like structures in urinalysis, specifically RBC casts?",
-    choices: ["Glomerulonephritis", "Cystitis", "Urethritis", "Normal physiological finding"],
+    question:
+      "What is the significance of finding cast-like structures in urinalysis, specifically RBC casts?",
+    choices: [
+      "Glomerulonephritis",
+      "Cystitis",
+      "Urethritis",
+      "Normal physiological finding",
+    ],
     correctAnswer: "Glomerulonephritis",
     topic: "Urinalysis",
     difficulty: QuestionDifficulty.HARD,
@@ -274,7 +336,8 @@ export const demoQuestions = [
   // =========================================================================
   {
     id: "507f1f77bcf86cd799439026",
-    question: "Which white blood cell is primarily responsible for antibody production?",
+    question:
+      "Which white blood cell is primarily responsible for antibody production?",
     choices: ["Neutrophil", "B-lymphocyte", "Macrophage", "Basophil"],
     correctAnswer: "B-lymphocyte",
     topic: "Biology",
@@ -288,7 +351,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439034",
-    question: "Which immunoglobulin class is the first to be produced during a primary immune response?",
+    question:
+      "Which immunoglobulin class is the first to be produced during a primary immune response?",
     choices: ["IgG", "IgA", "IgM", "IgE"],
     correctAnswer: "IgM",
     topic: "Immunoglobulins",
@@ -302,7 +366,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439035",
-    question: "An individual with blood type O negative can safely receive red blood cells from which donor type?",
+    question:
+      "An individual with blood type O negative can safely receive red blood cells from which donor type?",
     choices: ["O positive", "O negative", "A negative", "B negative"],
     correctAnswer: "O negative",
     topic: "Blood Bank",
@@ -316,7 +381,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439036",
-    question: "Which type of hypersensitivity reaction is mediated by IgE and is responsible for systemic anaphylaxis?",
+    question:
+      "Which type of hypersensitivity reaction is mediated by IgE and is responsible for systemic anaphylaxis?",
     choices: ["Type I", "Type II", "Type III", "Type IV"],
     correctAnswer: "Type I",
     topic: "Hypersensitivity",
@@ -334,8 +400,14 @@ export const demoQuestions = [
   // =========================================================================
   {
     id: "507f1f77bcf86cd799439037",
-    question: "What is the most commonly used fixative for routine histopathological tissue processing?",
-    choices: ["10% Neutral Buffered Formalin", "Bouin's fluid", "Carnoy's fluid", "Zenker's fluid"],
+    question:
+      "What is the most commonly used fixative for routine histopathological tissue processing?",
+    choices: [
+      "10% Neutral Buffered Formalin",
+      "Bouin's fluid",
+      "Carnoy's fluid",
+      "Zenker's fluid",
+    ],
     correctAnswer: "10% Neutral Buffered Formalin",
     topic: "Tissue Fixation",
     difficulty: QuestionDifficulty.EASY,
@@ -348,7 +420,8 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439038",
-    question: "Which clearing agent is most widely used in routine paraffin wax tissue processing?",
+    question:
+      "Which clearing agent is most widely used in routine paraffin wax tissue processing?",
     choices: ["Benzene", "Xylene", "Chloroform", "Cedarwood oil"],
     correctAnswer: "Xylene",
     topic: "Tissue Processing",
@@ -362,12 +435,13 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd799439039",
-    question: "According to RA 5527, what is the composition of the Board of Medical Technology?",
+    question:
+      "According to RA 5527, what is the composition of the Board of Medical Technology?",
     choices: [
       "One Chairman (Pathologist) and two members (RMTs)",
       "One Chairman (RMT) and two members (Pathologists)",
       "Three Pathologists",
-      "Three Registered Medical Technologists"
+      "Three Registered Medical Technologists",
     ],
     correctAnswer: "One Chairman (Pathologist) and two members (RMTs)",
     topic: "Medtech Laws",
@@ -381,8 +455,14 @@ export const demoQuestions = [
   },
   {
     id: "507f1f77bcf86cd79943903a",
-    question: "Which stain is specifically used to demonstrate acid mucopolysaccharides in tissue sections?",
-    choices: ["Masson's trichrome", "Alcian blue", "Periodic Acid-Schiff (PAS)", "Van Gieson"],
+    question:
+      "Which stain is specifically used to demonstrate acid mucopolysaccharides in tissue sections?",
+    choices: [
+      "Masson's trichrome",
+      "Alcian blue",
+      "Periodic Acid-Schiff (PAS)",
+      "Van Gieson",
+    ],
     correctAnswer: "Alcian blue",
     topic: "Special Staining",
     difficulty: QuestionDifficulty.HARD,
@@ -393,4 +473,4 @@ export const demoQuestions = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+];
