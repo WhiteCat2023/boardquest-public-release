@@ -1,0 +1,94 @@
+# Summary of Work & Changes Made Today
+
+Below is a detailed documentation of all features, architecture refactorings, security fixes, and UI/UX updates completed today.
+
+---
+
+## 1. Question Bank Redesign & Single Datagrid Header Toolbar
+
+### **Custom Pill Pagination**
+- **[QuestionListPagination.tsx](file:///d:/Code/capstone/frontend/src/components/custom/pagination/QuestionListPagination.tsx)**
+  - Replaced standard pagination buttons with an active pill-style design matching BoardQuest's brand theme.
+  - Active page is highlighted with `#A70202` (brand maroon accent).
+  - Supported `< Previous`, `Next >`, page numbers, ellipsis `...`, and direct page click navigation.
+
+### **Unified Top Header Datagrid Toolbar**
+- **[BulkActionsToolbar.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/BulkActionsToolbar.tsx)** & **[QuestionTable.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/QuestionTable.tsx)**
+  - Integrated the toolbar directly as the top header of the datagrid container card (`bg-slate-50/50 border-b border-slate-200/80 px-4 py-3`).
+  - **0 Items Selected**: Displays `Showing X questions` count pill and `Items per page` dropdown selector (6, 9, 12, 18, 24, 30).
+  - **≥1 Items Selected**: Displays selection pill (`[X] X questions selected`) and bulk action buttons (**Publish**, **Unpublish**, **Request Revision**, **Delete**).
+
+### **Card View File Preservation**
+- Removed grid layout rendering from `QuestionList.tsx` while preserving **`AdminQuestionCardView.tsx`** untouched in the codebase for future use.
+
+---
+
+## 2. Zustand State Management & Clean Architecture Refactoring
+
+- **[QuestionListStore.ts](file:///d:/Code/capstone/frontend/src/store/QuestionListStore.ts)**
+  - Centralized question list state into a dedicated Zustand store (`cursorsStack`, `currentPageIndex`, `itemsPerPage`, `rowSelection`, `isFeedbackOpen`).
+- **[useQuestionListActions.ts](file:///d:/Code/capstone/frontend/src/hooks/useQuestionListActions.ts)**
+  - Extracted all pagination navigation, Sonner undo toast delete handlers, and bulk action mutations into a custom hook.
+- **[QuestionList.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/QuestionList.tsx)**
+  - Reduced `QuestionList.tsx` from ~390 lines down to **~120 lines**.
+
+---
+
+## 3. Forgot Password & Tokenized Password Reset Feature
+
+### **Login Page Link**
+- **[LoginPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/LoginPage.tsx)**
+  - Positioned an uppercase **"FORGOT PASSWORD?"** link aligned at the bottom-right of the password input field.
+
+### **Forgot Password Page & Tokenized Reset Page**
+- **[ForgotPasswordPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/ForgotPasswordPage.tsx)**: Built view with email input, loading states, and confirmation messaging.
+- **[ResetPasswordPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/ResetPasswordPage.tsx)**: Built tokenized reset page parsing `?token=...` from URL query parameters, with password visibility toggles and confirm-password validation.
+- **[App.tsx](file:///d:/Code/capstone/frontend/src/App.tsx)**: Registered public routes `/forgot-password` and `/reset-password`.
+
+---
+
+## 4. Nodemailer Email Service & Backend Auth Endpoints
+
+- **[mail.service.ts](file:///d:/Code/capstone/api/src/services/mail.service.ts)**
+  - Built a responsive HTML email template featuring BQ logo branding (`B` black + `Q` `#a60b0b`), card container, CTA button ("RESET PASSWORD"), and 1-hour expiration notice.
+  - Implemented automatic Ethereal Email fallback with clickable `https://ethereal.email/message/...` preview links logged in terminal when live SMTP environment variables are unconfigured.
+- **[auth.services.ts](file:///d:/Code/capstone/api/src/services/auth.services.ts)**, **[auth.controller.ts](file:///d:/Code/capstone/api/src/controller/auth.controller.ts)**, **[auth.routes.ts](file:///d:/Code/capstone/api/src/routes/auth.routes.ts)**:
+  - `POST /auth/forgot-password`: Validates email, generates 1-hour signed JWT reset token, and triggers email service.
+  - `POST /auth/reset-password`: Verifies JWT reset token, hashes password using Argon2, and updates user credentials in MongoDB via Prisma.
+
+---
+
+## 5. Security & Dependency Maintenance
+
+- **SheetJS (`xlsx`) Audit Fix**: Resolved high-severity vulnerability report in `api/package.json` by updating `xlsx` to official SheetJS distribution (`https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz`), achieving **0 vulnerabilities** on `npm audit`.
+- **TypeScript Types**: Installed `@types/nodemailer` dev dependency.
+- **Automated Tests**: Updated `auth.test.ts` with unit tests for `forgot-password` and `reset-password`. Verified that **all 6 API test suites (103/103 tests) pass cleanly**.
+
+---
+
+## 6. Sidebar Navigation Renaming
+
+- Updated menu list configurations (`teacherSidebarMenulist.ts`, `teamLeadSidebarMenuList.ts`, `superAdminSidebarMenuList.ts`) to rename sub-items to **"Live Questions"** and **"Shared Library"**.
+
+---
+
+## Summary Table of Key Files Modified/Created Today
+
+| File | Type | Description |
+|---|---|---|
+| [QuestionListPagination.tsx](file:///d:/Code/capstone/frontend/src/components/custom/pagination/QuestionListPagination.tsx) | Modified | Custom active pill pagination (`#A70202` maroon) |
+| [BulkActionsToolbar.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/BulkActionsToolbar.tsx) | Modified | Integrated datagrid header toolbar |
+| [QuestionTable.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/QuestionTable.tsx) | Modified | Embedded top header toolbar inside table card |
+| [QuestionListStore.ts](file:///d:/Code/capstone/frontend/src/store/QuestionListStore.ts) | **New** | Zustand store for question list state |
+| [useQuestionListActions.ts](file:///d:/Code/capstone/frontend/src/hooks/useQuestionListActions.ts) | **New** | Custom action hook for pagination and bulk mutations |
+| [QuestionList.tsx](file:///d:/Code/capstone/frontend/src/view/admin/question_bank/components/list/QuestionList.tsx) | Refactored | Streamlined component (~390 to ~120 lines) |
+| [LoginPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/LoginPage.tsx) | Modified | Positioned bottom-right Forgot Password link |
+| [ForgotPasswordPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/ForgotPasswordPage.tsx) | **New** | Forgot password request view |
+| [ResetPasswordPage.tsx](file:///d:/Code/capstone/frontend/src/view/login/ResetPasswordPage.tsx) | **New** | Tokenized reset password page |
+| [mail.service.ts](file:///d:/Code/capstone/api/src/services/mail.service.ts) | **New** | Nodemailer HTML template & Ethereal fallback |
+| [auth.services.ts](file:///d:/Code/capstone/api/src/services/auth.services.ts) | Modified | Added `forgotPassword` & `resetPassword` logic |
+| [auth.controller.ts](file:///d:/Code/capstone/api/src/controller/auth.controller.ts) | Modified | Added controller handlers for forgot/reset password |
+| [auth.routes.ts](file:///d:/Code/capstone/api/src/routes/auth.routes.ts) | Modified | Registered `POST /forgot-password` and `POST /reset-password` |
+| [App.tsx](file:///d:/Code/capstone/frontend/src/App.tsx) | Modified | Registered `/forgot-password` and `/reset-password` routes |
+| [package.json](file:///d:/Code/capstone/api/package.json) | Modified | SheetJS vulnerability fix (`xlsx` update to 0.20.3) |
+| [auth.test.ts](file:///d:/Code/capstone/api/src/__tests__/auth.test.ts) | Modified | Added unit tests for forgot/reset endpoints (103/103 pass) |
