@@ -99,3 +99,13 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   return new ApiResponse(200, { id: tokenPayload.id, role: tokenPayload.role, accessToken: newAccessToken }, "Token refreshed successfully").send(res);
 };
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await authService.forgotPassword(req.body);
+  return new ApiResponse(200, result, "Password reset request processed successfully").send(res);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const result = await authService.resetPassword(req.body);
+  return new ApiResponse(200, result, "Password has been successfully reset").send(res);
+});

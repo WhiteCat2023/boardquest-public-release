@@ -19,14 +19,11 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      // Send reset request call to API endpoint if available or simulate smooth feedback
-      await axiosPrivate.post("/auth/forgot-password", { email }).catch(() => {
-        // Fallback for UI feedback if backend endpoint is in progress
-      });
+      await axiosPrivate.post("/auth/forgot-password", { email });
       setIsSubmitted(true);
-      toast.success("Password reset link sent!");
+      toast.success("Password reset link sent to your email!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to request password reset.");
+      toast.error(err.response?.data?.message || "Failed to send password reset email.");
     } finally {
       setLoading(false);
     }

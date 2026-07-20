@@ -1,5 +1,7 @@
 import { ApiError } from "../utils/apiError";
 import { hashedPassword, verifyPassword } from "../utils/hash";
+import { signJWT, verifyJWT } from "../utils/jwt.utils";
+import { sendPasswordResetEmail } from "./mail.service";
 import prisma from "./prisma";
 import { z } from "zod";
 
@@ -36,6 +38,18 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Password is required"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Confirm Password is required"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+});
+
 export const createReviewCenterRepUserSchema = z
   .object({
     employeeId: z.string().min(1, "Employee ID is required"),
@@ -54,6 +68,8 @@ export const createReviewCenterRepUserSchema = z
 type addNewAdminUserInput = z.infer<typeof addNewAdminUserSchema>;
 type createAdminUserInput = z.infer<typeof createAdminUserSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
+type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 type createReviewCenterRepUserInput = z.infer<typeof createReviewCenterRepUserSchema>;
 
 export class AuthService {
@@ -160,6 +176,79 @@ export class AuthService {
 
     // SEND SIGN UP LINK TO REVIEW CENTER REPRESENTATIVE
   }
+
+  async forgotPassword(data: ForgotPasswordInput) {
+    const parsed = forgotPasswordSchema.safeParse(data);
+
+    if (!parsed.success) {
+      const errors = parsed.error.flatten();
+      throw new ApiError(400, "Valid email address is required", [
+        JSON.stringify(errors),
+      ]);
+    }
+
+    const { email } = parsed.data;
+    const user = await this.db.adminUser.findUnique({ where: { email } });
+
+    if (user) {
+      const resetToken = signJWT(
+        { id: user.id, email: user.email, type: "password_reset" },
+        "1h"
+      );
+
+      await sendPasswordResetEmail({
+        toEmail: user.email,
+        resetToken,
+        userName: user.name,
+      });
+    }
+
+    return {
+      message: "If an account with that email exists, password reset instructions have been sent.",
+    };
+  }
+
+  async resetPassword(data: ResetPasswordInput) {
+    const parsed = resetPasswordSchema.safeParse(data);
+
+    if (!parsed.success) {
+      const errors = parsed.error.flatten();
+      throw new ApiError(400, "Validation failed", [
+        JSON.stringify(errors),
+      ]);
+    }
+
+    const { token, newPassword } = parsed.data;
+
+    const { payload, expired } = verifyJWT(token);
+
+    if (expired || !payload) {
+      throw new ApiError(400, "Invalid or expired password reset token");
+    }
+
+    const tokenPayload = payload as { id: string; email: string; type?: string };
+
+    if (tokenPayload.type !== "password_reset") {
+      throw new ApiError(400, "Invalid password reset token type");
+    }
+
+    const user = await this.db.adminUser.findUnique({
+      where: { id: tokenPayload.id },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User account not found");
+    }
+
+    const hash = await hashedPassword(newPassword);
+
+    await this.db.adminUser.update({
+      where: { id: user.id },
+      data: { password: hash },
+    });
+
+    return { message: "Password has been reset successfully." };
+  }
 }
 
 export const authService = new AuthService();
@@ -170,3 +259,7 @@ export const createNewStudent = authService.createNewStudent.bind(authService);
 export const createNewPartner = authService.createNewPartner.bind(authService);
 export const signupAdmin = authService.signupAdmin.bind(authService);
 export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(authService);
+export const forgotPassword = authService.forgotPassword.bind(authService);
+export const resetPassword = authService.resetPassword.bind(authService);
+
+
