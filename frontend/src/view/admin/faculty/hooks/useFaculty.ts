@@ -11,6 +11,8 @@ export function useFaculties() {
       const response = await axiosPrivate.get("/faculty");
       return response.data?.data?.faculties ?? [];
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -21,8 +23,14 @@ export function useDepartments() {
     queryKey: ["departments"],
     queryFn: async () => {
       const response = await axiosPrivate.get("/departments/get");
-      return response.data?.data?.departments ?? [];
+      const resData = response.data?.data;
+      if (Array.isArray(resData)) return resData;
+      if (Array.isArray(resData?.departments)) return resData.departments;
+      if (Array.isArray(response.data?.departments)) return response.data.departments;
+      return [];
     },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -61,6 +69,34 @@ export function useToggleFacultyStatus() {
   return useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       return await axiosPrivate.patch(`/faculty/${id}/status`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["faculties"] });
+    },
+  });
+}
+
+export function useCategories() {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await axiosPrivate.get("/questions/category/get");
+      return response.data?.data?.categories ?? response.data?.data ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useUpdateFacultyCategories() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, categoryIds }: { id: string; categoryIds: string[] }) => {
+      return await axiosPrivate.patch(`/faculty/${id}/categories`, { categoryIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });

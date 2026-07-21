@@ -57,3 +57,22 @@ export const toggleFacultyStatus = asyncHandler(async (req: AuthenticatedRequest
 
   return new ApiResponse(200, { faculty: sanitized }, "Faculty status updated successfully").send(res);
 });
+
+export const updateFacultyCategories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const creatorRole = req.user?.role;
+  if (!creatorRole) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  const { id } = req.params;
+  const { categoryIds } = req.body;
+
+  if (!Array.isArray(categoryIds)) {
+    throw new ApiError(400, "categoryIds must be an array of category IDs.");
+  }
+
+  const updated = await facultyService.updateFacultyCategories(id as string, categoryIds, creatorRole);
+  const { password, ...sanitized } = updated;
+
+  return new ApiResponse(200, { faculty: sanitized }, "Handled categories updated successfully").send(res);
+});

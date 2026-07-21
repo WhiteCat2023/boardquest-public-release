@@ -7,6 +7,11 @@ export interface Department {
   name: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+}
+
 export interface FacultyMember {
   id: string;
   employeeId: string;
@@ -20,6 +25,8 @@ export interface FacultyMember {
     id: string;
     name: string;
   };
+  handledCategories?: Category[];
+  handledCategoryIds?: string[];
   isActive?: boolean;
   lastActiveAt?: string;
   createdAt: string;
@@ -33,6 +40,7 @@ export interface CreateFacultyPayload {
   password: string;
   phoneNumber: string;
   departmentId: string;
+  handledCategoryIds?: string[];
   role: RoleType;
 }
 

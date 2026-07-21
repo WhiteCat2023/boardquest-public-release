@@ -15,6 +15,7 @@ export const createFacultySchema = z.object({
   departmentId: z.string().min(1, "Department is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  handledCategoryIds: z.array(z.string()).optional().default([]),
 });
 
 export const updateFacultySchema = z.object({
@@ -54,6 +55,7 @@ export class FacultyService {
     return await this.db.adminUser.findMany({
       include: {
         department: true,
+        handledCategories: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -68,7 +70,7 @@ export class FacultyService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
+    const { employeeId, name, email, role, phoneNumber, departmentId, username, password, handledCategoryIds } = parsed.data;
 
     // Role hierarchy validation
     if (!this.isAllowedToManageRole(creatorRole, role)) {
@@ -104,9 +106,11 @@ export class FacultyService {
         departmentId,
         username,
         password: hash,
+        handledCategoryIds: handledCategoryIds || [],
       },
       include: {
         department: true,
+        handledCategories: true,
       }
     });
   }
@@ -147,6 +151,33 @@ export class FacultyService {
       data: { isActive },
       include: {
         department: true,
+        handledCategories: true,
+      },
+    });
+  }
+
+  async updateFacultyCategories(id: string, categoryIds: string[], creatorRole: string) {
+    // Strictly restrict updating handled categories to ADMIN and SUPERADMIN
+    if (creatorRole !== "ADMIN" && creatorRole !== "SUPERADMIN") {
+      throw new ApiError(403, "Only Administrators and Super Administrators can manage handled categories.");
+    }
+
+    const userToUpdate = await this.db.adminUser.findUnique({
+      where: { id },
+    });
+
+    if (!userToUpdate) {
+      throw new ApiError(404, "Faculty member not found");
+    }
+
+    return await this.db.adminUser.update({
+      where: { id },
+      data: {
+        handledCategoryIds: categoryIds,
+      },
+      include: {
+        department: true,
+        handledCategories: true,
       },
     });
   }
@@ -159,3 +190,4 @@ export const getAllFaculty = facultyService.getAllFaculty.bind(facultyService);
 export const createFaculty = facultyService.createFaculty.bind(facultyService);
 export const deleteFaculty = facultyService.deleteFaculty.bind(facultyService);
 export const toggleFacultyStatus = facultyService.toggleFacultyStatus.bind(facultyService);
+export const updateFacultyCategories = facultyService.updateFacultyCategories.bind(facultyService);

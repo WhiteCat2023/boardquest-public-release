@@ -22,7 +22,8 @@ export const teacherNavItem: NavItemProps[] = [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" }
+                    { title: "Revisions", path: "/question-bank?view=revisions" },
+                    { title: "Categories", path: "/question-bank?view=categories" }
                 ]
             },
         ]

@@ -5,7 +5,7 @@ import { createDepartment, getDepartments, updateDepartment, deleteDepartment } 
 const router = Router();
 
 router.post("/create", authenticateToken, requireAdmin, createDepartment);
-router.get("/get", authenticateToken, requireAdmin, getDepartments);
+router.get("/get", authenticateToken, getDepartments);
 router.put("/:departmentId", authenticateToken, requireAdmin, updateDepartment);
 router.delete("/:departmentId", authenticateToken, requireAdmin, deleteDepartment);
 

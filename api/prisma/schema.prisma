@@ -56,6 +56,8 @@ model AdminUser {
   departmentId  String?     @db.ObjectId 
 
   createdCategory Category[] @relation("CategoryAuthor")
+  handledCategories Category[] @relation("HandledCategories", fields: [handledCategoryIds], references: [id])
+  handledCategoryIds String[] @db.ObjectId
 
   createdDepartments Department[] @relation("DepartmentAuthor")
   updatedDepartments Department[] @relation("DepartmentUpdater")
@@ -114,6 +116,9 @@ model Category {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name String
   questions Question[]
+
+  handlers    AdminUser[] @relation("HandledCategories", fields: [handlerIds], references: [id])
+  handlerIds  String[]    @db.ObjectId
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -9,6 +9,8 @@ import RequireAuth from "./components/RequireAuth";
 import PersistentSession from "./components/PersistentSession";
 import DashboardLayout from "./layout/DashboardLayout";
 import { FacultyManagement, AddFacultyMember, ViewFacultyMember } from "./view/admin/faculty";
+import StudentManagement from "./view/admin/StudentManagement";
+import Curriculum from "./view/admin/Curriculum";
 import ReviewCenter from "./view/admin/ReviewCenter";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
@@ -19,7 +21,6 @@ import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
 import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
 import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
-import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -46,6 +47,8 @@ function App() {
                 <Route path="faculty-management/create" element={<AddFacultyMember />} />
                 <Route path="faculty-management/add" element={<AddFacultyMember />} />
                 <Route path="faculty-management/view/:facultyId" element={<ViewFacultyMember />} />
+                <Route path="student-management" element={<StudentManagement />} />
+                <Route path="curriculum" element={<Curriculum />} />
               </Route>
 
               <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
@@ -67,13 +70,6 @@ function App() {
               <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
                 <Route path="settings" element={<Settings />} />
               </Route>
-
-              {/* <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
-                <Route path="settings" element={<SettingLayout />}>
-                  <Route index element={<Settings />} />
-                  <Route path="profile-settings" element={<ProfileSettings />} />
-                </Route>
-              </Route> */}
               
               <Route path="profile-settings" element={<ProfileSettings />} />
             </Route>
@@ -90,4 +86,3 @@ function App() {
 }
 
 export default App
-

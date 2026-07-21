@@ -20,6 +20,16 @@ export const teamLeadNavItem: NavItemProps[] = [
                 icon: "Users"
             },
             {
+                title: "Student Management",
+                path: "/student-management",
+                icon: "GraduationCap"
+            },
+            {
+                title: "Curriculum",
+                path: "/curriculum",
+                icon: "BookOpenCheck"
+            },
+            {
                 title: "Review Center",
                 path: "/review-center",
                 icon: "BookOpen"
@@ -32,7 +42,8 @@ export const teamLeadNavItem: NavItemProps[] = [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" }
+                    { title: "Revisions", path: "/question-bank?view=revisions" },
+                    { title: "Categories", path: "/question-bank?view=categories" }
                 ]
             },
         ]

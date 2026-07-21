@@ -50,6 +50,9 @@ export default function FacultyTable({
                   Scope / Department
                 </TableHead>
                 <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                  Handled Subjects
+                </TableHead>
+                <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
                   Authority Role
                 </TableHead>
                 <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">

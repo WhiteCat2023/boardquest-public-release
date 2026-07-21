@@ -130,6 +130,7 @@ export default function AddFacultyMember() {
           departments={departments}
           isDepartmentsLoading={isDepartmentsLoading}
           onChange={handleFieldChange}
+          onCategoryChange={(categoryIds) => setFormData((prev) => ({ ...prev, handledCategoryIds: categoryIds }))}
         />
 
         <FacultyAccountForm

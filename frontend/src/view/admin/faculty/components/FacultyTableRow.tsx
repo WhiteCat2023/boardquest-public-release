@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Trash2, Shield, Briefcase, Phone, Mail, Power, Clock } from "lucide-react";
+import { Eye, Trash2, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen } from "lucide-react";
 import type { FacultyMember, RoleType } from "../types";
 import { getRoleBadgeColor, isUserOnline } from "../utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -35,6 +35,8 @@ export default function FacultyTableRow({
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
+
+  const handledCategories = member.handledCategories || [];
 
   return (
     <TableRow className="hover:bg-slate-50/30 transition-colors group border-b border-slate-100">
@@ -81,6 +83,36 @@ export default function FacultyTableRow({
         <div className="flex items-center gap-1.5 text-slate-700 text-xs font-semibold">
           <Briefcase size={13} className="text-slate-400" />
           <span className="capitalize">{member.department?.name || "General"}</span>
+        </div>
+      </TableCell>
+
+      {/* Handled Subjects / Categories */}
+      <TableCell className="p-4">
+        <div className="flex items-center gap-1 flex-wrap max-w-xs">
+          {handledCategories.length > 0 ? (
+            handledCategories.slice(0, 2).map((cat) => (
+              <Badge
+                key={cat.id}
+                variant="outline"
+                className="bg-indigo-50/70 text-indigo-700 border-indigo-200 text-[10px] font-bold py-0.5 px-2 rounded-md truncate max-w-[110px]"
+                title={cat.name}
+              >
+                <BookOpen size={10} className="mr-1 shrink-0 inline" />
+                <span className="truncate">{cat.name}</span>
+              </Badge>
+            ))
+          ) : (
+            <span className="text-xs text-slate-400 font-medium italic">Unassigned</span>
+          )}
+          {handledCategories.length > 2 && (
+            <Badge
+              variant="outline"
+              className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] font-bold py-0.5 px-1.5 rounded-md"
+              title={handledCategories.slice(2).map((c) => c.name).join(", ")}
+            >
+              +{handledCategories.length - 2} more
+            </Badge>
+          )}
         </div>
       </TableCell>
 
