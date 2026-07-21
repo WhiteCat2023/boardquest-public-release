@@ -102,6 +102,14 @@ export class AuthService {
       throw new ApiError(401, "Invalid email or password");
     }
 
+    await this.db.adminUser.update({
+      where: { id: user.id },
+      data: {
+        isActive: true,
+        lastActiveAt: new Date(),
+      },
+    });
+
     return user;
   }
 

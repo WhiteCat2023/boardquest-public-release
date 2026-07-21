@@ -42,3 +42,18 @@ export const deleteFaculty = asyncHandler(async (req: AuthenticatedRequest, res:
 
   return new ApiResponse(200, null, "Faculty member deleted successfully").send(res);
 });
+
+export const toggleFacultyStatus = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const creatorRole = req.user?.role;
+  if (!creatorRole) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  const { id } = req.params;
+  const { isActive } = req.body;
+
+  const updated = await facultyService.toggleFacultyStatus(id as string, Boolean(isActive), creatorRole);
+  const { password, ...sanitized } = updated;
+
+  return new ApiResponse(200, { faculty: sanitized }, "Faculty status updated successfully").send(res);
+});

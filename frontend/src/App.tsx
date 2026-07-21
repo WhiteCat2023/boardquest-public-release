@@ -8,7 +8,7 @@ import MainLayout from "./layout/MainLayout";
 import RequireAuth from "./components/RequireAuth";
 import PersistentSession from "./components/PersistentSession";
 import DashboardLayout from "./layout/DashboardLayout";
-import FacultyManagement from "./view/admin/FacultyManagement";
+import { FacultyManagement, AddFacultyMember, ViewFacultyMember } from "./view/admin/faculty";
 import ReviewCenter from "./view/admin/ReviewCenter";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
@@ -43,6 +43,9 @@ function App() {
 
               <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>
                 <Route path="faculty-management" element={<FacultyManagement />} />
+                <Route path="faculty-management/create" element={<AddFacultyMember />} />
+                <Route path="faculty-management/add" element={<AddFacultyMember />} />
+                <Route path="faculty-management/view/:facultyId" element={<ViewFacultyMember />} />
               </Route>
 
               <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]} />}>

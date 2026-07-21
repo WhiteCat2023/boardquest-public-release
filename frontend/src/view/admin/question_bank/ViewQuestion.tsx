@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
 import { QuestionStatus, UserRole } from "@/types/question";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
+import { useQuestionDetail } from "@/hooks/useQuestionBank";
 
 export default function ViewQuestion() {
   const { questionId } = useParams();
@@ -31,14 +32,8 @@ export default function ViewQuestion() {
   const currentUserId = (auth as any)?.data?.user?.id;
   const currentUserRole = (auth as any)?.data?.user?.role;
 
-  // Fetch question details
-  const { data: question, isLoading, error } = useQuery({
-    queryKey: ["questionDetail", questionId],
-    queryFn: async () => {
-      const response = await axiosPrivate.get(`/questions/get/${questionId}`);
-      return response.data?.data?.question || response.data?.data;
-    },
-  });
+  // Fetch question details via custom hook
+  const { data: question, isLoading, error } = useQuestionDetail(questionId);
 
   const handleDelete = () => {
     // Optimistically update lists cache to hide the question immediately

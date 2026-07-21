@@ -54,6 +54,7 @@ export const authenticateToken = async (
         username: true,
         name: true,
         role: true,
+        isActive: true,
       },
     });
 
@@ -64,6 +65,17 @@ export const authenticateToken = async (
       });
       return;
     }
+
+    // Update isActive and lastActiveAt asynchronously
+    prisma.adminUser
+      .update({
+        where: { id: user.id },
+        data: {
+          isActive: true,
+          lastActiveAt: new Date(),
+        },
+      })
+      .catch((err) => console.error("Error updating user active status:", err));
 
     req.user = user;
     next();

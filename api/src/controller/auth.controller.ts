@@ -4,7 +4,8 @@ import * as authService from "../services/auth.services";
 import { generateToken } from "../utils/generateToken";
 import { ApiResponse } from "../utils/apiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
-import {signJWT, verifyJWT} from "../utils/jwt.utils";
+import { signJWT, verifyJWT } from "../utils/jwt.utils";
+import prisma from "../services/prisma";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -58,6 +59,31 @@ export const signup = asyncHandler(async (req, res) => {
 });
 
 export const logout = async (req: Request, res: Response) => {
+  try {
+    let token = req.cookies?.accessToken || req.cookies?.token;
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.slice(7);
+      }
+    }
+
+    if (token) {
+      const { payload } = verifyJWT(token);
+      if (payload && (payload as any).id) {
+        await prisma.adminUser.update({
+          where: { id: (payload as any).id },
+          data: {
+            isActive: false,
+            lastActiveAt: new Date(),
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error updating user status during logout:", error);
+  }
+
   const cookieOptions = {
     httpOnly: true,
     secure: true,

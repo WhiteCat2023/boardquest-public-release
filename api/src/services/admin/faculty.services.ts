@@ -128,6 +128,28 @@ export class FacultyService {
       where: { id },
     });
   }
+
+  async toggleFacultyStatus(id: string, isActive: boolean, creatorRole: string) {
+    const userToUpdate = await this.db.adminUser.findUnique({
+      where: { id },
+    });
+
+    if (!userToUpdate) {
+      throw new ApiError(404, "Faculty member not found");
+    }
+
+    if (!this.isAllowedToManageRole(creatorRole, userToUpdate.role)) {
+      throw new ApiError(403, `You are not authorized to update status for a user with role ${userToUpdate.role}`);
+    }
+
+    return await this.db.adminUser.update({
+      where: { id },
+      data: { isActive },
+      include: {
+        department: true,
+      },
+    });
+  }
 }
 
 export const facultyService = new FacultyService();
@@ -136,3 +158,4 @@ export const isAllowedToManageRole = facultyService.isAllowedToManageRole.bind(f
 export const getAllFaculty = facultyService.getAllFaculty.bind(facultyService);
 export const createFaculty = facultyService.createFaculty.bind(facultyService);
 export const deleteFaculty = facultyService.deleteFaculty.bind(facultyService);
+export const toggleFacultyStatus = facultyService.toggleFacultyStatus.bind(facultyService);
