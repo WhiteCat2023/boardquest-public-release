@@ -30,6 +30,11 @@ export const adminNavItem: NavItemProps[] = [
                 icon: "BookOpenCheck"
             },
             {
+                title: "Subject Management",
+                path: "/subject-management",
+                icon: "BookMarked"
+            },
+            {
                 title: "Review Center",
                 path: "/review-center",
                 icon: "BookOpen"
@@ -42,8 +47,7 @@ export const adminNavItem: NavItemProps[] = [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" },
-                    { title: "Categories", path: "/question-bank?view=categories" }
+                    { title: "Revisions", path: "/question-bank?view=revisions" }
                 ]
             },
         ]
@@ -61,11 +65,6 @@ export const adminNavItem: NavItemProps[] = [
     {
         sideBarCategoryName: "SYSTEM & USER",
         content: [
-            {
-                title: "Profile Settings",
-                path: "/profile-settings",
-                icon: "UserCircle"
-            },
             {
                 title: "System Settings",
                 path: "/settings",

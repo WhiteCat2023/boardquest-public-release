@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getDifficultyColor } from "@/utils/style";
 import { UserRole } from "@/types/question";
 
@@ -149,9 +150,17 @@ export default function ReviewCenter() {
           </div>
 
           {isLoading ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center text-slate-400 w-full">
-              <div className="animate-spin inline-block border-3 border-[#A70202] border-t-transparent rounded-full w-8 h-8 mb-4"></div>
-              <p className="text-sm font-medium">Fetching evaluation queue...</p>
+            <div className="flex flex-col gap-4 w-full">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xs">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-5 w-24 rounded-full bg-slate-200/80" />
+                    <Skeleton className="h-4 w-32 rounded-md bg-slate-200/80" />
+                  </div>
+                  <Skeleton className="h-4 w-full bg-slate-200/80 rounded-md" />
+                  <Skeleton className="h-4 w-2/3 bg-slate-200/80 rounded-md" />
+                </div>
+              ))}
             </div>
           ) : questions.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3 w-full shadow-xs">

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { StudentAnalyticsResult } from "../../../../api/src/services/admin/analytics.services";
 
 interface StudentListItem {
@@ -125,9 +126,21 @@ export default function Analytics() {
       {/* Right Pane: Performance Dashboard */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 h-full p-8 flex flex-col gap-6">
         {isReportLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-32">
-            <div className="animate-spin inline-block border-3 border-[#A70202] border-t-transparent rounded-full w-8 h-8 mb-4"></div>
-            <p className="text-sm font-semibold">Consolidating performance metrics...</p>
+          <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
+            <Card className="p-6 bg-white border border-slate-200 rounded-3xl space-y-3">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-14 w-14 rounded-full bg-slate-200/80" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-48 bg-slate-200/80 rounded-md" />
+                  <Skeleton className="h-4 w-32 bg-slate-200/80 rounded-md" />
+                </div>
+              </div>
+            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Skeleton className="h-28 rounded-2xl bg-slate-200/80" />
+              <Skeleton className="h-28 rounded-2xl bg-slate-200/80" />
+              <Skeleton className="h-28 rounded-2xl bg-slate-200/80" />
+            </div>
           </div>
         ) : !report ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-32 text-center gap-3">

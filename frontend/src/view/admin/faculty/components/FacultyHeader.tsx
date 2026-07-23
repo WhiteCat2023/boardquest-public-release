@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
-import { Users, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
+import AddFacultyButton from "@/components/custom/button/AddFacultyButton";
 
 interface FacultyHeaderProps {
   canAddFaculty: boolean;
@@ -20,12 +19,9 @@ export default function FacultyHeader({ canAddFaculty }: FacultyHeaderProps) {
       </div>
 
       {canAddFaculty && (
-        <Link to="/faculty-management/create">
-          <Button className="bg-[#A70202] text-white hover:bg-[#8f0101] rounded-xl px-5 py-2.5 flex items-center gap-2 font-semibold shadow-sm transition-all duration-200 cursor-pointer">
-            <UserPlus size={16} />
-            Add Faculty Member
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <AddFacultyButton />
+        </div>
       )}
     </div>
   );

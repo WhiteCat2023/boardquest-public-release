@@ -1,7 +1,5 @@
 import { Search, X } from "lucide-react";
 import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
-import { useQuery } from "@tanstack/react-query";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { QUESTION_DIFFICULTY, QUESTION_STATUS, QUESTION_TYPE } from "@/enums/QuestionBank";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,15 +15,12 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 
 export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } = {}) {
-    const axiosPrivate = useAxiosPrivate();
     const [searchParams] = useSearchParams();
     const view = searchParams.get("view") || "bank";
 
     const { 
         search, 
         setSearch, 
-        selectedCategory, 
-        setSelectedCategory, 
         selectedDifficulty, 
         setSelectedDifficulty, 
         selectedType, 
@@ -33,18 +28,8 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
         selectedStatus, 
         setSelectedStatus } = useQuestionBankFilterStore();
 
-
-    const {data: categories = []} = useQuery({
-        queryKey: ["categories"],
-        queryFn: async () => {
-            const response = await axiosPrivate.get("/questions/category/get");
-            return response.data?.data?.categories ?? [];
-        },
-    });
-
     const clearFilters = () => {
         setSearch("");
-        setSelectedCategory("");
         setSelectedDifficulty("");
         setSelectedType("");
         setSelectedStatus("");
@@ -55,7 +40,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
             {!showSearch && (
                 <div className="flex items-center justify-between w-full pb-1">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filters</span>
-                    {(search || selectedCategory || selectedDifficulty || selectedType || selectedStatus) && (
+                    {(search || selectedDifficulty || selectedType || selectedStatus) && (
                         <Button
                             variant="link"
                             size="sm"
@@ -75,7 +60,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                         <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                             Search
                         </FieldLabel>
-                        {(search || selectedCategory || selectedDifficulty || selectedType || selectedStatus) && (
+                        {(search || selectedDifficulty || selectedType || selectedStatus) && (
                             <Button
                                 variant="link"
                                 size="sm"
@@ -108,29 +93,6 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                     </div>
                 </Field>
             )}
-
-            {/* Category Select */}
-            <Field>
-                <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Category
-                </FieldLabel>
-                <Select
-                    value={selectedCategory || "all"}
-                    onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}
-                >
-                    <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 text-slate-600">
-                        <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false} position="popper" align="start">
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </Field>
 
             {/* Difficulty Buttons */}
             <Field>

@@ -30,6 +30,11 @@ export const teamLeadNavItem: NavItemProps[] = [
                 icon: "BookOpenCheck"
             },
             {
+                title: "Subject Management",
+                path: "/subject-management",
+                icon: "BookMarked"
+            },
+            {
                 title: "Review Center",
                 path: "/review-center",
                 icon: "BookOpen"
@@ -42,8 +47,7 @@ export const teamLeadNavItem: NavItemProps[] = [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" },
-                    { title: "Categories", path: "/question-bank?view=categories" }
+                    { title: "Revisions", path: "/question-bank?view=revisions" }
                 ]
             },
         ]
@@ -55,16 +59,6 @@ export const teamLeadNavItem: NavItemProps[] = [
                 title: "Analytics",
                 path: "/analytics",
                 icon: "BarChart2"
-            },
-        ]
-    },
-    {
-        sideBarCategoryName: "SYSTEM & USER",
-        content: [
-            {
-                title: "Profile Settings",
-                path: "/profile-settings",   
-                icon: "UserCircle"
             },
         ]
     },

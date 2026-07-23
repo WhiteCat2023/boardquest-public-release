@@ -31,18 +31,6 @@ export const createFaculty = asyncHandler(async (req: AuthenticatedRequest, res:
   return new ApiResponse(201, { faculty: sanitized }, "Faculty member created successfully").send(res);
 });
 
-export const deleteFaculty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorRole = req.user?.role;
-  if (!creatorRole) {
-    throw new ApiError(401, "Unauthorized");
-  }
-
-  const { id } = req.params;
-  await facultyService.deleteFaculty(id as string, creatorRole);
-
-  return new ApiResponse(200, null, "Faculty member deleted successfully").send(res);
-});
-
 export const toggleFacultyStatus = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const creatorRole = req.user?.role;
   if (!creatorRole) {
@@ -75,4 +63,16 @@ export const updateFacultyCategories = asyncHandler(async (req: AuthenticatedReq
   const { password, ...sanitized } = updated;
 
   return new ApiResponse(200, { faculty: sanitized }, "Handled categories updated successfully").send(res);
+});
+
+export const bulkCreateFaculty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const creatorRole = req.user?.role;
+  if (!creatorRole) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  const { members } = req.body;
+  const result = await facultyService.bulkCreateFaculty(members, creatorRole);
+
+  return new ApiResponse(201, result, `${result.createdCount} faculty member(s) created successfully`).send(res);
 });

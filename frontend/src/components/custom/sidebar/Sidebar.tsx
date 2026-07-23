@@ -139,40 +139,27 @@ function Sidebar({ navItem, logout }: SidebarContentProps) {
       </SidebarHeader>
 
       <SidebarContent className="px-5 gap-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:gap-2">
-        {navItem.map((item: NavItemProps, index: number) => (
-          <SidebarGroup key={index} className="p-0">
-            <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
-              {item.sideBarCategoryName}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-2">
-                {item.content.map((content: NavContentProps, contentIndex: number) => (
-                  <SidebarItem 
-                    key={contentIndex} 
-                    content={content} 
-                    location={location} 
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {navItem
+          .filter((item: NavItemProps) => item.content && item.content.length > 0)
+          .map((item: NavItemProps, index: number) => (
+            <SidebarGroup key={index} className="p-0">
+              <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
+                {item.sideBarCategoryName}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-2">
+                  {item.content.map((content: NavContentProps, contentIndex: number) => (
+                    <SidebarItem 
+                      key={contentIndex} 
+                      content={content} 
+                      location={location} 
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
       </SidebarContent>
-
-      <SidebarFooter className="mt-auto px-5 pb-5 pt-4 border-t border-gray-100 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:border-t-0">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              onClick={logout} 
-              tooltip="Logout"
-              className="flex items-center gap-3 w-full px-3 py-2.5 h-auto rounded-xl text-sm font-medium !text-gray-500 hover:!bg-gray-100 hover:!text-gray-800 transition-all duration-150 group-data-[collapsible=icon]:justify-center"
-            >
-              <LogOut size={18} className="shrink-0" />
-              <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </UISidebar>
   );
 }

@@ -55,6 +55,16 @@ export const deleteStudent = asyncHandler(async (req: Request, res: Response) =>
 });
 
 /**
+ * Bulk create / enroll students from CSV
+ * Body: { students: [...] }
+ */
+export const bulkCreateStudents = asyncHandler(async (req: Request, res: Response) => {
+  const { students } = req.body;
+  const result = await studentService.bulkCreateStudents(students);
+  return new ApiResponse(201, result, `${result.createdCount} student(s) enrolled successfully`).send(res);
+});
+
+/**
  * Get student statistics (level, XP, streak, achievements)
  * Params: studentId
  */

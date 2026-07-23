@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +47,6 @@ import {
 import {
   useFaculties,
   useToggleFacultyStatus,
-  useDeleteFaculty,
   useCategories,
   useUpdateFacultyCategories,
 } from "./hooks/useFaculty";
@@ -61,11 +61,9 @@ export default function ViewFacultyMember() {
     useCategories();
 
   const toggleStatusMutation = useToggleFacultyStatus();
-  const deleteMutation = useDeleteFaculty();
   const updateCategoriesMutation = useUpdateFacultyCategories();
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isEditCategoriesOpen, setIsEditCategoriesOpen] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
@@ -174,32 +172,6 @@ export default function ViewFacultyMember() {
     );
   };
 
-  const handleOpenDeleteConfirm = () => {
-    if (!member) return;
-    if (member.id === currentUserId) {
-      toast.error("You cannot delete your own account.");
-      return;
-    }
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (!member) return;
-    deleteMutation.mutate(member.id, {
-      onSuccess: () => {
-        toast.success("Faculty member deleted successfully.");
-        setIsDeleteConfirmOpen(false);
-        navigate("/faculty-management");
-      },
-      onError: (err: any) => {
-        toast.error(
-          err.response?.data?.message || "Failed to delete faculty member.",
-        );
-        setIsDeleteConfirmOpen(false);
-      },
-    });
-  };
-
   const handleSaveCategories = () => {
     if (!member) return;
     updateCategoriesMutation.mutate(
@@ -218,18 +190,7 @@ export default function ViewFacultyMember() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <div className="animate-spin border-3 border-[#A70202] border-t-transparent rounded-full w-8 h-8"></div>
-        <p className="text-sm font-medium text-slate-400">
-          Loading faculty profile details...
-        </p>
-      </div>
-    );
-  }
-
-  if (!member) {
+  if (!member && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8 text-center">
         <div className="p-4 bg-slate-100 text-slate-400 rounded-full">
@@ -251,18 +212,29 @@ export default function ViewFacultyMember() {
     );
   }
 
-  const isAccountActive = member.isActive !== false;
-  const isOnline = isUserOnline(member.lastActiveAt, member.isActive);
+  const activeMember = member || ({
+    id: "placeholder",
+    name: "Loading Faculty Member",
+    email: "loading.faculty@university.edu",
+    role: "TEACHER",
+    isActive: true,
+    department: { name: "Department Name" },
+    handledCategories: [{ id: "1", name: "Category Name" }],
+  } as any);
+
+  const isAccountActive = member?.isActive !== false;
+  const isOnline = isUserOnline(member?.lastActiveAt, member?.isActive);
   const canManage =
-    member.id !== currentUserId &&
-    isAllowedToManageRole(currentUserRole, member.role);
+    member?.id !== currentUserId &&
+    isAllowedToManageRole(currentUserRole, member?.role);
   const canManageCategories =
     currentUserRole === "ADMIN" || currentUserRole === "SUPERADMIN";
 
   const handledCategories = member.handledCategories || [];
 
   return (
-    <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50 max-w-5xl mx-auto">
+    <phantom-ui loading={isLoading}>
+      <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50 max-w-5xl mx-auto">
       {/* Header & Back Navigation */}
       <div className="flex flex-col gap-4 sticky top-0 bg-slate-50/95 backdrop-blur-md pb-4 pt-4 -mt-4 z-10 border-b border-slate-100">
         <div className="flex items-center gap-2">
@@ -289,17 +261,6 @@ export default function ViewFacultyMember() {
               Complete administrative record and authorization profile
             </p>
           </div>
-
-          {canManage && (
-            <Button
-              onClick={handleOpenDeleteConfirm}
-              variant="destructive"
-              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border border-red-200 rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors shadow-none"
-            >
-              <Trash2 size={15} />
-              Delete Account
-            </Button>
-          )}
         </div>
       </div>
 
@@ -390,16 +351,6 @@ export default function ViewFacultyMember() {
                 >
                   <Power size={14} />
                   {isAccountActive ? "Deactivate Account" : "Activate Account"}
-                </Button>
-
-                <Button
-                  onClick={handleOpenDeleteConfirm}
-                  disabled={deleteMutation.isPending}
-                  variant="destructive"
-                  className="w-full h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border border-red-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-none"
-                >
-                  <Trash2 size={14} />
-                  Delete Member Account
                 </Button>
               </>
             )}
@@ -640,43 +591,6 @@ export default function ViewFacultyMember() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation AlertDialog */}
-      <AlertDialog
-        open={isDeleteConfirmOpen}
-        onOpenChange={setIsDeleteConfirmOpen}
-      >
-        <AlertDialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xl max-w-md">
-          <AlertDialogHeader className="flex flex-row items-start gap-3.5 text-left">
-            <div className="p-2.5 bg-red-50 text-red-600 rounded-2xl border border-red-100 shrink-0 mt-0.5">
-              <Trash2 size={20} className="stroke-[2.5]" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <AlertDialogTitle className="text-lg font-bold text-slate-800 leading-snug">
-                Delete Faculty Account
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-slate-500 leading-relaxed">
-                Are you sure you want to permanently delete{" "}
-                <strong className="text-slate-800">{member.name}</strong> (
-                {member.role})? This action cannot be undone and will
-                permanently remove their profile and access.
-              </AlertDialogDescription>
-            </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-            <AlertDialogCancel className="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border-0 text-xs font-semibold px-4 py-2 cursor-pointer">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isPending}
-              className="rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 cursor-pointer"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Account"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Edit Handled Categories Modal for Admin / SuperAdmin */}
       {canManageCategories && (
         <AlertDialog
@@ -763,6 +677,7 @@ export default function ViewFacultyMember() {
           </AlertDialogContent>
         </AlertDialog>
       )}
-    </div>
+      </div>
+    </phantom-ui>
   );
 }

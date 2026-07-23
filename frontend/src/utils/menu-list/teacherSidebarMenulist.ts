@@ -15,6 +15,11 @@ export const teacherNavItem: NavItemProps[] = [
         sideBarCategoryName: "LEARNING MANAGEMENT",
         content: [
             {
+                title: "Subject Management",
+                path: "/subject-management",
+                icon: "BookMarked"
+            },
+            {
                 title: "Question Bank",
                 path: "/question-bank",
                 icon: "ClipboardList",
@@ -22,19 +27,8 @@ export const teacherNavItem: NavItemProps[] = [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" },
-                    { title: "Categories", path: "/question-bank?view=categories" }
+                    { title: "Revisions", path: "/question-bank?view=revisions" }
                 ]
-            },
-        ]
-    },
-    {
-        sideBarCategoryName: "SYSTEM & USER",
-        content: [
-            {
-                title: "Profile Settings",
-                path: "/profile-settings",   
-                icon: "UserCircle"
             },
         ]
     },

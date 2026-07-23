@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Trash2, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen } from "lucide-react";
+import { Eye, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen } from "lucide-react";
 import type { FacultyMember, RoleType } from "../types";
 import { getRoleBadgeColor, isUserOnline } from "../utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,17 +10,15 @@ interface FacultyTableRowProps {
   member: FacultyMember;
   canManage: boolean;
   onToggleStatus: (id: string, currentStatus: boolean, name: string) => void;
-  onDelete: (id: string, name: string, role: RoleType) => void;
 }
 
 export default function FacultyTableRow({
   member,
   canManage,
   onToggleStatus,
-  onDelete,
 }: FacultyTableRowProps) {
-  const isAccountActive = member.isActive !== false;
-  const isOnline = isUserOnline(member.lastActiveAt, member.isActive);
+  const isAccountActive = member?.isActive !== false;
+  const isOnline = isUserOnline(member?.lastActiveAt, member?.isActive);
 
   const formatLastActive = (dateStr?: string) => {
     if (!dateStr) return "Never";
@@ -36,7 +34,7 @@ export default function FacultyTableRow({
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  const handledCategories = member.handledCategories || [];
+  const handledCategories = member?.handledCategories || [];
 
   return (
     <TableRow className="hover:bg-slate-50/30 transition-colors group border-b border-slate-100">
@@ -66,7 +64,7 @@ export default function FacultyTableRow({
         </div>
       </TableCell>
 
-      {/* Contact Details */}
+      {/* Contact Details
       <TableCell className="p-4">
         <div className="flex flex-col gap-0.5 text-xs font-medium text-slate-500">
           <span className="flex items-center gap-1.5">
@@ -76,7 +74,7 @@ export default function FacultyTableRow({
             <Phone size={12} className="text-slate-400" /> {member.phoneNumber}
           </span>
         </div>
-      </TableCell>
+      </TableCell> */}
 
       {/* Scope / Department */}
       <TableCell className="p-4">
@@ -87,7 +85,7 @@ export default function FacultyTableRow({
       </TableCell>
 
       {/* Handled Subjects / Categories */}
-      <TableCell className="p-4">
+      {/* <TableCell className="p-4">
         <div className="flex items-center gap-1 flex-wrap max-w-xs">
           {handledCategories.length > 0 ? (
             handledCategories.slice(0, 2).map((cat) => (
@@ -114,7 +112,7 @@ export default function FacultyTableRow({
             </Badge>
           )}
         </div>
-      </TableCell>
+      </TableCell> */}
 
       {/* Authority Role */}
       <TableCell className="p-4">
@@ -193,15 +191,7 @@ export default function FacultyTableRow({
             </button>
           )}
 
-          {canManage ? (
-            <button
-              onClick={() => onDelete(member.id, member.name, member.role)}
-              className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-              title="Delete Faculty Account"
-            >
-              <Trash2 size={15} />
-            </button>
-          ) : (
+          {!canManage && (
             <span className="text-xs text-slate-300 font-semibold italic ml-2">Locked</span>
           )}
         </div>

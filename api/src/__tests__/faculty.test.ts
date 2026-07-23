@@ -127,38 +127,4 @@ describe('Faculty Routes', () => {
       expect(response.status).toBe(403);
     });
   });
-
-  describe('DELETE /api/faculty/:id', () => {
-    it('should delete a faculty member successfully', async () => {
-      (facultyService.deleteFaculty as jest.Mock).mockResolvedValue(undefined);
-
-      const response = await request(app).delete('/api/faculty/faculty-1');
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toContain('deleted successfully');
-      expect(facultyService.deleteFaculty).toHaveBeenCalledWith('faculty-1', 'ADMIN');
-    });
-
-    it('should handle deletion permission / existence error from service', async () => {
-      (facultyService.deleteFaculty as jest.Mock).mockRejectedValue(
-        new ApiError(403, 'You do not have permission to delete this role')
-      );
-
-      const response = await request(app).delete('/api/faculty/faculty-1');
-
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('You do not have permission to delete this role');
-    });
-
-    it('should block delete if user is not authorized (e.g. TEACHER)', async () => {
-      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
-        req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER' };
-        next();
-      });
-
-      const response = await request(app).delete('/api/faculty/faculty-1');
-
-      expect(response.status).toBe(403);
-    });
-  });
 });

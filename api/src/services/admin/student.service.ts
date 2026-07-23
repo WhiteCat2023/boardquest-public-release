@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
 
+import { sendStudentCredentialsEmail } from "../mail.service";
 import { StudyPlanService, createStudyPlanSchema } from "./studyPlan.service";
 import { SubjectMasteryService, updateSubjectMasterySchema } from "./subjectMastery.service";
 import { ExamResultService, recordExamResultSchema } from "./examResult.service";
@@ -121,22 +122,31 @@ export class StudentService {
    * Get student profile by ID
    */
   async getStudentById(studentId: string) {
-    const student = await this.db.user.findUnique({
-      where: { id: studentId },
-      include: {
-        mastery: true,
-        achievements: true,
-        examResults: true,
-        studyPlans: true,
-        lessonCompletions: true,
-      },
-    });
-
-    if (!student) {
+    if (!studentId || typeof studentId !== "string" || !/^[0-9a-fA-F]{24}$/.test(studentId)) {
       throw new ApiError(404, "Student not found");
     }
 
-    return student;
+    try {
+      const student = await this.db.user.findUnique({
+        where: { id: studentId },
+        include: {
+          mastery: true,
+          achievements: true,
+          examResults: true,
+          studyPlans: true,
+          lessonCompletions: true,
+        },
+      });
+
+      if (!student) {
+        throw new ApiError(404, "Student not found");
+      }
+
+      return student;
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      throw new ApiError(404, "Student not found");
+    }
   }
 
   /**
@@ -237,6 +247,82 @@ export class StudentService {
       totalXPEarned: totalXPEarned._sum.xp || 0,
     };
   }
+
+  /**
+   * Bulk create / enroll students from CSV
+   */
+  async bulkCreateStudents(students: Array<{
+    name: string;
+    email: string;
+    location?: string;
+    program?: string;
+    yearLevel?: string;
+  }>) {
+    if (!Array.isArray(students) || students.length === 0) {
+      throw new ApiError(400, "No student entries provided for import.");
+    }
+
+    const createdStudents: any[] = [];
+    const errors: Array<{ email: string; name: string; error: string }> = [];
+
+    for (let i = 0; i < students.length; i++) {
+      const item = students[i];
+      const name = item.name?.trim();
+      const email = item.email?.trim().toLowerCase();
+
+      if (!name || !email) {
+        errors.push({ email: email || "unknown", name: name || "unknown", error: "Name and Email are required fields." });
+        continue;
+      }
+
+      const existing = await this.db.user.findUnique({
+        where: { email },
+      });
+
+      if (existing) {
+        errors.push({ email, name, error: "Email already registered." });
+        continue;
+      }
+
+      const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+      const tempPassword = `BQ-STU-${randomChars}`;
+
+      try {
+        const hash = await hashedPassword(tempPassword);
+        const newStudent = await this.db.user.create({
+          data: {
+            email,
+            password: hash,
+            name,
+            location: item.location?.trim() || "Philippines",
+            level: 1,
+            xp: 0,
+            streak: 0,
+          },
+        });
+
+        sendStudentCredentialsEmail({
+          toEmail: email,
+          name,
+          password: tempPassword,
+          studentId: newStudent.id,
+        }).catch((err) => console.error("[BulkStudentImport] Email send error:", err));
+
+        const { password, ...sanitized } = newStudent;
+        createdStudents.push(sanitized);
+      } catch (err: any) {
+        errors.push({ email, name, error: err.message || "Failed to enroll student" });
+      }
+    }
+
+    return {
+      totalProcessed: students.length,
+      createdCount: createdStudents.length,
+      skippedCount: errors.length,
+      createdStudents,
+      errors,
+    };
+  }
 }
 
 // ============ Service Instantiations ============
@@ -256,6 +342,7 @@ export const getStudentById = studentService.getStudentById.bind(studentService)
 export const updateStudent = studentService.updateStudent.bind(studentService);
 export const deleteStudent = studentService.deleteStudent.bind(studentService);
 export const getStudentStats = studentService.getStudentStats.bind(studentService);
+export const bulkCreateStudents = studentService.bulkCreateStudents.bind(studentService);
 
 export const createStudyPlan = studyPlanService.createStudyPlan.bind(studyPlanService);
 export const getStudyPlans = studyPlanService.getStudyPlans.bind(studyPlanService);

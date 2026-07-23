@@ -3,7 +3,9 @@ import { useCategories } from "@/view/admin/faculty/hooks/useFaculty";
 import { Tag, Plus, Search, FolderPlus, BookOpen, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,7 +70,7 @@ export default function CategoriesView() {
             placeholder="Search evaluation categories..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+            className="pl-10 h-11 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] shadow-2xs"
           />
         </div>
 
@@ -85,12 +87,23 @@ export default function CategoriesView() {
 
       {/* Grid of Categories */}
       {isLoading ? (
-        <div className="py-20 text-center text-slate-400">
-          <div className="animate-spin inline-block border-3 border-[#A70202] border-t-transparent rounded-full w-8 h-8 mb-3" />
-          <p className="text-sm font-medium">Fetching evaluation categories...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 min-h-[170px]">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-6 w-32 bg-slate-200/80 rounded-md" />
+                <Skeleton className="h-5 w-16 bg-slate-200/80 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-48 bg-slate-200/80 rounded-md" />
+              <div className="pt-4 flex justify-between items-center">
+                <Skeleton className="h-4 w-24 bg-slate-200/80 rounded-md" />
+                <Skeleton className="h-4 w-4 bg-slate-200/80 rounded-md" />
+              </div>
+            </Card>
+          ))}
         </div>
       ) : filteredCategories.length === 0 ? (
-        <div className="py-20 text-center text-slate-400 flex flex-col items-center justify-center gap-3 bg-white border border-slate-200 rounded-3xl p-8">
+        <Card className="py-20 text-center text-slate-400 flex flex-col items-center justify-center gap-3 bg-white border border-slate-200 rounded-3xl p-8">
           <Tag size={44} className="text-slate-300 stroke-[1.5]" />
           <p className="font-bold text-slate-700 text-base">No Categories Found</p>
           <p className="text-xs max-w-sm text-slate-400">
@@ -98,42 +111,49 @@ export default function CategoriesView() {
               ? `No categories match "${searchTerm}".`
               : "No evaluation categories have been created yet."}
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCategories.map((cat: any) => (
             <Card
               key={cat.id}
-              className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between gap-4 group"
+              className="group relative bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:border-[#A70202]/30 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden min-h-[170px]"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100 group-hover:scale-105 transition-transform">
-                    <BookOpen size={20} className="stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-base group-hover:text-indigo-600 transition-colors">
-                      {cat.name}
-                    </h3>
-                    <span className="text-[11px] font-semibold text-slate-400">
-                      Subject Category
-                    </span>
+              {/* Hover top accent line */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-[#A70202] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Background watermark icon */}
+              <BookOpen className="absolute -right-4 -bottom-4 size-28 text-slate-100 opacity-40 group-hover:opacity-25 group-hover:scale-110 group-hover:text-[#A70202] transition-all duration-300 pointer-events-none" />
+
+              <CardHeader className="p-0 space-y-0 relative z-10">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-3 bg-[#A70202]/10 text-[#A70202] rounded-2xl border border-[#A70202]/15 shadow-2xs group-hover:bg-[#A70202] group-hover:text-white group-hover:scale-105 transition-all duration-300">
+                      <BookOpen size={22} className="stroke-[2.2]" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <CardTitle className="font-bold text-slate-800 text-base sm:text-lg leading-tight group-hover:text-[#A70202] transition-colors line-clamp-1">
+                        {cat.name}
+                      </CardTitle>
+                      <Badge variant="outline" className="w-fit text-[10px] font-semibold text-slate-400 bg-slate-50 border-slate-200/80 px-2 py-0.5">
+                        Subject Category
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </CardHeader>
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs">
-                <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <Layers size={14} className="text-indigo-500" />
-                  <span>
-                    {cat.questions?.length ?? 0} {cat.questions?.length === 1 ? "Question" : "Questions"}
-                  </span>
+              <CardFooter className="p-0 pt-5 border-t border-slate-100 flex items-center justify-between border-b-0 bg-transparent relative z-10 mt-4">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-medium text-slate-600">
+                  <span className="size-2 rounded-full bg-[#A70202]" />
+                  <span className="font-bold text-slate-800">{cat.questions?.length ?? 0}</span>
+                  <span className="text-slate-400">{cat.questions?.length === 1 ? "Question" : "Questions"}</span>
                 </div>
 
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-full">
+                <Badge variant="outline" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-full border-0">
                   Active
-                </span>
-              </div>
+                </Badge>
+              </CardFooter>
             </Card>
           ))}
         </div>
@@ -146,7 +166,7 @@ export default function CategoriesView() {
             <form onSubmit={handleCreateCategory}>
               <AlertDialogHeader className="text-left space-y-3">
                 <div className="flex flex-row items-center gap-3">
-                  <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100 shrink-0">
+                  <div className="p-2.5 bg-[#A70202]/10 text-[#A70202] rounded-2xl border border-[#A70202]/15 shrink-0">
                     <FolderPlus size={20} className="stroke-[2.5]" />
                   </div>
                   <AlertDialogTitle className="text-lg font-bold text-slate-800">

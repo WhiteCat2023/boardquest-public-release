@@ -21,6 +21,11 @@ import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
 import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
 import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
+import AddedFacultyUsingCSV from "./view/admin/faculty/AddedFacultyUsingCSV";
+import AddedStudentUsingCSV from "./view/admin/student_management/AddedStudentUsingCSV";
+import EnrollStudentPage from "./view/admin/student_management/EnrollStudentPage";
+import ViewStudent from "./view/admin/student_management/ViewStudent";
+import SubjectManagement from "./view/admin/subject_management/SubjectManagement";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -47,7 +52,11 @@ function App() {
                 <Route path="faculty-management/create" element={<AddFacultyMember />} />
                 <Route path="faculty-management/add" element={<AddFacultyMember />} />
                 <Route path="faculty-management/view/:facultyId" element={<ViewFacultyMember />} />
+                <Route path="faculty-management/import" element={<AddedFacultyUsingCSV />} />
                 <Route path="student-management" element={<StudentManagement />} />
+                <Route path="student-management/create" element={<EnrollStudentPage />} />
+                <Route path="student-management/import" element={<AddedStudentUsingCSV />} />
+                <Route path="student-management/view/:studentId" element={<ViewStudent />} />
                 <Route path="curriculum" element={<Curriculum />} />
               </Route>
 
@@ -56,6 +65,7 @@ function App() {
               </Route>
 
               <Route element={<RequireAuth allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]} />}>
+                <Route path="subject-management" element={<SubjectManagement />} />
                 <Route path="question-bank" element={<QuestionBank />} />
                 <Route path="question-bank/create" element={<AddQuestion />} />
                 <Route path="question-bank/edit/:questionId" element={<AddQuestion />} />

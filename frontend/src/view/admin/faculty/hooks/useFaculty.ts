@@ -48,13 +48,21 @@ export function useCreateFaculty() {
   });
 }
 
-export function useDeleteFaculty() {
+export function useBulkCreateFaculty() {
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      return await axiosPrivate.delete(`/faculty/${id}`);
+    mutationFn: async (members: Array<{
+      name: string;
+      email: string;
+      role?: string;
+      employeeId?: string;
+      phoneNumber?: string;
+      departmentName?: string;
+      departmentId?: string;
+    }>) => {
+      return await axiosPrivate.post("/faculty/bulk", { members });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });

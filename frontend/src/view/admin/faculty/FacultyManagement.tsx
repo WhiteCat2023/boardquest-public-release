@@ -1,12 +1,21 @@
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Power, Trash2 } from "lucide-react";
+import { Power, Search, Filter, RotateCcw, X } from "lucide-react";
 import type { FacultyMember, RoleType } from "./types";
 import { getAllowedRolesToCreate } from "./utils/facultyUtils";
-import { useFaculties, useDeleteFaculty, useToggleFacultyStatus } from "./hooks/useFaculty";
+import { useFaculties, useToggleFacultyStatus, useDepartments } from "./hooks/useFaculty";
 import FacultyHeader from "./components/FacultyHeader";
 import FacultyTable from "./components/FacultyTable";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +34,23 @@ export default function FacultyManagement() {
   const currentUserId = (auth as any)?.data?.user?.id;
 
   const { data: faculties = [], isLoading: isFacultiesLoading } = useFaculties();
-  const deleteMutation = useDeleteFaculty();
+  const { data: departments = [] } = useDepartments();
   const toggleStatusMutation = useToggleFacultyStatus();
+
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("ALL");
+  const [selectedDept, setSelectedDept] = useState<string>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
   // Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
-    type: "toggle" | "delete";
     memberId: string;
     memberName: string;
-    memberRole?: RoleType;
     currentStatus?: boolean;
   }>({
     isOpen: false,
-    type: "toggle",
     memberId: "",
     memberName: "",
   });
@@ -50,59 +62,69 @@ export default function FacultyManagement() {
     }
     setConfirmDialog({
       isOpen: true,
-      type: "toggle",
       memberId: id,
       memberName: name,
       currentStatus,
     });
   };
 
-  const handleOpenDeleteConfirm = (id: string, memberName: string, memberRole: RoleType) => {
-    if (id === currentUserId) {
-      toast.error("You cannot delete your own account.");
-      return;
-    }
-    setConfirmDialog({
-      isOpen: true,
-      type: "delete",
-      memberId: id,
-      memberName: memberName,
-      memberRole,
-    });
-  };
-
   const handleConfirmAction = () => {
-    const { type, memberId, memberName, currentStatus } = confirmDialog;
+    const { memberId, memberName, currentStatus } = confirmDialog;
     if (!memberId) return;
 
-    if (type === "toggle") {
-      const nextStatus = !currentStatus;
-      toggleStatusMutation.mutate(
-        { id: memberId, isActive: nextStatus },
-        {
-          onSuccess: () => {
-            toast.success(`${memberName}'s account was ${nextStatus ? "activated" : "deactivated"}.`);
-            setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-          },
-          onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to update account status.");
-            setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-          },
-        }
-      );
-    } else if (type === "delete") {
-      deleteMutation.mutate(memberId, {
+    const nextStatus = !currentStatus;
+    toggleStatusMutation.mutate(
+      { id: memberId, isActive: nextStatus },
+      {
         onSuccess: () => {
-          toast.success("Faculty account deleted successfully.");
+          toast.success(`${memberName}'s account was ${nextStatus ? "activated" : "deactivated"}.`);
           setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.message || "Failed to delete faculty member.");
+          toast.error(err.response?.data?.message || "Failed to update account status.");
           setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         },
-      });
-    }
+      }
+    );
   };
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedRole("ALL");
+    setSelectedDept("ALL");
+    setSelectedStatus("ALL");
+  };
+
+  const hasActiveFilters =
+    searchTerm.trim() !== "" ||
+    selectedRole !== "ALL" ||
+    selectedDept !== "ALL" ||
+    selectedStatus !== "ALL";
+
+  // Filtering Logic
+  const filteredFaculties = faculties.filter((f) => {
+    const matchSearch =
+      !searchTerm.trim() ||
+      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (f.employeeId && f.employeeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (f.username && f.username.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchRole = selectedRole === "ALL" || f.role === selectedRole;
+    
+    const matchDept =
+      selectedDept === "ALL" ||
+      f.departmentId === selectedDept ||
+      f.department?.name.toLowerCase() === selectedDept.toLowerCase();
+
+    const isActive = f.isActive !== false;
+    const matchStatus =
+      selectedStatus === "ALL" ||
+      (selectedStatus === "ACTIVE" && isActive) ||
+      (selectedStatus === "DEACTIVATED" && !isActive);
+
+    return matchSearch && matchRole && matchDept && matchStatus;
+  });
 
   const canAddFaculty = getAllowedRolesToCreate(currentUserRole).length > 0;
   const isTogglingActive = confirmDialog.currentStatus !== false;
@@ -110,13 +132,94 @@ export default function FacultyManagement() {
   return (
     <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50">
       <FacultyHeader canAddFaculty={canAddFaculty} />
+
+      {/* Search & Filters Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+          <Input
+            type="text"
+            placeholder="Search by name, email, employee ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-9 h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Dropdowns */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Role Filter */}
+          <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <SelectTrigger className="h-10 w-[140px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="ALL">All Roles</SelectItem>
+              <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="TEAMLEAD">Team Lead</SelectItem>
+              <SelectItem value="TEACHER">Teacher</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Department Filter */}
+          <Select value={selectedDept} onValueChange={setSelectedDept}>
+            <SelectTrigger className="h-10 w-[160px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+              <SelectValue placeholder="Department" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="ALL">All Departments</SelectItem>
+              {departments.map((dept) => (
+                <SelectItem key={dept.id} value={dept.id}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status Filter */}
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="h-10 w-[130px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="DEACTIVATED">Deactivated</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Reset Filters */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-10 text-xs font-semibold text-slate-500 hover:text-[#A70202] hover:bg-red-50 rounded-xl gap-1.5 cursor-pointer px-3"
+            >
+              <RotateCcw size={13} />
+              Reset
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Directory Table */}
       <FacultyTable
-        faculties={faculties}
+        faculties={filteredFaculties}
         isLoading={isFacultiesLoading}
         currentUserRole={currentUserRole}
         currentUserId={currentUserId}
         onToggleStatus={handleOpenToggleConfirm}
-        onDelete={handleOpenDeleteConfirm}
       />
 
       {/* Shadcn UI Confirmation AlertDialog */}
@@ -127,33 +230,15 @@ export default function FacultyManagement() {
         <AlertDialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xl max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              {confirmDialog.type === "toggle" ? (
-                <>
-                  <Power className={isTogglingActive ? "text-amber-600" : "text-emerald-600"} size={20} />
-                  {isTogglingActive ? "Deactivate Account" : "Activate Account"}
-                </>
-              ) : (
-                <>
-                  <Trash2 className="text-red-600" size={20} />
-                  Delete Account
-                </>
-              )}
+              <Power className={isTogglingActive ? "text-amber-600" : "text-emerald-600"} size={20} />
+              {isTogglingActive ? "Deactivate Account" : "Activate Account"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-slate-500 mt-2 leading-relaxed">
-              {confirmDialog.type === "toggle" ? (
-                <>
-                  Are you sure you want to {isTogglingActive ? "deactivate" : "activate"}{" "}
-                  <strong className="text-slate-800">{confirmDialog.memberName}</strong>'s account?{" "}
-                  {isTogglingActive
-                    ? "Deactivated accounts will immediately lose login privileges."
-                    : "Active accounts will regain full login access."}
-                </>
-              ) : (
-                <>
-                  Are you sure you want to permanently delete{" "}
-                  <strong className="text-slate-800">{confirmDialog.memberName}</strong> ({confirmDialog.memberRole})? This action cannot be undone.
-                </>
-              )}
+              Are you sure you want to {isTogglingActive ? "deactivate" : "activate"}{" "}
+              <strong className="text-slate-800">{confirmDialog.memberName}</strong>'s account?{" "}
+              {isTogglingActive
+                ? "Deactivated accounts will immediately lose login privileges."
+                : "Active accounts will regain full login access."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6 flex items-center justify-end gap-3">
@@ -163,16 +248,12 @@ export default function FacultyManagement() {
             <AlertDialogAction
               onClick={handleConfirmAction}
               className={`rounded-xl text-white text-xs font-semibold px-4 py-2 cursor-pointer ${
-                confirmDialog.type === "delete"
-                  ? "bg-red-600 hover:bg-red-700"
-                  : isTogglingActive
+                isTogglingActive
                   ? "bg-amber-600 hover:bg-amber-700"
                   : "bg-emerald-600 hover:bg-emerald-700"
               }`}
             >
-              {confirmDialog.type === "delete"
-                ? "Delete Account"
-                : `Confirm ${isTogglingActive ? "Deactivation" : "Activation"}`}
+              {`Confirm ${isTogglingActive ? "Deactivation" : "Activation"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -6,14 +6,12 @@ import MarronButton from '@/components/custom/button/MarronButton';
 
 function FilterDropdown() {
     const {
-        selectedCategory,
         selectedDifficulty,
         selectedType,
         selectedStatus,
     } = useQuestionBankFilterStore();
 
     const activeFilterCount = [
-        selectedCategory,
         selectedDifficulty,
         selectedType,
         selectedStatus,
