@@ -129,17 +129,53 @@ model Category {
 
 // [ Review Center Schema ]
 
+model ReviewCenter {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String   @unique
+  code           String?  @unique
+  description    String?
+  logoUrl        String?
+  address        String?
+  location       String?  @default("Philippines")
+  contactEmail   String?
+  contactPhone   String?
+  website        String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  representatives ReviewCenterRepresentativeUser[]
+  programs        ReviewCenterProgram[]
+}
+
 model ReviewCenterRepresentativeUser {
-  id String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId String
-  name String
-  email String @unique
-  companyName String
-  phonenumber String
-  password String
-  location  String?  @default("Philippines")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId     String
+  name           String
+  email          String        @unique
+  companyName    String
+  phonenumber    String
+  password       String
+  location       String?       @default("Philippines")
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  reviewCenter   ReviewCenter? @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
+  reviewCenterId String?       @db.ObjectId
+}
+
+model ReviewCenterProgram {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  description    String?
+  reviewCenterId String       @db.ObjectId
+  reviewCenter   ReviewCenter @relation(fields: [reviewCenterId], references: [id], onDelete: Cascade)
+  startDate      DateTime?
+  endDate        DateTime?
+  status         String       @default("ACTIVE")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 // [ User Schema ]

@@ -35,7 +35,7 @@ export const adminNavItem: NavItemProps[] = [
                 icon: "BookMarked"
             },
             {
-                title: "Review Center",
+                title: "Review Center Management",
                 path: "/review-center",
                 icon: "BookOpen"
             },

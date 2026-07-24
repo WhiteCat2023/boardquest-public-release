@@ -16,15 +16,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import appContent from "../locales/en.appcontent.json"; 
 
 export default function UserProfileWidget() {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
 
   const user = (auth as any)?.data?.user;
-  const userName = user?.name || "User Name";
-  const userEmail = user?.email || "user@example.com";
-  const userRole = user?.role || "USER";
+  const userName = user?.name || appContent.superadmin.name;
+  const userEmail = user?.email || appContent.superadmin.email;
+  const userRole = user?.role || appContent.superadmin.role;
 
   const initials = userName
     ? userName

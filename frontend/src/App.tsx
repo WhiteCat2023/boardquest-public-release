@@ -15,7 +15,7 @@ import {
 } from "./view/admin/faculty";
 import StudentManagement from "./view/admin/StudentManagement";
 import Curriculum from "./view/admin/Curriculum";
-import ReviewCenter from "./view/admin/ReviewCenter";
+import ReviewCenterManagement from "./view/admin/review_center/ReviewCenterManagement";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/settings/Settings";
@@ -114,7 +114,7 @@ function App() {
                   />
                 }
               >
-                <Route path="review-center" element={<ReviewCenter />} />
+                <Route path="review-center" element={<ReviewCenterManagement />} />
               </Route>
 
               <Route

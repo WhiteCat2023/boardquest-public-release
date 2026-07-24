@@ -1,0 +1,254 @@
+{
+  "app": {
+    "name": "BoardQuest",
+    "version": "1.0.0",
+    "description": "Plataporma sa Pagbunyag alang sa Board Licensure Exam sa Medical Technology"
+  },
+  "roles": {
+    "superadmin": "Gipanalipdan nga Super Admin",
+    "admin": "Tagdumala (Admin)",
+    "teamlead": "Ulo sa Korte / Kaubang Admin",
+    "teacher": "Tudloay nga Magtutudlo"
+  },
+  "sidebar": {
+    "headerTitle": "Portal sa Magtutudlo",
+    "headerAbbreviation": "PM",
+    "categories": {
+      "overview": "MGA SUMMARY",
+      "learningManagement": "PAGDUMALA SA PAGTUON",
+      "studentManagement": "PAGDUMALA SA ESTUDYANTE",
+      "systemAndUser": "SISTEMA UG GIGAMIT",
+      "settings": "MGA PANG-SAYOD"
+    },
+    "menuItems": {
+      "dashboard": "Dashboard",
+      "facultyManagement": "Pagdumala sa Magtutudlo",
+      "studentManagement": "Pagdumala sa Estudiyante",
+      "curriculum": "Kurikulum",
+      "subjectManagement": "Pagdumala sa Asignatura",
+      "reviewCenter": "Sentro sa Review",
+      "questionBank": "Pundok sa Pangutana",
+      "analytics": "Analitika",
+      "systemSettings": "Pang-sayod sa Sistema"
+    },
+    "subItems": {
+      "myQuestions": "Akong mga Pangutana",
+      "liveQuestions": "Gipagawas nga Pangutana",
+      "sharedLibrary": "Pampublikong Librarya",
+      "revisions": "Mga Rebisyon"
+    }
+  },
+  "dashboard": {
+    "banner": {
+      "systemStatus": "Naka-on ang Sistema ug Naka-sync",
+      "portals": {
+        "SUPERADMIN": "Portal sa Gipanalipdan nga Admin",
+        "ADMIN": "Portal sa Tagdumala",
+        "TEAMLEAD": "Portal sa Ulo sa Korte",
+        "TEACHER": "Portal sa Magtutudlo",
+        "DEFAULT": "Portal sa Ehekutibo"
+      },
+      "descriptions": {
+        "TEACHER": "Kaugalingong lugar sa pagtudlo, sudlanan sa mga pangutana, ug estado sa pagsuway sa estudyante.",
+        "TEAMLEAD": "Pagdumala sa ebalwasyon sa kurikulum, linya sa pagsubay sa pangutana, ug paglantaw sa agi sa klase.",
+        "ADMIN": "Sumaryo sa sukod sa kurikulum, agi sa estudyante, status sa magtutudlo, ug numero sa bangko sa pangutana.",
+        "SUPERADMIN": "Sumaryo sa sukod sa kurikulum, agi sa estudyante, status sa magtutudlo, ug numero sa bangko sa pangutana."
+      },
+      "greetings": {
+        "morning": "Maayong buntag",
+        "afternoon": "Maayong hapon",
+        "evening": "Maayong gabi-i",
+        "defaultUser": "Koponan sa Magtutudlo"
+      },
+      "actions": {
+        "addNewQuestion": "Puno og Bag-ong Pangutana",
+        "addQuestion": "Puno og Pangutana",
+        "myDrafts": "Akong mga Draft",
+        "reviewQueue": "Linya sa Pagsubay",
+        "studentRoster": "Listahan sa Estudyante"
+      }
+    },
+    "kpiCards": {
+      "questionBank": {
+        "badges": {
+          "teacher": "Akong mga Pangutana",
+          "teamlead": "Kinahanglan Subayon",
+          "admin": "Bangko sa Pangutana"
+        },
+        "labels": {
+          "teacher": "Gisuwat nga Pangutana",
+          "teamlead": "Naghulat sa Ebalwasyon",
+          "admin": "Pangutana sa Board Exam"
+        },
+        "approved": "Gi-uyonan",
+        "published": "Gipagawas",
+        "actionView": "Tan-awa"
+      },
+      "curriculum": {
+        "badges": {
+          "teacher": "Gikuptan nga Asignatura",
+          "admin": "Kurikulum"
+        },
+        "labels": {
+          "teacher": "Gihatag nga Kategorya sa Asignatura",
+          "admin": "Nasakpan nga Asignatura sa Kurikulum"
+        },
+        "subtitle": "Kurikulum sa Ekswelahan",
+        "actionSubjects": "Mga Asignatura"
+      },
+      "enrolledStudents": {
+        "badge": "Naka-enrol",
+        "label": "Aktibong Estudyante sa Plataporma",
+        "subtitle": "Gisubay nga mga Magkuhaay",
+        "actionRoster": "Listahan"
+      },
+      "instructorsAndDrafts": {
+        "badges": {
+          "teacher": "Mga Draft",
+          "admin": "Mga Magtutudlo"
+        },
+        "labels": {
+          "teacher": "Nakatipig nga Draft",
+          "admin": "Magtutudlo ug Edukador"
+        },
+        "subtitles": {
+          "teacher": "Imoha ra kini",
+          "admin": "Koponan sa Magtutudlo"
+        },
+        "actions": {
+          "teacher": "Duma ang mga Draft",
+          "admin": "Listahan sa Magtutudlo"
+        }
+      }
+    },
+    "subjectOverview": {
+      "title": "Sumaryo sa 6 ka Pangunang Asignatura sa Licensure Examination",
+      "description": "Karon nga sukad sa pagkat-on sa 6 ka pangunang bahin sa Medical Technology board examination.",
+      "benchmarkBadge": "Pasado nga Marka: 75% Benchmark",
+      "proficiencyLabel": "Averahi nga Nakat-onan sa Klase",
+      "subjects": [
+        {
+          "code": "CC-301",
+          "name": "Clinical Chemistry",
+          "proficiency": 84
+        },
+        {
+          "code": "MB-302",
+          "name": "Microbiology & Parasitology",
+          "proficiency": 78
+        },
+        {
+          "code": "HE-303",
+          "name": "Hematology & Coagulation",
+          "proficiency": 88
+        },
+        {
+          "code": "CM-304",
+          "name": "Clinical Microscopy",
+          "proficiency": 72
+        },
+        {
+          "code": "IS-305",
+          "name": "Immunology & Blood Bank",
+          "proficiency": 81
+        },
+        {
+          "code": "HP-306",
+          "name": "Histopath & MT Laws",
+          "proficiency": 69
+        }
+      ]
+    },
+    "recentQuestions": {
+      "titles": {
+        "teacher": "Akong Nabuhat nga mga Pangutana",
+        "admin": "Bag-ong Na-submit nga Pangutana"
+      },
+      "actions": {
+        "teamlead": "Linya sa Pagsubay",
+        "admin": "Tan-awa Tanan"
+      },
+      "emptyStates": {
+        "teacher": "Wala pa kay nabuhat nga mga pangutana.",
+        "admin": "Wala pa'y na-record nga mga pangutana.",
+        "createQuestionButton": "Himoa ang Unang Pangutana"
+      },
+      "badges": {
+        "published": "Gipagawas",
+        "underReview": "Gisubay Pa"
+      },
+      "fallbackSubject": "Kinsang Asignatura",
+      "authorPrefix": "Naghimo:"
+    },
+    "studentRoster": {
+      "title": "Listahan sa Estudyante",
+      "viewAllAction": "Tan-awa Tanan",
+      "emptyState": "Wala pa'y nakarehistro nga estudyante.",
+      "levelPrefix": "Lvl"
+    }
+  },
+  "settings": {
+    "title": "Pang-sayod sa Sistema",
+    "subtitle": "Pagdumala sa pinulongan sa sistema, hitsura, ug uban pang mga set-up sa account.",
+    "languageSection": {
+      "title": "Pinulongan sa Sistema",
+      "description": "Pili-a ang pinulongan nga gamiton sa tibuok plataporma.",
+      "selectLabel": "Pili og Pinulongan",
+      "languages": {
+        "en": "English (US)",
+        "tl": "Tagalog (Filipino)",
+        "ceb": "Bisaya (Cebuano)"
+      },
+      "savedNotification": "Nabag-o na ang pinulongan sa sistema!"
+    },
+    "themeSection": {
+      "title": "Hitsura ug Tema",
+      "description": "Pili-a ang gusto nimo nga tema para sa aplikasyon.",
+      "savedNotification": "Nabag-o na ang tema!",
+      "options": {
+        "light": {
+          "name": "Puti / Hayag nga Tema",
+          "description": "Hinis ug hayag nga tan-awon"
+        },
+        "dark": {
+          "name": "Ngitngit nga Tema",
+          "description": "Ngitngit nga mode para minus kapoy sa mata"
+        },
+        "system": {
+          "name": "Tema sa Sistema / Browser",
+          "description": "Mo-sync ra sa gipili sa imong aparato o browser"
+        }
+      }
+    }
+  },
+  "facultyManagement": {
+    "title": "Listahan sa Magtutudlo ug Edukador",
+    "badges": {
+      "coadmin": "KAUBANG ADMIN",
+      "online": "Naka-online",
+      "offline": "Naka-offline",
+      "active": "Aktibo",
+      "deactivated": "Deactivated",
+      "locked": "Naka-lock"
+    },
+    "tooltips": {
+      "viewDetails": "Tan-awa ang Detalye sa Magtutudlo",
+      "deactivate": "I-deactivate ang Account",
+      "activate": "I-aktibo ang Account",
+      "protectedSuperAdmin": "Protektado ang Super Admin account ug dili mapanas o ma-deactivate."
+    }
+  },
+  "common": {
+    "view": "Tan-awa",
+    "edit": "Usba",
+    "delete": "Panasa",
+    "cancel": "I-kansela",
+    "save": "I-save",
+    "submit": "I-sumite",
+    "loading": "Nagproseso...",
+    "search": "Pangita-a",
+    "filter": "Sala-an",
+    "actions": "Lihok",
+    "status": "Status"
+  }
+}

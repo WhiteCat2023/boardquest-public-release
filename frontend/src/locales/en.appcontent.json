@@ -10,6 +10,11 @@
     "teamlead": "Team Lead / Co-Admin",
     "teacher": "Faculty Instructor"
   },
+  "superadmin": {
+    "name": "System Super Administrator",
+    "email": "superadmin@boardquest.edu.ph",
+    "role": "SUPERADMIN"
+  },
   "dashboard": {
     "banner": {
       "systemStatus": "System Live & Synced",

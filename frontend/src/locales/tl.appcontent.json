@@ -1,0 +1,254 @@
+{
+  "app": {
+    "name": "BoardQuest",
+    "version": "1.0.0",
+    "description": "Platform sa Pag-aaral para sa Board Licensure Exam ng Medical Technology"
+  },
+  "roles": {
+    "superadmin": "Punong Tagapamahala (Super Admin)",
+    "admin": "Tagapamahala (Admin)",
+    "teamlead": "Pinuno ng Koponan / Kasamang Admin",
+    "teacher": "Guro sa Pang-akademya"
+  },
+  "sidebar": {
+    "headerTitle": "Portal ng Guro",
+    "headerAbbreviation": "PG",
+    "categories": {
+      "overview": "PANGKALAHATANG TANAW",
+      "learningManagement": "PAMAMAHALA NG PAG-AARAL",
+      "studentManagement": "PAMAMAHALA NG ESTUDYANTE",
+      "systemAndUser": "SISTEMA AT GUMAGAMIT",
+      "settings": "MGA PANG-AYOS"
+    },
+    "menuItems": {
+      "dashboard": "Dashboard",
+      "facultyManagement": "Pamamahala ng Guro",
+      "studentManagement": "Pamamahala ng Estudyante",
+      "curriculum": "Kurikulum",
+      "subjectManagement": "Pamamahala ng Somak",
+      "reviewCenter": "Sentro ng Rebyu",
+      "questionBank": "Bangko ng Tanong",
+      "analytics": "Analitika",
+      "systemSettings": "Pang-ayos ng Sistema"
+    },
+    "subItems": {
+      "myQuestions": "Aking mga Tanong",
+      "liveQuestions": "Mga Naka-publish na Tanong",
+      "sharedLibrary": "Pampublikong Aklatan",
+      "revisions": "Mga Rebisyon"
+    }
+  },
+  "dashboard": {
+    "banner": {
+      "systemStatus": "Gumagana ang Sistema at Naka-sync",
+      "portals": {
+        "SUPERADMIN": "Portal ng Punong Tagapamahala",
+        "ADMIN": "Portal ng Tagapamahala",
+        "TEAMLEAD": "Portal ng Pinuno ng Koponan",
+        "TEACHER": "Portal ng Guro",
+        "DEFAULT": "Portal ng Ehekutibo"
+      },
+      "descriptions": {
+        "TEACHER": "Personal na espasyo sa pagtuturo, imbakan ng mga tanong, at progreso ng pagtataya sa estudyante.",
+        "TEAMLEAD": "Pangangasiwa sa ebalwasyon ng kurikulum, pila ng pagsusuri ng tanong, at pagsubaybay sa akademikong pagganap.",
+        "ADMIN": "Pangkalahatang tanaw ng mga sukatan sa ebalwasyon ng kurikulum, progreso ng estudyante, katayuan ng guro, at estadistika ng bangko ng tanong.",
+        "SUPERADMIN": "Pangkalahatang tanaw ng mga sukatan sa ebalwasyon ng kurikulum, progreso ng estudyante, katayuan ng guro, at estadistika ng bangko ng tanong."
+      },
+      "greetings": {
+        "morning": "Magandang umaga",
+        "afternoon": "Magandang hapon",
+        "evening": "Magandang gabi",
+        "defaultUser": "Miyembro ng Guro"
+      },
+      "actions": {
+        "addNewQuestion": "Magdagdag ng Bagong Tanong",
+        "addQuestion": "Magdagdag ng Tanong",
+        "myDrafts": "Aking mga Draft",
+        "reviewQueue": "Pila ng Rebyu",
+        "studentRoster": "Talaan ng Estudyante"
+      }
+    },
+    "kpiCards": {
+      "questionBank": {
+        "badges": {
+          "teacher": "Aking mga Tanong",
+          "teamlead": "Kailangang Suriin",
+          "admin": "Bangko ng Tanong"
+        },
+        "labels": {
+          "teacher": "Mga Tanong na Naisulat",
+          "teamlead": "Nakapila para sa Ebalwasyon",
+          "admin": "Bangko ng Tanong sa Board Exam"
+        },
+        "approved": "Inaprubahan",
+        "published": "Naka-publish",
+        "actionView": "Tingnan"
+      },
+      "curriculum": {
+        "badges": {
+          "teacher": "Hawak na Somak",
+          "admin": "Kurikulum"
+        },
+        "labels": {
+          "teacher": "Mga Nakatalagang Kategorya ng Somak",
+          "admin": "Saklaw ng Somak sa Kurikulum"
+        },
+        "subtitle": "Akademikong Kurikulum",
+        "actionSubjects": "Mga Somak"
+      },
+      "enrolledStudents": {
+        "badge": "Naka-enrol",
+        "label": "Aktibong mga Estudyante sa Platform",
+        "subtitle": "Mga Subaybay na Kumuha ng Exam",
+        "actionRoster": "Talaan"
+      },
+      "instructorsAndDrafts": {
+        "badges": {
+          "teacher": "Mga Draft na Tanong",
+          "admin": "Mga Guro"
+        },
+        "labels": {
+          "teacher": "Mga Tanong na Naka-save bilang Draft",
+          "admin": "Mga Guro at Edukador"
+        },
+        "subtitles": {
+          "teacher": "Pribado sa iyo",
+          "admin": "Talaan ng Guro"
+        },
+        "actions": {
+          "teacher": "Pamahalaan ang mga Draft",
+          "admin": "Talaan ng Guro"
+        }
+      }
+    },
+    "subjectOverview": {
+      "title": "Pangkalahatang Tanaw sa 6 na Pangunahing Somak sa Licensure Examination",
+      "description": "Kasalukuyang sukatan ng pagganap sa 6 na pangunahing domeyn sa Medical Technology board examination.",
+      "benchmarkBadge": "Pasa na Marka: 75% Benchmark",
+      "proficiencyLabel": "Gawaran ng Kakayahan ng Klase",
+      "subjects": [
+        {
+          "code": "CC-301",
+          "name": "Clinical Chemistry",
+          "proficiency": 84
+        },
+        {
+          "code": "MB-302",
+          "name": "Microbiology & Parasitology",
+          "proficiency": 78
+        },
+        {
+          "code": "HE-303",
+          "name": "Hematology & Coagulation",
+          "proficiency": 88
+        },
+        {
+          "code": "CM-304",
+          "name": "Clinical Microscopy",
+          "proficiency": 72
+        },
+        {
+          "code": "IS-305",
+          "name": "Immunology & Blood Bank",
+          "proficiency": 81
+        },
+        {
+          "code": "HP-306",
+          "name": "Histopath & MT Laws",
+          "proficiency": 69
+        }
+      ]
+    },
+    "recentQuestions": {
+      "titles": {
+        "teacher": "Aking Naisulat na mga Tanong",
+        "admin": "Huling mga Naipasa na Tanong"
+      },
+      "actions": {
+        "teamlead": "Pila ng Rebyu",
+        "admin": "Tingnan Lahat"
+      },
+      "emptyStates": {
+        "teacher": "Wala ka pang naisusulat na mga tanong.",
+        "admin": "Wala pang naitalang mga naipasa na tanong.",
+        "createQuestionButton": "Lumikha ng Unang Tanong"
+      },
+      "badges": {
+        "published": "Naka-publish",
+        "underReview": "Sinusuri Pa"
+      },
+      "fallbackSubject": "Pangkalahatang Somak",
+      "authorPrefix": "May-akda:"
+    },
+    "studentRoster": {
+      "title": "Talaan ng Estudyante",
+      "viewAllAction": "Tingnan Lahat",
+      "emptyState": "Wala pang nakatalang estudyante.",
+      "levelPrefix": "Lvl"
+    }
+  },
+  "settings": {
+    "title": "Pang-ayos ng Sistema",
+    "subtitle": "Pamahalaan ang wika ng sistema, kagustuhan sa hitsura, at mga pang-ayos sa account.",
+    "languageSection": {
+      "title": "Wika ng Sistema",
+      "description": "Pumili ng wika na gagamitin para sa interface ng buong platform.",
+      "selectLabel": "Pumili ng Wika",
+      "languages": {
+        "en": "English (US)",
+        "tl": "Tagalog (Filipino)",
+        "ceb": "Bisaya (Cebuano)"
+      },
+      "savedNotification": "Matagumpay na nabago ang wika ng sistema!"
+    },
+    "themeSection": {
+      "title": "Hitsura at Tema",
+      "description": "Pumili ng nakasanayang tema ng hitsura para sa application.",
+      "savedNotification": "Matagumpay na nabago ang tema!",
+      "options": {
+        "light": {
+          "name": "Maliwanag na Tema",
+          "description": "Malinis at maliwanag na hitsura"
+        },
+        "dark": {
+          "name": "Madilim na Tema",
+          "description": "Makinis na madilim na mode para bawas pagod sa mata"
+        },
+        "system": {
+          "name": "Tema ng Sistema / Browser",
+          "description": "Kusa na nakiki-sync sa tema ng iyong aparato o browser"
+        }
+      }
+    }
+  },
+  "facultyManagement": {
+    "title": "Talaan ng mga Guro at Edukador",
+    "badges": {
+      "coadmin": "KASAMANG ADMIN",
+      "online": "Naka-online",
+      "offline": "Naka-offline",
+      "active": "Aktibo",
+      "deactivated": "Hindi Aktibo",
+      "locked": "Naka-lock"
+    },
+    "tooltips": {
+      "viewDetails": "Tingnan ang Detalye ng Guro",
+      "deactivate": "I-deactivate ang Account",
+      "activate": "I-aktibo ang Account",
+      "protectedSuperAdmin": "Protektado ang Super Admin account at hindi pwedeng i-deactivate o burahin."
+    }
+  },
+  "common": {
+    "view": "Tingnan",
+    "edit": "Baguhin",
+    "delete": "Burahin",
+    "cancel": "Kanselahin",
+    "save": "I-save",
+    "submit": "Ipadala",
+    "loading": "Naglo-load...",
+    "search": "Maghanap",
+    "filter": "Pang-sara",
+    "actions": "Mga Aksyon",
+    "status": "Katayuan"
+  }
+}
