@@ -134,7 +134,7 @@ export default function AddEditReviewCenterModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl max-w-lg w-full">
+      <DialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl sm:max-w-xl w-full">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2.5">
             <Building2 className="text-[#A70202]" size={22} />

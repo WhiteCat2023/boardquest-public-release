@@ -16,6 +16,8 @@ import {
 import StudentManagement from "./view/admin/StudentManagement";
 import Curriculum from "./view/admin/Curriculum";
 import ReviewCenterManagement from "./view/admin/review_center/ReviewCenterManagement";
+import CalendarManagement from "./view/admin/CalendarManagement";
+import LogsManagement from "./view/admin/logs_management/LogsManagement";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/settings/Settings";
@@ -115,6 +117,8 @@ function App() {
                 }
               >
                 <Route path="review-center" element={<ReviewCenterManagement />} />
+                <Route path="calendar-management" element={<CalendarManagement />} />
+                <Route path="logs-management" element={<LogsManagement />} />
               </Route>
 
               <Route

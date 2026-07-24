@@ -1,35 +1,39 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { QuestionDifficulty, QuestionType, QuestionStatus } from "../../../generated/prisma/enums";
+import {
+  QuestionDifficulty,
+  QuestionType,
+  QuestionStatus,
+} from "../../../generated/prisma/enums";
 
 // ============ Validation Schemas ============
 
 export const CreateQuestionSchema = z.object({
-    question: z.string().min(1, "Question title is required"),
-    choices: z.array(z.string()).min(1, "Question choices is required"),
-    correctAnswer: z.string().min(1, "Correct answer is required"),
-    categoryId: z.string().min(1, "Question category is required"),
-    authorId: z.string().min(1, "Author ID is required"),
-    topic: z.string().min(1, "Topic is required"),
-    difficulty: z.nativeEnum(QuestionDifficulty),
-    type: z.nativeEnum(QuestionType),
-    status: z.nativeEnum(QuestionStatus).optional().default(QuestionStatus.DRAFT),
-    isPublished: z.boolean().optional().default(false),
+  question: z.string().min(1, "Question title is required"),
+  choices: z.array(z.string()).min(1, "Question choices is required"),
+  correctAnswer: z.string().min(1, "Correct answer is required"),
+  categoryId: z.string().min(1, "Question category is required"),
+  authorId: z.string().min(1, "Author ID is required"),
+  topic: z.string().min(1, "Topic is required"),
+  difficulty: z.nativeEnum(QuestionDifficulty),
+  type: z.nativeEnum(QuestionType),
+  status: z.nativeEnum(QuestionStatus).optional().default(QuestionStatus.DRAFT),
+  isPublished: z.boolean().optional().default(false),
 });
 
 export const UpdateQuestionSchema = z.object({
-    id: z.string().min(1, "Question ID is required"),
-    question: z.string().min(1, "Question title is required"),
-    choices: z.array(z.string()).min(1, "Question choices is required"),
-    correctAnswer: z.string().min(1, "Correct answer is required"),
-    categoryId: z.string().min(1, "Question category is required"),
-    authorId: z.string().min(1, "Author ID is required"),
-    topic: z.string().min(1, "Topic is required"),
-    difficulty: z.nativeEnum(QuestionDifficulty),
-    type: z.nativeEnum(QuestionType),
-    status: z.nativeEnum(QuestionStatus),
-    isPublished: z.boolean().optional(),
+  id: z.string().min(1, "Question ID is required"),
+  question: z.string().min(1, "Question title is required"),
+  choices: z.array(z.string()).min(1, "Question choices is required"),
+  correctAnswer: z.string().min(1, "Correct answer is required"),
+  categoryId: z.string().min(1, "Question category is required"),
+  authorId: z.string().min(1, "Author ID is required"),
+  topic: z.string().min(1, "Topic is required"),
+  difficulty: z.nativeEnum(QuestionDifficulty),
+  type: z.nativeEnum(QuestionType),
+  status: z.nativeEnum(QuestionStatus),
+  isPublished: z.boolean().optional(),
 });
 
 // ============ Type Definitions ============
@@ -56,25 +60,36 @@ export class QuestionService {
     const parsed = CreateQuestionSchema.safeParse(data);
 
     if (!parsed.success) {
-        const errors = parsed.error.flatten().fieldErrors;
-        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, isPublished } = parsed.data;
+    const {
+      question,
+      choices,
+      correctAnswer,
+      categoryId,
+      authorId,
+      topic,
+      difficulty,
+      type,
+      status,
+      isPublished,
+    } = parsed.data;
 
     const newQuestion = await this.db.question.create({
-        data: {
-            question: question.toLowerCase().trim(),
-            choices,
-            correctAnswer: correctAnswer.toLowerCase().trim(),
-            categoryId: categoryId.trim(),
-            authorId,
-            topic: topic.trim(),
-            difficulty,
-            type,
-            status,
-            isPublished,
-        },
+      data: {
+        question: question.toLowerCase().trim(),
+        choices,
+        correctAnswer: correctAnswer.toLowerCase().trim(),
+        categoryId: categoryId.trim(),
+        authorId,
+        topic: topic.trim(),
+        difficulty,
+        type,
+        status,
+        isPublished,
+      },
     });
 
     return newQuestion;
@@ -84,33 +99,44 @@ export class QuestionService {
     const parsed = UpdateQuestionSchema.safeParse(data);
 
     if (!parsed.success) {
-        const errors = parsed.error.flatten().fieldErrors;
-        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
     const existing = await this.getQuestionById(questionId);
     if (existing.isPublished) {
-        throw new ApiError(400, "Published questions cannot be modified.");
+      throw new ApiError(400, "Published questions cannot be modified.");
     }
 
-    const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, isPublished } = parsed.data;
+    const {
+      question,
+      choices,
+      correctAnswer,
+      categoryId,
+      authorId,
+      topic,
+      difficulty,
+      type,
+      status,
+      isPublished,
+    } = parsed.data;
 
     const updatedQuestion = await this.db.question.update({
-        where: {
-            id: questionId,
-        },
-        data: {
-            question: question.toLowerCase().trim(),
-            choices,
-            correctAnswer: correctAnswer.toLowerCase().trim(),
-            categoryId: categoryId.trim(),
-            authorId,
-            topic: topic.trim(),
-            difficulty,
-            type,
-            status,
-            isPublished,
-        },
+      where: {
+        id: questionId,
+      },
+      data: {
+        question: question.toLowerCase().trim(),
+        choices,
+        correctAnswer: correctAnswer.toLowerCase().trim(),
+        categoryId: categoryId.trim(),
+        authorId,
+        topic: topic.trim(),
+        difficulty,
+        type,
+        status,
+        isPublished,
+      },
     });
 
     return updatedQuestion;
@@ -120,55 +146,58 @@ export class QuestionService {
     const whereClause = authorId ? { authorId } : undefined;
 
     if (cursor === undefined && limit === undefined) {
-        const questions = await this.db.question.findMany({
-            where: whereClause,
-            include: {
-                category: true,
-                author: {
-                    select: {
-                        name: true,
-                    }
-                }
+      const questions = await this.db.question.findMany({
+        where: whereClause,
+        include: {
+          category: true,
+          author: {
+            select: {
+              name: true,
             },
-            orderBy: {
-                id: "asc",
-            },
-        });
-        return questions;
+          },
+        },
+        orderBy: {
+          id: "asc",
+        },
+      });
+      return questions;
     }
 
     const limitNum = limit || 20;
     const questions = await this.db.question.findMany({
-        where: whereClause,
-        take: limitNum + 1,
-        skip: cursor ? 1 : undefined,
-        cursor: cursor ? {
+      where: whereClause,
+      take: limitNum + 1,
+      skip: cursor ? 1 : undefined,
+      cursor: cursor
+        ? {
             id: cursor,
-        } : undefined,
-        include: {
-            category: true,
-            author: {
-                select: {
-                    name: true,
-                }
-            }
+          }
+        : undefined,
+      include: {
+        category: true,
+        author: {
+          select: {
+            name: true,
+          },
         },
-        orderBy: {
-            id: "asc",
-        },
+      },
+      orderBy: {
+        id: "asc",
+      },
     });
 
     const hasNextPage = questions.length > limitNum;
     if (hasNextPage) {
-        questions.pop();
+      questions.pop();
     }
 
-    const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+    const nextCursor =
+      questions.length > 0 ? questions[questions.length - 1].id : null;
 
     return {
-        questions,
-        nextCursor,
-        hasNextPage,
+      questions,
+      nextCursor,
+      hasNextPage,
     };
   }
 
@@ -181,87 +210,94 @@ export class QuestionService {
     cursor?: string,
     limit?: number,
     authorId?: string,
-    isPublished?: boolean
+    isPublished?: boolean,
+    schoolYear?: string,
   ) {
-    const whereClause = {
-        question: search ? {
+    const whereClause: any = {
+      question: search
+        ? {
             contains: search,
-            mode: 'insensitive' as const,
-        } : undefined,
-        difficulty,
-        categoryId: category,
-        type,
-        status,
-        authorId,
-        isPublished,
+            mode: "insensitive" as const,
+          }
+        : undefined,
+      difficulty,
+      categoryId: category,
+      type,
+      status,
+      authorId,
+      isPublished,
+      ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
     };
 
     if (cursor === undefined && limit === undefined) {
-        const questions = await this.db.question.findMany({
-            where: whereClause,
-            include: {
-                category: true,
-                author: {
-                    select: {
-                        name: true,
-                    }
-                }
+      const questions = await this.db.question.findMany({
+        where: whereClause,
+        include: {
+          category: true,
+          author: {
+            select: {
+              name: true,
             },
-            take: 20,
-            orderBy: {
-                id: "asc",
-            },
-        });
-        return questions;
+          },
+        },
+        take: 20,
+        orderBy: {
+          id: "asc",
+        },
+      });
+      return questions;
     }
 
     const limitNum = limit || 20;
     const questions = await this.db.question.findMany({
-        where: whereClause,
-        take: limitNum + 1,
-        skip: cursor ? 1 : undefined,
-        cursor: cursor ? {
+      where: whereClause,
+      take: limitNum + 1,
+      skip: cursor ? 1 : undefined,
+      cursor: cursor
+        ? {
             id: cursor,
-        } : undefined,
-        include: {
-            category: true,
-            author: {
-                select: {
-                    name: true,
-                }
-            }
+          }
+        : undefined,
+      include: {
+        category: true,
+        author: {
+          select: {
+            name: true,
+          },
         },
-        orderBy: {
-            id: "asc",
-        },
+      },
+      orderBy: {
+        id: "asc",
+      },
     });
 
     const hasNextPage = questions.length > limitNum;
     if (hasNextPage) {
-        questions.pop();
+      questions.pop();
     }
 
-    const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+    const nextCursor =
+      questions.length > 0 ? questions[questions.length - 1].id : null;
 
     return {
-        questions,
-        nextCursor,
-        hasNextPage,
+      questions,
+      nextCursor,
+      hasNextPage,
     };
   }
 
   async getQuestionById(questionId: string) {
     const question = await this.db.question.findUnique({
-        where: {
-            id: questionId,
-        },
-        include: {
-            category: true,
-        },
+      where: {
+        id: questionId,
+      },
+      include: {
+        category: true,
+      },
     });
 
     if (!question) {
-        throw new ApiError(404, "Question not found");
+      throw new ApiError(404, "Question not found");
     }
 
     return question;
@@ -269,45 +305,45 @@ export class QuestionService {
 
   async deleteQuestion(questionId: string) {
     try {
-        const existingQuestion = await this.db.question.findUnique({
-                where: {
-                    id: questionId.trim(),
-                },
-            });
+      const existingQuestion = await this.db.question.findUnique({
+        where: {
+          id: questionId.trim(),
+        },
+      });
 
-            if (!existingQuestion) {
-                throw new ApiError(404, "Question not found");
-            }
+      if (!existingQuestion) {
+        throw new ApiError(404, "Question not found");
+      }
 
-            if (existingQuestion.isPublished) {
-                throw new ApiError(400, "Published questions cannot be deleted.");
-            }
+      if (existingQuestion.isPublished) {
+        throw new ApiError(400, "Published questions cannot be deleted.");
+      }
 
-            const deletedQuestion = await this.db.question.delete({
-                where: {
-                    id: questionId.trim(),
-                },
-            });
+      const deletedQuestion = await this.db.question.delete({
+        where: {
+          id: questionId.trim(),
+        },
+      });
 
-            return deletedQuestion;
-    } catch(error) {
-        console.error("Error deleting question:", error);
-        throw error;
+      return deletedQuestion;
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      throw error;
     }
   }
 
   async getQuestionsByCategory(categoryId: string) {
     const questions = await this.db.question.findMany({
-        where: {
-            categoryId,
-        },
-        include: {
-            category: true,
-        },
-    }); 
+      where: {
+        categoryId,
+      },
+      include: {
+        category: true,
+      },
+    });
 
-    if(questions.length === 0) {
-        throw new ApiError(404, "No questions found for this category");
+    if (questions.length === 0) {
+      throw new ApiError(404, "No questions found for this category");
     }
 
     return questions;
@@ -315,38 +351,38 @@ export class QuestionService {
 
   async getQuestionByDifficulty(difficulty: QuestionDifficulty) {
     const questions = await this.db.question.findMany({
-        where: {
-            difficulty,
-        },
+      where: {
+        difficulty,
+      },
     });
     return questions;
   }
 
   async getQuestionByType(type: QuestionType) {
     const questions = await this.db.question.findMany({
-        where: {
-            type,
-        },
+      where: {
+        type,
+      },
     });
     return questions;
   }
 
   async getQuestionByStatus(status: QuestionStatus) {
     const questions = await this.db.question.findMany({
-        where: {
-            status,
-        },
+      where: {
+        status,
+      },
     });
     return questions;
   }
 
   async getQuestionBySearch(search: string) {
     const questions = await this.db.question.findMany({
-        where: {
-            question: {
-                contains: search,
-            },
-        }, 
+      where: {
+        question: {
+          contains: search,
+        },
+      },
     });
     return questions;
   }
@@ -355,7 +391,7 @@ export class QuestionService {
     questions: ImportedQuestion[],
     categoryId: string,
     authorId: string,
-    status: QuestionStatus = QuestionStatus.DRAFT
+    status: QuestionStatus = QuestionStatus.DRAFT,
   ) {
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new ApiError(400, "No questions provided for import");
@@ -370,7 +406,7 @@ export class QuestionService {
       return this.db.question.create({
         data: {
           question: q.question.toLowerCase().trim(),
-          choices: choices.map(c => c.trim()),
+          choices: choices.map((c) => c.trim()),
           correctAnswer: q.correctAnswer.toLowerCase().trim(),
           categoryId: categoryId.trim(),
           authorId,
@@ -404,62 +440,89 @@ export class QuestionService {
 
   async bulkDeleteQuestions(ids: string[], user: any) {
     const questions = await this.db.question.findMany({
-      where: { id: { in: ids } }
+      where: { id: { in: ids } },
     });
 
     for (const question of questions) {
       const isAuthor = question.authorId === user.id;
-      const canDelete = user.role === "SUPERADMIN" || user.role === "ADMIN" || (user.role === "TEACHER" && isAuthor);
+      const canDelete =
+        user.role === "SUPERADMIN" ||
+        user.role === "ADMIN" ||
+        (user.role === "TEACHER" && isAuthor);
       if (!canDelete) {
-        throw new ApiError(403, `You do not have permission to delete question Q-${question.id.slice(-4).toUpperCase()}`);
+        throw new ApiError(
+          403,
+          `You do not have permission to delete question Q-${question.id.slice(-4).toUpperCase()}`,
+        );
       }
       if (question.isPublished) {
-        throw new ApiError(400, `Cannot delete published question Q-${question.id.slice(-4).toUpperCase()}`);
+        throw new ApiError(
+          400,
+          `Cannot delete published question Q-${question.id.slice(-4).toUpperCase()}`,
+        );
       }
     }
 
     await this.db.question.deleteMany({
-      where: { id: { in: ids } }
+      where: { id: { in: ids } },
     });
   }
 
   async bulkPublishQuestions(ids: string[], isPublished: boolean, user: any) {
-    const canPublish = user.role === "SUPERADMIN" || user.role === "ADMIN" || user.role === "TEAMLEAD";
+    const canPublish =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      user.role === "TEAMLEAD";
     if (!canPublish) {
-      throw new ApiError(403, "You do not have permission to publish/unpublish questions.");
+      throw new ApiError(
+        403,
+        "You do not have permission to publish/unpublish questions.",
+      );
     }
 
     const questions = await this.db.question.findMany({
-      where: { id: { in: ids } }
+      where: { id: { in: ids } },
     });
 
     if (isPublished) {
       for (const question of questions) {
         if (question.status !== QuestionStatus.APPROVED) {
-          throw new ApiError(400, `Only approved questions can be published (Q-${question.id.slice(-4).toUpperCase()} is not approved).`);
+          throw new ApiError(
+            400,
+            `Only approved questions can be published (Q-${question.id.slice(-4).toUpperCase()} is not approved).`,
+          );
         }
       }
     }
 
     await this.db.question.updateMany({
       where: { id: { in: ids } },
-      data: { isPublished }
+      data: { isPublished },
     });
   }
 
   async bulkFeedbackQuestions(ids: string[], feedback: string, user: any) {
-    const canFeedback = user.role === "SUPERADMIN" || user.role === "ADMIN" || user.role === "TEAMLEAD";
+    const canFeedback =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      user.role === "TEAMLEAD";
     if (!canFeedback) {
-      throw new ApiError(403, "You do not have permission to request revision on questions.");
+      throw new ApiError(
+        403,
+        "You do not have permission to request revision on questions.",
+      );
     }
 
     const questions = await this.db.question.findMany({
-      where: { id: { in: ids } }
+      where: { id: { in: ids } },
     });
 
     for (const question of questions) {
       if (question.isPublished) {
-        throw new ApiError(400, `Cannot request revision on published question Q-${question.id.slice(-4).toUpperCase()}.`);
+        throw new ApiError(
+          400,
+          `Cannot request revision on published question Q-${question.id.slice(-4).toUpperCase()}.`,
+        );
       }
     }
 
@@ -467,27 +530,43 @@ export class QuestionService {
       where: { id: { in: ids } },
       data: {
         status: QuestionStatus.NEEDS_REVISION,
-        feedback
-      }
+        feedback,
+      },
     });
   }
 }
 
 export const questionService = new QuestionService();
 
-export const createNewQuestion = questionService.createNewQuestion.bind(questionService);
-export const updateQuestion = questionService.updateQuestion.bind(questionService);
-export const getAllQuestions = questionService.getAllQuestions.bind(questionService);
-export const getFilteredQuestions = questionService.getFilteredQuestions.bind(questionService);
-export const getQuestionById = questionService.getQuestionById.bind(questionService);
-export const deleteQuestion = questionService.deleteQuestion.bind(questionService);
-export const getQuestionsByCategory = questionService.getQuestionsByCategory.bind(questionService);
-export const getQuestionByDifficulty = questionService.getQuestionByDifficulty.bind(questionService);
-export const getQuestionByType = questionService.getQuestionByType.bind(questionService);
-export const getQuestionByStatus = questionService.getQuestionByStatus.bind(questionService);
-export const getQuestionBySearch = questionService.getQuestionBySearch.bind(questionService);
-export const importQuestions = questionService.importQuestions.bind(questionService);
-export const togglePublishState = questionService.togglePublishState.bind(questionService);
-export const bulkDeleteQuestions = questionService.bulkDeleteQuestions.bind(questionService);
-export const bulkPublishQuestions = questionService.bulkPublishQuestions.bind(questionService);
-export const bulkFeedbackQuestions = questionService.bulkFeedbackQuestions.bind(questionService);
+export const createNewQuestion =
+  questionService.createNewQuestion.bind(questionService);
+export const updateQuestion =
+  questionService.updateQuestion.bind(questionService);
+export const getAllQuestions =
+  questionService.getAllQuestions.bind(questionService);
+export const getFilteredQuestions =
+  questionService.getFilteredQuestions.bind(questionService);
+export const getQuestionById =
+  questionService.getQuestionById.bind(questionService);
+export const deleteQuestion =
+  questionService.deleteQuestion.bind(questionService);
+export const getQuestionsByCategory =
+  questionService.getQuestionsByCategory.bind(questionService);
+export const getQuestionByDifficulty =
+  questionService.getQuestionByDifficulty.bind(questionService);
+export const getQuestionByType =
+  questionService.getQuestionByType.bind(questionService);
+export const getQuestionByStatus =
+  questionService.getQuestionByStatus.bind(questionService);
+export const getQuestionBySearch =
+  questionService.getQuestionBySearch.bind(questionService);
+export const importQuestions =
+  questionService.importQuestions.bind(questionService);
+export const togglePublishState =
+  questionService.togglePublishState.bind(questionService);
+export const bulkDeleteQuestions =
+  questionService.bulkDeleteQuestions.bind(questionService);
+export const bulkPublishQuestions =
+  questionService.bulkPublishQuestions.bind(questionService);
+export const bulkFeedbackQuestions =
+  questionService.bulkFeedbackQuestions.bind(questionService);

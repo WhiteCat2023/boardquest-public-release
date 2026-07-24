@@ -1,19 +1,19 @@
 import { Router } from "express";
 import {
-authenticateToken,
+  authenticateToken,
   requireAdmin,
   requireRoles,
 } from "../../middleware/auth.middleware";
 import {
   createQuestion,
   deleteQuestion,
-    getQuestionById,
-    getQuestions,
-    getQuestionsByCategory, 
-    updateQuestion,
-    bulkUploadQuestions,
-    extractQuestions,
-    publishQuestion,
+  getQuestionById,
+  getQuestions,
+  getQuestionsByCategory,
+  updateQuestion,
+  bulkUploadQuestions,
+  extractQuestions,
+  publishQuestion,
   bulkDeleteQuestions,
   bulkPublishQuestions,
   bulkFeedbackQuestions,
@@ -42,11 +42,26 @@ router.delete("/:questionId", authenticateToken, deleteQuestion);
 
 // Category routes
 router.get("/category/get", authenticateToken, getCategories);
-router.post("/category/create", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), createCategory);
+router.post(
+  "/category/create",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "ADMIN"]),
+  createCategory,
+);
 
 router.get("/category/single/:categoryId", authenticateToken, getCategory);
-router.put("/category/single/:categoryId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), updateCategory);
-router.delete("/category/single/:categoryId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), deleteCategory);
+router.put(
+  "/category/single/:categoryId",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "ADMIN"]),
+  updateCategory,
+);
+router.delete(
+  "/category/single/:categoryId",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "ADMIN"]),
+  deleteCategory,
+);
 
 router.get("/category/:categoryId", authenticateToken, getQuestionsByCategory);
 

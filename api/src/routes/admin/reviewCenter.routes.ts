@@ -6,15 +6,27 @@ import {
   createReviewCenter,
   updateReviewCenter,
   deleteReviewCenter,
+  getReviewSchedules,
+  createReviewSchedule,
+  updateReviewSchedule,
+  deleteReviewSchedule,
 } from "../../controller/admin/reviewCenter.controller";
 
 const router = Router();
 
-// Routes accessible by SUPERADMIN, ADMIN, and TEAMLEAD
-router.get("/", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getReviewCenters);
-router.get("/:id", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getReviewCenterById);
-router.post("/", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), createReviewCenter);
-router.put("/:id", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), updateReviewCenter);
-router.delete("/:id", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), deleteReviewCenter);
+const allowedRoles = ["SUPERADMIN", "ADMIN", "TEAMLEAD"];
+
+// Review Center Representative Directory Routes
+router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewCenters);
+router.get("/representatives/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);
+router.post("/", authenticateToken, requireRoles(allowedRoles), createReviewCenter);
+router.put("/:id", authenticateToken, requireRoles(allowedRoles), updateReviewCenter);
+router.delete("/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewCenter);
+
+// Review Calendar & Schedule Routes
+router.get("/schedules/get", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);
+router.post("/schedules/create", authenticateToken, requireRoles(allowedRoles), createReviewSchedule);
+router.put("/schedules/update/:id", authenticateToken, requireRoles(allowedRoles), updateReviewSchedule);
+router.delete("/schedules/delete/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewSchedule);
 
 export default router;

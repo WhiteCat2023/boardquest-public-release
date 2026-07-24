@@ -13,10 +13,9 @@ import ViewReviewCenterModal from "./components/ViewReviewCenterModal";
 import DeleteReviewCenterDialog from "./components/DeleteReviewCenterDialog";
 
 export default function ReviewCenterManagement() {
-  const { data: rawReviewCenters = [], isLoading } = useReviewCenters();
-  const deleteMutation = useDeleteReviewCenter();
+  const { data: rawReviewCenters = [], isLoading: isCentersLoading } = useReviewCenters();
+  const deleteCenterMutation = useDeleteReviewCenter();
 
-  // Ensure data is an array
   const reviewCenters = Array.isArray(rawReviewCenters) ? rawReviewCenters : [];
 
   // Search & Filter State
@@ -39,7 +38,7 @@ export default function ReviewCenterManagement() {
     item: null,
   });
 
-  // Unique lists for filter dropdowns with safe optional chaining
+  // Unique lists for directory filter dropdowns
   const uniqueLocations = Array.from(
     new Set(reviewCenters.map((rc) => rc?.location || "Philippines").filter(Boolean))
   );
@@ -59,7 +58,7 @@ export default function ReviewCenterManagement() {
     selectedLocation !== "ALL" ||
     selectedCompany !== "ALL";
 
-  // Safe Filtering Logic
+  // Directory Safe Filtering Logic
   const filteredReviewCenters = reviewCenters.filter((rc) => {
     if (!rc) return false;
 
@@ -90,7 +89,7 @@ export default function ReviewCenterManagement() {
     return matchSearch && matchLocation && matchCompany;
   });
 
-  // Action Handlers
+  // Directory Action Handlers
   const handleOpenAdd = () => {
     setEditingItem(null);
     setIsAddEditOpen(true);
@@ -117,7 +116,7 @@ export default function ReviewCenterManagement() {
     if (!confirmDelete.item) return;
 
     const { id, companyName, name } = confirmDelete.item;
-    deleteMutation.mutate(id, {
+    deleteCenterMutation.mutate(id, {
       onSuccess: () => {
         toast.success(`Removed ${companyName || "Review Center"} (${name || "Representative"}) from directory.`);
         setConfirmDelete({ isOpen: false, item: null });
@@ -151,7 +150,7 @@ export default function ReviewCenterManagement() {
       {/* Cards Grid Component */}
       <ReviewCenterGrid
         items={filteredReviewCenters}
-        isLoading={isLoading}
+        isLoading={isCentersLoading}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         onView={handleOpenView}

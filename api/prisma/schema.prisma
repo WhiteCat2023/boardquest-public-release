@@ -110,6 +110,15 @@ model Question {
   authorId String    @db.ObjectId
 
   feedback String? @default("")
+  schoolYear String? @default("S.Y. 2025-2026")
+}
+
+model SchoolYear {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  year      String   @unique
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Category {
@@ -166,16 +175,18 @@ model ReviewCenterRepresentativeUser {
 }
 
 model ReviewCenterProgram {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
   title          String
   description    String?
-  reviewCenterId String       @db.ObjectId
-  reviewCenter   ReviewCenter @relation(fields: [reviewCenterId], references: [id], onDelete: Cascade)
+  companyName    String?
+  category       String?
+  reviewCenterId String?       @db.ObjectId
+  reviewCenter   ReviewCenter? @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
   startDate      DateTime?
   endDate        DateTime?
-  status         String       @default("ACTIVE")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  status         String        @default("ACTIVE")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 // [ User Schema ]
@@ -264,6 +275,25 @@ model ExamResult {
   timestamp DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+model SystemLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  level     LogLevel @default(INFO)
+  action    String
+  message   String
+  source    String?  @default("System")
+  userEmail String?
+  ipAddress String?
+  metadata  String?
+  createdAt DateTime @default(now())
 }
 
 model AiAnalysis {

@@ -40,6 +40,11 @@ export const teamLeadNavItem: NavItemProps[] = [
                 icon: "BookOpen"
             },
             {
+                title: "Calendar Management",
+                path: "/calendar-management",
+                icon: "Calendar"
+            },
+            {
                 title: "Question Bank",
                 path: "/question-bank",
                 icon: "ClipboardList",

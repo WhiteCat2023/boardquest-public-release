@@ -40,6 +40,11 @@ export const adminNavItem: NavItemProps[] = [
                 icon: "BookOpen"
             },
             {
+                title: "Calendar Management",
+                path: "/calendar-management",
+                icon: "Calendar"
+            },
+            {
                 title: "Question Bank",
                 path: "/question-bank",
                 icon: "ClipboardList",
@@ -65,6 +70,11 @@ export const adminNavItem: NavItemProps[] = [
     {
         sideBarCategoryName: "SYSTEM & USER",
         content: [
+            {
+                title: "Logs Management",
+                path: "/logs-management",
+                icon: "ScrollText"
+            },
             {
                 title: "System Settings",
                 path: "/settings",
