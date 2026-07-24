@@ -10,6 +10,7 @@ export const demoAdminUsers = [
     phoneNumber: "+63-2-1234-5678",
     departmentId: "507f1f77bcf86cd799439020", // Link to a Department
     location: "Philippines",
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -24,6 +25,7 @@ export const demoAdminUsers = [
     phoneNumber: "+63-2-2345-6789",
     departmentId: "507f1f77bcf86cd799439020",
     location: "Metro Manila",
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -38,6 +40,7 @@ export const demoAdminUsers = [
     phoneNumber: "+63-2-3456-7890",
     departmentId: "507f1f77bcf86cd799439020",
     location: "Metro Manila",
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

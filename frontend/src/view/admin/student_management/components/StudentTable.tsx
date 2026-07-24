@@ -30,13 +30,20 @@ export default function StudentTable({ students, isLoading }: StudentTableProps)
         {!isLoading && students.length === 0 ? (
           <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
             <GraduationCap size={48} className="text-slate-300 stroke-[1.5]" />
-            <p className="font-bold text-slate-600">No Enrolled Students Registered</p>
-            <p className="text-sm max-w-sm">No students have been enrolled in the platform yet.</p>
+            <p className="font-bold text-slate-600">
+              No Enrolled Students Registered
+            </p>
+            <p className="text-sm max-w-sm">
+              No students have been enrolled in the platform yet.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
             <Table className="w-full text-left border-collapse">
-              <TableHeader className="bg-slate-50/50 border-b border-slate-100">
+              <TableHeader
+                className="bg-slate-50/50 border-b border-slate-100"
+                data-shimmer-ignore
+              >
                 <TableRow className="border-b border-slate-100 hover:bg-transparent">
                   <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
                     Student Profile
@@ -61,7 +68,9 @@ export default function StudentTable({ students, isLoading }: StudentTableProps)
               <TableBody className="divide-y divide-slate-100">
                 {displayStudents.map((student, idx) => (
                   <StudentTableRow
-                    key={student.id === "placeholder" ? `ph-${idx}` : student.id}
+                    key={
+                      student.id === "placeholder" ? `ph-${idx}` : student.id
+                    }
                     student={student}
                   />
                 ))}

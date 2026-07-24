@@ -88,6 +88,32 @@ export class AuthService {
 
     const { email, password } = parsed.data;
 
+    // Environment Super Admin check (Bypasses database storage completely)
+    const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
+    const envSuperAdminUsername = (process.env.SUPERADMIN_USERNAME || "superadmin").toLowerCase();
+    const envSuperAdminPassword = process.env.SUPERADMIN_PASSWORD || "superadmin123";
+
+    const inputIdent = email.trim().toLowerCase();
+    if (inputIdent === envSuperAdminEmail || inputIdent === envSuperAdminUsername) {
+      if (password !== envSuperAdminPassword) {
+        throw new ApiError(401, "Invalid email or password");
+      }
+      return {
+        id: "superadmin-env-id",
+        employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
+        email: envSuperAdminEmail,
+        username: envSuperAdminUsername,
+        name: process.env.SUPERADMIN_NAME || "System Super Administrator",
+        role: "SUPERADMIN" as const,
+        phoneNumber: "+63-2-9999-0000",
+        location: "Main HQ",
+        isActive: true,
+        lastActiveAt: new Date(),
+        createdAt: new Date("2026-01-01"),
+        updatedAt: new Date(),
+      };
+    }
+
     const user = await this.db.adminUser.findUnique({ where: { email } });
 
     if (!user) {

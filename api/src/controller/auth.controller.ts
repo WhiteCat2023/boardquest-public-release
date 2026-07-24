@@ -70,14 +70,15 @@ export const logout = async (req: Request, res: Response) => {
 
     if (token) {
       const { payload } = verifyJWT(token);
-      if (payload && (payload as any).id) {
+      const userId = (payload as any)?.id;
+      if (userId && userId !== "superadmin-env-id") {
         await prisma.adminUser.update({
-          where: { id: (payload as any).id },
+          where: { id: userId },
           data: {
             isActive: false,
             lastActiveAt: new Date(),
           },
-        });
+        }).catch(() => {});
       }
     }
   } catch (error) {

@@ -39,13 +39,20 @@ export default function FacultyTable({
         {!isLoading && faculties.length === 0 ? (
           <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
             <Users size={48} className="text-slate-300 stroke-[1.5]" />
-            <p className="font-bold text-slate-600">No Administrators Registered</p>
-            <p className="text-sm max-w-sm">No administrators or teachers have been added to the system yet.</p>
+            <p className="font-bold text-slate-600">
+              No Administrators Registered
+            </p>
+            <p className="text-sm max-w-sm">
+              No administrators or teachers have been added to the system yet.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
             <Table className="w-full text-left border-collapse">
-              <TableHeader className="bg-slate-50/50 border-b border-slate-100">
+              <TableHeader
+                className="bg-slate-50/50 border-b border-slate-100"
+                data-shimmer-ignore
+              >
                 <TableRow className="border-b border-slate-100 hover:bg-transparent">
                   <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
                     Employee Profile
@@ -70,7 +77,9 @@ export default function FacultyTable({
               <TableBody className="divide-y divide-slate-100">
                 {displayFaculties.map((faculty, idx) => (
                   <FacultyTableRow
-                    key={faculty.id === "placeholder" ? `ph-${idx}` : faculty.id}
+                    key={
+                      faculty.id === "placeholder" ? `ph-${idx}` : faculty.id
+                    }
                     member={faculty}
                     canManage={
                       faculty.id !== currentUserId &&

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen } from "lucide-react";
+import { Eye, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen, Lock } from "lucide-react";
 import type { FacultyMember, RoleType } from "../types";
 import { getRoleBadgeColor, isUserOnline } from "../utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,6 +19,10 @@ export default function FacultyTableRow({
 }: FacultyTableRowProps) {
   const isAccountActive = member?.isActive !== false;
   const isOnline = isUserOnline(member?.lastActiveAt, member?.isActive);
+  const isSuperAdminAccount =
+    member?.role === "SUPERADMIN" ||
+    member?.username === "superadmin" ||
+    member?.employeeId === "SA-0001";
 
   const formatLastActive = (dateStr?: string) => {
     if (!dateStr) return "Never";
@@ -177,7 +181,7 @@ export default function FacultyTableRow({
             </button>
           </Link>
 
-          {canManage && (
+          {canManage && !isSuperAdminAccount && (
             <button
               onClick={() => onToggleStatus(member.id, isAccountActive, member.name)}
               className={`p-2 rounded-lg transition-all cursor-pointer ${
@@ -189,6 +193,15 @@ export default function FacultyTableRow({
             >
               <Power size={15} />
             </button>
+          )}
+
+          {canManage && isSuperAdminAccount && (
+            <span
+              className="p-2 text-slate-300 cursor-not-allowed"
+              title="System Super Admin account is protected and cannot be deactivated or deleted."
+            >
+              <Lock size={15} />
+            </span>
           )}
 
           {!canManage && (

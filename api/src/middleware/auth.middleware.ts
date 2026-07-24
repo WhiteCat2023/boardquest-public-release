@@ -45,37 +45,51 @@ export const authenticateToken = async (
 
     const decoded = payload as { id: string };
 
-    // Fetch user details from database
-    const user = await prisma.adminUser.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        name: true,
-        role: true,
+    const superAdminId = "superadmin-env-id";
+    const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
+
+    let user;
+    if (decoded.id === superAdminId || decoded.id === envSuperAdminEmail) {
+      user = {
+        id: superAdminId,
+        email: envSuperAdminEmail,
+        username: process.env.SUPERADMIN_USERNAME || "superadmin",
+        name: process.env.SUPERADMIN_NAME || "System Super Administrator",
+        role: "SUPERADMIN",
         isActive: true,
-      },
-    });
-
-    if (!user) {
-      res.status(401).json({
-        message: "User not found",
-        error: "USER_NOT_FOUND",
-      });
-      return;
-    }
-
-    // Update isActive and lastActiveAt asynchronously
-    prisma.adminUser
-      .update({
-        where: { id: user.id },
-        data: {
+      };
+    } else {
+      user = await prisma.adminUser.findUnique({
+        where: { id: decoded.id },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          name: true,
+          role: true,
           isActive: true,
-          lastActiveAt: new Date(),
         },
-      })
-      .catch((err) => console.error("Error updating user active status:", err));
+      });
+
+      if (!user) {
+        res.status(401).json({
+          message: "User not found",
+          error: "USER_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Update isActive and lastActiveAt asynchronously
+      prisma.adminUser
+        .update({
+          where: { id: user.id },
+          data: {
+            isActive: true,
+            lastActiveAt: new Date(),
+          },
+        })
+        .catch((err) => console.error("Error updating user active status:", err));
+    }
 
     req.user = user;
     next();

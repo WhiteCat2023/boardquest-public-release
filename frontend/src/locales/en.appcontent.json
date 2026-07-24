@@ -1,0 +1,192 @@
+{
+  "app": {
+    "name": "BoardQuest",
+    "version": "1.0.0",
+    "description": "Medical Technology Board Licensure Examination Learning Platform"
+  },
+  "roles": {
+    "superadmin": "Super Administrator",
+    "admin": "Administrator",
+    "teamlead": "Team Lead / Co-Admin",
+    "teacher": "Faculty Instructor"
+  },
+  "dashboard": {
+    "banner": {
+      "systemStatus": "System Live & Synced",
+      "portals": {
+        "SUPERADMIN": "Super Administrator Portal",
+        "ADMIN": "Administrator Portal",
+        "TEAMLEAD": "Team Lead Portal",
+        "TEACHER": "Faculty Portal",
+        "DEFAULT": "Executive Portal"
+      },
+      "descriptions": {
+        "TEACHER": "Personal teaching workspace, question authoring repository, and student evaluation progress.",
+        "TEAMLEAD": "Curriculum evaluation oversight, question review queue, and academic performance monitoring.",
+        "ADMIN": "Overview of curriculum evaluation metrics, student progress, faculty status, and question bank statistics.",
+        "SUPERADMIN": "Overview of curriculum evaluation metrics, student progress, faculty status, and question bank statistics."
+      },
+      "greetings": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening",
+        "defaultUser": "Faculty Member"
+      },
+      "actions": {
+        "addNewQuestion": "Add New Question",
+        "addQuestion": "Add Question",
+        "myDrafts": "My Drafts",
+        "reviewQueue": "Review Queue",
+        "studentRoster": "Student Roster"
+      }
+    },
+    "kpiCards": {
+      "questionBank": {
+        "badges": {
+          "teacher": "My Questions",
+          "teamlead": "Needs Review",
+          "admin": "Item Bank"
+        },
+        "labels": {
+          "teacher": "Authored Questions",
+          "teamlead": "Pending Evaluation Queue",
+          "admin": "Board Questions Bank"
+        },
+        "approved": "Approved",
+        "published": "Published",
+        "actionView": "View"
+      },
+      "curriculum": {
+        "badges": {
+          "teacher": "Handled Subjects",
+          "admin": "Curriculum"
+        },
+        "labels": {
+          "teacher": "Assigned Subject Categories",
+          "admin": "Curriculum Subject Scope"
+        },
+        "subtitle": "Academic Curriculum",
+        "actionSubjects": "Subjects"
+      },
+      "enrolledStudents": {
+        "badge": "Enrolled",
+        "label": "Active Platform Students",
+        "subtitle": "Tracked Aspirants",
+        "actionRoster": "Roster"
+      },
+      "instructorsAndDrafts": {
+        "badges": {
+          "teacher": "Draft Items",
+          "admin": "Instructors"
+        },
+        "labels": {
+          "teacher": "Questions Saved as Draft",
+          "admin": "Faculty & Educators"
+        },
+        "subtitles": {
+          "teacher": "Private to you",
+          "admin": "Faculty Roster"
+        },
+        "actions": {
+          "teacher": "Manage Drafts",
+          "admin": "Faculty List"
+        }
+      }
+    },
+    "subjectOverview": {
+      "title": "6 Major Licensure Examination Subjects Overview",
+      "description": "Current evaluation performance benchmark across the 6 core Medical Technology board examination domains.",
+      "benchmarkBadge": "Passing Mark: 75% Benchmark",
+      "proficiencyLabel": "Average Class Proficiency",
+      "subjects": [
+        {
+          "code": "CC-301",
+          "name": "Clinical Chemistry",
+          "proficiency": 84
+        },
+        {
+          "code": "MB-302",
+          "name": "Microbiology & Parasitology",
+          "proficiency": 78
+        },
+        {
+          "code": "HE-303",
+          "name": "Hematology & Coagulation",
+          "proficiency": 88
+        },
+        {
+          "code": "CM-304",
+          "name": "Clinical Microscopy",
+          "proficiency": 72
+        },
+        {
+          "code": "IS-305",
+          "name": "Immunology & Blood Bank",
+          "proficiency": 81
+        },
+        {
+          "code": "HP-306",
+          "name": "Histopath & MT Laws",
+          "proficiency": 69
+        }
+      ]
+    },
+    "recentQuestions": {
+      "titles": {
+        "teacher": "My Authored Questions",
+        "admin": "Recent Question Submissions"
+      },
+      "actions": {
+        "teamlead": "Review Queue",
+        "admin": "View All"
+      },
+      "emptyStates": {
+        "teacher": "You have not authored any question items yet.",
+        "admin": "No question submissions recorded yet.",
+        "createQuestionButton": "Create Your First Question"
+      },
+      "badges": {
+        "published": "Published",
+        "underReview": "Under Review"
+      },
+      "fallbackSubject": "General Subject",
+      "authorPrefix": "Author:"
+    },
+    "studentRoster": {
+      "title": "Student Roster",
+      "viewAllAction": "View All",
+      "emptyState": "No students registered yet.",
+      "levelPrefix": "Lvl"
+    }
+  },
+  "facultyManagement": {
+    "title": "Faculty & Educator Roster",
+    "badges": {
+      "coadmin": "CO-ADMIN",
+      "online": "Online",
+      "offline": "Offline",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "locked": "Locked"
+    },
+    "tooltips": {
+      "viewDetails": "View Faculty Details",
+      "deactivate": "Deactivate Account",
+      "activate": "Activate Account",
+      "protectedSuperAdmin": "System Super Admin account is protected and cannot be deactivated or deleted."
+    }
+  },
+  "common": {
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "status": "Status"
+  }
+}

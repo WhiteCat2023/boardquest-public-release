@@ -8,6 +8,17 @@ const prisma = new PrismaClient();
 
 export async function seedAdminUserDb() {
   try {
+    // Purge any lingering SUPERADMIN user records in the DB table as Super Admin is configured strictly via .env
+    await prisma.adminUser.deleteMany({
+      where: {
+        OR: [
+          { role: "SUPERADMIN" },
+          { username: process.env.SUPERADMIN_USERNAME || "superadmin" },
+          { email: process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph" },
+        ],
+      },
+    }).catch(() => {});
+
     console.log("Seeding users...");
     for (const user of demoAdminUsers) {
       const hashedPass = await hashedPassword(user.password);
@@ -43,15 +54,5 @@ export async function seedAdminUserDb() {
     console.error("Error during database seeding:", error?.message || error);
   }
 }
-
-// main()
-//   .then(async () => {
-//     await prisma.$disconnect();
-//   })
-//   .catch(async (e) => {
-//     console.error(e);
-//     await prisma.$disconnect();
-//     process.exit(1);
-//   });
 
 export default prisma;

@@ -53,7 +53,24 @@ export class FacultyService {
   }
 
   async getAllFaculty() {
-    return await this.db.adminUser.findMany({
+    const envSuperAdmin = {
+      id: "superadmin-env-id",
+      employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
+      email: process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph",
+      username: process.env.SUPERADMIN_USERNAME || "superadmin",
+      name: process.env.SUPERADMIN_NAME || "System Super Administrator",
+      role: "SUPERADMIN",
+      phoneNumber: "+63-2-9999-0000",
+      location: "Main HQ",
+      isActive: true,
+      lastActiveAt: new Date(),
+      createdAt: new Date("2026-01-01"),
+      updatedAt: new Date(),
+      department: { id: "system-dept", name: "Executive Administration" },
+      handledCategories: [],
+    };
+
+    const faculties = await this.db.adminUser.findMany({
       include: {
         department: true,
         handledCategories: true,
@@ -62,6 +79,8 @@ export class FacultyService {
         createdAt: "desc",
       },
     });
+
+    return [envSuperAdmin, ...faculties];
   }
 
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
@@ -117,12 +136,31 @@ export class FacultyService {
   }
 
   async toggleFacultyStatus(id: string, isActive: boolean, creatorRole: string) {
+    if (id === "superadmin-env-id") {
+      throw new ApiError(
+        400,
+        "The Super Admin account is environment-configured and cannot be modified or deleted in the database."
+      );
+    }
+
     const userToUpdate = await this.db.adminUser.findUnique({
       where: { id },
     });
 
     if (!userToUpdate) {
       throw new ApiError(404, "Faculty member not found");
+    }
+
+    if (
+      (userToUpdate.role === "SUPERADMIN" ||
+        userToUpdate.username === "superadmin" ||
+        userToUpdate.employeeId === "SA-0001") &&
+      !isActive
+    ) {
+      throw new ApiError(
+        400,
+        "The primary Super Admin account is system-protected and cannot be deactivated or deleted."
+      );
     }
 
     if (!this.isAllowedToManageRole(creatorRole, userToUpdate.role)) {
