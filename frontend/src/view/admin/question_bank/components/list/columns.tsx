@@ -26,7 +26,7 @@ export const getQuestionColumns = ({
           type="checkbox"
           checked={table.getIsAllRowsSelected()}
           onChange={table.getToggleAllRowsSelectedHandler()}
-          className="rounded border-slate-300 text-[#A70202] focus:ring-[#A70202]/10 h-4 w-4 cursor-pointer accent-[#A70202]"
+          className="rounded border-border text-primary focus:ring-ring/20 h-4 w-4 cursor-pointer accent-primary"
         />
       </div>
     ),
@@ -36,7 +36,7 @@ export const getQuestionColumns = ({
           type="checkbox"
           checked={row.getIsSelected()}
           onChange={row.getToggleSelectedHandler()}
-          className="rounded border-slate-300 text-[#A70202] focus:ring-[#A70202]/10 h-4 w-4 cursor-pointer accent-[#A70202]"
+          className="rounded border-border text-primary focus:ring-ring/20 h-4 w-4 cursor-pointer accent-primary"
         />
       </div>
     ),
@@ -45,7 +45,7 @@ export const getQuestionColumns = ({
     accessorKey: "id",
     header: "ID",
     cell: ({ row }) => (
-      <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold tracking-wide text-slate-600">
+      <span className="rounded bg-muted px-2 py-1 text-[10px] font-bold tracking-wide text-muted-foreground border border-border">
         Q-{row.original.id.slice(-4).toUpperCase()}
       </span>
     ),
@@ -58,13 +58,13 @@ export const getQuestionColumns = ({
       return (
         <div className="flex flex-col gap-1.5 max-w-[280px]">
           <span 
-            className="text-sm font-semibold text-slate-800 line-clamp-2 leading-relaxed" 
+            className="text-sm font-semibold text-foreground line-clamp-2 leading-relaxed" 
             title={questionContent}
           >
             {questionContent}
           </span>
           <div className="flex">
-            <span className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 tracking-wide">
+            <span className="rounded bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wide">
               {row.original.category?.name || 'Subject'}
             </span>
           </div>
@@ -76,8 +76,8 @@ export const getQuestionColumns = ({
     accessorKey: "topic",
     header: "Topic",
     cell: ({ row }) => (
-      <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
-        <Tag size={10} className="text-slate-400" />
+      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+        <Tag size={10} className="text-muted-foreground/60" />
         {row.original.topic || 'Topic'}
       </span>
     ),
@@ -86,7 +86,7 @@ export const getQuestionColumns = ({
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+      <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
         {row.original.type}
       </span>
     ),
@@ -107,10 +107,10 @@ export const getQuestionColumns = ({
       const authorName = typeof row.original.author === 'object' ? row.original.author?.name : row.original.author;
       return (
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-700 shrink-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary border border-primary/20 shrink-0">
             {getInitials(authorName)}
           </div>
-          <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]" title={authorName}>
+          <span className="text-xs font-semibold text-foreground truncate max-w-[120px]" title={authorName}>
             {authorName || 'Unknown'}
           </span>
         </div>
@@ -126,7 +126,7 @@ export const getQuestionColumns = ({
           {row.original.status}
         </span>
         {row.original.isPublished && (
-          <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-700">
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
             Published
           </span>
         )}
@@ -147,7 +147,7 @@ export const getQuestionColumns = ({
         <div className="flex items-center justify-end gap-1.5 pr-6">
           <button
             onClick={() => onView?.(item.id)}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700 focus:outline-none cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground focus:outline-none cursor-pointer"
             title="View Details"
           >
             <Eye size={14} />
@@ -156,7 +156,7 @@ export const getQuestionColumns = ({
           {canEdit && (
             <button
               onClick={() => navigate(`/question-bank/edit/${item.id}`)}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700 focus:outline-none cursor-pointer"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground focus:outline-none cursor-pointer"
               title="Edit Question"
             >
               <Edit size={14} />
@@ -166,7 +166,7 @@ export const getQuestionColumns = ({
           {canDelete && (
             <button
               onClick={() => onDelete?.(item.id)}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-200 bg-white text-rose-500 shadow-sm transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none cursor-pointer"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-destructive/30 bg-card text-destructive shadow-2xs transition-colors hover:bg-destructive/10 focus:outline-none cursor-pointer"
               title="Delete Question"
             >
               <Trash2 size={14} />

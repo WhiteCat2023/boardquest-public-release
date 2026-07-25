@@ -129,7 +129,7 @@ export default function ReviewCenterManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50">
+    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground">
       {/* Header */}
       <ReviewCenterHeader onAddClick={handleOpenAdd} />
 

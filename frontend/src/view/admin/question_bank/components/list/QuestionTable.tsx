@@ -1,10 +1,7 @@
-import { useState, useMemo } from 'react';
-import { UserRole, type Question } from '@/types/question';
+import { useMemo } from 'react';
+import { type Question } from '@/types/question';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
-import useAxiosPrivate from '@/hooks/useAxiosPrivate';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,7 +15,6 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import BulkFeedbackDialog from '../dialog/BulkFeedbackDialog';
 import { getQuestionColumns } from './columns';
 import BulkActionsToolbar from './BulkActionsToolbar';
 
@@ -88,8 +84,8 @@ export default function QuestionTable({
   const selectedRows = table.getSelectedRowModel().rows;
 
   return (
-    <div className="relative w-full flex flex-col gap-0 font-sans">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+    <div className="relative w-full flex flex-col gap-0 font-sans text-foreground">
+      <div className="w-full bg-card border border-border shadow-sm rounded-2xl overflow-hidden">
         {/* Datagrid Top Header Toolbar */}
         <BulkActionsToolbar
           totalCount={questions.length}
@@ -108,11 +104,11 @@ export default function QuestionTable({
         />
 
         <Table>
-          <TableHeader className="bg-slate-50/50" data-shimmer-ignore>
+          <TableHeader className="bg-muted/40 border-b border-border" data-shimmer-ignore>
             {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className="border-b border-slate-100 hover:bg-transparent">
+              <TableRow key={headerGroup.id} className="border-b border-border hover:bg-transparent">
                 {headerGroup.headers.map(header => (
-                  <TableHead key={header.id} className="text-xs font-bold text-slate-400 uppercase tracking-wider py-4">
+                  <TableHead key={header.id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider py-4">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -121,13 +117,13 @@ export default function QuestionTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-border">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map(row => (
                 <TableRow 
                   key={row.id} 
-                  className={`border-b border-slate-100 hover:bg-slate-50/40 transition-colors ${
-                    row.getIsSelected() ? 'bg-slate-50/80' : ''
+                  className={`border-b border-border hover:bg-accent/40 transition-colors ${
+                    row.getIsSelected() ? 'bg-accent/70' : ''
                   }`}
                 >
                   {row.getVisibleCells().map(cell => (
@@ -139,7 +135,7 @@ export default function QuestionTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 font-medium">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground font-medium">
                   No questions found.
                 </TableCell>
               </TableRow>

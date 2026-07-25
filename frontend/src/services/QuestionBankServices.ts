@@ -46,8 +46,8 @@ export const extractQuestions = async (axiosPrivate: any) => {
         return;
       }
 
-      let fileContent = "";
-      let fileType = "csv";
+      let fileContent: string;
+      let fileType: string;
 
       if (isExcel) {
         fileType = "excel";

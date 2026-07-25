@@ -8,6 +8,8 @@ import { BrowserRouter } from 'react-router-dom';
 import "@aejkatappaja/phantom-ui";
 
 
+import { ThemeProvider } from 'next-themes';
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
@@ -15,7 +17,9 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <App />
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <App />
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </BrowserRouter>

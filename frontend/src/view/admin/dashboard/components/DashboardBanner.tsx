@@ -45,23 +45,23 @@ export function DashboardBanner({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border border-slate-200/80 rounded-3xl p-6 md:p-8 shadow-xs">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xs">
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="bg-[#A70202]/10 text-[#A70202] border-[#A70202]/20 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full"
+            className="bg-primary/10 text-primary border-primary/20 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full"
           >
             {getPortalTitle()}
           </Badge>
-          <span className="text-xs text-slate-400 font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             &bull; {appContent.dashboard.banner.systemStatus}
           </span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
           {getGreeting()}, {userName}
         </h1>
-        <p className="text-xs md:text-sm text-slate-500">
+        <p className="text-xs md:text-sm text-muted-foreground">
           {getPortalDescription()}
         </p>
       </div>
@@ -70,7 +70,7 @@ export function DashboardBanner({
         {isTeacher && (
           <>
             <Link to="/question-bank">
-              <Button className="bg-[#A70202] text-white hover:bg-[#8e0202] rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
                 <Plus size={15} />
                 {appContent.dashboard.banner.actions.addNewQuestion}
               </Button>
@@ -78,9 +78,9 @@ export function DashboardBanner({
             <Link to="/question-bank">
               <Button
                 variant="outline"
-                className="bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
+                className="bg-muted hover:bg-accent border-border text-foreground rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
               >
-                <FileEdit size={15} className="text-[#A70202]" />
+                <FileEdit size={15} className="text-primary" />
                 {appContent.dashboard.banner.actions.myDrafts} ({teacherDraftCount})
               </Button>
             </Link>
@@ -90,7 +90,7 @@ export function DashboardBanner({
         {isTeamLead && (
           <>
             <Link to="/review-center">
-              <Button className="bg-[#A70202] text-white hover:bg-[#8e0202] rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
                 <Clock size={15} />
                 {appContent.dashboard.banner.actions.reviewQueue} ({pendingReviewQuestions})
               </Button>
@@ -98,9 +98,9 @@ export function DashboardBanner({
             <Link to="/question-bank">
               <Button
                 variant="outline"
-                className="bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
+                className="bg-muted hover:bg-accent border-border text-foreground rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
               >
-                <Plus size={15} className="text-[#A70202]" />
+                <Plus size={15} className="text-primary" />
                 {appContent.dashboard.banner.actions.addQuestion}
               </Button>
             </Link>
@@ -110,7 +110,7 @@ export function DashboardBanner({
         {isAdminOrSuper && (
           <>
             <Link to="/question-bank">
-              <Button className="bg-[#A70202] text-white hover:bg-[#8e0202] rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
                 <Plus size={15} />
                 {appContent.dashboard.banner.actions.addQuestion}
               </Button>
@@ -118,9 +118,9 @@ export function DashboardBanner({
             <Link to="/student-management">
               <Button
                 variant="outline"
-                className="bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
+                className="bg-muted hover:bg-accent border-border text-foreground rounded-2xl px-4 py-2 text-xs font-bold gap-1.5 cursor-pointer"
               >
-                <GraduationCap size={15} className="text-[#A70202]" />
+                <GraduationCap size={15} className="text-primary" />
                 {appContent.dashboard.banner.actions.studentRoster}
               </Button>
             </Link>

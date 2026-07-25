@@ -20,7 +20,11 @@ function PersistentSession() {
             }
         }
 
-        !auth?.data?.user?.id ? verifyRefreshToken() : setIsLoading(false)
+        if (!(auth as any)?.data?.user?.id) {
+            verifyRefreshToken()
+        } else {
+            setIsLoading(false)
+        }
     }, [])
 
     return (

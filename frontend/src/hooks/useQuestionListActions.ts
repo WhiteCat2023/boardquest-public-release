@@ -14,7 +14,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     const { auth } = useAuth();
     const axiosPrivate = useAxiosPrivate();
     const queryClient = useQueryClient();
-    const pendingDeletes = useRef<{ [id: string]: NodeJS.Timeout }>({});
+    const pendingDeletes = useRef<{ [id: string]: any }>({});
 
     const {
         cursorsStack,

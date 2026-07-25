@@ -1,38 +1,39 @@
 // Helper to get initials
 export const getInitials = (name?: string) => {
-    if (!name) return '??';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  if (!name) return '??';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
 
-  // Status colors mapping
-  export const getStatusColor = (status?: string) => {
-    switch ((status || '').toLowerCase()) {
-      case 'approved':
-        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-      case 'pending review':
-        return 'border-amber-200 bg-amber-50 text-amber-700';
-      case 'needs revision':
-        return 'border-rose-200 bg-rose-50 text-rose-700';
-      default:
-        return 'border-slate-200 bg-slate-50 text-slate-700';
-    }
-  };
+// Status colors mapping
+export const getStatusColor = (status?: string) => {
+  switch ((status || '').toLowerCase().replace(/_/g, ' ')) {
+    case 'approved':
+      return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    case 'pending review':
+    case 'pending':
+      return 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    case 'needs revision':
+      return 'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400';
+    default:
+      return 'border-border bg-muted text-muted-foreground';
+  }
+};
 
-  // Difficulty colors mapping
-  export const getDifficultyColor = (diff?: string) => {
-    switch ((diff || '').toLowerCase()) {
-      case 'easy':
-        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-      case 'medium':
-        return 'border-amber-200 bg-amber-50 text-amber-700';
-      case 'hard':
-        return 'border-rose-200 bg-rose-50 text-rose-700';
-      default:
-        return 'border-slate-200 bg-slate-50 text-slate-600';
-    }
-  };
+// Difficulty colors mapping
+export const getDifficultyColor = (diff?: string) => {
+  switch ((diff || '').toLowerCase()) {
+    case 'easy':
+      return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    case 'medium':
+      return 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    case 'hard':
+      return 'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400';
+    default:
+      return 'border-border bg-muted text-muted-foreground';
+  }
+};

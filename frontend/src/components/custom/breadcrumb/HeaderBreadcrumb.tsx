@@ -62,7 +62,7 @@ export default function HeaderBreadcrumb() {
 
           // Customize Question View/Edit breadcrumb label
           if (isQuestionViewOrEdit && index === 2 && questionData) {
-            const rawText = questionData.question || "";
+            const rawText = questionData.text || (questionData as any).question || "";
             const truncatedText =
               rawText.length > 40 ? `${rawText.slice(0, 40)}...` : rawText;
             displayLabel =

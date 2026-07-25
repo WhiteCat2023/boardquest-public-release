@@ -12,7 +12,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -162,18 +161,18 @@ export default function SetReviewScheduleModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-2xl sm:max-w-2xl md:max-w-3xl w-full overflow-hidden">
+      <DialogContent className="bg-card rounded-3xl p-7 border border-border shadow-2xl sm:max-w-2xl md:max-w-3xl w-full overflow-hidden text-foreground">
         {/* Styled Top Banner Header */}
-        <div className="relative -mx-8 -mt-8 p-7 px-8 bg-gradient-to-r from-[#A70202] via-red-800 to-amber-900 text-white flex items-center gap-4">
-          <div className="size-14 rounded-2xl bg-white/15 border border-white/30 text-white flex items-center justify-center font-bold shadow-inner shrink-0 backdrop-blur-md">
+        <div className="relative -mx-8 -mt-8 p-7 px-8 bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground flex items-center gap-4">
+          <div className="size-14 rounded-2xl bg-primary-foreground/15 border border-primary-foreground/30 text-primary-foreground flex items-center justify-center font-bold shadow-inner shrink-0 backdrop-blur-md">
             <CalendarIcon size={26} />
           </div>
           <div>
-            <DialogTitle className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <DialogTitle className="text-xl font-bold text-primary-foreground tracking-tight flex items-center gap-2.5">
               {isEditing ? "Edit Review Schedule & Dates" : "Schedule Review Period"}
               <Sparkles size={18} className="text-amber-300" />
             </DialogTitle>
-            <DialogDescription className="text-xs text-red-100 mt-1">
+            <DialogDescription className="text-xs text-primary-foreground/80 mt-1">
               Set the start date and end date for intensive board reviews, mock exams, or subject coaching batches.
             </DialogDescription>
           </div>
@@ -182,8 +181,8 @@ export default function SetReviewScheduleModal({
         <form onSubmit={handleSubmit} className="space-y-4 mt-5">
           {/* Review Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <CalendarIcon size={14} className="text-[#A70202]" />
+            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <CalendarIcon size={14} className="text-primary" />
               Review Program / Batch Title *
             </label>
             <Input
@@ -191,7 +190,7 @@ export default function SetReviewScheduleModal({
               placeholder="e.g. 2026 Comprehensive MTLE Board Review"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-10 bg-slate-50/60 border border-slate-200 rounded-xl text-sm font-medium focus-visible:ring-2 focus-visible:ring-[#A70202]/20 focus-visible:border-[#A70202]"
+              className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
               required
             />
           </div>
@@ -200,13 +199,13 @@ export default function SetReviewScheduleModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Review Center Institution */}
             <div className="space-y-1.5 min-w-0">
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Building2 size={14} className="text-slate-400 shrink-0" />
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Building2 size={14} className="text-muted-foreground shrink-0" />
                 Review Center Institution
               </label>
               {reviewCenters.length > 0 ? (
                 <Select value={companyName} onValueChange={setCompanyName}>
-                  <SelectTrigger className="h-10 w-full bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202]">
+                  <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
                     <SelectValue placeholder="Select Review Center" className="truncate" />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-w-[280px]">
@@ -223,19 +222,19 @@ export default function SetReviewScheduleModal({
                   placeholder="e.g. Apex MedTech Review Center"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="h-10 w-full bg-slate-50/60 border border-slate-200 rounded-xl text-sm"
+                  className="h-10 w-full bg-muted/40 border border-border rounded-xl text-sm text-foreground"
                 />
               )}
             </div>
 
             {/* Category */}
             <div className="space-y-1.5 min-w-0">
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Tag size={14} className="text-slate-400 shrink-0" />
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Tag size={14} className="text-muted-foreground shrink-0" />
                 Category
               </label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-10 w-full bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202]">
+                <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -250,15 +249,15 @@ export default function SetReviewScheduleModal({
           </div>
 
           {/* BEAUTIFIED START DATE & END DATE SECTION */}
-          <div className="p-4 bg-gradient-to-br from-red-50/50 via-slate-50/80 to-amber-50/40 border border-red-100 rounded-2xl space-y-3">
+          <div className="p-4 bg-muted/40 border border-border rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Clock size={14} className="text-[#A70202]" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Clock size={14} className="text-primary" />
                 Review Duration & Dates
               </span>
 
               {durationDays !== null && (
-                <span className="text-[11px] font-bold text-[#A70202] bg-white border border-red-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                <span className="text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full shadow-2xs">
                   {durationDays} {durationDays === 1 ? "Day" : "Days"} Program
                 </span>
               )}
@@ -266,40 +265,40 @@ export default function SetReviewScheduleModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Start Date */}
-              <div className="space-y-1.5 min-w-0 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
-                  <CalendarIcon size={13} className="text-[#A70202]" />
+              <div className="space-y-1.5 min-w-0 bg-card p-3 rounded-xl border border-border shadow-2xs">
+                <label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+                  <CalendarIcon size={13} className="text-primary" />
                   Start Date *
                 </label>
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9 bg-slate-50/50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus-visible:ring-2 focus-visible:ring-[#A70202]/20 focus-visible:border-[#A70202]"
+                  className="h-9 bg-muted/40 border border-border rounded-lg text-xs font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary"
                   required
                 />
               </div>
 
               {/* End Date */}
-              <div className="space-y-1.5 min-w-0 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
-                  <CalendarIcon size={13} className="text-[#A70202]" />
+              <div className="space-y-1.5 min-w-0 bg-card p-3 rounded-xl border border-border shadow-2xs">
+                <label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+                  <CalendarIcon size={13} className="text-primary" />
                   End Date *
                 </label>
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9 bg-slate-50/50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus-visible:ring-2 focus-visible:ring-[#A70202]/20 focus-visible:border-[#A70202]"
+                  className="h-9 bg-muted/40 border border-border rounded-lg text-xs font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary"
                   required
                 />
               </div>
             </div>
 
             {startDate && endDate && (
-              <div className="flex items-center justify-center gap-2 text-[11px] font-medium text-slate-500 pt-1">
+              <div className="flex items-center justify-center gap-2 text-[11px] font-medium text-muted-foreground pt-1">
                 <span>{new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-                <ArrowRight size={12} className="text-[#A70202]" />
+                <ArrowRight size={12} className="text-primary" />
                 <span>{new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
               </div>
             )}
@@ -307,9 +306,9 @@ export default function SetReviewScheduleModal({
 
           {/* Schedule Status Selection */}
           <div className="space-y-1.5 min-w-0">
-            <label className="text-xs font-bold text-slate-700">Schedule Status</label>
+            <label className="text-xs font-bold text-foreground">Schedule Status</label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-10 w-full bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202]">
+              <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -322,8 +321,8 @@ export default function SetReviewScheduleModal({
 
           {/* Notes / Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <AlignLeft size={14} className="text-slate-400" />
+            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <AlignLeft size={14} className="text-muted-foreground" />
               Description & Notes
             </label>
             <textarea
@@ -331,24 +330,24 @@ export default function SetReviewScheduleModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full p-3 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202] outline-none transition-all"
+              className="w-full p-3 bg-muted/40 border border-border rounded-xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none transition-all"
             />
           </div>
 
           {/* Styled Footer */}
-          <div className="bg-slate-50/90 -mx-8 -mb-8 p-5 px-8 mt-7 rounded-b-3xl border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="bg-muted/40 -mx-8 -mb-8 p-5 px-8 mt-7 rounded-b-3xl border-t border-border flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="h-10 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl px-4 cursor-pointer"
+              className="h-10 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground rounded-xl px-4 cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 text-xs font-semibold bg-[#A70202] hover:bg-[#8b0101] text-white rounded-xl px-5 cursor-pointer shadow-md flex items-center gap-2 transition-all"
+              className="h-10 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 cursor-pointer shadow-md flex items-center gap-2 transition-all"
             >
               {isSubmitting && <Loader2 size={14} className="animate-spin" />}
               {isEditing ? "Save Date Changes" : "Create Review Schedule"}

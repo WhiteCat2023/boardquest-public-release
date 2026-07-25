@@ -287,6 +287,34 @@ export class AuthService {
 
     return { message: "Password has been reset successfully." };
   }
+
+  async updateProfile(userId: string, data: { name?: string; email?: string; username?: string; phoneNumber?: string; password?: string }) {
+    if (userId === "superadmin-env-id") {
+      throw new ApiError(400, "Environment Super Admin account profile cannot be modified.");
+    }
+
+    const user = await this.db.adminUser.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new ApiError(404, "User account not found");
+    }
+
+    const updateData: any = {};
+    if (data.name) updateData.name = data.name;
+    if (data.email) updateData.email = data.email;
+    if (data.username) updateData.username = data.username;
+    if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
+    if (data.password) {
+      updateData.password = await hashedPassword(data.password);
+    }
+
+    const updated = await this.db.adminUser.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    const { password, ...sanitized } = updated as any;
+    return sanitized;
+  }
 }
 
 export const authService = new AuthService();
@@ -299,5 +327,6 @@ export const signupAdmin = authService.signupAdmin.bind(authService);
 export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(authService);
 export const forgotPassword = authService.forgotPassword.bind(authService);
 export const resetPassword = authService.resetPassword.bind(authService);
+export const updateProfile = authService.updateProfile.bind(authService);
 
 

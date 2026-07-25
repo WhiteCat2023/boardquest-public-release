@@ -10,7 +10,7 @@ export type AuthContextType = {
   setAuth: React.Dispatch<React.SetStateAction<object>>;
   login: (userData: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
-  loginMutation: ReturnType<typeof useMutation>;
+  loginMutation: any;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);

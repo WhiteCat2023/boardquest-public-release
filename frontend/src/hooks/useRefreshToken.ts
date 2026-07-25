@@ -12,7 +12,7 @@ const useRefreshToken = () => {
           ...prev, 
           data: {
             user: {
-              ...prev?.data?.user,
+              ...(prev as any)?.data?.user,
               id: res.data.data.id,
               role: res.data.data.role
             }

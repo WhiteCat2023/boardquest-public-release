@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, MapPin, Calendar, Award, Zap } from "lucide-react";
+import { Eye, MapPin, Calendar, Zap } from "lucide-react";
 import type { Student } from "../hooks/useStudent";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,20 +24,20 @@ export default function StudentTableRow({ student }: StudentTableRowProps) {
   const unlockedBadges = badges.filter((b) => b.unlocked);
 
   return (
-    <TableRow className="hover:bg-slate-50/40 transition-colors group border-b border-slate-100">
+    <TableRow className="hover:bg-accent/40 transition-colors group border-b border-border">
       {/* Student Profile */}
       <TableCell className="p-4 px-6">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border border-slate-200 bg-red-50 text-[#A70202]">
-            <AvatarFallback className="font-bold text-xs bg-[#A70202]/10 text-[#A70202] uppercase">
+          <Avatar className="h-10 w-10 border border-primary/20 bg-primary/10 text-primary">
+            <AvatarFallback className="font-bold text-xs bg-primary/10 text-primary uppercase">
               {student.name.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-bold text-slate-800 text-sm group-hover:text-[#A70202] transition-colors">
+            <span className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">
               {student.name}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="text-xs text-muted-foreground font-medium">
               {student.email}
             </span>
           </div>
@@ -47,11 +47,11 @@ export default function StudentTableRow({ student }: StudentTableRowProps) {
       {/* Level & XP */}
       <TableCell className="p-4">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-bold gap-1 px-2.5 py-0.5 rounded-full">
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[10px] font-bold gap-1 px-2.5 py-0.5 rounded-full">
             <Zap size={11} className="fill-amber-500 text-amber-500" />
             Lvl {student.level || 1}
           </Badge>
-          <span className="text-xs font-semibold text-slate-600">
+          <span className="text-xs font-semibold text-foreground/80">
             {student.xp || 0} XP
           </span>
         </div>
@@ -74,7 +74,7 @@ export default function StudentTableRow({ student }: StudentTableRowProps) {
             );
           })}
           {unlockedBadges.length > 3 && (
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
               +{unlockedBadges.length - 3}
             </span>
           )}
@@ -83,16 +83,16 @@ export default function StudentTableRow({ student }: StudentTableRowProps) {
 
       {/* Location */}
       <TableCell className="p-4">
-        <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-          <MapPin size={13} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+          <MapPin size={13} className="text-muted-foreground/70" />
           <span>{student.location || "Philippines"}</span>
         </div>
       </TableCell>
 
       {/* Date Joined */}
       <TableCell className="p-4">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-          <Calendar size={13} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+          <Calendar size={13} className="text-muted-foreground/70" />
           <span>{formatDate(student.createdAt)}</span>
         </div>
       </TableCell>
@@ -102,7 +102,7 @@ export default function StudentTableRow({ student }: StudentTableRowProps) {
         <div className="flex items-center justify-end gap-1">
           <Link to={`/student-management/view/${student.id}`}>
             <button
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all cursor-pointer"
               title="View Student Profile"
             >
               <Eye size={15} />

@@ -44,11 +44,11 @@ export default function QuestionList({ filters }: QuestionListProps) {
     <>
       {/* ── Error state ── */}
       {error && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-red-100 bg-red-50 py-16 text-center">
-          <AlertCircle size={36} className="text-[#A70202]" />
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-destructive/20 bg-destructive/10 py-16 text-center text-foreground font-sans">
+          <AlertCircle size={36} className="text-destructive" />
           <div>
-            <p className="font-semibold text-gray-800">Something went wrong</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="font-semibold text-foreground">Something went wrong</p>
+            <p className="text-sm text-muted-foreground mt-1">
               {error instanceof Error
                 ? error.message
                 : "Failed to fetch questions."}
@@ -56,7 +56,7 @@ export default function QuestionList({ filters }: QuestionListProps) {
           </div>
           <button
             onClick={() => fetchQuestions()}
-            className="mt-2 rounded-xl bg-[#A70202] px-5 py-2 text-sm font-medium text-white hover:bg-[#8f0101] transition-colors"
+            className="mt-2 rounded-xl bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
           >
             Try again
           </button>
@@ -65,13 +65,13 @@ export default function QuestionList({ filters }: QuestionListProps) {
 
       {/* ── Data layout ── */}
       <phantom-ui loading={loading}>
-        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300 font-sans">
           {/* ── Empty state ── */}
           {questions.length === 0 && !loading && !error && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-white py-16 text-center shadow-sm">
-              <FileQuestion size={36} className="text-gray-300" />
-              <p className="font-semibold text-gray-600">No questions yet</p>
-              <p className="text-sm text-gray-400">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card py-16 text-center shadow-xs">
+              <FileQuestion size={36} className="text-muted-foreground/40" />
+              <p className="font-semibold text-foreground">No questions yet</p>
+              <p className="text-sm text-muted-foreground">
                 Add your first question to get started.
               </p>
             </div>

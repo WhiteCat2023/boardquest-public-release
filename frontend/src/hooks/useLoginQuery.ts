@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import AxiosInstance from "@/utils/axiosInstance";
-import type { LoginRequest } from "../utils/query/auth";
+import AxiosInstance from "@/utils/AxiosInstance";
+type LoginRequest = any;
 
 const Login = (inputs: LoginRequest) => useQuery({
     queryKey: ['auth'],

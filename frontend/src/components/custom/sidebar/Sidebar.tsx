@@ -1,12 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
-import { LogOut, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { NavItemProps, NavContentProps } from '@/types/sidebarMenuItems';
 import { useState, useEffect } from 'react';
 import {
   Sidebar as UISidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -14,7 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 type LucideIconName = keyof typeof LucideIcons;
 
@@ -58,8 +57,8 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
             flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10
             transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
             ${isActive
-              ? '!bg-[#E9B0B0] !text-[#A70202]'
-              : '!text-gray-500 hover:!bg-gray-100 hover:!text-gray-800 hover:!text-[#A70202]'
+              ? '!bg-[#E9B0B0] !text-[#A70202] dark:!bg-primary/20 dark:!text-primary font-bold dark:border dark:border-primary/30 shadow-2xs'
+              : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary'
             }
           `}
         >
@@ -83,8 +82,8 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
           flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer
           transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
           ${isParentActive
-            ? 'bg-slate-100/80 text-gray-800 font-semibold'
-            : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202]'
+            ? 'bg-slate-100/80 text-gray-800 font-semibold dark:bg-sidebar-accent dark:text-sidebar-accent-foreground'
+            : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary'
           }
         `}
       >
@@ -92,14 +91,14 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
           <DynamicIcon name={content.icon} size={18} className="shrink-0" />
           <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
         </div>
-        <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 transition-colors">
+        <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 dark:text-sidebar-foreground/50 dark:hover:text-sidebar-foreground transition-colors">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </div>
       </SidebarMenuButton>
 
       {/* Sub-items block */}
       {isOpen && (
-        <div className="pl-6 mt-1 flex flex-col gap-1 border-l border-slate-100 ml-5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
+        <div className="pl-6 mt-1 flex flex-col gap-1 border-l border-slate-100 dark:border-sidebar-border ml-5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
           {content.subItems!.map((sub, idx) => {
             const isSubActive = location.pathname + location.search === sub.path;
             return (
@@ -109,8 +108,8 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
                 className={`
                   text-xs py-1.5 px-3 rounded-lg font-medium transition-all duration-150
                   ${isSubActive
-                    ? 'text-[#A70202] bg-[#E9B0B0]/40 font-semibold'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    ? 'text-[#A70202] bg-[#E9B0B0]/40 font-semibold dark:text-primary dark:bg-primary/20 dark:border dark:border-primary/30'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50 dark:text-sidebar-foreground/70 dark:hover:text-sidebar-foreground dark:hover:bg-sidebar-accent'
                   }
                 `}
               >
@@ -124,16 +123,16 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
   );
 }
 
-function Sidebar({ navItem, logout }: SidebarContentProps) {
+function Sidebar({ navItem }: SidebarContentProps) {
   const location = useLocation();
 
   return (
-    <UISidebar collapsible="icon" className="font-[Poppins] bg-white border-r border-gray-100">
+    <UISidebar collapsible="icon" className="font-sans bg-white dark:bg-sidebar text-gray-800 dark:text-sidebar-foreground border-r border-gray-100 dark:border-sidebar-border">
       <SidebarHeader className="mb-6 p-5 pb-0 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-4 group-data-[collapsible=icon]:pt-5">
-        <h1 className="text-lg font-bold text-gray-800 tracking-tight truncate group-data-[collapsible=icon]:hidden">
+        <h1 className="text-lg font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight truncate group-data-[collapsible=icon]:hidden">
           Faculty Portal
         </h1>
-        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center font-bold text-gray-800 tracking-tight">
+        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight">
           FP
         </div>
       </SidebarHeader>
@@ -143,7 +142,7 @@ function Sidebar({ navItem, logout }: SidebarContentProps) {
           .filter((item: NavItemProps) => item.content && item.content.length > 0)
           .map((item: NavItemProps, index: number) => (
             <SidebarGroup key={index} className="p-0">
-              <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
+              <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 dark:text-sidebar-foreground/50 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
                 {item.sideBarCategoryName}
               </SidebarGroupLabel>
               <SidebarGroupContent>

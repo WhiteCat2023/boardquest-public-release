@@ -48,9 +48,9 @@ export default function Dashboard() {
     isQuestionLoading;
 
   const totalFaculties =
-    facultyData?.total ?? (facultyData?.faculties || []).length;
+    (facultyData as any)?.total ?? (Array.isArray(facultyData) ? facultyData.length : (facultyData as any)?.faculties?.length || 0);
   const totalStudents =
-    studentData?.total ?? (studentData?.students || []).length;
+    (studentData as any)?.total ?? (Array.isArray(studentData) ? studentData.length : (studentData as any)?.students?.length || 0);
   const totalCategories = (categoryData || []).length;
   const handledCategoriesCount =
     currentUser?.handledCategories?.length || (categoryData || []).length;
@@ -92,7 +92,7 @@ export default function Dashboard() {
 
   return (
     <phantom-ui loading={isLoading}>
-      <div className="flex flex-col gap-8 p-6 md:p-8 w-full max-w-7xl mx-auto font-sans bg-slate-50/50 min-h-full">
+      <div className="flex flex-col gap-8 p-6 md:p-8 w-full max-w-7xl mx-auto font-sans bg-background text-foreground min-h-full">
         {/* Banner Section */}
         <DashboardBanner
           userRole={userRole}

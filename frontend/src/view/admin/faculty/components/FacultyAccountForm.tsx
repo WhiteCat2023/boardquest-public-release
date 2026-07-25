@@ -13,23 +13,23 @@ export default function FacultyAccountForm({ formData, onChange }: FacultyAccoun
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
-      <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-        <div className="p-2 bg-slate-100 text-slate-600 rounded-xl">
+    <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6 font-sans text-foreground">
+      <div className="flex items-center gap-3 border-b border-border pb-4">
+        <div className="p-2 bg-muted text-muted-foreground rounded-xl">
           <Lock size={18} />
         </div>
         <div>
-          <h2 className="text-base font-bold text-slate-800">Account Credentials</h2>
-          <p className="text-xs text-slate-400">Login username and password for platform authentication</p>
+          <h2 className="text-base font-bold text-foreground">Account Credentials</h2>
+          <p className="text-xs text-muted-foreground">Login username and password for platform authentication</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Username */}
         <div className="flex flex-col gap-2">
-          <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-            <User size={14} className="text-slate-400" />
-            Username <span className="text-[#A70202]">*</span>
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <User size={14} className="text-muted-foreground" />
+            Username <span className="text-primary">*</span>
           </Label>
           <Input
             type="text"
@@ -37,15 +37,15 @@ export default function FacultyAccountForm({ formData, onChange }: FacultyAccoun
             placeholder="e.g. jdoe_admin"
             value={formData.username}
             onChange={(e) => onChange("username", e.target.value)}
-            className="h-11 border-slate-200 rounded-xl focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm"
+            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Password */}
         <div className="flex flex-col gap-2">
-          <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-            <Lock size={14} className="text-slate-400" />
-            Password <span className="text-[#A70202]">*</span>
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Lock size={14} className="text-muted-foreground" />
+            Password <span className="text-primary">*</span>
           </Label>
           <div className="relative">
             <Input
@@ -54,12 +54,12 @@ export default function FacultyAccountForm({ formData, onChange }: FacultyAccoun
               placeholder="Min. 6 characters"
               value={formData.password}
               onChange={(e) => onChange("password", e.target.value)}
-              className="h-11 pr-10 border-slate-200 rounded-xl focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm"
+              className="h-11 pr-10 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>

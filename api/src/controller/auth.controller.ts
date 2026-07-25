@@ -136,3 +136,27 @@ export const resetPassword = asyncHandler(async (req, res) => {
   const result = await authService.resetPassword(req.body);
   return new ApiResponse(200, result, "Password has been successfully reset").send(res);
 });
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  let token = req.cookies?.accessToken || req.cookies?.token;
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7);
+    }
+  }
+
+  if (!token) {
+    return new ApiResponse(401, null, "Unauthorized").send(res);
+  }
+
+  const { payload } = verifyJWT(token);
+  const userId = (payload as any)?.id;
+
+  if (!userId) {
+    return new ApiResponse(401, null, "Unauthorized").send(res);
+  }
+
+  const updatedUser = await authService.updateProfile(userId, req.body);
+  return new ApiResponse(200, { user: updatedUser }, "Profile updated successfully").send(res);
+});

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Power, Search, Filter, RotateCcw, X } from "lucide-react";
-import type { FacultyMember, RoleType } from "./types";
+import { Power, Search, RotateCcw, X } from "lucide-react";
+import type { RoleType } from "./types";
 import { getAllowedRolesToCreate } from "./utils/facultyUtils";
 import { useFaculties, useToggleFacultyStatus, useDepartments } from "./hooks/useFaculty";
 import FacultyHeader from "./components/FacultyHeader";
@@ -118,6 +118,7 @@ export default function FacultyManagement() {
       f.department?.name.toLowerCase() === selectedDept.toLowerCase();
 
     const isActive = f.isActive !== false;
+
     const matchStatus =
       selectedStatus === "ALL" ||
       (selectedStatus === "ACTIVE" && isActive) ||
@@ -130,25 +131,25 @@ export default function FacultyManagement() {
   const isTogglingActive = confirmDialog.currentStatus !== false;
 
   return (
-    <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50">
+    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground">
       <FacultyHeader canAddFaculty={canAddFaculty} />
 
       {/* Search & Filters Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             type="text"
             placeholder="Search by name, email, employee ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-9 h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+            className="pl-10 pr-9 h-10 bg-muted/40 border border-border rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X size={14} />
             </button>
@@ -159,7 +160,7 @@ export default function FacultyManagement() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Role Filter */}
           <Select value={selectedRole} onValueChange={setSelectedRole}>
-            <SelectTrigger className="h-10 w-[140px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+            <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -173,7 +174,7 @@ export default function FacultyManagement() {
 
           {/* Department Filter */}
           <Select value={selectedDept} onValueChange={setSelectedDept}>
-            <SelectTrigger className="h-10 w-[160px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+            <SelectTrigger className="h-10 w-[160px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Department" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -188,7 +189,7 @@ export default function FacultyManagement() {
 
           {/* Status Filter */}
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="h-10 w-[130px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+            <SelectTrigger className="h-10 w-[130px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -204,7 +205,7 @@ export default function FacultyManagement() {
               variant="ghost"
               size="sm"
               onClick={resetFilters}
-              className="h-10 text-xs font-semibold text-slate-500 hover:text-[#A70202] hover:bg-red-50 rounded-xl gap-1.5 cursor-pointer px-3"
+              className="h-10 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1.5 cursor-pointer px-3"
             >
               <RotateCcw size={13} />
               Reset
@@ -227,22 +228,22 @@ export default function FacultyManagement() {
         open={confirmDialog.isOpen}
         onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, isOpen: open }))}
       >
-        <AlertDialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xl max-w-md">
+        <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-xl max-w-md text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Power className={isTogglingActive ? "text-amber-600" : "text-emerald-600"} size={20} />
+            <AlertDialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Power className={isTogglingActive ? "text-amber-500" : "text-emerald-500"} size={20} />
               {isTogglingActive ? "Deactivate Account" : "Activate Account"}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-slate-500 mt-2 leading-relaxed">
+            <AlertDialogDescription className="text-sm text-muted-foreground mt-2 leading-relaxed">
               Are you sure you want to {isTogglingActive ? "deactivate" : "activate"}{" "}
-              <strong className="text-slate-800">{confirmDialog.memberName}</strong>'s account?{" "}
+              <strong className="text-foreground">{confirmDialog.memberName}</strong>'s account?{" "}
               {isTogglingActive
                 ? "Deactivated accounts will immediately lose login privileges."
                 : "Active accounts will regain full login access."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6 flex items-center justify-end gap-3">
-            <AlertDialogCancel className="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border-0 text-xs font-semibold px-4 py-2 cursor-pointer">
+            <AlertDialogCancel className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 py-2 cursor-pointer">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

@@ -70,15 +70,15 @@ export const isAllowedToManageRole = (creatorRole: RoleType, targetRole: RoleTyp
 export const getRoleBadgeColor = (role: RoleType): string => {
   switch (role) {
     case UserRole.SUPERADMIN:
-      return "bg-red-50 text-red-700 border-red-200";
+      return "bg-primary/10 text-primary border-primary/20";
     case UserRole.ADMIN:
-      return "bg-orange-50 text-orange-700 border-orange-200";
+      return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
     case UserRole.TEAMLEAD:
-      return "bg-indigo-50 text-indigo-700 border-indigo-200";
+      return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
     case UserRole.TEACHER:
-      return "bg-green-50 text-green-700 border-green-200";
+      return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
     default:
-      return "bg-slate-50 text-slate-700 border-slate-200";
+      return "bg-muted text-muted-foreground border-border";
   }
 };
 

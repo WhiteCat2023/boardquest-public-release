@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Shield, Briefcase, Phone, Mail, Power, Clock, BookOpen, Lock } from "lucide-react";
+import { Eye, Shield, Briefcase, Power, Clock, Lock } from "lucide-react";
 import type { FacultyMember, RoleType } from "../types";
 import { getRoleBadgeColor, isUserOnline } from "../utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -38,85 +38,41 @@ export default function FacultyTableRow({
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  const handledCategories = member?.handledCategories || [];
-
   return (
-    <TableRow className="hover:bg-slate-50/30 transition-colors group border-b border-slate-100">
+    <TableRow className="hover:bg-accent/40 transition-colors group border-b border-border">
       {/* Profile */}
       <TableCell className="p-4 px-6">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Avatar className="h-10 w-10 border border-slate-200 bg-slate-100">
-              <AvatarFallback className="font-bold text-slate-600 uppercase text-xs bg-slate-100">
+            <Avatar className="h-10 w-10 border border-border bg-muted">
+              <AvatarFallback className="font-bold text-foreground uppercase text-xs bg-muted">
                 {member.name.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
             {/* Online/Offline Status Dot */}
             <span
-              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white transition-colors ${
-                isOnline ? "bg-emerald-500" : "bg-slate-300"
+              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card transition-colors ${
+                isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
               }`}
               title={isOnline ? "Online Now" : "Offline"}
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-800">{member.name}</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+            <span className="text-sm font-bold text-foreground">{member.name}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
               ID: {member.employeeId}
             </span>
           </div>
         </div>
       </TableCell>
 
-      {/* Contact Details
-      <TableCell className="p-4">
-        <div className="flex flex-col gap-0.5 text-xs font-medium text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <Mail size={12} className="text-slate-400" /> {member.email}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Phone size={12} className="text-slate-400" /> {member.phoneNumber}
-          </span>
-        </div>
-      </TableCell> */}
-
       {/* Scope / Department */}
       <TableCell className="p-4">
-        <div className="flex items-center gap-1.5 text-slate-700 text-xs font-semibold">
-          <Briefcase size={13} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-foreground text-xs font-semibold">
+          <Briefcase size={13} className="text-muted-foreground" />
           <span className="capitalize">{member.department?.name || "General"}</span>
         </div>
       </TableCell>
-
-      {/* Handled Subjects / Categories */}
-      {/* <TableCell className="p-4">
-        <div className="flex items-center gap-1 flex-wrap max-w-xs">
-          {handledCategories.length > 0 ? (
-            handledCategories.slice(0, 2).map((cat) => (
-              <Badge
-                key={cat.id}
-                variant="outline"
-                className="bg-indigo-50/70 text-indigo-700 border-indigo-200 text-[10px] font-bold py-0.5 px-2 rounded-md truncate max-w-[110px]"
-                title={cat.name}
-              >
-                <BookOpen size={10} className="mr-1 shrink-0 inline" />
-                <span className="truncate">{cat.name}</span>
-              </Badge>
-            ))
-          ) : (
-            <span className="text-xs text-slate-400 font-medium italic">Unassigned</span>
-          )}
-          {handledCategories.length > 2 && (
-            <Badge
-              variant="outline"
-              className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] font-bold py-0.5 px-1.5 rounded-md"
-              title={handledCategories.slice(2).map((c) => c.name).join(", ")}
-            >
-              +{handledCategories.length - 2} more
-            </Badge>
-          )}
-        </div>
-      </TableCell> */}
 
       {/* Authority Role */}
       <TableCell className="p-4">
@@ -139,11 +95,11 @@ export default function FacultyTableRow({
             variant="outline"
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
               isOnline
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-slate-100 text-slate-500 border-slate-200"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-muted text-muted-foreground border-border"
             }`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
             {isOnline ? "Online" : "Offline"}
           </Badge>
 
@@ -152,8 +108,8 @@ export default function FacultyTableRow({
             variant="outline"
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
               isAccountActive
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-amber-50 text-amber-700 border-amber-200"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
             }`}
           >
             {isAccountActive ? "Active" : "Deactivated"}
@@ -163,8 +119,8 @@ export default function FacultyTableRow({
 
       {/* Last Activity Column */}
       <TableCell className="p-4">
-        <span className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-          <Clock size={12} className="text-slate-400" />
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+          <Clock size={12} className="text-muted-foreground/70" />
           {formatLastActive(member.lastActiveAt)}
         </span>
       </TableCell>
@@ -174,7 +130,7 @@ export default function FacultyTableRow({
         <div className="flex items-center justify-end gap-1">
           <Link to={`/faculty-management/view/${member.id}`}>
             <button
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all cursor-pointer"
               title="View Faculty Details"
             >
               <Eye size={15} />
@@ -186,8 +142,8 @@ export default function FacultyTableRow({
               onClick={() => onToggleStatus(member.id, isAccountActive, member.name)}
               className={`p-2 rounded-lg transition-all cursor-pointer ${
                 isAccountActive
-                  ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                  : "text-amber-600 hover:text-emerald-600 hover:bg-emerald-50"
+                  ? "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10"
+                  : "text-amber-600 hover:text-emerald-600 hover:bg-emerald-500/10"
               }`}
               title={isAccountActive ? "Deactivate Account" : "Activate Account"}
             >
@@ -197,7 +153,7 @@ export default function FacultyTableRow({
 
           {canManage && isSuperAdminAccount && (
             <span
-              className="p-2 text-slate-300 cursor-not-allowed"
+              className="p-2 text-muted-foreground/40 cursor-not-allowed"
               title="System Super Admin account is protected and cannot be deactivated or deleted."
             >
               <Lock size={15} />
@@ -205,7 +161,7 @@ export default function FacultyTableRow({
           )}
 
           {!canManage && (
-            <span className="text-xs text-slate-300 font-semibold italic ml-2">Locked</span>
+            <span className="text-xs text-muted-foreground/40 font-semibold italic ml-2">Locked</span>
           )}
         </div>
       </TableCell>

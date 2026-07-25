@@ -134,13 +134,13 @@ export default function AddEditReviewCenterModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl sm:max-w-xl w-full">
+      <DialogContent className="bg-card rounded-3xl p-6 border border-border shadow-2xl sm:max-w-xl w-full text-foreground font-sans">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2.5">
-            <Building2 className="text-[#A70202]" size={22} />
+          <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2.5">
+            <Building2 className="text-primary" size={22} />
             {isEditing ? "Edit Review Center Details" : "Add Review Center Representative"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500 mt-1">
+          <DialogDescription className="text-xs text-muted-foreground mt-1">
             {isEditing
               ? "Update partner organization details and representative contact information."
               : "Register a new affiliated review center institution and representative user account."}
@@ -150,8 +150,8 @@ export default function AddEditReviewCenterModal({
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {/* Review Center Company Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <Building2 size={14} className="text-slate-400" />
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <Building2 size={14} className="text-muted-foreground" />
               Review Center / Organization Name *
             </label>
             <Input
@@ -159,7 +159,7 @@ export default function AddEditReviewCenterModal({
               placeholder="e.g. Apex Medical Review Center"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+              className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
               required
             />
           </div>
@@ -167,8 +167,8 @@ export default function AddEditReviewCenterModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Representative Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <User size={14} className="text-slate-400" />
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <User size={14} className="text-muted-foreground" />
                 Representative Name *
               </label>
               <Input
@@ -176,15 +176,15 @@ export default function AddEditReviewCenterModal({
                 placeholder="e.g. Dr. Roberto Santos"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
                 required
               />
             </div>
 
             {/* Employee ID */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <BadgeCheck size={14} className="text-slate-400" />
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <BadgeCheck size={14} className="text-muted-foreground" />
                 Employee / Partner ID
               </label>
               <Input
@@ -192,7 +192,7 @@ export default function AddEditReviewCenterModal({
                 placeholder="e.g. RC-2026-001"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -200,8 +200,8 @@ export default function AddEditReviewCenterModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Email Address */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <Mail size={14} className="text-slate-400" />
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Mail size={14} className="text-muted-foreground" />
                 Email Address *
               </label>
               <Input
@@ -209,15 +209,15 @@ export default function AddEditReviewCenterModal({
                 placeholder="e.g. contact@apexreview.ph"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
                 required
               />
             </div>
 
             {/* Phone Number */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <Phone size={14} className="text-slate-400" />
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Phone size={14} className="text-muted-foreground" />
                 Phone Number
               </label>
               <Input
@@ -225,7 +225,7 @@ export default function AddEditReviewCenterModal({
                 placeholder="e.g. +63 917 555 1234"
                 value={phonenumber}
                 onChange={(e) => setPhonenumber(e.target.value)}
-                className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -233,8 +233,8 @@ export default function AddEditReviewCenterModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Location */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <MapPin size={14} className="text-slate-400" />
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <MapPin size={14} className="text-muted-foreground" />
                 Location / Branch
               </label>
               <Input
@@ -242,15 +242,15 @@ export default function AddEditReviewCenterModal({
                 placeholder="e.g. Manila, Philippines"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
               />
             </div>
 
             {/* Password (for new user creation) */}
             {!isEditing && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Lock size={14} className="text-slate-400" />
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Lock size={14} className="text-muted-foreground" />
                   Initial Password
                 </label>
                 <Input
@@ -258,25 +258,25 @@ export default function AddEditReviewCenterModal({
                   placeholder="Defaults to ReviewCenter123!"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+                  className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
                 />
               </div>
             )}
           </div>
 
-          <DialogFooter className="mt-6 flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+          <DialogFooter className="mt-6 flex items-center justify-end gap-3 pt-2 border-t border-border">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="h-10 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl px-4 cursor-pointer"
+              className="h-10 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground rounded-xl px-4 cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 text-xs font-semibold bg-[#A70202] hover:bg-[#8b0101] text-white rounded-xl px-5 cursor-pointer flex items-center gap-2"
+              className="h-10 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 cursor-pointer flex items-center gap-2 shadow-xs"
             >
               {isSubmitting && <Loader2 size={14} className="animate-spin" />}
               {isEditing ? "Save Changes" : "Create Review Center"}

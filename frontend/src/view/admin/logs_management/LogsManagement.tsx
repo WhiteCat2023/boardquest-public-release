@@ -116,7 +116,7 @@ export default function LogsManagement() {
     toast.success(`Exported ${logs.length} log records to CSV.`);
   };
 
-  // Render log level badges with rich industry-standard styling
+  // Render log level badges
   const renderLevelBadge = (level: LogLevelType) => {
     switch (level) {
       case "FATAL":
@@ -128,22 +128,22 @@ export default function LogsManagement() {
         );
       case "ERROR":
         return (
-          <Badge className="bg-red-100 text-[#A70202] border border-red-200 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-            <AlertCircle size={12} className="text-[#A70202]" />
+          <Badge className="bg-primary/10 text-primary border border-primary/20 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+            <AlertCircle size={12} className="text-primary" />
             ERROR
           </Badge>
         );
       case "WARN":
         return (
-          <Badge className="bg-amber-100 text-amber-900 border border-amber-300/80 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-            <AlertTriangle size={12} className="text-amber-600" />
+          <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+            <AlertTriangle size={12} className="text-amber-500" />
             WARN
           </Badge>
         );
       case "INFO":
       default:
         return (
-          <Badge className="bg-blue-50 text-blue-700 border border-blue-200 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+          <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
             <Info size={12} className="text-blue-500" />
             INFO
           </Badge>
@@ -152,17 +152,17 @@ export default function LogsManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50">
+    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground">
       {/* Sticky Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 bg-slate-50/95 backdrop-blur-md pb-4 pt-8 -mt-8 -mx-8 px-8 border-b border-slate-100 z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 bg-background/95 backdrop-blur-md pb-4 pt-6 -mt-6 -mx-6 md:-mt-8 md:-mx-8 px-6 md:px-8 border-b border-border z-10">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
-            <ScrollText className="text-[#A70202]" size={26} />
+          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
+            <ScrollText className="text-primary" size={26} />
             System Audit & Logs Management
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5 flex items-center gap-2">
+          <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-2">
             Monitor application events across industry-standard levels:
-            <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
+            <span className="inline-flex items-center gap-1 font-semibold text-foreground">
               <span className="size-2 rounded-full bg-blue-500" /> INFO
               <span className="size-2 rounded-full bg-amber-500 ml-1" /> WARN
               <span className="size-2 rounded-full bg-red-600 ml-1" /> ERROR
@@ -175,7 +175,7 @@ export default function LogsManagement() {
           <Button
             variant="outline"
             onClick={() => refetch()}
-            className="h-10 text-xs font-semibold bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs"
+            className="h-10 text-xs font-semibold bg-card border-border text-foreground hover:bg-accent rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <RefreshCw size={14} className={isLogsLoading ? "animate-spin" : ""} />
             Refresh
@@ -184,7 +184,7 @@ export default function LogsManagement() {
           <Button
             variant="outline"
             onClick={handleExportCSV}
-            className="h-10 text-xs font-semibold bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs"
+            className="h-10 text-xs font-semibold bg-card border-border text-foreground hover:bg-accent rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <Download size={14} />
             Export CSV
@@ -192,7 +192,7 @@ export default function LogsManagement() {
 
           <Button
             onClick={() => setIsConfirmClearOpen(true)}
-            className="h-10 text-xs font-semibold bg-red-50 hover:bg-red-100 text-[#A70202] border border-red-200 rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs transition-all"
+            className="h-10 text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl px-3.5 flex items-center gap-2 cursor-pointer shadow-2xs transition-all"
           >
             <Trash2 size={14} />
             Clear Logs
@@ -203,66 +203,66 @@ export default function LogsManagement() {
       {/* KPI LOG LEVEL STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total Logs */}
-        <Card className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+        <Card className="bg-card border border-border rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Volume</span>
-            <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Volume</span>
+            <div className="p-2 rounded-xl bg-muted text-foreground">
               <ScrollText size={18} />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-extrabold text-slate-800 font-mono">
+            <span className="text-2xl font-extrabold text-foreground font-mono">
               {isStatsLoading ? <Skeleton className="h-7 w-16" /> : stats?.total ?? logs.length}
             </span>
-            <span className="text-[11px] text-slate-400 block mt-0.5">Recorded log streams</span>
+            <span className="text-[11px] text-muted-foreground block mt-0.5">Recorded log streams</span>
           </div>
         </Card>
 
         {/* INFO Logs */}
-        <Card className="bg-white border border-blue-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+        <Card className="bg-card border border-blue-500/20 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">INFO</span>
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">INFO</span>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <Info size={18} />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-extrabold text-blue-700 font-mono">
+            <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">
               {isStatsLoading ? <Skeleton className="h-7 w-16" /> : stats?.info ?? 0}
             </span>
-            <span className="text-[11px] text-blue-500 block mt-0.5">Operational events</span>
+            <span className="text-[11px] text-muted-foreground block mt-0.5">Operational events</span>
           </div>
         </Card>
 
         {/* WARN Logs */}
-        <Card className="bg-white border border-amber-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+        <Card className="bg-card border border-amber-500/20 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">WARN</span>
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">WARN</span>
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <AlertTriangle size={18} />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-extrabold text-amber-800 font-mono">
+            <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 font-mono">
               {isStatsLoading ? <Skeleton className="h-7 w-16" /> : stats?.warn ?? 0}
             </span>
-            <span className="text-[11px] text-amber-600 block mt-0.5">Rate & system warnings</span>
+            <span className="text-[11px] text-muted-foreground block mt-0.5">Rate & system warnings</span>
           </div>
         </Card>
 
         {/* ERROR Logs */}
-        <Card className="bg-white border border-red-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+        <Card className="bg-card border border-primary/20 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#A70202] uppercase tracking-wider">ERROR</span>
-            <div className="p-2 rounded-xl bg-red-50 text-[#A70202]">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">ERROR</span>
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
               <AlertCircle size={18} />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-extrabold text-[#A70202] font-mono">
+            <span className="text-2xl font-extrabold text-primary font-mono">
               {isStatsLoading ? <Skeleton className="h-7 w-16" /> : stats?.error ?? 0}
             </span>
-            <span className="text-[11px] text-red-500 block mt-0.5">Handled exceptions</span>
+            <span className="text-[11px] text-muted-foreground block mt-0.5">Handled exceptions</span>
           </div>
         </Card>
 
@@ -287,7 +287,7 @@ export default function LogsManagement() {
       </div>
 
       {/* FILTER & SEARCH BAR */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 border border-slate-200/80 rounded-2xl shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card p-4 border border-border rounded-2xl shadow-2xs">
         {/* Log Level Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
           {(["ALL", "INFO", "WARN", "ERROR", "FATAL"] as const).map((lvl) => (
@@ -299,13 +299,13 @@ export default function LogsManagement() {
                   ? lvl === "FATAL"
                     ? "bg-purple-950 text-white shadow-sm"
                     : lvl === "ERROR"
-                    ? "bg-[#A70202] text-white shadow-sm"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : lvl === "WARN"
                     ? "bg-amber-500 text-white shadow-sm"
                     : lvl === "INFO"
                     ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-800 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                    : "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               {lvl === "FATAL" && <Flame size={12} className="text-red-400" />}
@@ -319,26 +319,26 @@ export default function LogsManagement() {
 
         {/* Search Keyword Input */}
         <div className="relative flex-1 w-full sm:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             type="text"
             placeholder="Search log messages, actions, sources, or users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-medium focus-visible:ring-2 focus-visible:ring-[#A70202]/20 focus-visible:border-[#A70202]"
+            className="pl-10 pr-4 h-10 bg-muted/40 border border-border rounded-xl text-xs font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* LOG STREAM TABLE VIEW */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-xs">
-        <div className="p-4 px-6 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-            <Terminal size={16} className="text-[#A70202]" />
+      <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-xs">
+        <div className="p-4 px-6 border-b border-border bg-muted/40 flex items-center justify-between">
+          <span className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <Terminal size={16} className="text-primary" />
             Live Audit Stream ({logs.length} Entries)
           </span>
 
-          <span className="text-[11px] font-mono font-medium text-slate-400">
+          <span className="text-[11px] font-mono font-medium text-muted-foreground">
             Auto-refresh active (10s)
           </span>
         </div>
@@ -346,19 +346,19 @@ export default function LogsManagement() {
         {isLogsLoading ? (
           <div className="p-8 space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full bg-slate-100 rounded-xl" />
+              <Skeleton key={i} className="h-12 w-full bg-muted rounded-xl" />
             ))}
           </div>
         ) : logs.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-            <ScrollText size={36} className="text-slate-300" />
-            <h3 className="text-sm font-bold text-slate-700">No Log Entries Found</h3>
-            <p className="text-xs text-slate-400 max-w-sm">
+            <ScrollText size={36} className="text-muted-foreground/40" />
+            <h3 className="text-sm font-bold text-foreground">No Log Entries Found</h3>
+            <p className="text-xs text-muted-foreground max-w-sm">
               There are no audit logs matching level filter "{selectedLevel}" and search term "{searchTerm}".
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {logs.map((log: LogItem) => {
               const isExpanded = expandedLogId === log.id;
               const formattedDate = new Date(log.createdAt).toLocaleString("en-US", {
@@ -375,12 +375,12 @@ export default function LogsManagement() {
                   key={log.id}
                   className={`transition-colors ${
                     log.level === "FATAL"
-                      ? "bg-purple-950/5 hover:bg-purple-950/10"
+                      ? "bg-purple-950/10 hover:bg-purple-950/20"
                       : log.level === "ERROR"
-                      ? "bg-red-50/30 hover:bg-red-50/60"
+                      ? "bg-primary/5 hover:bg-primary/10"
                       : log.level === "WARN"
-                      ? "bg-amber-50/30 hover:bg-amber-50/60"
-                      : "hover:bg-slate-50/80"
+                      ? "bg-amber-500/5 hover:bg-amber-500/10"
+                      : "hover:bg-accent/50"
                   }`}
                 >
                   {/* Main Row summary */}
@@ -393,23 +393,23 @@ export default function LogsManagement() {
 
                       <div className="flex flex-col gap-1 min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-bold text-slate-800 font-mono">
+                          <span className="text-xs font-bold text-foreground font-mono">
                             {log.action}
                           </span>
                           {log.source && (
                             <Badge
                               variant="outline"
-                              className="text-[10px] font-semibold text-slate-600 bg-slate-100 border-slate-200 px-2 py-0.2"
+                              className="text-[10px] font-semibold text-muted-foreground bg-muted border-border px-2 py-0.2"
                             >
                               {log.source}
                             </Badge>
                           )}
-                          <span className="text-[11px] font-mono text-slate-400">
+                          <span className="text-[11px] font-mono text-muted-foreground">
                             {formattedDate}
                           </span>
                         </div>
 
-                        <p className="text-xs text-slate-700 font-medium truncate">
+                        <p className="text-xs text-foreground/90 font-medium truncate">
                           {log.message}
                         </p>
                       </div>
@@ -417,15 +417,15 @@ export default function LogsManagement() {
 
                     <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end">
                       {log.userEmail && (
-                        <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                          <User size={13} className="text-slate-400" />
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          <User size={13} className="text-muted-foreground/70" />
                           {log.userEmail}
                         </span>
                       )}
 
                       {log.ipAddress && (
-                        <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                          <Globe size={12} className="text-slate-300" />
+                        <span className="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
+                          <Globe size={12} className="text-muted-foreground/70" />
                           {log.ipAddress}
                         </span>
                       )}
@@ -433,7 +433,7 @@ export default function LogsManagement() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60"
+                        className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
                       >
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </Button>
@@ -508,13 +508,13 @@ export default function LogsManagement() {
 
       {/* Clear Logs Dialog */}
       <AlertDialog open={isConfirmClearOpen} onOpenChange={setIsConfirmClearOpen}>
-        <AlertDialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl max-w-md">
+        <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-2xl max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Trash2 className="text-[#A70202]" size={20} />
+            <AlertDialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Trash2 className="text-primary" size={20} />
               Clear Audit Log History?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+            <AlertDialogDescription className="text-xs text-muted-foreground mt-1">
               This action will purge all current system audit logs (`INFO`, `WARN`, `ERROR`, `FATAL`). This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -522,7 +522,7 @@ export default function LogsManagement() {
             <AlertDialogCancel className="h-9 text-xs font-semibold rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmClear}
-              className="h-9 text-xs font-semibold bg-[#A70202] hover:bg-[#8b0101] text-white rounded-xl px-4 cursor-pointer"
+              className="h-9 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-4 cursor-pointer"
             >
               Confirm Purge
             </AlertDialogAction>

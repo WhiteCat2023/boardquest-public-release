@@ -34,12 +34,12 @@ export default function FacultyTable({
       : faculties;
 
   return (
-    <Card className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden w-full p-0">
+    <Card className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden w-full p-0">
       <phantom-ui loading={isLoading}>
         {!isLoading && faculties.length === 0 ? (
-          <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
-            <Users size={48} className="text-slate-300 stroke-[1.5]" />
-            <p className="font-bold text-slate-600">
+          <div className="py-24 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+            <Users size={48} className="text-muted-foreground/40 stroke-[1.5]" />
+            <p className="font-bold text-foreground">
               No Administrators Registered
             </p>
             <p className="text-sm max-w-sm">
@@ -50,31 +50,31 @@ export default function FacultyTable({
           <div className="overflow-x-auto w-full">
             <Table className="w-full text-left border-collapse">
               <TableHeader
-                className="bg-slate-50/50 border-b border-slate-100"
+                className="bg-muted/40 border-b border-border"
                 data-shimmer-ignore
               >
-                <TableRow className="border-b border-slate-100 hover:bg-transparent">
-                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                <TableRow className="border-b border-border hover:bg-transparent">
+                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Employee Profile
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Scope / Department
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Authority Role
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Account Status
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 h-auto">
+                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Last Activity
                   </TableHead>
-                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right h-auto">
+                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto">
                     Actions
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-y divide-slate-100">
+              <TableBody className="divide-y divide-border">
                 {displayFaculties.map((faculty, idx) => (
                   <FacultyTableRow
                     key={

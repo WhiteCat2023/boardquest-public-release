@@ -9,7 +9,7 @@ export const getFaculties = asyncHandler(async (req: AuthenticatedRequest, res: 
   const faculties = await facultyService.getAllFaculty();
   
   // Sanitize password before returning
-  const sanitized = faculties.map(f => {
+  const sanitized = faculties.map((f: any) => {
     const { password, ...rest } = f;
     return rest;
   });

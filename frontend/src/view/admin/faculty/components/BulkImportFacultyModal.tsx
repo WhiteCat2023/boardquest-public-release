@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useBulkCreateFaculty } from "../hooks/useFaculty";
 import {
@@ -73,7 +72,6 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
       const currentLine = lines[i].trim();
       if (!currentLine) continue;
 
-      // Match values taking into account quotes or simple commas
       const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
       const name = nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : (values[0] || "");
       const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
@@ -179,17 +177,17 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader className="text-left pb-2 border-b border-slate-100">
+      <DialogContent className="bg-card rounded-3xl p-6 border border-border shadow-2xl max-w-2xl max-h-[85vh] flex flex-col font-sans text-foreground">
+        <DialogHeader className="text-left pb-2 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#A70202]/10 text-[#A70202] rounded-2xl border border-[#A70202]/15">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/20">
               <FileSpreadsheet size={22} className="stroke-[2.2]" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-slate-800 tracking-tight">
+              <DialogTitle className="text-xl font-bold text-foreground tracking-tight">
                 Bulk Import Faculty Members
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-400 mt-0.5">
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                 Upload a CSV file to add multiple faculty accounts. Unique temporary passwords will be automatically emailed to each member.
               </DialogDescription>
             </div>
@@ -199,13 +197,13 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
         <div className="flex-1 overflow-y-auto py-4 space-y-5">
           {/* File Upload Zone */}
           {!file ? (
-            <div className="border-2 border-dashed border-slate-200 hover:border-[#A70202]/40 rounded-3xl p-8 text-center transition-all bg-slate-50/50 hover:bg-[#A70202]/5 flex flex-col items-center justify-center gap-3 group">
-              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs group-hover:scale-105 transition-transform text-[#A70202]">
+            <div className="border-2 border-dashed border-border hover:border-primary/40 rounded-3xl p-8 text-center transition-all bg-muted/40 hover:bg-primary/10 flex flex-col items-center justify-center gap-3 group relative">
+              <div className="p-4 bg-card rounded-2xl border border-border shadow-xs group-hover:scale-105 transition-transform text-primary">
                 <Upload size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-700">Click or drag CSV file to upload</p>
-                <p className="text-xs text-slate-400 mt-1">Supports standard CSV files (.csv)</p>
+                <p className="text-sm font-bold text-foreground">Click or drag CSV file to upload</p>
+                <p className="text-xs text-muted-foreground mt-1">Supports standard CSV files (.csv)</p>
               </div>
               <input
                 type="file"
@@ -217,7 +215,7 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                 type="button"
                 variant="outline"
                 onClick={downloadSampleCSV}
-                className="mt-2 text-xs font-semibold text-[#A70202] border-[#A70202]/30 hover:bg-[#A70202]/10 rounded-xl gap-2 cursor-pointer"
+                className="mt-2 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/10 rounded-xl gap-2 cursor-pointer"
               >
                 <Download size={14} />
                 Download Sample CSV Template
@@ -226,12 +224,12 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
           ) : (
             <div className="space-y-4">
               {/* File Info Bar */}
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div className="flex items-center justify-between p-3.5 bg-muted/40 border border-border rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <FileSpreadsheet size={20} className="text-[#A70202]" />
+                  <FileSpreadsheet size={20} className="text-primary" />
                   <div>
-                    <p className="text-xs font-bold text-slate-800">{file.name}</p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-xs font-bold text-foreground">{file.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
                       {parsedRows.length} entries parsed ({validCount} valid)
                     </p>
                   </div>
@@ -245,7 +243,7 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                       setFile(null);
                       setParsedRows([]);
                     }}
-                    className="text-slate-400 hover:text-red-600 text-xs cursor-pointer"
+                    className="text-muted-foreground hover:text-destructive text-xs cursor-pointer"
                   >
                     Change File
                   </Button>
@@ -254,16 +252,16 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
 
               {/* Preview List */}
               {isParsing ? (
-                <div className="py-12 text-center text-slate-400">
-                  <div className="animate-spin inline-block border-3 border-[#A70202] border-t-transparent rounded-full w-6 h-6 mb-2" />
+                <div className="py-12 text-center text-muted-foreground">
+                  <div className="animate-spin inline-block border-3 border-primary border-t-transparent rounded-full w-6 h-6 mb-2" />
                   <p className="text-xs font-medium">Parsing CSV contents...</p>
                 </div>
               ) : parsedRows.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No valid records found in file.</div>
+                <div className="py-8 text-center text-muted-foreground text-xs">No valid records found in file.</div>
               ) : (
-                <div className="border border-slate-200 rounded-2xl overflow-hidden max-h-64 overflow-y-auto">
+                <div className="border border-border rounded-2xl overflow-hidden max-h-64 overflow-y-auto bg-card">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
+                    <thead className="bg-muted/80 text-muted-foreground font-semibold border-b border-border sticky top-0">
                       <tr>
                         <th className="py-2.5 px-3">Status</th>
                         <th className="py-2.5 px-3">Name</th>
@@ -272,24 +270,24 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                         <th className="py-2.5 px-3 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-border">
                       {parsedRows.map((row, idx) => (
-                        <tr key={idx} className={row.isValid ? "hover:bg-slate-50/60" : "bg-red-50/50"}>
+                        <tr key={idx} className={row.isValid ? "hover:bg-accent/40" : "bg-destructive/10"}>
                           <td className="py-2 px-3">
                             {row.isValid ? (
-                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] gap-1">
+                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1">
                                 <CheckCircle2 size={12} /> Valid
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] gap-1">
+                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] gap-1">
                                 <AlertCircle size={12} /> {row.validationError}
                               </Badge>
                             )}
                           </td>
-                          <td className="py-2 px-3 font-semibold text-slate-800">{row.name || "—"}</td>
-                          <td className="py-2 px-3 text-slate-600">{row.email || "—"}</td>
+                          <td className="py-2 px-3 font-semibold text-foreground">{row.name || "—"}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{row.email || "—"}</td>
                           <td className="py-2 px-3">
-                            <Badge variant="muted" className="text-[10px] uppercase font-bold">
+                            <Badge variant="outline" className="text-[10px] uppercase font-bold bg-muted text-muted-foreground border-border">
                               {row.role}
                             </Badge>
                           </td>
@@ -298,7 +296,7 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemoveRow(idx)}
-                              className="h-7 w-7 text-slate-400 hover:text-red-600 rounded-lg cursor-pointer"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-lg cursor-pointer"
                             >
                               <Trash2 size={14} />
                             </Button>
@@ -313,9 +311,9 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
           )}
         </div>
 
-        <DialogFooter className="flex items-center justify-between border-t border-slate-100 pt-4">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Mail size={13} className="text-[#A70202]" />
+        <DialogFooter className="flex items-center justify-between border-t border-border pt-4">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Mail size={13} className="text-primary" />
             <span>Credentials will be auto-emailed on import</span>
           </div>
 
@@ -324,7 +322,7 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
               type="button"
               variant="outline"
               onClick={onClose}
-              className="rounded-xl border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              className="rounded-xl border-border text-xs font-semibold text-foreground hover:bg-accent cursor-pointer"
             >
               Cancel
             </Button>
@@ -332,7 +330,7 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
               type="button"
               disabled={bulkCreateMutation.isPending || validCount === 0}
               onClick={handleImport}
-              className="bg-[#A70202] hover:bg-[#8f0101] text-white rounded-xl text-xs font-semibold px-5 cursor-pointer flex items-center gap-2"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-semibold px-5 cursor-pointer flex items-center gap-2 shadow-xs"
             >
               {bulkCreateMutation.isPending ? "Importing & Emailing..." : `Import ${validCount} Member(s)`}
             </Button>

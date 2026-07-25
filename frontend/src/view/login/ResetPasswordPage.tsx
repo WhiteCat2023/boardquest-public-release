@@ -50,19 +50,19 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f3f4f6] font-sans">
-      <div className="w-[420px] bg-white rounded-[2rem] p-10 shadow-2xl flex flex-col items-center">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4">
+      <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-6">
           <div className="relative flex items-center justify-center h-16 w-24 mb-1">
-            <span className="text-6xl font-black text-black absolute left-2 z-10 font-sans tracking-tighter">
+            <span className="text-6xl font-black text-foreground absolute left-2 z-10 font-sans tracking-tighter">
               B
             </span>
-            <span className="text-6xl font-black text-[#a60b0b] absolute right-1 z-20 top-2 font-sans tracking-tighter">
+            <span className="text-6xl font-black text-primary absolute right-1 z-20 top-2 font-sans tracking-tighter">
               Q
             </span>
           </div>
-          <h1 className="text-xl font-extrabold tracking-widest text-black">
+          <h1 className="text-xl font-extrabold tracking-widest text-foreground">
             BOARDQUEST
           </h1>
         </div>
@@ -70,19 +70,19 @@ export default function ResetPasswordPage() {
         {/* Missing / Invalid Token State */}
         {!token ? (
           <div className="flex flex-col items-center text-center space-y-4 w-full animate-in fade-in duration-300">
-            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-[#a60b0b]">
+            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20">
               <AlertTriangle size={32} />
             </div>
-            <h2 className="text-lg font-extrabold text-black">
-              INVALID <span className="text-[#a60b0b]">RESET LINK</span>
+            <h2 className="text-lg font-extrabold text-foreground">
+              INVALID <span className="text-primary">RESET LINK</span>
             </h2>
-            <p className="text-xs font-bold text-gray-500 max-w-[280px] leading-relaxed">
+            <p className="text-xs font-bold text-muted-foreground max-w-[280px] leading-relaxed">
               This password reset link is invalid or missing a token. Please request a new reset email.
             </p>
 
             <Button
               onClick={() => navigate("/forgot-password")}
-              className="w-full mt-4 bg-[#a60b0b] text-white rounded-xl hover:bg-[#a60b0b]/90 font-bold uppercase tracking-wider text-xs py-3.5"
+              className="w-full mt-4 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer shadow-xs"
             >
               REQUEST NEW LINK
             </Button>
@@ -90,19 +90,19 @@ export default function ResetPasswordPage() {
         ) : isSuccess ? (
           /* Success State */
           <div className="flex flex-col items-center text-center space-y-4 w-full animate-in fade-in duration-300">
-            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-[#a60b0b]">
+            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20">
               <CheckCircle2 size={32} />
             </div>
-            <h2 className="text-lg font-extrabold text-black">
-              PASSWORD <span className="text-[#a60b0b]">RESET SUCCESSFUL</span>
+            <h2 className="text-lg font-extrabold text-foreground">
+              PASSWORD <span className="text-primary">RESET SUCCESSFUL</span>
             </h2>
-            <p className="text-xs font-bold text-gray-500 max-w-[280px] leading-relaxed">
+            <p className="text-xs font-bold text-muted-foreground max-w-[280px] leading-relaxed">
               Your password has been updated successfully. You can now log in with your new credentials.
             </p>
 
             <Button
               onClick={() => navigate("/login")}
-              className="w-full mt-4 bg-[#a60b0b] text-white rounded-xl hover:bg-[#a60b0b]/90 font-bold uppercase tracking-wider text-xs py-3.5"
+              className="w-full mt-4 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer shadow-xs"
             >
               PROCEED TO LOG IN
             </Button>
@@ -112,10 +112,10 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="w-full space-y-5">
             <FieldGroup>
               <FieldSet className="text-center mb-8">
-                <FieldLegend className="text-lg font-extrabold text-black mb-1">
-                  SET NEW <span className="text-[#a60b0b]">PASSWORD</span>
+                <FieldLegend className="text-lg font-extrabold text-foreground mb-1">
+                  SET NEW <span className="text-primary">PASSWORD</span>
                 </FieldLegend>
-                <FieldDescription className="text-[10px] font-bold text-gray-400 uppercase tracking-wide max-w-[260px] mx-auto leading-snug">
+                <FieldDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[260px] mx-auto leading-snug">
                   ENTER YOUR NEW PASSWORD TO RESTORE ACCESS
                 </FieldDescription>
 
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
                   {/* New Password */}
                   <Field>
                     <FieldLabel
-                      className="text-[11px] font-bold text-gray-800 uppercase tracking-wide text-left block"
+                      className="text-[11px] font-bold text-foreground uppercase tracking-wide text-left block"
                       htmlFor="new-password"
                     >
                       NEW PASSWORD
@@ -136,16 +136,17 @@ export default function ResetPasswordPage() {
                         placeholder="**********"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full h-auto bg-[#f8f9fa] rounded-xl text-sm transition-colors placeholder:text-gray-400"
+                        className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                       />
                       <InputGroupAddon align="inline-start">
-                        <Lock />
+                        <Lock className="text-muted-foreground" />
                       </InputGroupAddon>
                       <InputGroupAddon align="inline-end">
                         <Button
                           type="button"
                           variant="ghost"
                           onClick={() => setTogglePassword(!togglePassword)}
+                          className="text-muted-foreground hover:text-foreground"
                         >
                           {togglePassword ? <Eye /> : <EyeClosed />}
                         </Button>
@@ -156,7 +157,7 @@ export default function ResetPasswordPage() {
                   {/* Confirm Password */}
                   <Field>
                     <FieldLabel
-                      className="text-[11px] font-bold text-gray-800 uppercase tracking-wide text-left block"
+                      className="text-[11px] font-bold text-foreground uppercase tracking-wide text-left block"
                       htmlFor="confirm-password"
                     >
                       CONFIRM PASSWORD
@@ -169,16 +170,17 @@ export default function ResetPasswordPage() {
                         placeholder="**********"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full h-auto bg-[#f8f9fa] rounded-xl text-sm transition-colors placeholder:text-gray-400"
+                        className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                       />
                       <InputGroupAddon align="inline-start">
-                        <Lock />
+                        <Lock className="text-muted-foreground" />
                       </InputGroupAddon>
                       <InputGroupAddon align="inline-end">
                         <Button
                           type="button"
                           variant="ghost"
                           onClick={() => setToggleConfirmPassword(!toggleConfirmPassword)}
+                          className="text-muted-foreground hover:text-foreground"
                         >
                           {toggleConfirmPassword ? <Eye /> : <EyeClosed />}
                         </Button>
@@ -187,7 +189,7 @@ export default function ResetPasswordPage() {
                   </Field>
 
                   <Button
-                    className="w-full bg-[#a60b0b] text-white rounded-xl hover:bg-[#a60b0b]/90 font-bold uppercase tracking-wider text-xs py-3.5 transition-all mt-2"
+                    className="w-full bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 transition-all mt-2 cursor-pointer shadow-xs"
                     type="submit"
                     disabled={loading}
                   >
@@ -198,7 +200,7 @@ export default function ResetPasswordPage() {
                   <div className="mt-8 text-center w-full">
                     <Link
                       to="/login"
-                      className="inline-flex items-center gap-2 text-xs font-bold text-[#a60b0b] hover:underline uppercase tracking-wide transition-colors"
+                      className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline uppercase tracking-wide transition-colors"
                     >
                       <ArrowLeft size={14} /> BACK TO LOG IN
                     </Link>

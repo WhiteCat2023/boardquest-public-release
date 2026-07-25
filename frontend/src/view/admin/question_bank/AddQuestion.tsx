@@ -119,171 +119,131 @@ export default function AddQuestion() {
         setMcqCorrectIndex(correctIdx >= 0 ? correctIdx : 0);
       } else if (existingQuestion.type === "TRUE_FALSE") {
         setTfCorrect(existingQuestion.correctAnswer === "True" ? "True" : "False");
-      } else {
+      } else if (existingQuestion.type === "SHORT_ANSWER") {
         setSaCorrectAnswer(existingQuestion.correctAnswer || "");
       }
     }
-  }, [existingQuestion]);
+  }, [existingQuestion, isEditMode, setCategoryId, setTopic, setDifficulty, setFormat, setQuestionWording, setStatus]);
 
-  // Set default category when loaded
-  useEffect(() => {
-    if (categories.length > 0 && !categoryId) {
-      setCategoryId(categories[0].id);
-    }
-  }, [categories, categoryId]);
-
-  const handleMcqChoiceChange = (index: number, value: string) => {
-    setMcqChoices((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
-  };
-
-  const handleCancel = () => {
-    navigate("/question-bank");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Validations
-    if (!categoryId) {
-      toast.error("Please select an academic subject category.");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!topic.trim()) {
-      toast.error("Please enter a benchmark topic.");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!questionWording.trim()) {
-      toast.error("Please write the question wording prompt.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    let finalChoices: string[] = [];
-    let finalCorrectAnswer = "";
-
-    if (format === "MCQ") {
-      if (mcqChoices.some((choice) => !choice.trim())) {
-        toast.error("All MCQ options must be written.");
-        setIsSubmitting(false);
-        return;
-      }
-      finalChoices = mcqChoices.map(c => c.trim());
-      finalCorrectAnswer = mcqChoices[mcqCorrectIndex].trim();
-    } else if (format === "TRUE_FALSE") {
-      finalChoices = ["True", "False"];
-      finalCorrectAnswer = tfCorrect;
-    } else {
-      if (!saCorrectAnswer.trim()) {
-        toast.error("Please provide the correct answer wording.");
-        setIsSubmitting(false);
-        return;
-      }
-      finalChoices = [saCorrectAnswer.trim()];
-      finalCorrectAnswer = saCorrectAnswer.trim();
-    }
-
-    const authorId = (auth as any)?.data?.user?.id;
-    if (!authorId) {
-      toast.error("User authentication lost. Please log in again.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Forced status constraints based on roles
-    let finalStatus = status;
-    if (currentUserRole === "TEACHER") {
-      finalStatus = "DRAFT"; // Teachers can only save questions as DRAFT
-    }
-
-    const payload = {
-      id: questionId, // required for UpdateQuestionSchema validation
-      question: questionWording.trim(),
-      choices: finalChoices,
-      correctAnswer: finalCorrectAnswer,
-      categoryId,
-      authorId: existingQuestion?.authorId || authorId,
-      topic: topic.trim(),
-      difficulty,
-      type: format,
-      status: finalStatus,
-    };
-
-    try {
-      if (isEditMode) {
-        await axiosPrivate.put(`/questions/${questionId}`, payload);
-        toast.success("Question updated successfully!");
-      } else {
-        await axiosPrivate.post("/questions/create", payload);
-        toast.success("Question draft created successfully!");
-      }
-      setTimeout(() => {
-        navigate("/question-bank");
-      }, 1500);
-    } catch (err: any) {
-      const serverMsg = err.response?.data?.message || "Failed to save question.";
-      toast.error(serverMsg);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleMcqChoiceChange = (index: number, val: string) => {
+    const updated = [...mcqChoices];
+    updated[index] = val;
+    setMcqChoices(updated);
   };
 
   const getStatusOptions = () => {
     if (currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN") {
       return [
-        { value: "DRAFT", label: "Draft" },
-        { value: "PENDING_REVIEW", label: "Pending Review" },
+        { value: "DRAFT", label: "Drafting Mode" },
         { value: "NEEDS_REVISION", label: "Needs Revision" },
-        { value: "APPROVED", label: "Approved" },
+        { value: "APPROVED", label: "Approved for Pool" },
       ];
     }
-    if (currentUserRole === "TEAMLEAD") {
-      return [
-        { value: "DRAFT", label: "Draft" },
-        { value: "PENDING_REVIEW", label: "Pending Review" },
-        { value: "NEEDS_REVISION", label: "Needs Revision" },
-      ];
+    return [
+      { value: "DRAFT", label: "Drafting Mode" },
+      { value: "PENDING", label: "Submit for Approval" },
+    ];
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!questionWording.trim()) {
+      toast.error("Please enter the question text/wording.");
+      return;
     }
-    return [{ value: "DRAFT", label: "Draft" }];
+
+    if (!categoryId) {
+      toast.error("Please select an academic subject category.");
+      return;
+    }
+
+    let computedCorrectAnswer = "";
+    let finalChoices: string[] = [];
+
+    if (format === "MCQ") {
+      if (mcqChoices.some((c) => !c.trim())) {
+        toast.error("Please fill in all 4 multiple choice options.");
+        return;
+      }
+      computedCorrectAnswer = mcqChoices[mcqCorrectIndex];
+      finalChoices = mcqChoices;
+    } else if (format === "TRUE_FALSE") {
+      computedCorrectAnswer = tfCorrect;
+      finalChoices = ["True", "False"];
+    } else if (format === "SHORT_ANSWER") {
+      if (!saCorrectAnswer.trim()) {
+        toast.error("Please specify the expected short answer key.");
+        return;
+      }
+      computedCorrectAnswer = saCorrectAnswer.trim();
+      finalChoices = [];
+    }
+
+    setIsSubmitting(true);
+
+    const payload = {
+      question: questionWording,
+      type: format,
+      categoryId,
+      topic: topic || "General",
+      difficulty,
+      correctAnswer: computedCorrectAnswer,
+      choices: finalChoices,
+      status: currentUserRole === "TEACHER" ? "DRAFT" : status,
+    };
+
+    try {
+      if (isEditMode) {
+        await axiosPrivate.put(`/questions/update/${questionId}`, payload);
+        toast.success("Question updated successfully!");
+      } else {
+        await axiosPrivate.post("/questions/create", payload);
+        toast.success("New question added to repository!");
+      }
+      navigate("/question-bank");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save question.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate(-1);
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-4xl mx-auto animate-in fade-in duration-300">
-      {/* Back link */}
-      <Link 
-        to="/question-bank" 
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#A70202] transition-colors cursor-pointer w-fit"
-      >
-        <ArrowLeft size={16} />
-        Back to Question Bank
-      </Link>
+    <div className="flex flex-col gap-6 p-6 md:p-8 w-full max-w-6xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
+      {/* Back Button */}
+      <div className="flex items-center gap-2">
+        <Link
+          to="/question-bank"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          Back to Question Bank
+        </Link>
+      </div>
 
-      {/* Main Drafting Desk Card */}
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-3xl shadow-xs overflow-hidden flex flex-col">
-        
+      <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
         {/* Header Bar */}
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/40">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-full bg-red-50 text-[#A70202] border border-[#A70202]/10 shadow-xs">
+            <div className="p-2.5 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
               <PlusCircle size={22} className="stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+              <h2 className="text-lg font-bold text-foreground tracking-tight">
                 {isEditMode ? "Curriculum Revision Desk" : "Curriculum Drafting Desk"}
               </h2>
-              <p className="text-xs text-slate-400 font-medium">Formulate evaluation questions linked to standard benchmarks</p>
+              <p className="text-xs text-muted-foreground font-medium">Formulate evaluation questions linked to standard benchmarks</p>
             </div>
           </div>
           
-          <div className="flex flex-col items-start md:items-end text-xs text-slate-500 font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-[#A70202]/30 pl-3 md:pl-0 md:pr-3 py-0.5">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Authoring profile</span>
-            <span className="text-slate-800 font-bold text-sm">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
+          <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
+            <span className="text-[10px] text-muted-foreground/70 font-semibold uppercase tracking-wider">Authoring profile</span>
+            <span className="text-foreground font-bold text-sm">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
           </div>
         </div>
 
@@ -313,7 +273,7 @@ export default function AddQuestion() {
 
             {/* Benchmark Topic */}
             <div className="flex flex-col gap-1.5">
-              <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Benchmark Topic
               </Label>
               <Input
@@ -321,7 +281,7 @@ export default function AddQuestion() {
                 placeholder="e.g. Clinical Chemistry"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className=" bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] text-sm"
+                className="bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
               />
             </div>
 
@@ -359,7 +319,7 @@ export default function AddQuestion() {
 
           {/* Section 2: Question Format */}
           <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Question Format
             </Label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -384,22 +344,20 @@ export default function AddQuestion() {
           </div>
 
           {/* Section 4: Option Specifications & Correct Key Designation */}
-          <div className="border border-slate-200 rounded-2xl bg-slate-50/30 overflow-hidden">
-            <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+          <div className="border border-border rounded-2xl bg-muted/20 overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/40 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
               <div className="flex items-center gap-2">
-                <HelpCircle size={15} className="text-[#A70202]" />
-                <span className="text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                <HelpCircle size={15} className="text-primary" />
+                <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
                   Option Specifications & Correct Key Designation
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                 Toggle the selection to set the correct answer
               </span>
             </div>
 
             <div className="p-6 flex flex-col gap-4">
-              {/* MCQ LAYOUT */}
-
               {format === "MCQ" ?(
                 <MultipleChoiceInput
                   mcqChoices={mcqChoices}
@@ -417,13 +375,13 @@ export default function AddQuestion() {
         </div>
 
         {/* Bottom Actions Bar */}
-        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3.5">
+        <div className="p-6 border-t border-border bg-muted/40 flex justify-end gap-3.5">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="cursor-pointer border-slate-200 hover:bg-slate-100 font-semibold px-6 py-2.5 rounded-xl h-auto"
+            className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-6 py-2.5 rounded-xl h-auto"
           >
             Cancel Draft
           </Button>
@@ -431,10 +389,10 @@ export default function AddQuestion() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-[#A70202] text-white hover:bg-[#8e0202] cursor-pointer font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 shadow-xs"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 shadow-xs"
           >
             {isSubmitting ? (
-              <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" />
+              <span className="inline-block animate-spin border-2 border-primary-foreground border-t-transparent rounded-full w-4 h-4" />
             ) : (
               <Sparkles size={16} />
             )}

@@ -36,16 +36,16 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
     };
 
     return (
-        <FieldGroup>
+        <FieldGroup className="font-sans">
             {!showSearch && (
                 <div className="flex items-center justify-between w-full pb-1">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filters</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filters</span>
                     {(search || selectedDifficulty || selectedType || selectedStatus) && (
                         <Button
                             variant="link"
                             size="sm"
                             onClick={clearFilters}
-                            className="text-[10px] font-bold text-[#A70202] hover:text-[#c40303] uppercase tracking-wider transition-all duration-150 cursor-pointer p-0 h-auto"
+                            className="text-[10px] font-bold text-primary hover:text-primary/90 uppercase tracking-wider transition-all duration-150 cursor-pointer p-0 h-auto"
                         >
                             Reset Filters
                         </Button>
@@ -57,7 +57,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
             {showSearch && (
                 <Field>
                     <div className="flex items-center justify-between w-full">
-                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Search
                         </FieldLabel>
                         {(search || selectedDifficulty || selectedType || selectedStatus) && (
@@ -65,27 +65,27 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                                 variant="link"
                                 size="sm"
                                 onClick={clearFilters}
-                                className="text-[10px] font-bold text-[#A70202] hover:text-[#c40303] uppercase tracking-wider transition-all duration-150 cursor-pointer"
+                                className="text-[10px] font-bold text-primary hover:text-primary/90 uppercase tracking-wider transition-all duration-150 cursor-pointer"
                             >
                                 Reset Filters
                             </Button>
                         )}
                     </div>
                     <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="text"
                             placeholder="Search text, topic, ID..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-8 h-10 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150"
+                            className="w-full pl-9 pr-8 h-10 bg-card border border-border rounded-xl text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground transition-all duration-150"
                         />
                         {search && (
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setSearch("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 <X size={14} />
                             </Button>
@@ -96,7 +96,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
 
             {/* Difficulty Buttons */}
             <Field>
-                <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Difficulty
                 </FieldLabel>
                 <div className="grid grid-cols-3 gap-2">
@@ -106,10 +106,10 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                             <button
                                 key={index}
                                 onClick={() => setSelectedDifficulty(isSelected ? "" : diff)}
-                                className={`px-2.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 ${
+                                className={`px-2.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 cursor-pointer ${
                                     isSelected
-                                        ? "bg-[#E9B0B0] border-[#A70202] text-[#A70202] shadow-sm"
-                                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                                        ? "bg-primary/10 border-primary text-primary shadow-sm font-bold"
+                                        : "bg-muted border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                                 }`}
                             >
                                 {diff as string}
@@ -121,17 +121,17 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
 
             {/* Question Type Select */}
             <Field>
-                <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Question Type
                 </FieldLabel>
                 <Select
                     value={selectedType || "all"}
                     onValueChange={(value) => setSelectedType(value === "all" ? "" : value)}
                 >
-                    <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 text-slate-600">
+                    <SelectTrigger className="w-full h-10 bg-muted border-border rounded-xl focus:bg-card focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all duration-150 text-foreground">
                         <SelectValue placeholder="All Types" />
                     </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false} position="popper" align="start">
+                    <SelectContent position="popper" align="start">
                         <SelectItem value="all">All Types</SelectItem>
                         {Object.values(QUESTION_TYPE).map((type) => (
                             <SelectItem key={type} value={type}>
@@ -145,17 +145,17 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
             {/* Status Select */}
             {(view === "bank" || view === "my-questions") && (
                 <Field>
-                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         Status
                     </FieldLabel>
                     <Select
                         value={selectedStatus || "all"}
                         onValueChange={(value) => setSelectedStatus(value === "all" ? "" : value)}
                     >
-                        <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 text-slate-600">
+                        <SelectTrigger className="w-full h-10 bg-muted border-border rounded-xl focus:bg-card focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all duration-150 text-foreground">
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
-                        <SelectContent alignItemWithTrigger={false} position="popper" align="start">
+                        <SelectContent position="popper" align="start">
                             <SelectItem value="all">All Statuses</SelectItem>
                             {Object.values(QUESTION_STATUS).map((status) => (
                                 <SelectItem key={status} value={status}>

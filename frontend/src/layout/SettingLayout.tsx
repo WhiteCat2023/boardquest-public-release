@@ -17,12 +17,12 @@ function SettingLayout() {
 
   return (
     <SidebarProvider style={{ '--sidebar-width': '260px' } as React.CSSProperties}>
-      <div className="flex w-full min-h-[calc(100vh-4.1rem)]">
+      <div className="flex w-full min-h-[calc(100vh-4.1rem)] bg-background text-foreground">
         {/* Local Page-Level Settings Sidebar */}
-        <Sidebar className="border-r border-slate-100 bg-white" collapsible="none">
-          <SidebarContent className="px-4 py-6 gap-6">
+        <Sidebar className="border-r border-border bg-card" collapsible="none">
+          <SidebarContent className="px-4 py-6 gap-6 bg-card">
             <SidebarGroup className="p-0">
-              <SidebarGroupLabel className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase px-2 mb-2 bg-transparent">
+              <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase px-2 mb-2 bg-transparent">
                 Settings
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -36,13 +36,13 @@ function SettingLayout() {
                         flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10 h-auto w-full
                         transition-all duration-155
                         ${location.pathname === "/profile-settings"
-                          ? '!bg-[#E9B0B0]/20 border border-[#E9B0B0]/30 !text-[#A70202]'
-                          : '!text-gray-500 hover:!bg-gray-50 hover:!text-gray-700'
+                          ? '!bg-primary/10 border border-primary/20 !text-primary'
+                          : '!text-muted-foreground hover:!bg-accent hover:!text-foreground'
                         }
                       `}
                     >
                       <Link to="/profile-settings">
-                        <UserCircle size={18} className="shrink-0 text-[#A70202]" />
+                        <UserCircle size={18} className="shrink-0 text-primary" />
                         <span>Profile Settings</span>
                       </Link>
                     </SidebarMenuButton>
@@ -56,13 +56,13 @@ function SettingLayout() {
                         flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10 h-auto w-full
                         transition-all duration-155
                         ${location.pathname === "/settings"
-                          ? '!bg-[#E9B0B0]/20 border border-[#E9B0B0]/30 !text-[#A70202]'
-                          : '!text-gray-500 hover:!bg-gray-50 hover:!text-gray-700'
+                          ? '!bg-primary/10 border border-primary/20 !text-primary'
+                          : '!text-muted-foreground hover:!bg-accent hover:!text-foreground'
                         }
                       `}
                     >
                       <Link to="/settings">
-                        <SettingsIcon size={18} className="shrink-0 text-[#A70202]" />
+                        <SettingsIcon size={18} className="shrink-0 text-primary" />
                         <span>System Settings</span>
                       </Link>
                     </SidebarMenuButton>
@@ -75,7 +75,7 @@ function SettingLayout() {
         </Sidebar>
 
         {/* Settings Views Content */}
-        <div className="flex-1 p-8 bg-slate-50/50">
+        <div className="flex-1 p-6 md:p-8 bg-background">
           <Outlet />
         </div>
       </div>

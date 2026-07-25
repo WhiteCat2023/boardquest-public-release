@@ -36,11 +36,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
-        accessorKey: "question",
+        accessorKey: "text",
         header: "Question",
         cell: ({ row }) => (
-            <p className="max-w-sm truncate text-sm text-gray-800 font-medium" title={row.original.question}>
-                {row.original.question}
+            <p className="max-w-sm truncate text-sm text-foreground font-medium" title={row.original.text}>
+                {row.original.text}
             </p>
         ),
     },

@@ -55,21 +55,19 @@ export function DataTable<TData, TValue>({
     return (
         <div className="flex flex-col gap-4">
             {/* Search bar */}
-            {searchKey !== undefined || true ? (
-                <div className="relative w-full max-w-sm">
-                    <Search
-                        size={15}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
-                    <input
-                        type="text"
-                        value={globalFilter}
-                        onChange={(e) => setGlobalFilter(e.target.value)}
-                        placeholder={searchPlaceholder}
-                        className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202] transition-all"
-                    />
-                </div>
-            ) : null}
+            <div className="relative w-full max-w-sm">
+                <Search
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+                <input
+                    type="text"
+                    value={globalFilter}
+                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    placeholder={searchPlaceholder}
+                    className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A70202]/20 focus:border-[#A70202] transition-all"
+                />
+            </div>
 
             {/* Table */}
             <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">

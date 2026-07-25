@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, GraduationCap, RotateCcw, X } from "lucide-react";
+import { Search, RotateCcw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,25 +59,25 @@ export default function StudentManagement() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-8 w-full min-h-full font-sans bg-slate-50/50">
+    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground">
       <StudentHeader />
 
       {/* Search & Filters Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             type="text"
             placeholder="Search students by name, email, location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-9 h-10 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202]"
+            className="pl-10 pr-9 h-10 bg-muted/40 border border-border rounded-xl text-sm text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X size={14} />
             </button>
@@ -88,7 +88,7 @@ export default function StudentManagement() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Level Filter */}
           <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-            <SelectTrigger className="h-10 w-[140px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+            <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Level" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -102,7 +102,7 @@ export default function StudentManagement() {
 
           {/* Location Filter */}
           <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="h-10 w-[150px] bg-slate-50/50 border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+            <SelectTrigger className="h-10 w-[150px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Location" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -121,7 +121,7 @@ export default function StudentManagement() {
               variant="ghost"
               size="sm"
               onClick={resetFilters}
-              className="h-10 text-xs font-semibold text-slate-500 hover:text-[#A70202] hover:bg-red-50 rounded-xl gap-1.5 cursor-pointer px-3"
+              className="h-10 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1.5 cursor-pointer px-3"
             >
               <RotateCcw size={13} />
               Reset
