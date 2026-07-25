@@ -22,7 +22,11 @@ export const teamLeadNavItem: NavItemProps[] = [
             {
                 title: "Student Management",
                 path: "/student-management",
-                icon: "GraduationCap"
+                icon: "GraduationCap",
+                subItems: [
+                    { title: "Students", path: "/student-management" },
+                    { title: "Students Evaluation", path: "/student-management?view=evaluation" }
+                ]
             },
             {
                 title: "Curriculum",
@@ -50,9 +54,10 @@ export const teamLeadNavItem: NavItemProps[] = [
                 icon: "ClipboardList",
                 subItems: [
                     { title: "My Questions", path: "/question-bank?view=my-questions" },
+                    { title: "Review Questions", path: "/question-bank?view=review" },
                     { title: "Live Questions", path: "/question-bank?view=published" },
                     { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/question-bank?view=revisions" }
+                    { title: "Revisions", path: "/revisions" }
                 ]
             },
         ]

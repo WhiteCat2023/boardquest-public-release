@@ -27,11 +27,13 @@ interface QuestionTableProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   canManageBulk: boolean;
+  onApprove?: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
   onFeedback: () => void;
   onBulkDelete: () => void;
   onClear: () => void;
+  isApprovePending?: boolean;
   isPublishPending: boolean;
   isFeedbackPending: boolean;
   isDeletePending: boolean;
@@ -46,11 +48,13 @@ export default function QuestionTable({
   itemsPerPage,
   onItemsPerPageChange,
   canManageBulk,
+  onApprove,
   onPublish,
   onUnpublish,
   onFeedback,
   onBulkDelete,
   onClear,
+  isApprovePending,
   isPublishPending,
   isFeedbackPending,
   isDeletePending,
@@ -93,11 +97,13 @@ export default function QuestionTable({
           canManageBulk={canManageBulk}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
+          onApprove={onApprove}
           onPublish={onPublish}
           onUnpublish={onUnpublish}
           onFeedback={onFeedback}
           onDelete={onBulkDelete}
           onClear={onClear}
+          isApprovePending={isApprovePending}
           isPublishPending={isPublishPending}
           isFeedbackPending={isFeedbackPending}
           isDeletePending={isDeletePending}

@@ -25,7 +25,8 @@ function QuestionBank() {
   const [searchParams] = useSearchParams();
   const view = searchParams.get("view") || "bank";
   const { auth } = useAuth();
-  const currentUserId = (auth as any)?.data?.user?.id;
+  const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
+  const currentUserId = currentUser?.id;
 
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useCategories();
@@ -56,8 +57,12 @@ function QuestionBank() {
     type: selectedType,
   };
 
-  if (view === "my-questions") {
-    filters.authorId = currentUserId;
+  if (view === "review") {
+    filters.status = "PENDING_REVIEW";
+  } else if (view === "my-questions") {
+    if (currentUserId) {
+      filters.authorId = currentUserId;
+    }
     if (selectedStatus && selectedStatus !== "ALL") {
       filters.status = selectedStatus;
     }
@@ -81,6 +86,11 @@ function QuestionBank() {
 
   const getViewTitleAndDesc = () => {
     switch (view) {
+      case "review":
+        return {
+          title: "Review Questions",
+          desc: "Questions submitted by faculty pending administrator review and approval.",
+        };
       case "my-questions":
         return {
           title: "My Questions",

@@ -17,6 +17,11 @@ import {
   bulkDeleteQuestions,
   bulkPublishQuestions,
   bulkFeedbackQuestions,
+  bulkApproveQuestions,
+  bulkUpdateStatusQuestions,
+  getQuestionsThatNeedRevision,
+  updateRevisionFeedback,
+  deleteRevisionFeedback,
 } from "../../controller/admin/question.controller";
 import {
   createCategory,
@@ -34,6 +39,11 @@ router.post("/extract", authenticateToken, extractQuestions);
 router.post("/bulk/delete", authenticateToken, bulkDeleteQuestions);
 router.post("/bulk/publish", authenticateToken, bulkPublishQuestions);
 router.post("/bulk/feedback", authenticateToken, bulkFeedbackQuestions);
+router.post("/bulk/approve", authenticateToken, bulkApproveQuestions);
+router.post("/bulk/status", authenticateToken, bulkUpdateStatusQuestions);
+router.get("/revisions/get", authenticateToken, getQuestionsThatNeedRevision);
+router.put("/revisions/:revisionId", authenticateToken, updateRevisionFeedback);
+router.delete("/revisions/:revisionId", authenticateToken, deleteRevisionFeedback);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.put("/publish/:questionId", authenticateToken, publishQuestion);

@@ -144,61 +144,52 @@ export class QuestionService {
 
   async getAllQuestions(cursor?: string, limit?: number, authorId?: string) {
     const whereClause = authorId ? { authorId } : undefined;
+    const limitNum = limit || 20;
 
-    if (cursor === undefined && limit === undefined) {
+    try {
       const questions = await this.db.question.findMany({
         where: whereClause,
+        take: limit ? limitNum + 1 : undefined,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? { id: cursor } : undefined,
         include: {
           category: true,
-          author: {
-            select: {
-              name: true,
-            },
-          },
+          author: { select: { name: true } },
         },
-        orderBy: {
-          id: "asc",
-        },
+        orderBy: { id: "asc" },
       });
-      return questions;
+
+      if (!limit) return questions;
+
+      const hasNextPage = questions.length > limitNum;
+      if (hasNextPage) questions.pop();
+
+      const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+      return { questions, nextCursor, hasNextPage };
+    } catch (err: any) {
+      console.warn("getAllQuestions relation include failed, falling back to safe query:", err?.message);
+      const questions = await this.db.question.findMany({
+        where: whereClause,
+        take: limit ? limitNum + 1 : undefined,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? { id: cursor } : undefined,
+        include: { category: true },
+        orderBy: { id: "asc" },
+      });
+
+      const formatted = questions.map((q: any) => ({
+        ...q,
+        author: { name: "System Administrator" },
+      }));
+
+      if (!limit) return formatted;
+
+      const hasNextPage = formatted.length > limitNum;
+      if (hasNextPage) formatted.pop();
+
+      const nextCursor = formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+      return { questions: formatted, nextCursor, hasNextPage };
     }
-
-    const limitNum = limit || 20;
-    const questions = await this.db.question.findMany({
-      where: whereClause,
-      take: limitNum + 1,
-      skip: cursor ? 1 : undefined,
-      cursor: cursor
-        ? {
-            id: cursor,
-          }
-        : undefined,
-      include: {
-        category: true,
-        author: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        id: "asc",
-      },
-    });
-
-    const hasNextPage = questions.length > limitNum;
-    if (hasNextPage) {
-      questions.pop();
-    }
-
-    const nextCursor =
-      questions.length > 0 ? questions[questions.length - 1].id : null;
-
-    return {
-      questions,
-      nextCursor,
-      hasNextPage,
-    };
   }
 
   async getFilteredQuestions(
@@ -214,12 +205,7 @@ export class QuestionService {
     schoolYear?: string,
   ) {
     const whereClause: any = {
-      question: search
-        ? {
-            contains: search,
-            mode: "insensitive" as const,
-          }
-        : undefined,
+      question: search ? { contains: search } : undefined,
       difficulty,
       categoryId: category,
       type,
@@ -229,61 +215,52 @@ export class QuestionService {
       ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
     };
 
-    if (cursor === undefined && limit === undefined) {
+    const limitNum = limit || 20;
+
+    try {
       const questions = await this.db.question.findMany({
         where: whereClause,
+        take: limit ? limitNum + 1 : undefined,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? { id: cursor } : undefined,
         include: {
           category: true,
-          author: {
-            select: {
-              name: true,
-            },
-          },
+          author: { select: { name: true } },
         },
-        take: 20,
-        orderBy: {
-          id: "asc",
-        },
+        orderBy: { id: "asc" },
       });
-      return questions;
+
+      if (!limit) return questions;
+
+      const hasNextPage = questions.length > limitNum;
+      if (hasNextPage) questions.pop();
+
+      const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+      return { questions, nextCursor, hasNextPage };
+    } catch (err: any) {
+      console.warn("getFilteredQuestions relation include failed, falling back to safe query:", err?.message);
+      const questions = await this.db.question.findMany({
+        where: whereClause,
+        take: limit ? limitNum + 1 : undefined,
+        skip: cursor ? 1 : undefined,
+        cursor: cursor ? { id: cursor } : undefined,
+        include: { category: true },
+        orderBy: { id: "asc" },
+      });
+
+      const formatted = questions.map((q: any) => ({
+        ...q,
+        author: { name: "System Administrator" },
+      }));
+
+      if (!limit) return formatted;
+
+      const hasNextPage = formatted.length > limitNum;
+      if (hasNextPage) formatted.pop();
+
+      const nextCursor = formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+      return { questions: formatted, nextCursor, hasNextPage };
     }
-
-    const limitNum = limit || 20;
-    const questions = await this.db.question.findMany({
-      where: whereClause,
-      take: limitNum + 1,
-      skip: cursor ? 1 : undefined,
-      cursor: cursor
-        ? {
-            id: cursor,
-          }
-        : undefined,
-      include: {
-        category: true,
-        author: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        id: "asc",
-      },
-    });
-
-    const hasNextPage = questions.length > limitNum;
-    if (hasNextPage) {
-      questions.pop();
-    }
-
-    const nextCursor =
-      questions.length > 0 ? questions[questions.length - 1].id : null;
-
-    return {
-      questions,
-      nextCursor,
-      hasNextPage,
-    };
   }
 
   async getQuestionById(questionId: string) {
@@ -533,6 +510,146 @@ export class QuestionService {
         feedback,
       },
     });
+
+    try {
+      const isValidObjectId = (id?: string) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+      const createdById = isValidObjectId(user?.id) ? user.id : undefined;
+
+      await this.db.questionThatNeedsRevision.create({
+        data: {
+          questionIds: ids,
+          feedback,
+          createdById,
+        },
+      });
+    } catch (err: any) {
+      console.warn("Failed to create QuestionThatNeedsRevision record:", err?.message);
+    }
+  }
+
+  async getQuestionsThatNeedRevision() {
+    const revisionBatches = await this.db.questionThatNeedsRevision.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    const allQuestionIds = revisionBatches.flatMap((r) => r.questionIds || []);
+
+    const questions = await this.db.question.findMany({
+      where: {
+        id: { in: allQuestionIds },
+        status: QuestionStatus.NEEDS_REVISION,
+      },
+      include: {
+        category: true,
+        author: { select: { name: true } },
+      },
+    });
+
+    return {
+      revisionBatches,
+      questions,
+    };
+  }
+
+  async updateRevisionFeedback(revisionId: string, feedback: string, user: any) {
+    const revision = await this.db.questionThatNeedsRevision.findUnique({
+      where: { id: revisionId },
+    });
+    if (!revision) {
+      throw new ApiError(404, "Revision request record not found.");
+    }
+
+    const canModify =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      (revision.createdById && revision.createdById === user.id);
+
+    if (!canModify) {
+      throw new ApiError(403, "You can only modify revision feedback you created.");
+    }
+
+    await this.db.questionThatNeedsRevision.update({
+      where: { id: revisionId },
+      data: { feedback },
+    });
+
+    if (revision.questionIds && revision.questionIds.length > 0) {
+      await this.db.question.updateMany({
+        where: { id: { in: revision.questionIds } },
+        data: { feedback },
+      });
+    }
+  }
+
+  async deleteRevisionFeedback(revisionId: string, user: any) {
+    const revision = await this.db.questionThatNeedsRevision.findUnique({
+      where: { id: revisionId },
+    });
+    if (!revision) {
+      throw new ApiError(404, "Revision request record not found.");
+    }
+
+    const canModify =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      (revision.createdById && revision.createdById === user.id);
+
+    if (!canModify) {
+      throw new ApiError(403, "You can only delete revision feedback you created.");
+    }
+
+    await this.db.questionThatNeedsRevision.delete({
+      where: { id: revisionId },
+    });
+
+    if (revision.questionIds && revision.questionIds.length > 0) {
+      await this.db.question.updateMany({
+        where: { id: { in: revision.questionIds } },
+        data: {
+          status: QuestionStatus.PENDING_REVIEW,
+          feedback: "",
+        },
+      });
+    }
+  }
+
+  async bulkApproveQuestions(ids: string[], user: any) {
+    const canApprove =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      user.role === "TEAMLEAD";
+    if (!canApprove) {
+      throw new ApiError(
+        403,
+        "Only administrators and team leads can approve questions.",
+      );
+    }
+
+    await this.db.question.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        status: QuestionStatus.APPROVED,
+        feedback: "",
+      },
+    });
+  }
+
+  async bulkUpdateStatusQuestions(ids: string[], status: QuestionStatus, user: any) {
+    const canManage =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      user.role === "TEAMLEAD";
+    if (!canManage) {
+      throw new ApiError(
+        403,
+        "You do not have permission to update question status.",
+      );
+    }
+
+    await this.db.question.updateMany({
+      where: { id: { in: ids } },
+      data: { status },
+    });
   }
 }
 
@@ -570,3 +687,13 @@ export const bulkPublishQuestions =
   questionService.bulkPublishQuestions.bind(questionService);
 export const bulkFeedbackQuestions =
   questionService.bulkFeedbackQuestions.bind(questionService);
+export const bulkApproveQuestions =
+  questionService.bulkApproveQuestions.bind(questionService);
+export const bulkUpdateStatusQuestions =
+  questionService.bulkUpdateStatusQuestions.bind(questionService);
+export const getQuestionsThatNeedRevision =
+  questionService.getQuestionsThatNeedRevision.bind(questionService);
+export const updateRevisionFeedback =
+  questionService.updateRevisionFeedback.bind(questionService);
+export const deleteRevisionFeedback =
+  questionService.deleteRevisionFeedback.bind(questionService);

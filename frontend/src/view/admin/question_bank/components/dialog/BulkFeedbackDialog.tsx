@@ -35,14 +35,14 @@ export default function BulkFeedbackDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] p-6 rounded-2xl bg-white border border-slate-200 shadow-xl">
+      <DialogContent className="sm:max-w-[480px] p-6 rounded-2xl bg-card border border-border shadow-xl text-foreground font-sans">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-800 leading-snug">
+            <DialogTitle className="text-lg font-bold text-foreground tracking-tight">
               Request Revision
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 mt-1 leading-normal">
-              Flag <strong>{selectedCount}</strong> selected question{selectedCount !== 1 ? "s" : ""} as <em>Needs Revision</em> and add comments for the author.
+            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-normal">
+              Flag <strong className="text-foreground">{selectedCount}</strong> selected question{selectedCount !== 1 ? "s" : ""} as <em className="text-amber-600 dark:text-amber-400 font-semibold not-italic">Needs Revision</em> and add comments for the author.
             </DialogDescription>
           </DialogHeader>
 
@@ -55,7 +55,7 @@ export default function BulkFeedbackDialog({
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="e.g. Please correct typos in Option B and adjust the question difficulty."
               required
-              className="w-full min-h-[110px] p-3 text-sm border border-slate-200 rounded-xl bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all resize-none leading-relaxed placeholder-slate-400"
+              className="w-full min-h-[120px] p-3.5 text-xs font-medium border border-border rounded-xl bg-muted/40 text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all resize-none leading-relaxed placeholder:text-muted-foreground"
             />
           </div>
 
@@ -65,18 +65,18 @@ export default function BulkFeedbackDialog({
               variant="outline"
               disabled={isPending}
               onClick={() => onOpenChange(false)}
-              className="px-4 py-2 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-xl text-sm h-auto cursor-pointer"
+              className="px-4 py-2 border-border text-muted-foreground hover:bg-accent hover:text-foreground font-semibold rounded-xl text-xs h-auto cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isPending || !feedback.trim()}
-              className="px-5 py-2 bg-[#A70202] text-white hover:bg-[#8f0101] font-semibold rounded-xl text-sm h-auto cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs h-auto cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-amber-600/20"
             >
               {isPending ? (
                 <>
-                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-3.5 h-3.5" />
                   Submitting...
                 </>
               ) : (

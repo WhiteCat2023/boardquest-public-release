@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, RotateCcw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,10 @@ import StudentHeader from "./student_management/components/StudentHeader";
 import StudentTable from "./student_management/components/StudentTable";
 
 export default function StudentManagement() {
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get("view") || "students";
+  const isEvaluation = view === "evaluation";
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
@@ -60,7 +65,14 @@ export default function StudentManagement() {
 
   return (
     <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground">
-      <StudentHeader />
+      <StudentHeader
+        title={isEvaluation ? "Students Evaluation" : "Student Directory & Enrollment"}
+        description={
+          isEvaluation
+            ? "Track student performance, exam evaluation history, and academic progress."
+            : "Manage enrolled students, academic programs, and evaluation eligibility."
+        }
+      />
 
       {/* Search & Filters Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs">

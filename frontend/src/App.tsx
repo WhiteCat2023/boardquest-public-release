@@ -28,6 +28,7 @@ import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
 import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
 import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
+import RevisionDesk from "./view/admin/question_bank/RevisionDesk";
 import AddedFacultyUsingCSV from "./view/admin/faculty/AddedFacultyUsingCSV";
 import AddedStudentUsingCSV from "./view/admin/student_management/AddedStudentUsingCSV";
 import EnrollStudentPage from "./view/admin/student_management/EnrollStudentPage";
@@ -139,6 +140,7 @@ function App() {
                   element={<SubjectManagement />}
                 />
                 <Route path="question-bank" element={<QuestionBank />} />
+                <Route path="revisions" element={<RevisionDesk />} />
                 <Route path="question-bank/create" element={<AddQuestion />} />
                 <Route
                   path="question-bank/edit/:questionId"

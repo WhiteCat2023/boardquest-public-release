@@ -12,7 +12,8 @@ import {
   Calendar,
   AlertCircle,
   Globe,
-  EyeOff
+  EyeOff,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -32,6 +33,40 @@ export default function ViewQuestion() {
   const currentUserRole = (auth as any)?.data?.user?.role;
 
   const { data: question, isLoading, error } = useQuestionDetail(questionId);
+
+  const submitRevisionMutation = useMutation({
+    mutationFn: async () => {
+      await axiosPrivate.post("/questions/bulk/status", {
+        ids: [questionId],
+        status: QuestionStatus.PENDING_REVIEW,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      showUndoToast({
+        title: "Revisions Submitted",
+        message: "Question status updated to Pending Review",
+        duration: 5000,
+        onUndo: async () => {
+          try {
+            await axiosPrivate.post("/questions/bulk/status", {
+              ids: [questionId],
+              status: QuestionStatus.NEEDS_REVISION,
+            });
+            toast.info("Reverted revision submission.");
+            queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+          } catch (err: any) {
+            toast.error("Failed to undo revision submission.");
+          }
+        },
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to submit revisions.");
+    },
+  });
 
   const handleDelete = () => {
     queryClient.setQueriesData<any>({ queryKey: ["questions"] }, (old: any) => {
@@ -57,7 +92,7 @@ export default function ViewQuestion() {
       }
     }, 4000);
 
-    const questionText = question?.text || "Selected question";
+    const questionText = question?.question || question?.text || "Selected question";
 
     showUndoToast({
       title: "Question Deleted",
@@ -75,10 +110,24 @@ export default function ViewQuestion() {
     mutationFn: async (isPublished: boolean) => {
       await axiosPrivate.put(`/questions/publish/${questionId}`, { isPublished });
     },
-    onSuccess: (data: any, isPublished) => {
-      toast.success(`Question successfully ${isPublished ? "published" : "unpublished"}!`);
+    onSuccess: (_, isPublished) => {
       queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      showUndoToast({
+        title: isPublished ? "Question Published" : "Question Unpublished",
+        message: isPublished ? "Question is now Live" : "Question moved to Shared Library",
+        duration: 5000,
+        onUndo: async () => {
+          try {
+            await axiosPrivate.put(`/questions/publish/${questionId}`, { isPublished: !isPublished });
+            toast.info("Reverted publish state.");
+            queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+          } catch (err: any) {
+            toast.error("Failed to undo publish action.");
+          }
+        },
+      });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to update publish state.");
@@ -184,7 +233,7 @@ export default function ViewQuestion() {
           <div className="flex flex-col gap-2">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Question Prompt</span>
             <h2 className="text-xl font-bold text-foreground leading-relaxed">
-              {question.text}
+              {question.question || question.text}
             </h2>
           </div>
 
@@ -347,37 +396,54 @@ export default function ViewQuestion() {
             </Button>
           )}
 
-          {canPublish && (
+          {question.status === QuestionStatus.NEEDS_REVISION ? (
             <Button
               type="button"
-              onClick={handleTogglePublish}
-              disabled={publishMutation.isPending || (question.status !== QuestionStatus.APPROVED && !question.isPublished)}
-              className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
-                question.isPublished
-                  ? "border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
-              title={
-                question.status !== QuestionStatus.APPROVED && !question.isPublished
-                  ? "Question must be approved before publishing."
-                  : ""
-              }
+              onClick={() => submitRevisionMutation.mutate()}
+              disabled={submitRevisionMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs"
             >
-              {publishMutation.isPending ? (
+              {submitRevisionMutation.isPending ? (
                 <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
-              ) : question.isPublished ? (
-                <>
-                  <EyeOff size={16} />
-                  Unpublish Question
-                </>
               ) : (
                 <>
-                  <Globe size={16} />
-                  Publish Question
+                  <Send size={16} />
+                  Submit Revisions
                 </>
-              )
-              }
+              )}
             </Button>
+          ) : (
+            canPublish && (
+              <Button
+                type="button"
+                onClick={handleTogglePublish}
+                disabled={publishMutation.isPending || (question.status !== QuestionStatus.APPROVED && !question.isPublished)}
+                className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
+                  question.isPublished
+                    ? "border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
+                title={
+                  question.status !== QuestionStatus.APPROVED && !question.isPublished
+                    ? "Question must be approved before publishing."
+                    : ""
+                }
+              >
+                {publishMutation.isPending ? (
+                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+                ) : question.isPublished ? (
+                  <>
+                    <EyeOff size={16} />
+                    Unpublish Question
+                  </>
+                ) : (
+                  <>
+                    <Globe size={16} />
+                    Publish Question
+                  </>
+                )}
+              </Button>
+            )
           )}
         </div>
 

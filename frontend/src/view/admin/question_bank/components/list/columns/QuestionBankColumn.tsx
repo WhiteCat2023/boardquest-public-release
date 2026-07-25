@@ -38,11 +38,14 @@ export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
         accessorKey: "text",
         header: "Question",
-        cell: ({ row }) => (
-            <p className="max-w-sm truncate text-sm text-foreground font-medium" title={row.original.text}>
-                {row.original.text}
-            </p>
-        ),
+        cell: ({ row }) => {
+            const promptText = (row.original as any).question || row.original.text || "";
+            return (
+                <p className="max-w-sm truncate text-sm text-foreground font-medium" title={promptText}>
+                    {promptText}
+                </p>
+            );
+        },
     },
     {
         accessorKey: "questionType",

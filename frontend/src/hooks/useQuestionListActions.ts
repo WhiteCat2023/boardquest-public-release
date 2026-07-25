@@ -142,11 +142,29 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             await axiosPrivate.post("/questions/bulk/publish", { ids, isPublished });
         },
         onSuccess: (_, variables) => {
-            toast.success(
-                `Successfully ${variables.isPublished ? "published" : "unpublished"} ${variables.ids.length} questions.`
-            );
             clearRowSelection();
             queryClient.invalidateQueries({ queryKey: ["questions"] });
+            
+            const actionText = variables.isPublished ? "Published" : "Unpublished";
+            const targetText = variables.isPublished ? "moved to Live Questions" : "moved back to Shared Library";
+
+            showUndoToast({
+                title: `Questions ${actionText}`,
+                message: `${variables.ids.length} question${variables.ids.length !== 1 ? "s" : ""} ${targetText}`,
+                duration: 5000,
+                onUndo: async () => {
+                    try {
+                        await axiosPrivate.post("/questions/bulk/publish", {
+                            ids: variables.ids,
+                            isPublished: !variables.isPublished,
+                        });
+                        toast.info(`Reverted publish status for ${variables.ids.length} question(s).`);
+                        queryClient.invalidateQueries({ queryKey: ["questions"] });
+                    } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Failed to undo publishing change.");
+                    }
+                },
+            });
         },
         onError: (err: any) => {
             toast.error(err.response?.data?.message || "Failed to bulk update publish state.");
@@ -168,7 +186,45 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         },
     });
 
+    const bulkApproveMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axiosPrivate.post("/questions/bulk/approve", { ids });
+        },
+        onSuccess: (_, ids) => {
+            clearRowSelection();
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+            showUndoToast({
+                title: "Questions Approved",
+                message: `${ids.length} question${ids.length !== 1 ? "s" : ""} marked as Approved`,
+                duration: 5000,
+                onUndo: async () => {
+                    try {
+                        await axiosPrivate.post("/questions/bulk/status", {
+                            ids,
+                            status: "PENDING_REVIEW",
+                        });
+                        toast.info(`Reverted status for ${ids.length} question(s).`);
+                        queryClient.invalidateQueries({ queryKey: ["questions"] });
+                    } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Failed to undo question approval.");
+                    }
+                },
+            });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to bulk approve questions.");
+        },
+    });
+
     // Bulk Action Handlers
+    const handleBulkApprove = () => {
+        if (!canManageBulk) {
+            toast.error("Only administrators and team leads can approve questions.");
+            return;
+        }
+
+        bulkApproveMutation.mutate(selectedIds);
+    };
     const handleBulkDelete = () => {
         const hasPublished = selectedQuestions.some((q) => q.isPublished);
         if (hasPublished) {
@@ -190,9 +246,53 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             return;
         }
 
-        if (window.confirm(`Are you sure you want to delete the ${selectedIds.length} selected questions?`)) {
-            bulkDeleteMutation.mutate(selectedIds);
+        const queryKey = ["questions", { ...filters, cursor: currentCursor, limit: itemsPerPage }];
+        const previousData = queryClient.getQueryData<any>(queryKey);
+        const idsToDelete = [...selectedIds];
+
+        clearRowSelection();
+
+        // Optimistically remove deleted items from current cache view
+        if (previousData) {
+            const updatedQuestions = previousData.questions.filter((q: any) => !idsToDelete.includes(q.id));
+            queryClient.setQueryData(queryKey, {
+                ...previousData,
+                questions: updatedQuestions,
+            });
         }
+
+        const batchKey = `bulk_${Date.now()}`;
+        const timeoutId = setTimeout(async () => {
+            delete pendingDeletes.current[batchKey];
+            try {
+                await axiosPrivate.post("/questions/bulk/delete", { ids: idsToDelete });
+                queryClient.invalidateQueries({ queryKey: ["questions"] });
+            } catch (err: any) {
+                toast.error(err.response?.data?.message || "Failed to delete questions permanently.");
+                if (previousData) {
+                    queryClient.setQueryData(queryKey, previousData);
+                }
+            }
+        }, 5000);
+
+        pendingDeletes.current[batchKey] = timeoutId;
+
+        showUndoToast({
+            title: "Questions Deleted",
+            message: `${idsToDelete.length} question${idsToDelete.length !== 1 ? "s" : ""} deleted`,
+            duration: 5000,
+            onUndo: () => {
+                const tId = pendingDeletes.current[batchKey];
+                if (tId) {
+                    clearTimeout(tId);
+                    delete pendingDeletes.current[batchKey];
+                }
+                if (previousData) {
+                    queryClient.setQueryData(queryKey, previousData);
+                }
+                toast.success("Bulk delete action undone.");
+            },
+        });
     };
 
     const handleBulkPublish = (isPublished: boolean) => {
@@ -272,12 +372,14 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         selectedIds,
         isFeedbackOpen,
         canManageBulk,
+        bulkApproveMutation,
         bulkPublishMutation,
         bulkFeedbackMutation,
         bulkDeleteMutation,
         handleView,
         handleDelete,
         handleItemsPerPageChange,
+        handleBulkApprove,
         handleBulkDelete,
         handleBulkPublish,
         handleBulkFeedbackOpen,

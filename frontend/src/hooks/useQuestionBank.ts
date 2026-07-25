@@ -28,10 +28,15 @@ export function useQuestionBank(filters?: QuestionFilters) {
         const response = await axiosPrivate.get("/questions/get", {
             params: cleanParams,
         });
+        const rawData = response.data?.data;
+        const questionsList = Array.isArray(rawData)
+            ? rawData
+            : (rawData?.questions ?? []);
+
         return {
-            questions: (response.data?.data?.questions ?? []) as Question[],
-            nextCursor: response.data?.data?.nextCursor as string | null,
-            hasNextPage: !!response.data?.data?.hasNextPage,
+            questions: questionsList as Question[],
+            nextCursor: rawData?.nextCursor as string | null,
+            hasNextPage: !!rawData?.hasNextPage,
         };
     };
 

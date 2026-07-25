@@ -23,12 +23,14 @@ export default function QuestionList({ filters }: QuestionListProps) {
     selectedIds,
     isFeedbackOpen,
     canManageBulk,
+    bulkApproveMutation,
     bulkPublishMutation,
     bulkFeedbackMutation,
     bulkDeleteMutation,
     handleView,
     handleDelete,
     handleItemsPerPageChange,
+    handleBulkApprove,
     handleBulkDelete,
     handleBulkPublish,
     handleBulkFeedbackOpen,
@@ -88,11 +90,13 @@ export default function QuestionList({ filters }: QuestionListProps) {
               itemsPerPage={itemsPerPage}
               onItemsPerPageChange={handleItemsPerPageChange}
               canManageBulk={canManageBulk}
+              onApprove={handleBulkApprove}
               onPublish={() => handleBulkPublish(true)}
               onUnpublish={() => handleBulkPublish(false)}
               onFeedback={handleBulkFeedbackOpen}
               onBulkDelete={handleBulkDelete}
               onClear={() => setRowSelection({})}
+              isApprovePending={bulkApproveMutation.isPending}
               isPublishPending={bulkPublishMutation.isPending}
               isFeedbackPending={bulkFeedbackMutation.isPending}
               isDeletePending={bulkDeleteMutation.isPending}

@@ -39,7 +39,7 @@ export const createQuestion = asyncHandler(
       `Created question: "${(question.question || "").slice(0, 45)}..." (${question.type}, ${question.difficulty})`,
       "QuestionService",
       user.email,
-      req.ip
+      req.ip,
     );
     return new ApiResponse(
       201,
@@ -115,10 +115,16 @@ export const getQuestions = asyncHandler(
           ? false
           : undefined;
 
+    const isValidObjectId = (id?: string) =>
+      typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+
     // If teacher, they can only see their own questions.
     // Admin/Co-Admin can filter specifically by any authorId.
-    const authorIdFilter =
+    const rawAuthorId =
       user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
+    const authorIdFilter = isValidObjectId(rawAuthorId)
+      ? rawAuthorId
+      : undefined;
 
     const hasFilter = !!(
       search ||
@@ -405,6 +411,112 @@ export const bulkFeedbackQuestions = asyncHandler(
       200,
       null,
       `Feedback sent successfully for ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
+export const bulkApproveQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    await QuesitonServices.bulkApproveQuestions(ids, user);
+    await logInfo(
+      "BULK_APPROVE_QUESTION",
+      `Approved ${ids.length} question(s) in bulk`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully approved ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
+export const bulkUpdateStatusQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, status } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    if (!status) {
+      throw new ApiError(400, "status is required");
+    }
+
+    await QuesitonServices.bulkUpdateStatusQuestions(ids, status, user);
+    await logInfo(
+      "BULK_UPDATE_STATUS_QUESTION",
+      `Updated status for ${ids.length} question(s) to ${status}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully updated status for ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
+export const getQuestionsThatNeedRevision = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const revisions = await QuesitonServices.getQuestionsThatNeedRevision();
+    return new ApiResponse(
+      200,
+      { revisions },
+      "Revision questions retrieved successfully",
+    ).send(res);
+  },
+);
+
+export const updateRevisionFeedback = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const revisionId = req.params.revisionId as string;
+    const { feedback } = req.body;
+    const user = req.user;
+    if (!user) throw new ApiError(401, "Authentication required");
+
+    if (!feedback) throw new ApiError(400, "Feedback text is required");
+
+    await QuesitonServices.updateRevisionFeedback(revisionId, feedback, user);
+    return new ApiResponse(
+      200,
+      null,
+      "Revision feedback updated successfully",
+    ).send(res);
+  },
+);
+
+export const deleteRevisionFeedback = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const revisionId = req.params.revisionId as string;
+    const user = req.user;
+    if (!user) throw new ApiError(401, "Authentication required");
+
+    await QuesitonServices.deleteRevisionFeedback(revisionId, user);
+    return new ApiResponse(
+      200,
+      null,
+      "Revision request deleted successfully",
     ).send(res);
   },
 );

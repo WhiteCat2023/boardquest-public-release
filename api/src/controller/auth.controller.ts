@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import * as authService from "../services/auth.services";
 import { generateToken } from "../utils/generateToken";
 import { ApiResponse } from "../utils/apiResponse";
+import { ApiError } from "../utils/apiError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { signJWT, verifyJWT } from "../utils/jwt.utils";
 import prisma from "../services/prisma";
@@ -41,6 +42,18 @@ export const login = asyncHandler(async (req, res) => {
       { error: err.message }
     );
     throw err;
+  }
+
+  if (!user) {
+    const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+    await logWarn(
+      "AUTH_LOGIN_FAILED",
+      `Failed login attempt for account "${attemptedEmail}". Invalid credentials.`,
+      "AuthService",
+      attemptedEmail,
+      req.ip
+    );
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const accesstoken = signJWT({ id: user.id, email: user.email, role: user.role }, "10s");

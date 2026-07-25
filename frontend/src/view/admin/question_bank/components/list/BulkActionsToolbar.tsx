@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, EyeOff, MessageSquare, Trash2, X, SlidersHorizontal } from "lucide-react";
+import { Globe, EyeOff, MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2 } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
 
@@ -9,11 +9,13 @@ interface UnifiedToolbarProps {
   canManageBulk: boolean;
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
+  onApprove?: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
   onFeedback: () => void;
   onDelete: () => void;
   onClear: () => void;
+  isApprovePending?: boolean;
   isPublishPending: boolean;
   isFeedbackPending: boolean;
   isDeletePending: boolean;
@@ -25,11 +27,13 @@ export default function BulkActionsToolbar({
   canManageBulk,
   itemsPerPage,
   onItemsPerPageChange,
+  onApprove,
   onPublish,
   onUnpublish,
   onFeedback,
   onDelete,
   onClear,
+  isApprovePending,
   isPublishPending,
   isFeedbackPending,
   isDeletePending,
@@ -71,11 +75,23 @@ export default function BulkActionsToolbar({
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
             {canManageBulk && (
               <>
+                {onApprove && (
+                  <button
+                    type="button"
+                    onClick={onApprove}
+                    disabled={isApprovePending}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={13} />
+                    Approve
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={onPublish}
                   disabled={isPublishPending}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Globe size={13} />
                   Publish
