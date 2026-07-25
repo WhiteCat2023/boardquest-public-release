@@ -1,6 +1,5 @@
-import { Search, X } from "lucide-react";
+import { Search, X, RotateCcw, RotateCw } from "lucide-react";
 import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
-import { QUESTION_DIFFICULTY, QUESTION_STATUS, QUESTION_TYPE } from "@/enums/QuestionBank";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -9,14 +8,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } = {}) {
     const [searchParams] = useSearchParams();
     const view = searchParams.get("view") || "bank";
+
+    const queryClient = useQueryClient();
+    const isFetchingQuestions = useIsFetching({ queryKey: ["questions"] }) > 0;
 
     const { 
         search, 
@@ -26,146 +28,131 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
         selectedType, 
         setSelectedType, 
         selectedStatus, 
-        setSelectedStatus } = useQuestionBankFilterStore();
+        setSelectedStatus 
+    } = useQuestionBankFilterStore();
 
-    const clearFilters = () => {
+    const resetFilters = () => {
         setSearch("");
         setSelectedDifficulty("");
         setSelectedType("");
-        setSelectedStatus("");
+        setSelectedStatus("ALL");
     };
 
+    const handleReload = async () => {
+        await queryClient.invalidateQueries({ queryKey: ["questions"] });
+        toast.success("Question bank data reloaded!");
+    };
+
+    const hasActiveFilters =
+        search.trim() !== "" ||
+        selectedDifficulty !== "" ||
+        selectedType !== "" ||
+        (selectedStatus !== "" && selectedStatus !== "ALL");
+
     return (
-        <FieldGroup className="font-sans">
-            {!showSearch && (
-                <div className="flex items-center justify-between w-full pb-1">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filters</span>
-                    {(search || selectedDifficulty || selectedType || selectedStatus) && (
-                        <Button
-                            variant="link"
-                            size="sm"
-                            onClick={clearFilters}
-                            className="text-[10px] font-bold text-primary hover:text-primary/90 uppercase tracking-wider transition-all duration-150 cursor-pointer p-0 h-auto"
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs w-full font-sans">
+            {/* Search Input */}
+            {showSearch && (
+                <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+                    <Input
+                        type="text"
+                        placeholder="Search questions by wording, topic, or ID..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-10 pr-9 h-10 bg-muted/40 border border-border rounded-xl text-sm text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground"
+                    />
+                    {search && (
+                        <button
+                            type="button"
+                            onClick={() => setSearch("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                         >
-                            Reset Filters
-                        </Button>
+                            <X size={14} />
+                        </button>
                     )}
                 </div>
             )}
 
-            {/* Search Input */}
-            {showSearch && (
-                <Field>
-                    <div className="flex items-center justify-between w-full">
-                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            Search
-                        </FieldLabel>
-                        {(search || selectedDifficulty || selectedType || selectedStatus) && (
-                            <Button
-                                variant="link"
-                                size="sm"
-                                onClick={clearFilters}
-                                className="text-[10px] font-bold text-primary hover:text-primary/90 uppercase tracking-wider transition-all duration-150 cursor-pointer"
-                            >
-                                Reset Filters
-                            </Button>
-                        )}
-                    </div>
-                    <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder="Search text, topic, ID..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-8 h-10 bg-card border border-border rounded-xl text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground transition-all duration-150"
-                        />
-                        {search && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSearch("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <X size={14} />
-                            </Button>
-                        )}
-                    </div>
-                </Field>
-            )}
-
-            {/* Difficulty Buttons */}
-            <Field>
-                <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Difficulty
-                </FieldLabel>
-                <div className="grid grid-cols-3 gap-2">
-                    {Object.values(QUESTION_DIFFICULTY).map((diff, index) => {
-                        const isSelected = selectedDifficulty === diff;
-                        return (
-                            <button
-                                key={index}
-                                onClick={() => setSelectedDifficulty(isSelected ? "" : diff)}
-                                className={`px-2.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 cursor-pointer ${
-                                    isSelected
-                                        ? "bg-primary/10 border-primary text-primary shadow-sm font-bold"
-                                        : "bg-muted border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-                                }`}
-                            >
-                                {diff as string}
-                            </button>
-                        );
-                    })}
-                </div>
-            </Field>
-
-            {/* Question Type Select */}
-            <Field>
-                <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Question Type
-                </FieldLabel>
+            {/* Filter Dropdowns */}
+            <div className="flex flex-wrap items-center gap-3">
+                {/* Difficulty Filter */}
                 <Select
-                    value={selectedType || "all"}
-                    onValueChange={(value) => setSelectedType(value === "all" ? "" : value)}
+                    value={selectedDifficulty || "ALL"}
+                    onValueChange={(val) => setSelectedDifficulty(val === "ALL" ? "" : val)}
                 >
-                    <SelectTrigger className="w-full h-10 bg-muted border-border rounded-xl focus:bg-card focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all duration-150 text-foreground">
-                        <SelectValue placeholder="All Types" />
+                    <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                        <SelectValue placeholder="Difficulty" />
                     </SelectTrigger>
-                    <SelectContent position="popper" align="start">
-                        <SelectItem value="all">All Types</SelectItem>
-                        {Object.values(QUESTION_TYPE).map((type) => (
-                            <SelectItem key={type} value={type}>
-                                {type}
-                            </SelectItem>
-                        ))}
+                    <SelectContent position="popper">
+                        <SelectItem value="ALL">All Difficulties</SelectItem>
+                        <SelectItem value="EASY">Easy Level</SelectItem>
+                        <SelectItem value="MEDIUM">Medium Level</SelectItem>
+                        <SelectItem value="HARD">Hard Level</SelectItem>
                     </SelectContent>
                 </Select>
-            </Field>
 
-            {/* Status Select */}
-            {(view === "bank" || view === "my-questions") && (
-                <Field>
-                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Status
-                    </FieldLabel>
+                {/* Question Type Filter */}
+                <Select
+                    value={selectedType || "ALL"}
+                    onValueChange={(val) => setSelectedType(val === "ALL" ? "" : val)}
+                >
+                    <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                        <SelectValue placeholder="Question Type" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="ALL">All Types</SelectItem>
+                        <SelectItem value="MCQ">Multiple Choice</SelectItem>
+                        <SelectItem value="TRUE_FALSE">True / False</SelectItem>
+                        <SelectItem value="SHORT_ANSWER">Short Answer</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* Status Filter */}
+                {(view === "bank" || view === "my-questions") && (
                     <Select
-                        value={selectedStatus || "all"}
-                        onValueChange={(value) => setSelectedStatus(value === "all" ? "" : value)}
+                        value={selectedStatus || "ALL"}
+                        onValueChange={(val) => setSelectedStatus(val)}
                     >
-                        <SelectTrigger className="w-full h-10 bg-muted border-border rounded-xl focus:bg-card focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all duration-150 text-foreground">
-                            <SelectValue placeholder="All Statuses" />
+                        <SelectTrigger className="h-10 w-[160px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                            <SelectValue placeholder="Status" />
                         </SelectTrigger>
-                        <SelectContent position="popper" align="start">
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            {Object.values(QUESTION_STATUS).map((status) => (
-                                <SelectItem key={status} value={status}>
-                                    {status}
-                                </SelectItem>
-                            ))}
+                        <SelectContent position="popper">
+                            <SelectItem value="ALL">All Statuses</SelectItem>
+                            <SelectItem value="DRAFT">Draft Mode</SelectItem>
+                            <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
+                            <SelectItem value="NEEDS_REVISION">Needs Revision</SelectItem>
+                            <SelectItem value="APPROVED">Approved</SelectItem>
                         </SelectContent>
                     </Select>
-                </Field>
-            )}
-        </FieldGroup>
+                )}
+
+                {/* Reset Filters */}
+                {hasActiveFilters && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetFilters}
+                        className="h-10 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1.5 cursor-pointer px-3"
+                    >
+                        <RotateCcw size={13} />
+                        Reset
+                    </Button>
+                )}
+
+                {/* Reload / Refresh Data Button */}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleReload}
+                    disabled={isFetchingQuestions}
+                    className="h-10 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent border-border rounded-xl gap-1.5 cursor-pointer px-3 transition-all"
+                    title="Reload questions data"
+                >
+                    <RotateCw size={13} className={isFetchingQuestions ? "animate-spin text-primary" : ""} />
+                    <span>{isFetchingQuestions ? "Reloading..." : "Reload"}</span>
+                </Button>
+            </div>
+        </div>
     );
 }

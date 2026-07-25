@@ -1,15 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, ShieldOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 /* ─── Keyframes ──────────────────────────────────────────────────────────── */
 const keyframes = `
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(28px); }
     to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
   }
   @keyframes pulseRing {
     0%   { transform: scale(0.92); opacity: 0.7; }
@@ -50,8 +48,8 @@ const keyframes = `
     70%     { transform: translate(20px,-20px) scale(0.88); }
   }
   @keyframes dotPop {
-    0%,100% { transform: scale(1); opacity: 0.4; }
-    50%     { transform: scale(1.6); opacity: 1; }
+    0%,100% { transform: scale(1); opacity: 0.3; }
+    50%     { transform: scale(1.6); opacity: 0.8; }
   }
   @keyframes badgePing {
     0%   { transform: scale(1); opacity: 1; }
@@ -63,11 +61,8 @@ const keyframes = `
 function Dot({ delay }: { delay: number }) {
   return (
     <span
+      className="inline-block w-1.5 h-1.5 rounded-full bg-destructive/40"
       style={{
-        display: 'inline-block',
-        width: 5, height: 5,
-        borderRadius: '50%',
-        background: '#A70202',
         animation: `dotPop 1.8s ${delay}s ease-in-out infinite`,
       }}
     />
@@ -81,187 +76,131 @@ export default function Unauthorized() {
     <>
       <style>{keyframes}</style>
 
-      <div
-        className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ background: '#FAFAFA', fontFamily: 'Poppins, sans-serif' }}
-      >
+      <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-background text-foreground font-sans">
         {/* ── Background orbs ── */}
-        <div style={{
-          position: 'absolute', top: '8%', right: '10%',
-          width: 400, height: 400, borderRadius: '50%',
-          background: 'radial-gradient(circle, #fde8e8 0%, transparent 70%)',
-          animation: 'orb1 11s ease-in-out infinite',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '6%', left: '5%',
-          width: 320, height: 320, borderRadius: '50%',
-          background: 'radial-gradient(circle, #fde8e8 0%, transparent 70%)',
-          animation: 'orb2 14s ease-in-out infinite',
-          pointerEvents: 'none',
-        }} />
+        <div
+          className="absolute top-[8%] right-[10%] w-[400px] h-[400px] rounded-full bg-destructive/10 blur-3xl pointer-events-none"
+          style={{ animation: 'orb1 11s ease-in-out infinite' }}
+        />
+        <div
+          className="absolute bottom-[6%] left-[5%] w-[320px] h-[320px] rounded-full bg-destructive/10 blur-3xl pointer-events-none"
+          style={{ animation: 'orb2 14s ease-in-out infinite' }}
+        />
 
         {/* ── Dot grids ── */}
-        <div style={{
-          position: 'absolute', top: 40, left: 60,
-          display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10,
-          pointerEvents: 'none',
-        }}>
+        <div className="absolute top-10 left-14 grid grid-cols-6 gap-2.5 pointer-events-none hidden md:grid">
           {Array.from({ length: 24 }).map((_, i) => <Dot key={i} delay={(i % 6) * 0.18} />)}
         </div>
-        <div style={{
-          position: 'absolute', bottom: 40, right: 60,
-          display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10,
-          pointerEvents: 'none',
-        }}>
+        <div className="absolute bottom-10 right-14 grid grid-cols-6 gap-2.5 pointer-events-none hidden md:grid">
           {Array.from({ length: 24 }).map((_, i) => <Dot key={i} delay={(i % 6) * 0.22} />)}
         </div>
 
         {/* ── Main content ── */}
-        <div className="flex flex-col items-center text-center px-8" style={{ zIndex: 1, maxWidth: 540 }}>
+        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-lg">
 
           {/* Shield + icon cluster */}
-          <div style={{ position: 'relative', width: 140, height: 140, marginBottom: '2rem', animation: 'slideUp 0.5s 0.1s both' }}>
+          <div className="relative w-36 h-36 mb-8" style={{ animation: 'slideUp 0.5s 0.1s both' }}>
             {/* Outer pulse ring 2 */}
-            <div style={{
-              position: 'absolute', inset: -20,
-              borderRadius: '50%',
-              border: '2px solid rgba(167,2,2,0.2)',
-              animation: 'pulseRing2 2.6s 0.4s ease-in-out infinite',
-            }} />
+            <div
+              className="absolute -inset-5 rounded-full border-2 border-destructive/20"
+              style={{ animation: 'pulseRing2 2.6s 0.4s ease-in-out infinite' }}
+            />
             {/* Outer pulse ring */}
-            <div style={{
-              position: 'absolute', inset: -6,
-              borderRadius: '50%',
-              border: '2px solid rgba(167,2,2,0.35)',
-              animation: 'pulseRing 2.4s ease-in-out infinite',
-            }} />
+            <div
+              className="absolute -inset-1.5 rounded-full border-2 border-destructive/35"
+              style={{ animation: 'pulseRing 2.4s ease-in-out infinite' }}
+            />
 
             {/* Circle background */}
-            <div style={{
-              width: '100%', height: '100%', borderRadius: '50%',
-              background: 'linear-gradient(145deg, #fde8e8, #fff1f1)',
-              boxShadow: '0 8px 32px rgba(167,2,2,0.18)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: 'lockShake 4s 1s ease-in-out infinite',
-              position: 'relative', overflow: 'hidden',
-            }}>
+            <div
+              className="w-full h-full rounded-full bg-destructive/10 border border-destructive/20 shadow-md flex items-center justify-center relative overflow-hidden"
+              style={{ animation: 'lockShake 4s 1s ease-in-out infinite' }}
+            >
               {/* Scan beam */}
-              <div style={{
-                position: 'absolute', left: 0, right: 0, height: 2,
-                background: 'linear-gradient(90deg, transparent, rgba(167,2,2,0.5), transparent)',
-                animation: 'scan 2.5s linear infinite',
-              }} />
-              <ShieldOff size={52} color="#A70202" strokeWidth={1.5} />
+              <div
+                className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-destructive to-transparent"
+                style={{ animation: 'scan 2.5s linear infinite' }}
+              />
+              <ShieldOff size={52} className="text-destructive stroke-[1.5]" />
             </div>
 
             {/* "403" badge */}
-            <div style={{ position: 'relative', top: -14, left: '50%', transform: 'translateX(-50%)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="relative -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center justify-center">
               {/* Ping */}
-              <span style={{
-                position: 'absolute',
-                width: 32, height: 32, borderRadius: '50%',
-                background: '#A70202',
-                animation: 'badgePing 1.5s 0.5s ease-out infinite',
-              }} />
-              <span style={{
-                position: 'relative',
-                background: 'linear-gradient(135deg, #A70202, #E05252)',
-                color: 'white',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                padding: '3px 10px',
-                borderRadius: 99,
-                letterSpacing: '0.08em',
-                boxShadow: '0 2px 10px rgba(167,2,2,0.4)',
-                whiteSpace: 'nowrap',
-              }}>
+              <span
+                className="absolute w-8 h-8 rounded-full bg-destructive"
+                style={{ animation: 'badgePing 1.5s 0.5s ease-out infinite' }}
+              />
+              <Badge
+                variant="destructive"
+                className="relative text-[11px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider shadow-sm"
+              >
                 403
-              </span>
+              </Badge>
             </div>
           </div>
 
           {/* Divider pill */}
-          <div style={{
-            width: 50, height: 4, borderRadius: 99,
-            background: 'linear-gradient(90deg, #A70202, #E05252)',
-            marginBottom: '1.25rem',
-            animation: 'slideUp 0.6s 0.3s both',
-          }} />
+          <div
+            className="w-14 h-1 rounded-full bg-destructive mb-5"
+            style={{ animation: 'slideUp 0.6s 0.3s both' }}
+          />
 
           {/* Heading */}
-          <h1 style={{
-            fontSize: '1.75rem', fontWeight: 700,
-            color: '#1a1a2e', marginBottom: '0.65rem',
-            animation: 'slideUp 0.6s 0.45s both',
-          }}>
+          <h1
+            className="text-2xl md:text-3xl font-bold text-foreground mb-2.5 tracking-tight"
+            style={{ animation: 'slideUp 0.6s 0.45s both' }}
+          >
             Access Denied
           </h1>
 
           {/* Sub-text */}
-          <p style={{
-            fontSize: '0.95rem', color: '#6b7280',
-            lineHeight: 1.75, maxWidth: 380,
-            animation: 'slideUp 0.6s 0.6s both',
-          }}>
+          <p
+            className="text-sm text-muted-foreground leading-relaxed max-w-sm"
+            style={{ animation: 'slideUp 0.6s 0.6s both' }}
+          >
             You don't have permission to view this page. If you think this is a
             mistake, please contact your administrator.
           </p>
 
           {/* Inline info tag */}
-          <div style={{
-            marginTop: '1.25rem',
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '8px 16px', borderRadius: 12,
-            background: '#fde8e8', border: '1px solid #f9c5c5',
-            fontSize: '0.8rem', color: '#A70202', fontWeight: 500,
-            animation: 'slideUp 0.6s 0.72s both',
-          }}>
+          <div
+            className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive/10 border border-destructive/20 text-xs font-semibold text-destructive"
+            style={{ animation: 'slideUp 0.6s 0.72s both' }}
+          >
             <ShieldOff size={14} />
             Insufficient role privileges
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex gap-3 mt-8 flex-wrap justify-center" style={{ animation: 'slideUp 0.6s 0.82s both' }}>
-            <button
+          <div
+            className="flex gap-3 mt-8 flex-wrap justify-center"
+            style={{ animation: 'slideUp 0.6s 0.82s both' }}
+          >
+            <Button
+              variant="outline"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200"
-              style={{ borderColor: '#E9B0B0', color: '#A70202', background: 'white' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fde8e8'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'white'; }}
+              className="h-11 px-5 rounded-xl text-sm font-semibold border-border text-foreground hover:bg-accent gap-2 cursor-pointer transition-all"
             >
               <ArrowLeft size={16} />
               Go Back
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
-              style={{
-                background: 'linear-gradient(135deg, #A70202, #E05252)',
-                color: 'white',
-                boxShadow: '0 4px 18px rgba(167,2,2,0.35)',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 24px rgba(167,2,2,0.5)';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 18px rgba(167,2,2,0.35)';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              }}
+              className="h-11 px-5 rounded-xl text-sm font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2 cursor-pointer shadow-md transition-all"
             >
               <Home size={16} />
               Back to Home
-            </button>
+            </Button>
           </div>
 
           {/* Footer hint */}
-          <p style={{
-            marginTop: '2.5rem', fontSize: '0.78rem',
-            color: '#9ca3af', animation: 'slideUp 0.6s 0.95s both',
-          }}>
-            Error code: <span style={{ fontWeight: 600, color: '#A70202' }}>403</span> &mdash; Unauthorized Access
+          <p
+            className="mt-10 text-xs text-muted-foreground"
+            style={{ animation: 'slideUp 0.6s 0.95s both' }}
+          >
+            Error code: <span className="font-semibold text-destructive">403</span> &mdash; Unauthorized Access
           </p>
         </div>
       </div>

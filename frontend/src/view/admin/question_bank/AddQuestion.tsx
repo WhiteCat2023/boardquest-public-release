@@ -49,7 +49,7 @@ export default function AddQuestion() {
   } = useQuestionFormStore();
   
   // MCQ States
-  const [mcqChoices, setMcqChoices] = useState<string[]>(["", "", "", ""]);
+  const [mcqChoices, setMcqChoices] = useState<string[]>(["", ""]);
   const [mcqCorrectIndex, setMcqCorrectIndex] = useState<number>(0);
 
   // True/False States
@@ -114,8 +114,8 @@ export default function AddQuestion() {
       setStatus(existingQuestion.status || "DRAFT");
       
       if (existingQuestion.type === "MCQ") {
-        setMcqChoices(existingQuestion.choices || ["", "", "", ""]);
-        const correctIdx = existingQuestion.choices.indexOf(existingQuestion.correctAnswer);
+        setMcqChoices(existingQuestion.choices && existingQuestion.choices.length >= 2 ? existingQuestion.choices : ["", ""]);
+        const correctIdx = existingQuestion.choices ? existingQuestion.choices.indexOf(existingQuestion.correctAnswer) : -1;
         setMcqCorrectIndex(correctIdx >= 0 ? correctIdx : 0);
       } else if (existingQuestion.type === "TRUE_FALSE") {
         setTfCorrect(existingQuestion.correctAnswer === "True" ? "True" : "False");
@@ -131,6 +131,21 @@ export default function AddQuestion() {
     setMcqChoices(updated);
   };
 
+  const handleAddChoice = () => {
+    setMcqChoices([...mcqChoices, ""]);
+  };
+
+  const handleRemoveChoice = (index: number) => {
+    if (mcqChoices.length <= 2) return;
+    const updated = mcqChoices.filter((_, i) => i !== index);
+    setMcqChoices(updated);
+    if (mcqCorrectIndex >= updated.length) {
+      setMcqCorrectIndex(updated.length - 1);
+    } else if (mcqCorrectIndex === index) {
+      setMcqCorrectIndex(0);
+    }
+  };
+
   const getStatusOptions = () => {
     if (currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN") {
       return [
@@ -141,7 +156,7 @@ export default function AddQuestion() {
     }
     return [
       { value: "DRAFT", label: "Drafting Mode" },
-      { value: "PENDING", label: "Submit for Approval" },
+      { value: "PENDING_REVIEW", label: "Submit for Approval" },
     ];
   };
 
@@ -162,8 +177,12 @@ export default function AddQuestion() {
     let finalChoices: string[] = [];
 
     if (format === "MCQ") {
+      if (mcqChoices.length < 2) {
+        toast.error("Please add at least 2 options for multiple choice.");
+        return;
+      }
       if (mcqChoices.some((c) => !c.trim())) {
-        toast.error("Please fill in all 4 multiple choice options.");
+        toast.error("Please fill in all multiple choice options.");
         return;
       }
       computedCorrectAnswer = mcqChoices[mcqCorrectIndex];
@@ -364,6 +383,8 @@ export default function AddQuestion() {
                   mcqCorrectIndex={mcqCorrectIndex}
                   handleChange={handleMcqChoiceChange}
                   setMcqCorrectIndex={setMcqCorrectIndex}
+                  handleAddChoice={handleAddChoice}
+                  handleRemoveChoice={handleRemoveChoice}
                 />
               ) : format === "TRUE_FALSE" ? (
                 <TrueOrFalseInput tfCorrect={tfCorrect} setTfCorrect={setTfCorrect} />

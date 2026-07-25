@@ -29,7 +29,7 @@ export const useQuestionBankFilterStore = create<QuestionBankFilter>((set) => ({
   selectedCategory: "",
   selectedDifficulty: "",
   selectedType: "",
-  selectedStatus: "",
+  selectedStatus: "ALL",
   setSearch: (search: string) => set({ search }),
   setSelectedCategory: (selectedCategory: string) => set({ selectedCategory }),
   setSelectedDifficulty: (selectedDifficulty: string) =>
@@ -87,7 +87,7 @@ interface MCQFormStore {
 }
 
 export const useMCQFormStore = create<MCQFormStore>((set) => ({
-  mcqChoices: ["", "", "", ""],
+  mcqChoices: ["", ""],
   setMcqChoices: (mcqChoices: string[]) => set({ mcqChoices }),
 
   mcqCorrectIndex: 0,

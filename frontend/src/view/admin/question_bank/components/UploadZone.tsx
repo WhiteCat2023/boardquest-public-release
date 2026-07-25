@@ -65,7 +65,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category select */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Academic Subject</label>
+              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Academic Subject</label>
               <CustomSelectWithLabel
                 value={selectedCategoryId}
                 onValueChange={setSelectedCategoryId}
@@ -81,7 +81,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
 
             {/* Status information */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Role Constraint Status</label>
+              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Role Constraint Status</label>
               <div className="h-11 flex items-center px-4 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-600">
                 {currentUserRole === "TEACHER" ? "Auto-Drafted (Pending Approval)" : "Bulk Pending Review"}
               </div>
@@ -90,7 +90,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
 
           {/* Upload Zone */}
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Spreadsheet Attachment</label>
+            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Spreadsheet Attachment</label>
             <div
               onDragEnter={handleDrag}
               onDragOver={handleDrag}

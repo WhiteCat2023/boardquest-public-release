@@ -35,16 +35,16 @@ export function useLogs({ level = "ALL", search = "" }: UseLogsParams = {}) {
     queryKey: ["system-logs", level, search],
     queryFn: async () => {
       try {
-        const response = await axiosPrivate.get("/api/logs/get", {
+        const response = await axiosPrivate.get("/logs/get", {
           params: { level, search, limit: 200 },
         });
         return response.data?.data?.logs || response.data?.logs || [];
       } catch (error) {
-        console.warn("Failed to fetch system logs from backend, returning empty fallback:", error);
+        console.warn("Failed to fetch system logs from backend:", error);
         return [];
       }
     },
-    refetchInterval: 10000, // Refresh logs every 10 seconds automatically
+    refetchInterval: 5000,
   });
 }
 
@@ -55,7 +55,7 @@ export function useLogStats() {
     queryKey: ["system-logs-stats"],
     queryFn: async () => {
       try {
-        const response = await axiosPrivate.get("/api/logs/stats");
+        const response = await axiosPrivate.get("/logs/stats");
         return (
           response.data?.data?.stats ||
           response.data?.stats || {
@@ -71,7 +71,7 @@ export function useLogStats() {
         return { total: 0, info: 0, warn: 0, error: 0, fatal: 0 };
       }
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 }
 
@@ -81,7 +81,7 @@ export function useClearLogs() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await axiosPrivate.post("/api/logs/clear");
+      const response = await axiosPrivate.post("/logs/clear");
       return response.data;
     },
     onSuccess: () => {

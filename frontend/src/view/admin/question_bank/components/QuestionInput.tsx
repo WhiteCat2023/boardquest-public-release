@@ -9,7 +9,7 @@ interface QuestionInputProps {
 function QuestionInput({ questionWording, setQuestionWording }: QuestionInputProps) {
   return (
     <>
-        <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             Question Wording / Prompt
         </Label>
         <Textarea

@@ -17,7 +17,7 @@ interface CustomSelectWithLabelProps {
 export default function CustomSelectWithLabel ({label, value, onValueChange, children, className}: CustomSelectWithLabelProps) {
   return (
     <>
-    <Label className={`text-[11px] font-bold text-slate-500 uppercase tracking-wider ${className}`}>
+    <Label className={`text-[11px] font-bold text-muted-foreground uppercase tracking-wider ${className}`}>
       {label}
     </Label>
     <Select value={value} onValueChange={onValueChange}>

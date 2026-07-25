@@ -111,6 +111,28 @@ const DEMO_LOGS = [
 
 let IN_MEMORY_LOGS = [...DEMO_LOGS];
 
+async function seedInitialSystemLogs() {
+  try {
+    const initialLogs = DEMO_LOGS.map((log) => ({
+      level: log.level as LogLevelType,
+      action: log.action,
+      message: log.message,
+      source: log.source || "System",
+      userEmail: log.userEmail || null,
+      ipAddress: log.ipAddress || null,
+      metadata: log.metadata || null,
+      createdAt: new Date(log.createdAt),
+    }));
+
+    await (prisma as any).systemLog.createMany({
+      data: initialLogs,
+    });
+    console.log("Successfully seeded initial system logs to MongoDB database.");
+  } catch (err: any) {
+    console.warn("Failed to seed initial system logs to database:", err?.message);
+  }
+}
+
 export async function createSystemLog(
   level: LogLevelType,
   action: string,
@@ -168,7 +190,13 @@ export const logFatal = (action: string, message: string, source?: string, userE
 export async function getSystemLogs(query: LogFilterQuery) {
   const { level, search, limit = 100 } = query;
 
+  let dbLogs: any[] = [];
   try {
+    const count = await (prisma as any).systemLog.count();
+    if (count === 0) {
+      await seedInitialSystemLogs();
+    }
+
     const whereClause: any = {};
 
     if (level && level !== "ALL") {
@@ -178,36 +206,42 @@ export async function getSystemLogs(query: LogFilterQuery) {
     if (search && search.trim()) {
       const term = search.trim();
       whereClause.OR = [
-        { message: { contains: term, mode: "insensitive" } },
-        { action: { contains: term, mode: "insensitive" } },
-        { source: { contains: term, mode: "insensitive" } },
-        { userEmail: { contains: term, mode: "insensitive" } },
+        { message: { contains: term } },
+        { action: { contains: term } },
+        { source: { contains: term } },
+        { userEmail: { contains: term } },
       ];
     }
 
-    const logs = await (prisma as any).systemLog.findMany({
+    dbLogs = await (prisma as any).systemLog.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
       take: limit,
     });
-
-    if (logs.length > 0) {
-      return logs;
-    }
   } catch (error) {
-    console.warn("DB query warning in getSystemLogs, using in-memory fallback:", error);
+    console.warn("DB query warning in getSystemLogs:", error);
   }
 
-  // Filter in-memory logs
-  let filtered = [...IN_MEMORY_LOGS];
+  // Combine DB logs and IN_MEMORY_LOGS to ensure all recorded logs are visible
+  const allLogsMap = new Map<string, any>();
+  
+  // Add in-memory logs first
+  IN_MEMORY_LOGS.forEach((l) => allLogsMap.set(l.id, l));
+  
+  // Add/overwrite with DB logs
+  dbLogs.forEach((l) => allLogsMap.set(l.id, l));
 
+  let combined = Array.from(allLogsMap.values());
+
+  // Filter combined logs by level
   if (level && level !== "ALL") {
-    filtered = filtered.filter((l) => l.level === level);
+    combined = combined.filter((l) => l.level === level);
   }
 
+  // Filter combined logs by search term
   if (search && search.trim()) {
     const term = search.toLowerCase().trim();
-    filtered = filtered.filter(
+    combined = combined.filter(
       (l) =>
         (l.message && l.message.toLowerCase().includes(term)) ||
         (l.action && l.action.toLowerCase().includes(term)) ||
@@ -216,7 +250,10 @@ export async function getSystemLogs(query: LogFilterQuery) {
     );
   }
 
-  return filtered.slice(0, limit);
+  // Sort by createdAt descending
+  combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return combined.slice(0, limit);
 }
 
 export async function getSystemLogStats() {
@@ -224,10 +261,10 @@ export async function getSystemLogStats() {
   
   const stats = {
     total: logs.length,
-    info: logs.filter((l) => l.level === "INFO").length,
-    warn: logs.filter((l) => l.level === "WARN").length,
-    error: logs.filter((l) => l.level === "ERROR").length,
-    fatal: logs.filter((l) => l.level === "FATAL").length,
+    info: logs.filter((l: any) => l.level === "INFO").length,
+    warn: logs.filter((l: any) => l.level === "WARN").length,
+    error: logs.filter((l: any) => l.level === "ERROR").length,
+    fatal: logs.filter((l: any) => l.level === "FATAL").length,
   };
 
   return stats;

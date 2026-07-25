@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import AddQuestionButton from "../../../components/custom/button/AddQuestionButton";
 import { Input } from "../../../components/ui/input";
-import FilterDropdown from "./components/dropdown/Filter";
+import { QuestionFilter } from "./components/QuestionFilter";
 import { Separator } from "../../../components/ui/separator";
 import { useSearchParams } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
@@ -38,6 +38,7 @@ function QuestionBank() {
     setSelectedCategory,
     selectedDifficulty,
     selectedType,
+    selectedStatus,
   } = useQuestionBankFilterStore();
 
   useEffect(() => {
@@ -57,15 +58,25 @@ function QuestionBank() {
 
   if (view === "my-questions") {
     filters.authorId = currentUserId;
+    if (selectedStatus && selectedStatus !== "ALL") {
+      filters.status = selectedStatus;
+    }
   } else if (view === "published") {
     filters.isPublished = true;
+    if (selectedStatus && selectedStatus !== "ALL") {
+      filters.status = selectedStatus;
+    }
   } else if (view === "revisions") {
     filters.status = "NEEDS_REVISION";
     if ((auth as any)?.data?.user?.role === "TEACHER") {
       filters.authorId = currentUserId;
     }
   } else {
-    filters.status = "APPROVED";
+    // Shared Library: exclude published questions, only show non-published items
+    filters.isPublished = false;
+    if (selectedStatus && selectedStatus !== "ALL") {
+      filters.status = selectedStatus;
+    }
   }
 
   const getViewTitleAndDesc = () => {
@@ -77,8 +88,8 @@ function QuestionBank() {
         };
       case "published":
         return {
-          title: "Published Questions",
-          desc: "Questions currently active and visible to students.",
+          title: "Live Questions",
+          desc: "Approved and published questions currently active for exams.",
         };
       case "revisions":
         return {
@@ -88,8 +99,8 @@ function QuestionBank() {
       case "bank":
       default:
         return {
-          title: "Question Bank Pool",
-          desc: "Browse and manage all approved evaluation questions.",
+          title: "Shared Library",
+          desc: "Browse and manage all evaluation questions in the shared repository.",
         };
     }
   };
@@ -307,31 +318,8 @@ function QuestionBank() {
         </div>
       ) : (
         /* Question Table View */
-        <div className="animate-in fade-in duration-150">
-          <div className="flex gap-2 items-center w-full max-w-2xl mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
-              <Input
-                type="text"
-                placeholder="Search questions by wording, topic, or ID..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-9 h-10 w-full bg-card border border-border rounded-xl text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground transition-all duration-150"
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSearch("")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-8 w-8 rounded-lg cursor-pointer"
-                >
-                  <X className="size-4" />
-                </Button>
-              )}
-            </div>
-            <FilterDropdown />
-          </div>
-          <Separator className="bg-border" />
+        <div className="animate-in fade-in duration-150 space-y-4">
+          <QuestionFilter />
           <QuestionList filters={filters} />
         </div>
       )}

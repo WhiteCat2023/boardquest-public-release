@@ -22,6 +22,7 @@ import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/settings/Settings";
 import ProfileSettings from "./view/admin/ProfileSettings";
+import SettingLayout from "./layout/SettingLayout";
 import Missing from "./view/admin/Missing";
 import Unauthorized from "./view/admin/Unauthorized";
 import AddQuestion from "./view/admin/question_bank/AddQuestion";
@@ -170,7 +171,9 @@ function App() {
                   />
                 }
               >
-                <Route path="settings" element={<Settings />} />
+                <Route element={<SettingLayout />}>
+                  <Route path="settings" element={<Settings />} />
+                </Route>
               </Route>
 
               <Route path="profile-settings" element={<ProfileSettings />} />

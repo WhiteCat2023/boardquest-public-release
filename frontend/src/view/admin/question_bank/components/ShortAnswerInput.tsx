@@ -10,7 +10,7 @@ interface ShortAnswerInputProps {
 function ShortAnswerInput({ saCorrectAnswer, setSaCorrectAnswer }: ShortAnswerInputProps) {
     return (
         <div className="flex flex-col gap-1.5 w-full">
-            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Correct Answer Wording
             </Label>
             <div className="flex items-start gap-2">

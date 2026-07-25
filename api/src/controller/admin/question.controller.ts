@@ -12,6 +12,7 @@ import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
 import { agenda } from "../../services/queue.service";
+import { logInfo, logWarn } from "../../services/admin/logger.service";
 
 export const createQuestion = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -33,6 +34,13 @@ export const createQuestion = asyncHandler(
     }
 
     const question = await QuesitonServices.createNewQuestion(req.body);
+    await logInfo(
+      "CREATE_QUESTION",
+      `Created question: "${(question.question || "").slice(0, 45)}..." (${question.type}, ${question.difficulty})`,
+      "QuestionService",
+      user.email,
+      req.ip
+    );
     return new ApiResponse(
       201,
       { question },

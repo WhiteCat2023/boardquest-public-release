@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/apiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { signJWT, verifyJWT } from "../utils/jwt.utils";
 import prisma from "../services/prisma";
+import { logInfo, logWarn } from "../services/admin/logger.service";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -26,10 +27,20 @@ import prisma from "../services/prisma";
 // });
 
 export const login = asyncHandler(async (req, res) => {
-  const user = await authService.login(req.body);
-  
-  if (!user) {
-    return new ApiResponse(401, null, "Invalid email or password").send(res);
+  let user;
+  try {
+    user = await authService.login(req.body);
+  } catch (err: any) {
+    const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+    await logWarn(
+      "AUTH_LOGIN_FAILED",
+      `Failed login attempt for account "${attemptedEmail}". ${err.message || "Invalid credentials"}.`,
+      "AuthService",
+      attemptedEmail,
+      req.ip,
+      { error: err.message }
+    );
+    throw err;
   }
 
   const accesstoken = signJWT({ id: user.id, email: user.email, role: user.role }, "10s");
@@ -43,18 +54,21 @@ export const login = asyncHandler(async (req, res) => {
     maxAge: 24 * 60 * 60 * 1000,
   });
 
-    res.cookie("refreshToken", refreshtoken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+  res.cookie("refreshToken", refreshtoken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+
+  await logInfo("USER_LOGIN_SUCCESS", `${user.role || "User"} (${user.email}) logged in successfully.`, "AuthService", user.email, req.ip);
 
   return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
 
 export const signup = asyncHandler(async (req, res) => {
   const newUser = await authService.signupAdmin(req.body);
+  await logInfo("ADMIN_SIGNUP", `Created new admin user account (${newUser.email}).`, "AuthService", newUser.email, req.ip);
   return new ApiResponse(201, { user: newUser }, "Admin user created successfully").send(res);
 });
 

@@ -63,7 +63,7 @@ function Settings() {
       </div>
 
       {/* Card 1: Theme & Appearance Switcher */}
-      <Card className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden">
+      <Card id="theme" className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden scroll-mt-6">
         <CardHeader className="border-b border-border pb-4 pt-6 px-6 bg-card">
           <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
             <Sparkles size={18} className="text-primary" />
@@ -125,7 +125,7 @@ function Settings() {
       </Card>
 
       {/* Card 2: Notification & Alert Preferences */}
-      <Card className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden">
+      <Card id="notifications" className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden scroll-mt-6">
         <CardHeader className="border-b border-border pb-4 pt-6 px-6 bg-card">
           <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
             <Bell size={18} className="text-primary" />
@@ -200,7 +200,7 @@ function Settings() {
       </Card>
 
       {/* Card 3: Display & Table Defaults */}
-      <Card className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden">
+      <Card id="display" className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden scroll-mt-6">
         <CardHeader className="border-b border-border pb-4 pt-6 px-6 bg-card">
           <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
             <LayoutGrid size={18} className="text-primary" />

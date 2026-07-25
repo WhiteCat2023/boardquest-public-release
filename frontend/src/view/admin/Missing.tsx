@@ -1,15 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { Home, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-/* ─── Keyframe styles injected once ─────────────────────────────────────── */
+/* ─── Keyframe styles ─────────────────────────────────────── */
 const keyframes = `
   @keyframes floatY {
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-18px); }
-  }
-  @keyframes pulseFade {
-    0%, 100% { opacity: 0.15; transform: scale(1); }
-    50%       { opacity: 0.35; transform: scale(1.08); }
   }
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(30px); }
@@ -39,21 +36,16 @@ const keyframes = `
     70%     { transform: translate(25px,-25px) scale(0.85); }
   }
   @keyframes dotPop {
-    0%,100% { transform: scale(1); opacity: 0.5; }
-    50%     { transform: scale(1.6); opacity: 1; }
+    0%,100% { transform: scale(1); opacity: 0.3; }
+    50%     { transform: scale(1.6); opacity: 0.8; }
   }
 `;
 
-/* ─── Dot component for decorative grid ─────────────────────────────────── */
 function Dot({ delay }: { delay: number }) {
   return (
     <span
+      className="inline-block w-1.5 h-1.5 rounded-full bg-primary/40"
       style={{
-        display: 'inline-block',
-        width: 5,
-        height: 5,
-        borderRadius: '50%',
-        background: '#A70202',
         animation: `dotPop 1.8s ${delay}s ease-in-out infinite`,
       }}
     />
@@ -67,99 +59,45 @@ export default function Missing() {
     <>
       <style>{keyframes}</style>
 
-      <div
-        className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ background: '#FAFAFA', fontFamily: 'Poppins, sans-serif' }}
-      >
+      <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-background text-foreground font-sans">
         {/* ── Background orbs ── */}
         <div
-          style={{
-            position: 'absolute', top: '10%', left: '8%',
-            width: 420, height: 420, borderRadius: '50%',
-            background: 'radial-gradient(circle, #fde8e8 0%, transparent 70%)',
-            animation: 'orb1 10s ease-in-out infinite',
-            pointerEvents: 'none',
-          }}
+          className="absolute top-[10%] left-[8%] w-[420px] h-[420px] rounded-full bg-primary/10 blur-3xl pointer-events-none"
+          style={{ animation: 'orb1 10s ease-in-out infinite' }}
         />
         <div
-          style={{
-            position: 'absolute', bottom: '5%', right: '6%',
-            width: 340, height: 340, borderRadius: '50%',
-            background: 'radial-gradient(circle, #fde8e8 0%, transparent 70%)',
-            animation: 'orb2 13s ease-in-out infinite',
-            pointerEvents: 'none',
-          }}
+          className="absolute bottom-[5%] right-[6%] w-[340px] h-[340px] rounded-full bg-primary/10 blur-3xl pointer-events-none"
+          style={{ animation: 'orb2 13s ease-in-out infinite' }}
         />
 
         {/* ── Decorative dot grid (top-right) ── */}
-        <div
-          style={{
-            position: 'absolute', top: 40, right: 60,
-            display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10,
-            pointerEvents: 'none',
-          }}
-        >
+        <div className="absolute top-10 right-14 grid grid-cols-6 gap-2.5 pointer-events-none hidden md:grid">
           {Array.from({ length: 24 }).map((_, i) => (
             <Dot key={i} delay={(i % 6) * 0.18} />
           ))}
         </div>
 
         {/* ── Decorative dot grid (bottom-left) ── */}
-        <div
-          style={{
-            position: 'absolute', bottom: 40, left: 60,
-            display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10,
-            pointerEvents: 'none',
-          }}
-        >
+        <div className="absolute bottom-10 left-14 grid grid-cols-6 gap-2.5 pointer-events-none hidden md:grid">
           {Array.from({ length: 24 }).map((_, i) => (
             <Dot key={i} delay={(i % 6) * 0.22} />
           ))}
         </div>
 
         {/* ── Main card ── */}
-        <div
-          className="flex flex-col items-center text-center px-8"
-          style={{ zIndex: 1, maxWidth: 560 }}
-        >
+        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-lg">
           {/* Glitch 404 */}
-          <div
-            style={{
-              position: 'relative',
-              animation: 'floatY 3.5s ease-in-out infinite',
-              marginBottom: '1.5rem',
-              lineHeight: 1,
-            }}
-          >
+          <div className="relative mb-6 leading-none select-none" style={{ animation: 'floatY 3.5s ease-in-out infinite' }}>
             {/* Main text */}
-            <span
-              style={{
-                fontSize: 'clamp(7rem, 18vw, 12rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.04em',
-                background: 'linear-gradient(135deg, #A70202 0%, #E05252 50%, #A70202 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'block',
-                userSelect: 'none',
-              }}
-            >
+            <span className="text-8xl md:text-[11rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary block">
               404
             </span>
 
             {/* Glitch layer 1 */}
             <span
               aria-hidden
-              style={{
-                position: 'absolute', inset: 0,
-                fontSize: 'clamp(7rem, 18vw, 12rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.04em',
-                color: '#60a5fa',
-                display: 'block',
-                animation: 'glitch1 3s 1s steps(1) infinite',
-                userSelect: 'none',
-              }}
+              className="absolute inset-0 text-8xl md:text-[11rem] font-black tracking-tighter text-blue-500/40 block"
+              style={{ animation: 'glitch1 3s 1s steps(1) infinite' }}
             >
               404
             </span>
@@ -167,16 +105,8 @@ export default function Missing() {
             {/* Glitch layer 2 */}
             <span
               aria-hidden
-              style={{
-                position: 'absolute', inset: 0,
-                fontSize: 'clamp(7rem, 18vw, 12rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.04em',
-                color: '#f472b6',
-                display: 'block',
-                animation: 'glitch2 3s 1.3s steps(1) infinite',
-                userSelect: 'none',
-              }}
+              className="absolute inset-0 text-8xl md:text-[11rem] font-black tracking-tighter text-primary/40 block"
+              style={{ animation: 'glitch2 3s 1.3s steps(1) infinite' }}
             >
               404
             </span>
@@ -184,32 +114,22 @@ export default function Missing() {
 
           {/* Divider pill */}
           <div
-            style={{
-              width: 60, height: 4, borderRadius: 99,
-              background: 'linear-gradient(90deg, #A70202, #E05252)',
-              marginBottom: '1.5rem',
-              animation: 'slideUp 0.6s 0.2s both',
-            }}
+            className="w-16 h-1 rounded-full bg-primary mb-6"
+            style={{ animation: 'slideUp 0.6s 0.2s both' }}
           />
 
           {/* Heading */}
           <h1
-            style={{
-              fontSize: '1.65rem', fontWeight: 700,
-              color: '#1a1a2e', marginBottom: '0.75rem',
-              animation: 'slideUp 0.6s 0.35s both',
-            }}
+            className="text-2xl md:text-3xl font-bold text-foreground mb-3 tracking-tight"
+            style={{ animation: 'slideUp 0.6s 0.35s both' }}
           >
             Page Not Found
           </h1>
 
           {/* Sub-text */}
           <p
-            style={{
-              fontSize: '0.95rem', color: '#6b7280',
-              lineHeight: 1.7, maxWidth: 380,
-              animation: 'slideUp 0.6s 0.5s both',
-            }}
+            className="text-sm text-muted-foreground leading-relaxed max-w-sm"
+            style={{ animation: 'slideUp 0.6s 0.5s both' }}
           >
             Looks like this page took a wrong turn. It may have been moved,
             deleted, or never existed in the first place.
@@ -220,55 +140,30 @@ export default function Missing() {
             className="flex gap-3 mt-8 flex-wrap justify-center"
             style={{ animation: 'slideUp 0.6s 0.65s both' }}
           >
-            <button
+            <Button
+              variant="outline"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200"
-              style={{
-                borderColor: '#E9B0B0',
-                color: '#A70202',
-                background: 'white',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#fde8e8';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'white';
-              }}
+              className="h-11 px-5 rounded-xl text-sm font-semibold border-border text-foreground hover:bg-accent gap-2 cursor-pointer transition-all"
             >
               <ArrowLeft size={16} />
               Go Back
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
-              style={{
-                background: 'linear-gradient(135deg, #A70202, #E05252)',
-                color: 'white',
-                boxShadow: '0 4px 18px rgba(167,2,2,0.35)',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 24px rgba(167,2,2,0.5)';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 18px rgba(167,2,2,0.35)';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              }}
+              className="h-11 px-5 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 gap-2 cursor-pointer shadow-md transition-all"
             >
               <Home size={16} />
               Back to Home
-            </button>
+            </Button>
           </div>
 
           {/* Footer hint */}
           <p
-            style={{
-              marginTop: '2.5rem', fontSize: '0.78rem',
-              color: '#9ca3af', animation: 'slideUp 0.6s 0.8s both',
-            }}
+            className="mt-10 text-xs text-muted-foreground"
+            style={{ animation: 'slideUp 0.6s 0.8s both' }}
           >
-            Error code: <span style={{ fontWeight: 600, color: '#A70202' }}>404</span> &mdash; Page not found
+            Error code: <span className="font-semibold text-primary">404</span> &mdash; Page not found
           </p>
         </div>
       </div>

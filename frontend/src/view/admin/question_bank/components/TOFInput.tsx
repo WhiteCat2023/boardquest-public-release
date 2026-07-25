@@ -32,7 +32,7 @@ function TrueOrFalseInput({ tfCorrect, setTfCorrect }: TrueOrFalseInputProps) {
                         className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all duration-150 ${
                           isSelected
                             ? "bg-[#A70202]/5 border-[#A70202] text-[#A70202] font-semibold"
-                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                            : "bg-card border-border text-muted-foreground hover:bg-accent hover:border-border hover:text-foreground"
                         }`}
                       >
                         <RadioGroupItem
