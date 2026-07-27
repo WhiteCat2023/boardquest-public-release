@@ -25,7 +25,7 @@ export default function Dashboard() {
 
   // Data Queries
   const { data: facultyData, isLoading: isFacultyLoading } = useFaculties();
-  const { data: studentData, isLoading: isStudentLoading } = useStudents(0, 10);
+  const { data: studentData, isLoading: isStudentLoading } = useStudents({ skip: 0, take: 10 });
   const { data: categoryData, isLoading: isCategoryLoading } = useCategories();
 
   // Fetch Questions
@@ -92,7 +92,7 @@ export default function Dashboard() {
 
   return (
     <phantom-ui loading={isLoading}>
-      <div className="flex flex-col gap-8 p-6 md:p-8 w-full max-w-7xl mx-auto font-sans bg-background text-foreground min-h-full">
+      <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full max-w-7xl mx-auto font-sans bg-background text-foreground min-h-full">
         {/* Banner Section */}
         <DashboardBanner
           userRole={userRole}
@@ -120,7 +120,7 @@ export default function Dashboard() {
         <SubjectOverviewSection />
 
         {/* Operational Grid: Recent Questions & Student Roster */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
           <RecentQuestionsCard
             isTeacher={isTeacher}
             isTeamLead={isTeamLead}

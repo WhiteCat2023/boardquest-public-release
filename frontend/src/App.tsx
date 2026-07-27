@@ -19,6 +19,11 @@ import ReviewCenterManagement from "./view/admin/review_center/ReviewCenterManag
 import CalendarManagement from "./view/admin/CalendarManagement";
 import LogsManagement from "./view/admin/logs_management/LogsManagement";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
+import MyQuestions from "./view/admin/question_bank/MyQuestions";
+import ReviewQuestions from "./view/admin/question_bank/ReviewQuestions";
+import LiveQuestions from "./view/admin/question_bank/LiveQuestions";
+import SharedLibrary from "./view/admin/question_bank/SharedLibrary";
+import PermissionManagement from "./view/admin/question_bank/PermissionManagement";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/settings/Settings";
 import ProfileSettings from "./view/admin/ProfileSettings";
@@ -42,7 +47,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           {/* public routes */}
-          <Route path="home" element={<LandingPage />} />
+          {/* <Route path="home" element={<LandingPage />} /> */}
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
@@ -118,8 +123,14 @@ function App() {
                   />
                 }
               >
-                <Route path="review-center" element={<ReviewCenterManagement />} />
-                <Route path="calendar-management" element={<CalendarManagement />} />
+                <Route
+                  path="review-center"
+                  element={<ReviewCenterManagement />}
+                />
+                <Route
+                  path="calendar-management"
+                  element={<CalendarManagement />}
+                />
                 <Route path="logs-management" element={<LogsManagement />} />
               </Route>
 
@@ -140,6 +151,39 @@ function App() {
                   element={<SubjectManagement />}
                 />
                 <Route path="question-bank" element={<QuestionBank />} />
+                <Route
+                  path="question-bank/my-questions"
+                  element={<MyQuestions />}
+                />
+                <Route
+                  path="question-bank/review"
+                  element={<ReviewQuestions />}
+                />
+                <Route
+                  path="question-bank/review-questions"
+                  element={<ReviewQuestions />}
+                />
+                <Route
+                  path="question-bank/published"
+                  element={<LiveQuestions />}
+                />
+                <Route
+                  path="question-bank/live-questions"
+                  element={<LiveQuestions />}
+                />
+                <Route path="question-bank/bank" element={<SharedLibrary />} />
+                <Route
+                  path="question-bank/shared-library"
+                  element={<SharedLibrary />}
+                />
+                <Route
+                  path="question-bank/revisions"
+                  element={<RevisionDesk />}
+                />
+                <Route
+                  path="question-bank/permissions"
+                  element={<PermissionManagement />}
+                />
                 <Route path="revisions" element={<RevisionDesk />} />
                 <Route path="question-bank/create" element={<AddQuestion />} />
                 <Route
@@ -148,6 +192,10 @@ function App() {
                 />
                 <Route
                   path="question-bank/view/:questionId"
+                  element={<ViewQuestion />}
+                />
+                <Route
+                  path="question-bank/:questionId"
                   element={<ViewQuestion />}
                 />
                 <Route

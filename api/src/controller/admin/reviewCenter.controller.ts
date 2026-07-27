@@ -6,14 +6,15 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 
 export const getReviewCenters = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const list = await reviewCenterService.getAllReviewCenters();
+  const { search, location, company } = req.query;
 
-  const sanitized = list.map((item: any) => {
-    const { password, ...rest } = item;
-    return rest;
+  const reviewCenters = await reviewCenterService.getAllReviewCenters({
+    search: search as string,
+    location: location as string,
+    company: company as string,
   });
 
-  return new ApiResponse(200, { reviewCenters: sanitized }, "Review centers retrieved successfully").send(res);
+  return new ApiResponse(200, { reviewCenters }, "Review centers retrieved successfully").send(res);
 });
 
 export const getReviewCenterById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

@@ -1,8 +1,9 @@
-import { Link, useLocation } from 'react-router-dom';
-import * as LucideIcons from 'lucide-react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { NavItemProps, NavContentProps } from '@/types/sidebarMenuItems';
-import { useState, useEffect } from 'react';
+import { Link, useLocation } from "react-router-dom";
+import * as LucideIcons from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import type { NavItemProps, NavContentProps } from "@/types/sidebarMenuItems";
+import { useState, useEffect } from "react";
+import useAuth from "@/hooks/useAuth";
 import {
   Sidebar as UISidebar,
   SidebarContent,
@@ -17,8 +18,18 @@ import {
 
 type LucideIconName = keyof typeof LucideIcons;
 
-function DynamicIcon({ name, size = 18, className }: { name: string; size?: number; className?: string }) {
-  const IconComponent = LucideIcons[name as LucideIconName] as React.ElementType | undefined;
+function DynamicIcon({
+  name,
+  size = 18,
+  className,
+}: {
+  name: string;
+  size?: number;
+  className?: string;
+}) {
+  const IconComponent = LucideIcons[name as LucideIconName] as
+    | React.ElementType
+    | undefined;
   if (!IconComponent) return null;
   return <IconComponent size={size} className={className} />;
 }
@@ -28,14 +39,22 @@ interface SidebarContentProps {
   logout?: () => void;
 }
 
-function SidebarItem({ content, location }: { content: NavContentProps; location: any }) {
+function SidebarItem({
+  content,
+  location,
+}: {
+  content: NavContentProps;
+  location: any;
+}) {
   const hasSubItems = !!content.subItems && content.subItems.length > 0;
-  
+
   // Check if any sub-item is currently active (pathname + query search match)
-  const isAnySubActive = hasSubItems && content.subItems!.some(
-    sub => location.pathname + location.search === sub.path
-  );
-  
+  const isAnySubActive =
+    hasSubItems &&
+    content.subItems!.some(
+      (sub) => location.pathname + location.search === sub.path,
+    );
+
   const [isOpen, setIsOpen] = useState(isAnySubActive);
 
   // Sync open state with location changes
@@ -49,22 +68,25 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
     const isActive = location.pathname === content.path;
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton 
-          asChild 
-          isActive={isActive} 
+        <SidebarMenuButton
+          asChild
+          isActive={isActive}
           tooltip={content.title}
           className={`
             flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10
             transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
-            ${isActive
-              ? '!bg-[#E9B0B0] !text-[#A70202] dark:!bg-primary/20 dark:!text-primary font-bold dark:border dark:border-primary/30 shadow-2xs'
-              : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary'
+            ${
+              isActive
+                ? "!bg-[#E9B0B0] !text-[#A70202] dark:!bg-primary/20 dark:!text-primary font-bold dark:border dark:border-primary/30 shadow-2xs"
+                : "!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
             }
           `}
         >
           <Link to={content.path}>
             <DynamicIcon name={content.icon} size={18} className="shrink-0" />
-            <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
+            <span className="group-data-[collapsible=icon]:hidden">
+              {content.title}
+            </span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -75,21 +97,24 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
 
   return (
     <SidebarMenuItem className="flex flex-col w-full">
-      <SidebarMenuButton 
+      <SidebarMenuButton
         onClick={() => setIsOpen(!isOpen)}
         tooltip={content.title}
         className={`
           flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer
           transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
-          ${isParentActive
-            ? 'bg-slate-100/80 text-gray-800 font-semibold dark:bg-sidebar-accent dark:text-sidebar-accent-foreground'
-            : '!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary'
+          ${
+            isParentActive
+              ? "bg-slate-100/80 text-gray-800 font-semibold dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
+              : "!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
           }
         `}
       >
         <div className="flex items-center gap-3">
           <DynamicIcon name={content.icon} size={18} className="shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden">{content.title}</span>
+          <span className="group-data-[collapsible=icon]:hidden">
+            {content.title}
+          </span>
         </div>
         <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 dark:text-sidebar-foreground/50 dark:hover:text-sidebar-foreground transition-colors">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -100,16 +125,18 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
       {isOpen && (
         <div className="pl-6 mt-1 flex flex-col gap-1 border-l border-slate-100 dark:border-sidebar-border ml-5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
           {content.subItems!.map((sub, idx) => {
-            const isSubActive = location.pathname + location.search === sub.path;
+            const isSubActive =
+              location.pathname + location.search === sub.path;
             return (
               <Link
                 key={idx}
                 to={sub.path}
                 className={`
                   text-xs py-1.5 px-3 rounded-lg font-medium transition-all duration-150
-                  ${isSubActive
-                    ? 'text-[#A70202] bg-[#E9B0B0]/40 font-semibold dark:text-primary dark:bg-primary/20 dark:border dark:border-primary/30'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50 dark:text-sidebar-foreground/70 dark:hover:text-sidebar-foreground dark:hover:bg-sidebar-accent'
+                  ${
+                    isSubActive
+                      ? "text-[#A70202] bg-[#E9B0B0]/40 font-semibold dark:text-primary dark:bg-primary/20 dark:border dark:border-primary/30"
+                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-50 dark:text-sidebar-foreground/70 dark:hover:text-sidebar-foreground dark:hover:bg-sidebar-accent"
                   }
                 `}
               >
@@ -125,21 +152,59 @@ function SidebarItem({ content, location }: { content: NavContentProps; location
 
 function Sidebar({ navItem }: SidebarContentProps) {
   const location = useLocation();
+  const { auth } = useAuth();
+  const currentUserRole = (auth as any)?.data?.user?.role || (auth as any)?.user?.role;
+
+  const getPortalTitle = (role?: string) => {
+    switch (role?.toUpperCase()) {
+      case "SUPERADMIN":
+        return "Super Admin Portal";
+      case "ADMIN":
+        return "Admin Portal";
+      case "TEAMLEAD":
+        return "Team Lead Portal";
+      case "TEACHER":
+      default:
+        return "Faculty Portal";
+    }
+  };
+
+  const getPortalInitials = (role?: string) => {
+    switch (role?.toUpperCase()) {
+      case "SUPERADMIN":
+        return "SAP";
+      case "ADMIN":
+        return "AP";
+      case "TEAMLEAD":
+        return "TLP";
+      case "TEACHER":
+      default:
+        return "FP";
+    }
+  };
+
+  const portalTitle = getPortalTitle(currentUserRole);
+  const portalInitials = getPortalInitials(currentUserRole);
 
   return (
-    <UISidebar collapsible="icon" className="font-sans bg-white dark:bg-sidebar text-gray-800 dark:text-sidebar-foreground border-r border-gray-100 dark:border-sidebar-border">
+    <UISidebar
+      collapsible="icon"
+      className="font-sans bg-white dark:bg-sidebar text-gray-800 dark:text-sidebar-foreground border-r border-gray-100 dark:border-sidebar-border"
+    >
       <SidebarHeader className="mb-6 p-5 pb-0 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-4 group-data-[collapsible=icon]:pt-5">
         <h1 className="text-lg font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight truncate group-data-[collapsible=icon]:hidden">
-          Faculty Portal
+          {portalTitle}
         </h1>
         <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight">
-          FP
+          {portalInitials}
         </div>
       </SidebarHeader>
 
       <SidebarContent className="px-5 gap-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:gap-2">
         {navItem
-          .filter((item: NavItemProps) => item.content && item.content.length > 0)
+          .filter(
+            (item: NavItemProps) => item.content && item.content.length > 0,
+          )
           .map((item: NavItemProps, index: number) => (
             <SidebarGroup key={index} className="p-0">
               <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 dark:text-sidebar-foreground/50 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
@@ -147,13 +212,15 @@ function Sidebar({ navItem }: SidebarContentProps) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-2">
-                  {item.content.map((content: NavContentProps, contentIndex: number) => (
-                    <SidebarItem 
-                      key={contentIndex} 
-                      content={content} 
-                      location={location} 
-                    />
-                  ))}
+                  {item.content.map(
+                    (content: NavContentProps, contentIndex: number) => (
+                      <SidebarItem
+                        key={contentIndex}
+                        content={content}
+                        location={location}
+                      />
+                    ),
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

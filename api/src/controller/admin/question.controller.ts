@@ -21,8 +21,11 @@ export const createQuestion = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    if (user.role === "TEACHER") {
+    if (!req.body.authorId) {
       req.body.authorId = user.id;
+    }
+
+    if (user.role === "TEACHER") {
       req.body.status = "DRAFT";
     } else if (user.role === "TEAMLEAD") {
       if (req.body.status === "APPROVED") {
@@ -116,15 +119,18 @@ export const getQuestions = asyncHandler(
           : undefined;
 
     const isValidObjectId = (id?: string) =>
-      typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+      typeof id === "string" && (/^[0-9a-fA-F]{24}$/.test(id) || id === "superadmin-env-id");
 
     // If teacher, they can only see their own questions.
     // Admin/Co-Admin can filter specifically by any authorId.
     const rawAuthorId =
       user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
-    const authorIdFilter = isValidObjectId(rawAuthorId)
+    let authorIdFilter = isValidObjectId(rawAuthorId)
       ? rawAuthorId
       : undefined;
+    if (authorIdFilter === "superadmin-env-id") {
+      authorIdFilter = "507f1f77bcf86cd799439011";
+    }
 
     const hasFilter = !!(
       search ||
@@ -520,3 +526,84 @@ export const deleteRevisionFeedback = asyncHandler(
     ).send(res);
   },
 );
+
+export const synthesizeQuestion = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const { question, choices, correctAnswer, topic, targetDifficulty, type, additionalContext } = req.body;
+    if (!question || !choices || !correctAnswer || !topic || !targetDifficulty) {
+      throw new ApiError(400, "Missing required question synthesis fields: question, choices, correctAnswer, topic, targetDifficulty");
+    }
+
+    const result = await QuesitonServices.synthesizeQuestion({
+      question,
+      choices,
+      correctAnswer,
+      topic,
+      targetDifficulty,
+      type: type || QuestionType.MCQ,
+      count: 5,
+      additionalContext,
+    });
+
+    await logInfo(
+      "SYNTHESIZE_QUESTION",
+      `Synthesized 5 question variants for topic '${topic}' at level ${targetDifficulty}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(
+      200,
+      { synthesizedList: result },
+      "5 Question variants synthesized successfully",
+    ).send(res);
+  },
+);
+
+export const createSynthesizedQuestion = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (user.role === "TEACHER") {
+      req.body.authorId = user.id;
+      req.body.status = "DRAFT";
+    }
+
+    const question = await QuesitonServices.createSynthesizedQuestion(req.body);
+
+    await logInfo(
+      "CREATE_SYNTHESIZED_QUESTION",
+      `Synthesized & created question: "${(question.question || "").slice(0, 45)}..." (${question.difficulty})`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(
+      201,
+      { question },
+      "Synthesized question created and saved successfully",
+    ).send(res);
+  },
+);
+
+export const getPendingReviewAuthors = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const authors = await QuesitonServices.getPendingReviewAuthors();
+    return new ApiResponse(
+      200,
+      { authors },
+      "Pending review authors retrieved successfully",
+    ).send(res);
+  },
+);
+

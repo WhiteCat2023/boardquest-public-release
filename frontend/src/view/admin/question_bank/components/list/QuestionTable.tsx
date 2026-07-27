@@ -31,12 +31,17 @@ interface QuestionTableProps {
   onPublish: () => void;
   onUnpublish: () => void;
   onFeedback: () => void;
+  onResubmitReview?: () => void;
   onBulkDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
   isPublishPending: boolean;
   isFeedbackPending: boolean;
+  isResubmitPending?: boolean;
   isDeletePending: boolean;
+  isRevisionsView?: boolean;
+  isLiveView?: boolean;
+  isBankView?: boolean;
 }
 
 export default function QuestionTable({
@@ -52,12 +57,17 @@ export default function QuestionTable({
   onPublish,
   onUnpublish,
   onFeedback,
+  onResubmitReview,
   onBulkDelete,
   onClear,
   isApprovePending,
   isPublishPending,
   isFeedbackPending,
+  isResubmitPending,
   isDeletePending,
+  isRevisionsView = false,
+  isLiveView = false,
+  isBankView = false,
 }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
@@ -101,12 +111,17 @@ export default function QuestionTable({
           onPublish={onPublish}
           onUnpublish={onUnpublish}
           onFeedback={onFeedback}
+          onResubmitReview={onResubmitReview}
           onDelete={onBulkDelete}
           onClear={onClear}
           isApprovePending={isApprovePending}
           isPublishPending={isPublishPending}
           isFeedbackPending={isFeedbackPending}
+          isResubmitPending={isResubmitPending}
           isDeletePending={isDeletePending}
+          isRevisionsView={isRevisionsView}
+          isLiveView={isLiveView}
+          isBankView={isBankView}
         />
 
         <Table>
@@ -114,7 +129,7 @@ export default function QuestionTable({
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="border-b border-border hover:bg-transparent">
                 {headerGroup.headers.map(header => (
-                  <TableHead key={header.id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider py-4">
+                  <TableHead key={header.id} className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-wider py-2.5 px-3">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -133,7 +148,7 @@ export default function QuestionTable({
                   }`}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="py-4">
+                    <TableCell key={cell.id} className="py-2 px-3">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

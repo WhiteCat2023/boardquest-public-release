@@ -2,7 +2,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "../../generated/prisma/client";
+} from "../../generated/prisma/enums";
 
 export const demoQuestions = [
   // =========================================================================

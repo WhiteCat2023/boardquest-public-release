@@ -1,7 +1,7 @@
 import { Agenda, Job } from "agenda";
 import { MongoBackend } from "@agendajs/mongo-backend";
 import { importQuestions, ImportedQuestion } from "./admin/question.services";
-import { QuestionStatus } from "../../generated/prisma/client";
+import { QuestionStatus } from "../../generated/prisma/enums";
 
 const databaseUrl = process.env.DATABASE_URL || "";
 

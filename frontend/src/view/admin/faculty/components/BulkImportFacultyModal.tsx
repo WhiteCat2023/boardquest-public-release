@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Trash2, Mail } from "lucide-react";
+import {
+  Upload,
+  Download,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  Mail,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useBulkCreateFaculty } from "../hooks/useFaculty";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +21,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+const facultyRowSchema = z.object({
+  name: z.string().min(1, "Missing Name"),
+  email: z.string().min(1, "Missing Email").email("Invalid Email"),
+  role: z
+    .enum(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"])
+    .default("TEACHER"),
+  employeeId: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  departmentName: z.string().optional(),
+});
 
 interface ParsedFacultyRow {
   name: string;
@@ -29,7 +49,10 @@ interface BulkImportFacultyModalProps {
   onClose: () => void;
 }
 
-export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFacultyModalProps) {
+export default function BulkImportFacultyModal({
+  isOpen,
+  onClose,
+}: BulkImportFacultyModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedFacultyRow[]>([]);
   const [isParsing, setIsParsing] = useState(false);
@@ -52,19 +75,32 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
   };
 
   const parseCSVText = (text: string) => {
-    const lines = text.split(/\r\n|\n/).filter((line) => line.trim().length > 0);
+    const lines = text
+      .split(/\r\n|\n/)
+      .filter((line) => line.trim().length > 0);
     if (lines.length <= 1) {
       toast.error("CSV file contains no records or header only.");
       return [];
     }
 
-    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ""));
+    const headers = lines[0].split(",").map((h) =>
+      h
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z]/g, ""),
+    );
     const nameIdx = headers.findIndex((h) => h.includes("name"));
     const emailIdx = headers.findIndex((h) => h.includes("email"));
     const roleIdx = headers.findIndex((h) => h.includes("role"));
-    const empIdIdx = headers.findIndex((h) => h.includes("employee") || h.includes("empid") || h.includes("id"));
-    const phoneIdx = headers.findIndex((h) => h.includes("phone") || h.includes("number"));
-    const deptIdx = headers.findIndex((h) => h.includes("department") || h.includes("dept"));
+    const empIdIdx = headers.findIndex(
+      (h) => h.includes("employee") || h.includes("empid") || h.includes("id"),
+    );
+    const phoneIdx = headers.findIndex(
+      (h) => h.includes("phone") || h.includes("number"),
+    );
+    const deptIdx = headers.findIndex(
+      (h) => h.includes("department") || h.includes("dept"),
+    );
 
     const rows: ParsedFacultyRow[] = [];
 
@@ -72,36 +108,60 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
       const currentLine = lines[i].trim();
       if (!currentLine) continue;
 
-      const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
-      const name = nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : (values[0] || "");
-      const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
-      const role = roleIdx !== -1 && values[roleIdx] ? values[roleIdx].toUpperCase() : (values[2] ? values[2].toUpperCase() : "TEACHER");
-      const employeeId = empIdIdx !== -1 && values[empIdIdx] ? values[empIdIdx] : (values[3] || "");
-      const phoneNumber = phoneIdx !== -1 && values[phoneIdx] ? values[phoneIdx] : (values[4] || "");
-      const departmentName = deptIdx !== -1 && values[deptIdx] ? values[deptIdx] : (values[5] || "");
+      const values = currentLine
+        .split(",")
+        .map((v) => v.trim().replace(/^["']|["']$/g, ""));
+      const rawName =
+        nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : values[0] || "";
+      const rawEmail =
+        emailIdx !== -1 && values[emailIdx]
+          ? values[emailIdx]
+          : values[1] || "";
+      const rawRole =
+        roleIdx !== -1 && values[roleIdx]
+          ? values[roleIdx].toUpperCase()
+          : values[2]
+            ? values[2].toUpperCase()
+            : "TEACHER";
+      const rawEmpId =
+        empIdIdx !== -1 && values[empIdIdx]
+          ? values[empIdIdx]
+          : values[3] || "";
+      const rawPhone =
+        phoneIdx !== -1 && values[phoneIdx]
+          ? values[phoneIdx]
+          : values[4] || "";
+      const rawDept =
+        deptIdx !== -1 && values[deptIdx] ? values[deptIdx] : values[5] || "";
 
-      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      let isValid = true;
-      let validationError = "";
+      const candidate = {
+        name: rawName,
+        email: rawEmail,
+        role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(rawRole)
+          ? rawRole
+          : "TEACHER",
+        employeeId: rawEmpId || undefined,
+        phoneNumber: rawPhone || undefined,
+        departmentName: rawDept || undefined,
+      };
 
-      if (!name) {
-        isValid = false;
-        validationError = "Missing Name";
-      } else if (!email || !isValidEmail) {
-        isValid = false;
-        validationError = "Invalid Email";
+      const result = facultyRowSchema.safeParse(candidate);
+
+      if (result.success) {
+        rows.push({
+          ...result.data,
+          isValid: true,
+          validationError: "",
+        });
+      } else {
+        const firstError =
+          result.error.issues[0]?.message || "Invalid row data";
+        rows.push({
+          ...candidate,
+          isValid: false,
+          validationError: firstError,
+        });
       }
-
-      rows.push({
-        name,
-        email,
-        role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
-        employeeId: employeeId || undefined,
-        phoneNumber: phoneNumber || undefined,
-        departmentName: departmentName || undefined,
-        isValid,
-        validationError,
-      });
     }
 
     return rows;
@@ -157,19 +217,23 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
         onSuccess: (res: any) => {
           const result = res.data?.data;
           toast.success(
-            `Successfully created ${result?.createdCount || validMembers.length} faculty member(s)! Credentials have been emailed to their address.`
+            `Successfully created ${result?.createdCount || validMembers.length} faculty member(s)! Credentials have been emailed to their address.`,
           );
           if (result?.skippedCount > 0) {
-            toast.warning(`${result.skippedCount} entry/entries were skipped due to existing email or role restrictions.`);
+            toast.warning(
+              `${result.skippedCount} entry/entries were skipped due to existing email or role restrictions.`,
+            );
           }
           setFile(null);
           setParsedRows([]);
           onClose();
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.message || "Failed to import faculty members.");
+          toast.error(
+            err.response?.data?.message || "Failed to import faculty members.",
+          );
         },
-      }
+      },
     );
   };
 
@@ -188,7 +252,9 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                 Bulk Import Faculty Members
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Upload a CSV file to add multiple faculty accounts. Unique temporary passwords will be automatically emailed to each member.
+                Upload a CSV file to add multiple faculty accounts. Unique
+                temporary passwords will be automatically emailed to each
+                member.
               </DialogDescription>
             </div>
           </div>
@@ -202,8 +268,12 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                 <Upload size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold text-foreground">Click or drag CSV file to upload</p>
-                <p className="text-xs text-muted-foreground mt-1">Supports standard CSV files (.csv)</p>
+                <p className="text-sm font-bold text-foreground">
+                  Click or drag CSV file to upload
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supports standard CSV files (.csv)
+                </p>
               </div>
               <input
                 type="file"
@@ -228,7 +298,9 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                 <div className="flex items-center gap-3">
                   <FileSpreadsheet size={20} className="text-primary" />
                   <div>
-                    <p className="text-xs font-bold text-foreground">{file.name}</p>
+                    <p className="text-xs font-bold text-foreground">
+                      {file.name}
+                    </p>
                     <p className="text-[11px] text-muted-foreground">
                       {parsedRows.length} entries parsed ({validCount} valid)
                     </p>
@@ -257,7 +329,9 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                   <p className="text-xs font-medium">Parsing CSV contents...</p>
                 </div>
               ) : parsedRows.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground text-xs">No valid records found in file.</div>
+                <div className="py-8 text-center text-muted-foreground text-xs">
+                  No valid records found in file.
+                </div>
               ) : (
                 <div className="border border-border rounded-2xl overflow-hidden max-h-64 overflow-y-auto bg-card">
                   <table className="w-full text-left text-xs">
@@ -272,22 +346,42 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
                     </thead>
                     <tbody className="divide-y divide-border">
                       {parsedRows.map((row, idx) => (
-                        <tr key={idx} className={row.isValid ? "hover:bg-accent/40" : "bg-destructive/10"}>
+                        <tr
+                          key={idx}
+                          className={
+                            row.isValid
+                              ? "hover:bg-accent/40"
+                              : "bg-destructive/10"
+                          }
+                        >
                           <td className="py-2 px-3">
                             {row.isValid ? (
-                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1">
+                              <Badge
+                                variant="outline"
+                                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1"
+                              >
                                 <CheckCircle2 size={12} /> Valid
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] gap-1">
+                              <Badge
+                                variant="outline"
+                                className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] gap-1"
+                              >
                                 <AlertCircle size={12} /> {row.validationError}
                               </Badge>
                             )}
                           </td>
-                          <td className="py-2 px-3 font-semibold text-foreground">{row.name || "—"}</td>
-                          <td className="py-2 px-3 text-muted-foreground">{row.email || "—"}</td>
+                          <td className="py-2 px-3 font-semibold text-foreground">
+                            {row.name || "—"}
+                          </td>
+                          <td className="py-2 px-3 text-muted-foreground">
+                            {row.email || "—"}
+                          </td>
                           <td className="py-2 px-3">
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold bg-muted text-muted-foreground border-border">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] uppercase font-bold bg-muted text-muted-foreground border-border"
+                            >
                               {row.role}
                             </Badge>
                           </td>
@@ -332,7 +426,9 @@ export default function BulkImportFacultyModal({ isOpen, onClose }: BulkImportFa
               onClick={handleImport}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-semibold px-5 cursor-pointer flex items-center gap-2 shadow-xs"
             >
-              {bulkCreateMutation.isPending ? "Importing & Emailing..." : `Import ${validCount} Member(s)`}
+              {bulkCreateMutation.isPending
+                ? "Importing & Emailing..."
+                : `Import ${validCount} Member(s)`}
             </Button>
           </div>
         </DialogFooter>

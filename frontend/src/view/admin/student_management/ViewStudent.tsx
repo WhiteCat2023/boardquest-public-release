@@ -83,7 +83,7 @@ export default function ViewStudent() {
   const navigate = useNavigate();
 
   const { data: studentDirect, isLoading: isDirectLoading } = useStudent(studentId);
-  const { data: allStudentsData, isLoading: isListLoading } = useStudents(0, 100);
+  const { data: allStudentsData, isLoading: isListLoading } = useStudents({ skip: 0, take: 100 });
 
   const fallbackStudent = (allStudentsData?.students || []).find((s) => s.id === studentId);
   const student = studentDirect || fallbackStudent;

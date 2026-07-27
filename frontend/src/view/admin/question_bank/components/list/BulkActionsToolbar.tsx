@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, EyeOff, MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2 } from "lucide-react";
+import { Globe, EyeOff, MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2, RotateCcw, Send } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
 
@@ -13,12 +13,17 @@ interface UnifiedToolbarProps {
   onPublish: () => void;
   onUnpublish: () => void;
   onFeedback: () => void;
+  onResubmitReview?: () => void;
   onDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
   isPublishPending: boolean;
   isFeedbackPending: boolean;
+  isResubmitPending?: boolean;
   isDeletePending: boolean;
+  isRevisionsView?: boolean;
+  isLiveView?: boolean;
+  isBankView?: boolean;
 }
 
 export default function BulkActionsToolbar({
@@ -31,12 +36,17 @@ export default function BulkActionsToolbar({
   onPublish,
   onUnpublish,
   onFeedback,
+  onResubmitReview,
   onDelete,
   onClear,
   isApprovePending,
   isPublishPending,
   isFeedbackPending,
+  isResubmitPending,
   isDeletePending,
+  isRevisionsView = false,
+  isLiveView = false,
+  isBankView = false,
 }: UnifiedToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between w-full border-b border-border bg-muted/40 px-4 py-3 gap-3 transition-all duration-200 font-sans">
@@ -73,67 +83,85 @@ export default function BulkActionsToolbar({
         {/* Bulk Action Buttons — ONLY SHOWN WHEN selectedCount > 0 */}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
-            {canManageBulk && (
+            {isLiveView ? (
+              <button
+                type="button"
+                onClick={onUnpublish}
+                disabled={isPublishPending}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <EyeOff size={13} />
+                Unpublish
+              </button>
+            ) : isRevisionsView ? (
               <>
-                {onApprove && (
+                {onResubmitReview && (
                   <button
                     type="button"
-                    onClick={onApprove}
-                    disabled={isApprovePending}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                    onClick={onResubmitReview}
+                    disabled={isResubmitPending}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <CheckCircle2 size={13} />
-                    Approve
+                    <RotateCcw size={13} />
+                    Submit for Review
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  onClick={onPublish}
-                  disabled={isPublishPending}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <Globe size={13} />
-                  Publish
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onUnpublish}
-                  disabled={isPublishPending}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <EyeOff size={13} />
-                  Unpublish
-                </button>
-
-                <div className="h-4 w-px bg-border" />
-
-                <button
-                  type="button"
-                  onClick={onFeedback}
-                  disabled={isFeedbackPending}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <MessageSquare size={13} />
-                  Request Revision
-                </button>
               </>
+            ) : (
+              canManageBulk && (
+                <>
+                  {onApprove && !isBankView && (
+                    <button
+                      type="button"
+                      onClick={onApprove}
+                      disabled={isApprovePending}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={13} />
+                      Approve
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={onPublish}
+                    disabled={isPublishPending}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Globe size={13} />
+                    Publish
+                  </button>
+
+                  <div className="h-4 w-px bg-border" />
+
+                  <button
+                    type="button"
+                    onClick={onFeedback}
+                    disabled={isFeedbackPending}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <MessageSquare size={13} />
+                    Request Revision
+                  </button>
+                </>
+              )
             )}
 
-            <div className="h-4 w-px bg-border" />
-
-            <button
-              type="button"
-              onClick={onDelete}
-              disabled={isDeletePending}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Trash2 size={13} />
-              Delete
-            </button>
-
-            <div className="h-4 w-px bg-border" />
+            {!isLiveView && (
+              <>
+                <div className="h-4 w-px bg-border" />
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  disabled={isDeletePending}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Trash2 size={13} />
+                  Delete
+                </button>
+                <div className="h-4 w-px bg-border" />
+              </>
+            )}
           </div>
         )}
 

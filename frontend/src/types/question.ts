@@ -26,7 +26,8 @@ export enum QuestionStatus {
 
 export interface Question {
   id: string;
-  text: string;
+  text?: string;
+  question?: string;
   type: QuestionType;
   difficulty: QuestionDifficulty;
   category: Category;

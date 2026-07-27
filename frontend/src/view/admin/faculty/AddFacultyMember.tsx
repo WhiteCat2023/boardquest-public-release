@@ -9,14 +9,18 @@ import type { RoleType, CreateFacultyPayload } from "./types";
 import { getAllowedRolesToCreate } from "./utils/facultyUtils";
 import { useDepartments, useCreateFaculty } from "./hooks/useFaculty";
 import FacultyProfileForm from "./components/FacultyProfileForm";
-import FacultyAccountForm from "./components/FacultyAccountForm";
-import FacultyRoleSelector from "./components/FacultyRoleSelector";
 
 export default function AddFacultyMember() {
   const navigate = useNavigate();
   const { auth } = useAuth();
 
   const currentUserRole = (auth as any)?.data?.user?.role as RoleType;
+
+  // Name State
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
 
   // Form State
   const [formData, setFormData] = useState<CreateFacultyPayload>({
@@ -56,7 +60,7 @@ export default function AddFacultyMember() {
 
   const allowedRoles = getAllowedRolesToCreate(currentUserRole);
 
-  const handleFieldChange = (field: keyof CreateFacultyPayload, value: string) => {
+  const handleFieldChange = (field: keyof CreateFacultyPayload, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -64,17 +68,27 @@ export default function AddFacultyMember() {
     e.preventDefault();
     setErrorMsg("");
 
+    if (!firstName.trim() || !lastName.trim()) {
+      setErrorMsg("Please enter both First Name and Last Name.");
+      return;
+    }
+
     if (!formData.departmentId) {
       setErrorMsg("Please select a department.");
       return;
     }
 
-    if (formData.password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
-      return;
-    }
+    const fullName = [firstName.trim(), middleName.trim(), lastName.trim()]
+      .filter(Boolean)
+      .join(" ");
 
-    createMutation.mutate(formData, {
+    const payload: CreateFacultyPayload = {
+      ...formData,
+      name: fullName,
+      username: username.trim(),
+    };
+
+    createMutation.mutate(payload, {
       onSuccess: () => {
         toast.success("Faculty member registered successfully!");
         navigate("/faculty-management");
@@ -127,21 +141,19 @@ export default function AddFacultyMember() {
         {/* Modular Form Cards */}
         <FacultyProfileForm
           formData={formData}
+          firstName={firstName}
+          middleName={middleName}
+          lastName={lastName}
+          allowedRoles={allowedRoles}
           departments={departments}
           isDepartmentsLoading={isDepartmentsLoading}
+          onFirstNameChange={setFirstName}
+          onMiddleNameChange={setMiddleName}
+          onLastNameChange={setLastName}
           onChange={handleFieldChange}
           onCategoryChange={(categoryIds) => setFormData((prev) => ({ ...prev, handledCategoryIds: categoryIds }))}
-        />
-
-        <FacultyAccountForm
-          formData={formData}
-          onChange={handleFieldChange}
-        />
-
-        <FacultyRoleSelector
-          selectedRole={formData.role}
-          allowedRoles={allowedRoles}
-          onSelectRole={(role) => handleFieldChange("role", role)}
+          username={username}
+          onUsernameChange={setUsername}
         />
 
         {/* Actions Bar */}

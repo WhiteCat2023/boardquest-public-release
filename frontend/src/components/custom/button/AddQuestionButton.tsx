@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PlusCircleIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import CustomeDrawer from "../drawer/Drawer";
 import CustomDialog from "../dialog/Dialog";
 import MarronButton from "./MarronButton";
@@ -16,10 +16,11 @@ export default function AddQuestionButton() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAddManual = () => {
     setOpen(false);
-    navigate("/question-bank/create");
+    navigate("/question-bank/create", { state: { from: location } });
   };
 
   const handleAddAI = () => {
@@ -36,7 +37,7 @@ export default function AddQuestionButton() {
       label: "Add Question using CSV",
       onClick: () => {
         setOpen(false);
-        navigate("/question-bank/import");
+        navigate("/question-bank/import", { state: { from: location } });
       },
       className: "w-full py-6 bg-[#A70202] hover:bg-white hover:text-[#A70202] border border-[#A70202] text-white cursor-pointer font-semibold rounded-xl transition-all duration-150"
     }

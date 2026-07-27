@@ -50,38 +50,38 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
         (selectedStatus !== "" && selectedStatus !== "ALL");
 
     return (
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs w-full font-sans">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs w-full font-sans">
             {/* Search Input */}
             {showSearch && (
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
                     <Input
                         type="text"
                         placeholder="Search questions by wording, topic, or ID..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 pr-9 h-10 bg-muted/40 border border-border rounded-xl text-sm text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground"
+                        className="pl-9 pr-8 h-8 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground"
                     />
                     {search && (
                         <button
                             type="button"
                             onClick={() => setSearch("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                         >
-                            <X size={14} />
+                            <X size={13} />
                         </button>
                     )}
                 </div>
             )}
 
             {/* Filter Dropdowns */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
                 {/* Difficulty Filter */}
                 <Select
                     value={selectedDifficulty || "ALL"}
                     onValueChange={(val) => setSelectedDifficulty(val === "ALL" ? "" : val)}
                 >
-                    <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                    <SelectTrigger className="h-8 w-[125px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
                         <SelectValue placeholder="Difficulty" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -97,7 +97,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                     value={selectedType || "ALL"}
                     onValueChange={(val) => setSelectedType(val === "ALL" ? "" : val)}
                 >
-                    <SelectTrigger className="h-10 w-[140px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                    <SelectTrigger className="h-8 w-[135px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
                         <SelectValue placeholder="Question Type" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -109,12 +109,12 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                 </Select>
 
                 {/* Status Filter */}
-                {(view === "bank" || view === "my-questions") && (
+                {view === "my-questions" && (
                     <Select
                         value={selectedStatus || "ALL"}
                         onValueChange={(val) => setSelectedStatus(val)}
                     >
-                        <SelectTrigger className="h-10 w-[160px] bg-muted/40 border-border rounded-xl text-xs font-semibold text-foreground">
+                        <SelectTrigger className="h-8 w-[145px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent position="popper">
@@ -133,9 +133,9 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                         variant="ghost"
                         size="sm"
                         onClick={resetFilters}
-                        className="h-10 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1.5 cursor-pointer px-3"
+                        className="h-8 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer px-2.5"
                     >
-                        <RotateCcw size={13} />
+                        <RotateCcw size={12} />
                         Reset
                     </Button>
                 )}
@@ -146,10 +146,10 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                     size="sm"
                     onClick={handleReload}
                     disabled={isFetchingQuestions}
-                    className="h-10 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent border-border rounded-xl gap-1.5 cursor-pointer px-3 transition-all"
+                    className="h-8 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-accent border-border rounded-lg gap-1 cursor-pointer px-2.5 transition-all"
                     title="Reload questions data"
                 >
-                    <RotateCw size={13} className={isFetchingQuestions ? "animate-spin text-primary" : ""} />
+                    <RotateCw size={12} className={isFetchingQuestions ? "animate-spin text-primary" : ""} />
                     <span>{isFetchingQuestions ? "Reloading..." : "Reload"}</span>
                 </Button>
             </div>

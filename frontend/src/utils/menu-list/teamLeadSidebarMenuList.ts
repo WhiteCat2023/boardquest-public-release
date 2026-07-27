@@ -53,11 +53,11 @@ export const teamLeadNavItem: NavItemProps[] = [
                 path: "/question-bank",
                 icon: "ClipboardList",
                 subItems: [
-                    { title: "My Questions", path: "/question-bank?view=my-questions" },
-                    { title: "Review Questions", path: "/question-bank?view=review" },
-                    { title: "Live Questions", path: "/question-bank?view=published" },
-                    { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/revisions" }
+                    { title: "My Questions", path: "/question-bank/my-questions" },
+                    { title: "Review Questions", path: "/question-bank/review-questions" },
+                    { title: "Live Questions", path: "/question-bank/live-questions" },
+                    { title: "Shared Library", path: "/question-bank/shared-library" },
+                    { title: "Revisions", path: "/question-bank/revisions" }
                 ]
             },
         ]

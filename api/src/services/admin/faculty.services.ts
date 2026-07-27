@@ -15,7 +15,7 @@ export const createFacultySchema = z.object({
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
   departmentId: z.string().min(1, "Department is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().optional().default(""),
   handledCategoryIds: z.array(z.string()).optional().default([]),
 });
 
@@ -33,6 +33,35 @@ export const updateFacultySchema = z.object({
 
 export type CreateFacultyInput = z.infer<typeof createFacultySchema>;
 export type UpdateFacultyInput = z.infer<typeof updateFacultySchema>;
+
+const facultySelect = {
+  id: true,
+  employeeId: true,
+  name: true,
+  email: true,
+  username: true,
+  role: true,
+  phoneNumber: true,
+  departmentId: true,
+  handledCategoryIds: true,
+  questionPermissions: true,
+  isActive: true,
+  lastActiveAt: true,
+  createdAt: true,
+  updatedAt: true,
+  department: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  handledCategories: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+};
 
 // ============ Faculty Services ============
 
@@ -52,7 +81,16 @@ export class FacultyService {
     return false;
   }
 
-  async getAllFaculty() {
+  async getAllFaculty(filters?: {
+    search?: string;
+    role?: string;
+    departmentId?: string;
+    status?: string;
+    cursor?: string;
+    limit?: number;
+  }) {
+    const { search, role, departmentId, status, cursor, limit } = filters || {};
+
     const envSuperAdmin = {
       id: "superadmin-env-id",
       employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
@@ -70,17 +108,91 @@ export class FacultyService {
       handledCategories: [],
     };
 
-    const faculties = await this.db.adminUser.findMany({
-      include: {
-        department: true,
-        handledCategories: true,
-      },
+    const where: any = {};
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+        { username: { contains: q, mode: "insensitive" } },
+        { employeeId: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    if (role && role !== "ALL") {
+      where.role = role;
+    }
+
+    if (departmentId && departmentId !== "ALL") {
+      where.departmentId = departmentId;
+    }
+
+    if (status && status !== "ALL") {
+      if (status === "ACTIVE") {
+        where.isActive = true;
+      } else if (status === "DEACTIVATED") {
+        where.isActive = false;
+      }
+    }
+
+    // Check if envSuperAdmin matches the filter criteria
+    let matchesEnvSuperAdmin = true;
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      const matchSearch =
+        envSuperAdmin.name.toLowerCase().includes(q) ||
+        envSuperAdmin.email.toLowerCase().includes(q) ||
+        envSuperAdmin.username.toLowerCase().includes(q) ||
+        envSuperAdmin.employeeId.toLowerCase().includes(q);
+      if (!matchSearch) matchesEnvSuperAdmin = false;
+    }
+
+    if (role && role !== "ALL" && envSuperAdmin.role !== role) {
+      matchesEnvSuperAdmin = false;
+    }
+
+    if (departmentId && departmentId !== "ALL" && envSuperAdmin.department.id !== departmentId && envSuperAdmin.department.name.toLowerCase() !== departmentId.toLowerCase()) {
+      matchesEnvSuperAdmin = false;
+    }
+
+    if (status && status !== "ALL" && status !== "ACTIVE") {
+      matchesEnvSuperAdmin = false;
+    }
+
+    const allFaculties = await this.db.adminUser.findMany({
+      where,
+      select: facultySelect,
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return [envSuperAdmin, ...faculties];
+    const fullList = matchesEnvSuperAdmin ? [envSuperAdmin, ...allFaculties] : allFaculties;
+
+    if (!limit) return fullList;
+
+    const limitNum = limit || 10;
+    let startIndex = 0;
+
+    if (cursor) {
+      const cursorIndex = fullList.findIndex((item) => item.id === cursor);
+      if (cursorIndex !== -1) {
+        startIndex = cursorIndex + 1;
+      }
+    }
+
+    const sliced = fullList.slice(startIndex, startIndex + limitNum + 1);
+    const hasNextPage = sliced.length > limitNum;
+    if (hasNextPage) sliced.pop();
+
+    const nextCursor = sliced.length > 0 ? sliced[sliced.length - 1].id : null;
+
+    return {
+      faculties: sliced,
+      nextCursor,
+      hasNextPage,
+    };
   }
 
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
@@ -114,9 +226,14 @@ export class FacultyService {
       if (existing.employeeId === employeeId) throw new ApiError(409, "Employee ID is already in use");
     }
 
-    const hash = await hashedPassword(password);
+    // Auto-generate temporary password if not explicitly supplied
+    const tempPassword = password && password.trim().length >= 6
+      ? password.trim()
+      : `BQ-${Math.random().toString(36).slice(-6).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`;
 
-    return await this.db.adminUser.create({
+    const hash = await hashedPassword(tempPassword);
+
+    const newFaculty = await this.db.adminUser.create({
       data: {
         employeeId,
         name,
@@ -128,11 +245,20 @@ export class FacultyService {
         password: hash,
         handledCategoryIds: handledCategoryIds || [],
       },
-      include: {
-        department: true,
-        handledCategories: true,
-      }
+      select: facultySelect,
     });
+
+    // Send welcome credentials email containing the temporary password
+    sendFacultyCredentialsEmail({
+      toEmail: email,
+      name,
+      password: tempPassword,
+      role,
+      employeeId,
+      username,
+    }).catch(err => console.error("[createFaculty] Email send error:", err));
+
+    return newFaculty;
   }
 
   async toggleFacultyStatus(id: string, isActive: boolean, creatorRole: string) {
@@ -170,10 +296,7 @@ export class FacultyService {
     return await this.db.adminUser.update({
       where: { id },
       data: { isActive },
-      include: {
-        department: true,
-        handledCategories: true,
-      },
+      select: facultySelect,
     });
   }
 
@@ -196,10 +319,7 @@ export class FacultyService {
       data: {
         handledCategoryIds: categoryIds,
       },
-      include: {
-        department: true,
-        handledCategories: true,
-      },
+      select: facultySelect,
     });
   }
 
@@ -309,6 +429,181 @@ export class FacultyService {
       errors,
     };
   }
+
+  async updateUserPermissions(
+    id: string,
+    data: { role?: string; questionPermissions?: any; handledCategoryIds?: string[] },
+    requesterRole: string
+  ) {
+    if (requesterRole !== "ADMIN" && requesterRole !== "SUPERADMIN") {
+      throw new ApiError(403, "Only Administrators and Super Administrators can manage user permissions.");
+    }
+
+    const userToUpdate = await this.db.adminUser.findUnique({
+      where: { id },
+    });
+
+    if (!userToUpdate) {
+      throw new ApiError(404, "User not found.");
+    }
+
+    if (data.role && data.role === "SUPERADMIN" && requesterRole !== "SUPERADMIN") {
+      throw new ApiError(403, "Only Super Administrators can assign the SUPERADMIN role.");
+    }
+
+    return await this.db.adminUser.update({
+      where: { id },
+      data: {
+        ...(data.role && { role: data.role as Role }),
+        ...(data.handledCategoryIds && { handledCategoryIds: data.handledCategoryIds }),
+        ...(data.questionPermissions !== undefined && { questionPermissions: data.questionPermissions }),
+      },
+      select: facultySelect,
+    });
+  }
+
+  async createPermissionRequest(
+    userId: string,
+    data: {
+      targetQuestionId?: string;
+      targetUserId?: string;
+      requestedRole?: string;
+      requestedPermissions?: any;
+      requestedCategoryIds?: string[];
+      reason: string;
+    }
+  ) {
+    if (!data.reason || !data.reason.trim()) {
+      throw new ApiError(400, "Reason for permission request is required.");
+    }
+
+    const existing = await this.db.permissionRequest.findFirst({
+      where: {
+        userId,
+        status: "PENDING",
+        targetQuestionId: data.targetQuestionId || null,
+      },
+    });
+
+    if (existing) {
+      throw new ApiError(400, "You already have a pending permission request for this item.");
+    }
+
+    return await this.db.permissionRequest.create({
+      data: {
+        userId,
+        targetQuestionId: data.targetQuestionId || null,
+        targetUserId: data.targetUserId || null,
+        requestedRole: (data.requestedRole as Role) || null,
+        requestedPermissions: data.requestedPermissions || null,
+        requestedCategoryIds: data.requestedCategoryIds || [],
+        reason: data.reason.trim(),
+        status: "PENDING",
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true } },
+      },
+    });
+  }
+
+  async getPermissionRequests(filters?: { status?: string; userId?: string; targetUserId?: string }) {
+    const where: any = {};
+    if (filters?.status) where.status = filters.status;
+    if (filters?.userId) where.userId = filters.userId;
+    if (filters?.targetUserId) where.targetUserId = filters.targetUserId;
+
+    return await this.db.permissionRequest.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true, employeeId: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  async reviewPermissionRequest(
+    requestId: string,
+    reviewerId: string,
+    status: "APPROVED" | "DECLINED",
+    reviewNote?: string,
+    reviewerRole?: string
+  ) {
+    const request = await this.db.permissionRequest.findUnique({
+      where: { id: requestId },
+      include: { user: true },
+    });
+
+    if (!request) {
+      throw new ApiError(404, "Permission request not found.");
+    }
+
+    if (request.status !== "PENDING") {
+      throw new ApiError(400, `Permission request is already ${request.status.toLowerCase()}.`);
+    }
+
+    if (request.targetQuestionId) {
+      const question = await this.db.question.findUnique({
+        where: { id: request.targetQuestionId },
+      });
+
+      const isQuestionAuthor = question && question.authorId === reviewerId;
+      const isAdmin = reviewerRole === "ADMIN" || reviewerRole === "SUPERADMIN";
+
+      if (!isQuestionAuthor && !isAdmin) {
+        throw new ApiError(403, "You do not have permission to approve this request.");
+      }
+
+      if (status === "APPROVED" && question) {
+        const existingCollaborators = question.collaboratorIds || [];
+        if (!existingCollaborators.includes(request.userId)) {
+          await this.db.question.update({
+            where: { id: request.targetQuestionId },
+            data: {
+              collaboratorIds: [...existingCollaborators, request.userId],
+            },
+          });
+        }
+      }
+    } else {
+      if (reviewerRole !== "ADMIN" && reviewerRole !== "SUPERADMIN") {
+        throw new ApiError(403, "Only Administrators and Super Administrators can review global access requests.");
+      }
+
+      if (status === "APPROVED") {
+        const updateData: any = {};
+        if (request.requestedRole) updateData.role = request.requestedRole;
+        if (request.requestedCategoryIds && request.requestedCategoryIds.length > 0) {
+          updateData.handledCategoryIds = Array.from(
+            new Set([...(request.user.handledCategoryIds || []), ...request.requestedCategoryIds])
+          );
+        }
+        if (request.requestedPermissions) {
+          updateData.questionPermissions = request.requestedPermissions;
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await this.db.adminUser.update({
+            where: { id: request.userId },
+            data: updateData,
+          });
+        }
+      }
+    }
+
+    return await this.db.permissionRequest.update({
+      where: { id: requestId },
+      data: {
+        status,
+        reviewedById: reviewerId,
+        reviewNote: reviewNote?.trim() || "",
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+    });
+  }
 }
 
 export const facultyService = new FacultyService();
@@ -319,3 +614,7 @@ export const createFaculty = facultyService.createFaculty.bind(facultyService);
 export const bulkCreateFaculty = facultyService.bulkCreateFaculty.bind(facultyService);
 export const toggleFacultyStatus = facultyService.toggleFacultyStatus.bind(facultyService);
 export const updateFacultyCategories = facultyService.updateFacultyCategories.bind(facultyService);
+export const updateUserPermissions = facultyService.updateUserPermissions.bind(facultyService);
+export const createPermissionRequest = facultyService.createPermissionRequest.bind(facultyService);
+export const getPermissionRequests = facultyService.getPermissionRequests.bind(facultyService);
+export const reviewPermissionRequest = facultyService.reviewPermissionRequest.bind(facultyService);

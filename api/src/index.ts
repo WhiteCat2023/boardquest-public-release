@@ -9,6 +9,7 @@ import facultyRoutes from "./routes/admin/faculty.routes";
 import analyticsRoutes from "./routes/admin/analytics.routes";
 import reviewCenterRoutes from "./routes/admin/reviewCenter.routes";
 import logsRoutes from "./routes/admin/logs.routes";
+import guidanceRoutes from "./routes/admin/guidance.routes";
 import cors from "cors";
 // import gameRoutes from "./routes/admin/game_module/game.routes";
 import { seedAdminUserDb } from "./services/prisma";
@@ -36,6 +37,7 @@ app.use("/api/faculty", facultyRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/review-center", reviewCenterRoutes);
 app.use("/api/logs", logsRoutes);
+app.use("/api/guidance", guidanceRoutes);
 // app.use("/api/game", gameRoutes);
 
 const server = app.listen(3000, () => {

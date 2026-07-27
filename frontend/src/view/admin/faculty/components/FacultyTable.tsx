@@ -34,42 +34,42 @@ export default function FacultyTable({
       : faculties;
 
   return (
-    <Card className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden w-full p-0">
+    <Card className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden w-full p-0">
       <phantom-ui loading={isLoading}>
         {!isLoading && faculties.length === 0 ? (
-          <div className="py-24 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-            <Users size={48} className="text-muted-foreground/40 stroke-[1.5]" />
-            <p className="font-bold text-foreground">
+          <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
+            <Users size={38} className="text-muted-foreground/40 stroke-[1.5]" />
+            <p className="font-bold text-foreground text-sm">
               No Administrators Registered
             </p>
-            <p className="text-sm max-w-sm">
-              No administrators or teachers have been added to the system yet.
+            <p className="text-xs max-w-xs text-muted-foreground">
+              No administrators or faculty members match the filter criteria.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
             <Table className="w-full text-left border-collapse">
               <TableHeader
-                className="bg-muted/40 border-b border-border"
+                className="bg-muted/50 border-b border-border"
                 data-shimmer-ignore
               >
                 <TableRow className="border-b border-border hover:bg-transparent">
-                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                  <TableHead className="py-2.5 px-4 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Employee Profile
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Scope / Department
+                  <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                    Department
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                  <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Authority Role
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                  <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Account Status
                   </TableHead>
-                  <TableHead className="p-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                  <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Last Activity
                   </TableHead>
-                  <TableHead className="p-4 px-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto">
+                  <TableHead className="py-2.5 px-4 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto">
                     Actions
                   </TableHead>
                 </TableRow>

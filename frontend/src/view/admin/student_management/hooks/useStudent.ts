@@ -16,13 +16,21 @@ export interface Student {
   lessonCompletions?: any[];
 }
 
-export function useStudents(skip: number = 0, take: number = 50) {
+export function useStudents(params?: {
+  search?: string;
+  level?: string;
+  location?: string;
+  skip?: number;
+  take?: number;
+}) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<{ students: Student[]; total: number }>({
-    queryKey: ["students", skip, take],
+    queryKey: ["students", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get(`/students/get?skip=${skip}&take=${take}`);
+      const response = await axiosPrivate.get("/students/get", {
+        params,
+      });
       const resData = response.data?.data;
       if (Array.isArray(resData)) {
         return { students: resData, total: resData.length };

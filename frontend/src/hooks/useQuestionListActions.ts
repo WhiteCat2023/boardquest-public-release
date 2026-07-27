@@ -115,7 +115,9 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     };
 
     const handleView = (id: string) => {
-        navigate(`/question-bank/view/${id}`);
+        navigate(`/question-bank/view/${id}`, {
+            state: { from: window.location.pathname + window.location.search },
+        });
     };
 
     const handleItemsPerPageChange = (newLimit: number) => {
@@ -215,6 +217,25 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             toast.error(err.response?.data?.message || "Failed to bulk approve questions.");
         },
     });
+
+    const bulkStatusMutation = useMutation({
+        mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+            await axiosPrivate.post("/questions/bulk/status", { ids, status });
+        },
+        onSuccess: (_, variables) => {
+            toast.success(`Resubmitted ${variables.ids.length} question(s) for review.`);
+            clearRowSelection();
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to update review status.");
+        },
+    });
+
+    const handleBulkResubmitForReview = () => {
+        if (selectedIds.length === 0) return;
+        bulkStatusMutation.mutate({ ids: selectedIds, status: "PENDING_REVIEW" });
+    };
 
     // Bulk Action Handlers
     const handleBulkApprove = () => {
@@ -376,6 +397,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         bulkPublishMutation,
         bulkFeedbackMutation,
         bulkDeleteMutation,
+        bulkStatusMutation,
         handleView,
         handleDelete,
         handleItemsPerPageChange,
@@ -384,6 +406,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         handleBulkPublish,
         handleBulkFeedbackOpen,
         handleBulkFeedbackSubmit,
+        handleBulkResubmitForReview,
         handleNext,
         handlePrevious,
         handlePageSelect,

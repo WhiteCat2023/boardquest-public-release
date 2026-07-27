@@ -6,33 +6,52 @@ import {
   QuestionType,
   QuestionStatus,
 } from "../../../generated/prisma/enums";
+import { questionSynthesizerService, SynthesizeQuestionInput } from "./questionSynthesizer.service";
 
 // ============ Validation Schemas ============
 
 export const CreateQuestionSchema = z.object({
   question: z.string().min(1, "Question title is required"),
-  choices: z.array(z.string()).min(1, "Question choices is required"),
+  choices: z.array(z.string()).optional().default([]),
   correctAnswer: z.string().min(1, "Correct answer is required"),
   categoryId: z.string().min(1, "Question category is required"),
-  authorId: z.string().min(1, "Author ID is required"),
+  authorId: z.string().optional(),
   topic: z.string().min(1, "Topic is required"),
-  difficulty: z.nativeEnum(QuestionDifficulty),
-  type: z.nativeEnum(QuestionType),
-  status: z.nativeEnum(QuestionStatus).optional().default(QuestionStatus.DRAFT),
+  difficulty: z.preprocess(
+    (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
+    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)
+  ),
+  type: z.preprocess(
+    (val) => (val === "" || !val ? QuestionType.MCQ : val),
+    z.nativeEnum(QuestionType).default(QuestionType.MCQ)
+  ),
+  status: z.preprocess(
+    (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
+    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
+  ),
   isPublished: z.boolean().optional().default(false),
 });
 
 export const UpdateQuestionSchema = z.object({
   id: z.string().min(1, "Question ID is required"),
   question: z.string().min(1, "Question title is required"),
-  choices: z.array(z.string()).min(1, "Question choices is required"),
+  choices: z.array(z.string()).optional().default([]),
   correctAnswer: z.string().min(1, "Correct answer is required"),
   categoryId: z.string().min(1, "Question category is required"),
-  authorId: z.string().min(1, "Author ID is required"),
+  authorId: z.string().optional(),
   topic: z.string().min(1, "Topic is required"),
-  difficulty: z.nativeEnum(QuestionDifficulty),
-  type: z.nativeEnum(QuestionType),
-  status: z.nativeEnum(QuestionStatus),
+  difficulty: z.preprocess(
+    (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
+    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)
+  ),
+  type: z.preprocess(
+    (val) => (val === "" || !val ? QuestionType.MCQ : val),
+    z.nativeEnum(QuestionType).default(QuestionType.MCQ)
+  ),
+  status: z.preprocess(
+    (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
+    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
+  ),
   isPublished: z.boolean().optional(),
 });
 
@@ -77,22 +96,66 @@ export class QuestionService {
       isPublished,
     } = parsed.data;
 
+    let finalAuthorId: string = authorId || "";
+    const isValidObjectId = (id?: string) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
+    if (!isValidObjectId(finalAuthorId)) {
+      const existingAdmin = await this.db.adminUser.findFirst();
+      finalAuthorId = existingAdmin?.id || "507f1f77bcf86cd799439011";
+    }
+
+    // Automatically assign review status in the background based on author's role
+    let computedStatus: QuestionStatus = QuestionStatus.PENDING_REVIEW;
+    if (finalAuthorId) {
+      const authorUser = await this.db.adminUser.findUnique({ where: { id: finalAuthorId } });
+      if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
+        computedStatus = status === QuestionStatus.DRAFT ? QuestionStatus.DRAFT : QuestionStatus.APPROVED;
+      } else {
+        computedStatus = status === QuestionStatus.DRAFT ? QuestionStatus.DRAFT : QuestionStatus.PENDING_REVIEW;
+      }
+    }
+
     const newQuestion = await this.db.question.create({
       data: {
         question: question.toLowerCase().trim(),
         choices,
         correctAnswer: correctAnswer.toLowerCase().trim(),
         categoryId: categoryId.trim(),
-        authorId,
+        authorId: finalAuthorId,
         topic: topic.trim(),
         difficulty,
         type,
-        status,
+        status: computedStatus,
         isPublished,
       },
     });
 
     return newQuestion;
+  }
+
+  async synthesizeQuestion(input: SynthesizeQuestionInput) {
+    return await questionSynthesizerService.synthesizeQuestion(input);
+  }
+
+  async createSynthesizedQuestion(data: CreateNewQuestionInput) {
+    const synthesizedList = await questionSynthesizerService.synthesizeQuestion({
+      question: data.question,
+      choices: data.choices,
+      correctAnswer: data.correctAnswer,
+      topic: data.topic,
+      targetDifficulty: data.difficulty,
+      type: data.type,
+      count: 5,
+    });
+
+    const synthesized = synthesizedList[0];
+
+    return await this.createNewQuestion({
+      ...data,
+      question: synthesized.question,
+      choices: synthesized.choices,
+      correctAnswer: synthesized.correctAnswer,
+      difficulty: synthesized.difficulty,
+    });
   }
 
   async updateQuestion(questionId: string, data: UpdateQuestionInput) {
@@ -651,6 +714,44 @@ export class QuestionService {
       data: { status },
     });
   }
+
+  async getPendingReviewAuthors() {
+    const pendingQuestions = await this.db.question.findMany({
+      where: { status: QuestionStatus.PENDING_REVIEW },
+      select: {
+        id: true,
+        authorId: true,
+        createdAt: true,
+      },
+    });
+
+    const authorIds = Array.from(new Set(pendingQuestions.map((q) => q.authorId).filter(Boolean)));
+    const authors = await this.db.adminUser.findMany({
+      where: { id: { in: authorIds as string[] } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        department: true,
+      },
+    });
+
+    const result = authors.map((author) => {
+      const authorQuestions = pendingQuestions.filter((q) => q.authorId === author.id);
+      const latestSubmissionAt = authorQuestions.reduce((latest, q) => {
+        return !latest || new Date(q.createdAt) > new Date(latest) ? q.createdAt : latest;
+      }, null as Date | null);
+
+      return {
+        ...author,
+        pendingCount: authorQuestions.length,
+        latestSubmissionAt,
+      };
+    });
+
+    return result.sort((a, b) => b.pendingCount - a.pendingCount);
+  }
 }
 
 export const questionService = new QuestionService();
@@ -697,3 +798,9 @@ export const updateRevisionFeedback =
   questionService.updateRevisionFeedback.bind(questionService);
 export const deleteRevisionFeedback =
   questionService.deleteRevisionFeedback.bind(questionService);
+export const synthesizeQuestion =
+  questionService.synthesizeQuestion.bind(questionService);
+export const createSynthesizedQuestion =
+  questionService.createSynthesizedQuestion.bind(questionService);
+export const getPendingReviewAuthors =
+  questionService.getPendingReviewAuthors.bind(questionService);

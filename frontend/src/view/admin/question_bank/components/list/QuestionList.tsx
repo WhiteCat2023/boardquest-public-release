@@ -7,9 +7,12 @@ import { useQuestionListActions } from "@/hooks/useQuestionListActions";
 
 interface QuestionListProps {
   filters?: QuestionFilters;
+  isRevisionsView?: boolean;
+  isLiveView?: boolean;
+  isBankView?: boolean;
 }
 
-export default function QuestionList({ filters }: QuestionListProps) {
+export default function QuestionList({ filters, isRevisionsView, isLiveView, isBankView }: QuestionListProps) {
   const {
     questions,
     hasNextPage,
@@ -27,6 +30,7 @@ export default function QuestionList({ filters }: QuestionListProps) {
     bulkPublishMutation,
     bulkFeedbackMutation,
     bulkDeleteMutation,
+    bulkStatusMutation,
     handleView,
     handleDelete,
     handleItemsPerPageChange,
@@ -35,12 +39,17 @@ export default function QuestionList({ filters }: QuestionListProps) {
     handleBulkPublish,
     handleBulkFeedbackOpen,
     handleBulkFeedbackSubmit,
+    handleBulkResubmitForReview,
     handleNext,
     handlePrevious,
     handlePageSelect,
     setRowSelection,
     setIsFeedbackOpen,
   } = useQuestionListActions(filters);
+
+  const isRevisions = isRevisionsView || filters?.status === "NEEDS_REVISION";
+  const isLive = isLiveView || filters?.isPublished === true;
+  const isBank = isBankView || (filters?.isPublished === false && filters?.status === "APPROVED");
 
   return (
     <>
@@ -94,12 +103,17 @@ export default function QuestionList({ filters }: QuestionListProps) {
               onPublish={() => handleBulkPublish(true)}
               onUnpublish={() => handleBulkPublish(false)}
               onFeedback={handleBulkFeedbackOpen}
+              onResubmitReview={handleBulkResubmitForReview}
               onBulkDelete={handleBulkDelete}
               onClear={() => setRowSelection({})}
               isApprovePending={bulkApproveMutation.isPending}
               isPublishPending={bulkPublishMutation.isPending}
               isFeedbackPending={bulkFeedbackMutation.isPending}
+              isResubmitPending={bulkStatusMutation.isPending}
               isDeletePending={bulkDeleteMutation.isPending}
+              isRevisionsView={isRevisions}
+              isLiveView={isLive}
+              isBankView={isBank}
             />
           )}
 

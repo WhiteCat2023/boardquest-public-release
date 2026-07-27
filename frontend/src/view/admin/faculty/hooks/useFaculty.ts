@@ -2,14 +2,39 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import type { FacultyMember, Department, CreateFacultyPayload } from "../types";
 
-export function useFaculties() {
+export function useFaculties(params?: {
+  search?: string;
+  role?: string;
+  departmentId?: string;
+  status?: string;
+  cursor?: string;
+  limit?: number;
+}) {
   const axiosPrivate = useAxiosPrivate();
 
-  return useQuery<FacultyMember[]>({
-    queryKey: ["faculties"],
+  return useQuery<{
+    faculties: FacultyMember[];
+    nextCursor: string | null;
+    hasNextPage: boolean;
+  }>({
+    queryKey: ["faculties", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/faculty");
-      return response.data?.data?.faculties ?? [];
+      const response = await axiosPrivate.get("/faculty", {
+        params,
+      });
+      const data = response.data?.data;
+      if (data && typeof data === "object" && "faculties" in data) {
+        return {
+          faculties: data.faculties ?? [],
+          nextCursor: data.nextCursor ?? null,
+          hasNextPage: !!data.hasNextPage,
+        };
+      }
+      return {
+        faculties: Array.isArray(data) ? data : [],
+        nextCursor: null,
+        hasNextPage: false,
+      };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
     refetchOnWindowFocus: false,
@@ -84,13 +109,15 @@ export function useToggleFacultyStatus() {
   });
 }
 
-export function useCategories() {
+export function useCategories(params?: { isPublished?: boolean; status?: string; authorId?: string }) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/questions/category/get");
+      const response = await axiosPrivate.get("/questions/category/get", {
+        params,
+      });
       return response.data?.data?.categories ?? response.data?.data ?? [];
     },
     staleTime: 1000 * 60 * 5,

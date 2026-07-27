@@ -211,10 +211,10 @@ export async function getSystemLogs(query: LogFilterQuery) {
     if (search && search.trim()) {
       const term = search.trim();
       whereClause.OR = [
-        { message: { contains: term } },
-        { action: { contains: term } },
-        { source: { contains: term } },
-        { userEmail: { contains: term } },
+        { message: { contains: term, mode: "insensitive" } },
+        { action: { contains: term, mode: "insensitive" } },
+        { source: { contains: term, mode: "insensitive" } },
+        { userEmail: { contains: term, mode: "insensitive" } },
       ];
     }
 

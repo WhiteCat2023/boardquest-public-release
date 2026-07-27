@@ -137,13 +137,54 @@ let DEMO_REVIEW_SCHEDULES = [
   },
 ];
 
-export async function getAllReviewCenters() {
+const reviewCenterSelect = {
+  id: true,
+  employeeId: true,
+  name: true,
+  email: true,
+  companyName: true,
+  phonenumber: true,
+  location: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+export async function getAllReviewCenters(filters?: {
+  search?: string;
+  location?: string;
+  company?: string;
+}) {
+  const { search, location, company } = filters || {};
+
+  const where: any = {};
+
+  if (search && search.trim()) {
+    const q = search.trim();
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { email: { contains: q, mode: "insensitive" } },
+      { companyName: { contains: q, mode: "insensitive" } },
+      { employeeId: { contains: q, mode: "insensitive" } },
+      { location: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  if (location && location !== "ALL") {
+    where.location = { contains: location, mode: "insensitive" };
+  }
+
+  if (company && company !== "ALL") {
+    where.companyName = { contains: company, mode: "insensitive" };
+  }
+
   try {
     const list = await prisma.reviewCenterRepresentativeUser.findMany({
+      where,
+      select: reviewCenterSelect,
       orderBy: { createdAt: "desc" },
     });
 
-    if (list.length === 0) {
+    if (list.length === 0 && !search && (!location || location === "ALL") && (!company || company === "ALL")) {
       return DEMO_REVIEW_CENTERS;
     }
 

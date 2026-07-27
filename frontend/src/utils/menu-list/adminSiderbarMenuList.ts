@@ -12,22 +12,23 @@ export const adminNavItem: NavItemProps[] = [
         ]
     },
     {
-        sideBarCategoryName: "LEARNING MANAGEMENT",
+        sideBarCategoryName: "USER MANAGEMENT",
         content: [
             {
-                title: "Faculty Management",
+                title: "Users",
                 path: "/faculty-management",
                 icon: "Users"
             },
             {
-                title: "Student Management",
-                path: "/student-management",
-                icon: "GraduationCap",
-                subItems: [
-                    { title: "Students", path: "/student-management" },
-                    { title: "Students Evaluation", path: "/student-management?view=evaluation" }
-                ]
+                title: "Permissions",
+                path: "/question-bank/permissions",
+                icon: "ShieldCheck"
             },
+        ]
+    },
+    {
+        sideBarCategoryName: "LEARNING MANAGEMENT",
+        content: [
             {
                 title: "Curriculum",
                 path: "/curriculum",
@@ -53,11 +54,11 @@ export const adminNavItem: NavItemProps[] = [
                 path: "/question-bank",
                 icon: "ClipboardList",
                 subItems: [
-                    { title: "My Questions", path: "/question-bank?view=my-questions" },
-                    { title: "Review Questions", path: "/question-bank?view=review" },
-                    { title: "Live Questions", path: "/question-bank?view=published" },
-                    { title: "Shared Library", path: "/question-bank?view=bank" },
-                    { title: "Revisions", path: "/revisions" }
+                    { title: "My Questions", path: "/question-bank/my-questions" },
+                    { title: "Review Questions", path: "/question-bank/review-questions" },
+                    { title: "Live Questions", path: "/question-bank/live-questions" },
+                    { title: "Shared Library", path: "/question-bank/shared-library" },
+                    { title: "Revisions", path: "/question-bank/revisions" }
                 ]
             },
         ]
@@ -65,6 +66,16 @@ export const adminNavItem: NavItemProps[] = [
     {
         sideBarCategoryName: "STUDENT MANAGEMENT",
         content: [
+            {
+                title: "Students",
+                path: "/student-management",
+                icon: "GraduationCap"
+            },
+            {
+                title: "Students Evaluation",
+                path: "/student-management?view=evaluation",
+                icon: "ClipboardCheck"
+            },
             {
                 title: "Analytics",
                 path: "/analytics",

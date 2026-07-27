@@ -22,7 +22,11 @@ import {
   getQuestionsThatNeedRevision,
   updateRevisionFeedback,
   deleteRevisionFeedback,
+  synthesizeQuestion,
+  createSynthesizedQuestion,
+  getPendingReviewAuthors,
 } from "../../controller/admin/question.controller";
+
 import {
   createCategory,
   getCategories,
@@ -34,6 +38,9 @@ import {
 const router = Router();
 
 router.post("/create", authenticateToken, createQuestion);
+router.post("/synthesize", authenticateToken, synthesizeQuestion);
+router.post("/create-synthesized", authenticateToken, createSynthesizedQuestion);
+
 router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
 router.post("/extract", authenticateToken, extractQuestions);
 router.post("/bulk/delete", authenticateToken, bulkDeleteQuestions);
@@ -44,6 +51,7 @@ router.post("/bulk/status", authenticateToken, bulkUpdateStatusQuestions);
 router.get("/revisions/get", authenticateToken, getQuestionsThatNeedRevision);
 router.put("/revisions/:revisionId", authenticateToken, updateRevisionFeedback);
 router.delete("/revisions/:revisionId", authenticateToken, deleteRevisionFeedback);
+router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.put("/publish/:questionId", authenticateToken, publishQuestion);

@@ -1,4 +1,5 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
@@ -14,25 +15,86 @@ import {
   Globe,
   EyeOff,
   Send,
+  KeyRound,
+  CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
 import { QuestionStatus, UserRole } from "@/types/question";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
+import useQuestionPermissions from "@/hooks/useQuestionPermissions";
 import { useQuestionDetail } from "@/hooks/useQuestionBank";
+import { RequestPermissionModal } from "./components/RequestPermissionModal";
+import AuthorReviewFeedbackModal from "./components/dialog/AuthorReviewFeedbackModal";
 
 export default function ViewQuestion() {
   const { questionId } = useParams();
+  const location = useLocation();
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
-  const currentUserId = (auth as any)?.data?.user?.id;
-  const currentUserRole = (auth as any)?.data?.user?.role;
+  const from = location.state?.from || null;
+
+  const handleBackNav = () => {
+    if (from) {
+      navigate(from);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/question-bank");
+    }
+  };
 
   const { data: question, isLoading, error } = useQuestionDetail(questionId);
+
+  const {
+    canEdit,
+    canDelete,
+    canPublish,
+    canApprove,
+    canFeedback,
+    canComment,
+    isAuthor,
+    isLocked,
+  } = useQuestionPermissions(question);
+
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      await axiosPrivate.post("/questions/bulk/approve", { ids: [questionId] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      toast.success("Question approved successfully.");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to approve question.");
+    },
+  });
+
+  const feedbackMutation = useMutation({
+    mutationFn: async (feedback: string) => {
+      await axiosPrivate.post("/questions/bulk/feedback", {
+        ids: [questionId],
+        feedback,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      setIsFeedbackModalOpen(false);
+      toast.success("Revision feedback sent to author.");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to send revision feedback.");
+    },
+  });
 
   const submitRevisionMutation = useMutation({
     mutationFn: async () => {
@@ -171,25 +233,17 @@ export default function ViewQuestion() {
     ? question?.author?.name 
     : question?.author;
 
-  const authorId = typeof question?.author === "object"
-    ? (question?.author as any).id
-    : question?.authorId;
-
-  const isAuthor = authorId === currentUserId;
-  const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !question?.isPublished;
-  const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !question?.isPublished;
-  const canPublish = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD;
-
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-4xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
       {/* Back navigation */}
-      <Link 
-        to="/question-bank" 
+      <button 
+        type="button"
+        onClick={handleBackNav} 
         className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
       >
         <ArrowLeft size={16} />
-        Back to Question Bank
-      </Link>
+        {from?.includes("/review") ? "Back to Review Questions Desk" : "Back to Question Bank"}
+      </button>
 
       <div className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
         
@@ -365,14 +419,16 @@ export default function ViewQuestion() {
             </div>
             <div className="text-right text-[11px] font-medium text-muted-foreground">
               <span>Created on: </span>
-              <span className="font-semibold text-foreground">{new Date(question.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span className="font-semibold text-foreground">
+                {new Date(question.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(question.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </div>
 
         </div>
 
         {/* Action Footer Bar */}
-        <div className="p-6 border-t border-border bg-muted/40 flex justify-end gap-3.5">
+        <div className="p-6 border-t border-border bg-muted/40 flex flex-wrap items-center justify-end gap-3.5">
           {canDelete && (
             <Button
               type="button"
@@ -382,6 +438,18 @@ export default function ViewQuestion() {
             >
               <Trash2 size={16} />
               Delete Question
+            </Button>
+          )}
+
+          {!canEdit && !isAuthor && !question.isPublished && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsRequestModalOpen(true)}
+              className="border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary font-semibold px-5 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer"
+            >
+              <KeyRound size={16} />
+              Request Edit Access from Author
             </Button>
           )}
 
@@ -396,7 +464,38 @@ export default function ViewQuestion() {
             </Button>
           )}
 
-          {question.status === QuestionStatus.NEEDS_REVISION ? (
+          {question.status === QuestionStatus.PENDING_REVIEW && (canApprove || canFeedback) && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsFeedbackModalOpen(true)}
+                disabled={feedbackMutation.isPending}
+                className="border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold px-5 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer"
+              >
+                <MessageSquare size={16} />
+                Request Revision
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => approveMutation.mutate()}
+                disabled={approveMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs border border-emerald-600/20"
+              >
+                {approveMutation.isPending ? (
+                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} />
+                    Approve Question
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+
+          {question.status === QuestionStatus.NEEDS_REVISION && (
             <Button
               type="button"
               onClick={() => submitRevisionMutation.mutate()}
@@ -412,42 +511,57 @@ export default function ViewQuestion() {
                 </>
               )}
             </Button>
-          ) : (
-            canPublish && (
-              <Button
-                type="button"
-                onClick={handleTogglePublish}
-                disabled={publishMutation.isPending || (question.status !== QuestionStatus.APPROVED && !question.isPublished)}
-                className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
-                  question.isPublished
-                    ? "border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                    : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                }`}
-                title={
-                  question.status !== QuestionStatus.APPROVED && !question.isPublished
-                    ? "Question must be approved before publishing."
-                    : ""
-                }
-              >
-                {publishMutation.isPending ? (
-                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
-                ) : question.isPublished ? (
-                  <>
-                    <EyeOff size={16} />
-                    Unpublish Question
-                  </>
-                ) : (
-                  <>
-                    <Globe size={16} />
-                    Publish Question
-                  </>
-                )}
-              </Button>
-            )
+          )}
+
+          {canPublish && question.status === QuestionStatus.APPROVED && (
+            <Button
+              type="button"
+              onClick={handleTogglePublish}
+              disabled={publishMutation.isPending}
+              className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
+                question.isPublished
+                  ? "border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              }`}
+            >
+              {publishMutation.isPending ? (
+                <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+              ) : question.isPublished ? (
+                <>
+                  <EyeOff size={16} />
+                  Unpublish Question
+                </>
+              ) : (
+                <>
+                  <Globe size={16} />
+                  Publish Question
+                </>
+              )}
+            </Button>
           )}
         </div>
 
       </div>
+
+      <RequestPermissionModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        targetQuestionId={question?.id}
+        targetAuthorName={authorName}
+        targetAuthorId={typeof question?.author === "object" ? (question?.author as any).id : question?.authorId}
+        questionTitle={question?.question}
+      />
+
+      <AuthorReviewFeedbackModal
+        open={isFeedbackModalOpen}
+        onOpenChange={setIsFeedbackModalOpen}
+        onSubmit={async (feedback) => {
+          await feedbackMutation.mutateAsync(feedback);
+        }}
+        isPending={feedbackMutation.isPending}
+        selectedCount={1}
+        authorName={authorName}
+      />
     </div>
   );
 }

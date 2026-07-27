@@ -89,8 +89,39 @@ export class StudentService {
   /**
    * Get all students with optional filters
    */
-  async getAllStudents(skip: number = 0, take: number = 10) {
+  async getAllStudents(options?: {
+    search?: string;
+    level?: string;
+    location?: string;
+    skip?: number;
+    take?: number;
+  }) {
+    const { search, level, location, skip = 0, take = 50 } = options || {};
+
+    const where: any = {};
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+        { location: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    if (level && level !== "ALL") {
+      if (level === "1") where.level = 1;
+      else if (level === "2") where.level = 2;
+      else if (level === "3") where.level = 3;
+      else if (level === "4+") where.level = { gte: 4 };
+    }
+
+    if (location && location !== "ALL") {
+      where.location = { contains: location, mode: "insensitive" };
+    }
+
     const students = await this.db.user.findMany({
+      where,
       skip,
       take,
       select: {
@@ -103,9 +134,12 @@ export class StudentService {
         location: true,
         createdAt: true,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    const total = await this.db.user.count();
+    const total = await this.db.user.count({ where });
 
     return {
       data: students,

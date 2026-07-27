@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import {
   HelpCircle, 
   Sparkles, 
   PlusCircle, 
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import TrueOrFalseInput from "./components/TOFInput";
 import ShortAnswerInput from "./components/ShortAnswerInput";
 import MultipleChoiceInput from "./components/MCQInput";
 import QuestionInput from "./components/QuestionInput";
+import QuestionSynthesizerDialog, { type SynthesizedResult } from "./components/dialog/QuestionSynthesizerDialog";
 import { useQuestionFormStore } from "../../../store/QuestionBankStore";
 
 type QuestionFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
@@ -27,11 +29,26 @@ type QuestionFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
 export default function AddQuestion() {
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
+  const location = useLocation();
   const { questionId } = useParams();
   const { auth } = useAuth();
 
   const isEditMode = !!questionId;
   const currentUserRole = (auth as any)?.data?.user?.role;
+
+  const from = location.state?.from?.pathname
+    ? `${location.state.from.pathname}${location.state.from.search || ""}`
+    : location.state?.from || null;
+
+  const handleBackNav = () => {
+    if (from) {
+      navigate(from);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/question-bank");
+    }
+  };
 
   const {
     categoryId,
@@ -103,15 +120,15 @@ export default function AddQuestion() {
     enabled: isEditMode,
   });
 
-  // Pre-populate form when editing
+  // Pre-populate form when editing or initialize defaults
   useEffect(() => {
-    if (existingQuestion) {
+    if (isEditMode && existingQuestion) {
       setCategoryId(existingQuestion.categoryId || existingQuestion.category?.id || "");
       setTopic(existingQuestion.topic || "");
       setDifficulty(existingQuestion.difficulty || "MEDIUM");
       setFormat(existingQuestion.type || "MCQ");
       setQuestionWording(existingQuestion.question || "");
-      setStatus(existingQuestion.status || "DRAFT");
+      setStatus(existingQuestion.status || "PENDING_REVIEW");
       
       if (existingQuestion.type === "MCQ") {
         setMcqChoices(existingQuestion.choices && existingQuestion.choices.length >= 2 ? existingQuestion.choices : ["", ""]);
@@ -122,6 +139,10 @@ export default function AddQuestion() {
       } else if (existingQuestion.type === "SHORT_ANSWER") {
         setSaCorrectAnswer(existingQuestion.correctAnswer || "");
       }
+    } else if (!isEditMode) {
+      if (!difficulty) setDifficulty("MEDIUM");
+      if (!format) setFormat("MCQ");
+      if (!status) setStatus("PENDING_REVIEW");
     }
   }, [existingQuestion, isEditMode, setCategoryId, setTopic, setDifficulty, setFormat, setQuestionWording, setStatus]);
 
@@ -203,13 +224,13 @@ export default function AddQuestion() {
 
     const payload = {
       question: questionWording,
-      type: format,
+      type: format || "MCQ",
       categoryId,
       topic: topic || "General",
-      difficulty,
+      difficulty: difficulty || "MEDIUM",
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
-      status: currentUserRole === "TEACHER" ? "DRAFT" : status,
+      status: (status && status !== "") ? status : "PENDING_REVIEW",
     };
 
     try {
@@ -217,10 +238,19 @@ export default function AddQuestion() {
         await axiosPrivate.put(`/questions/update/${questionId}`, payload);
         toast.success("Question updated successfully!");
       } else {
+        // If user applied AI wording, preserve their original base draft in MongoDB as well
+        if (originalQuestionDraft && originalQuestionDraft !== questionWording) {
+          await axiosPrivate.post("/questions/create", {
+            ...payload,
+            question: originalQuestionDraft,
+            status: "DRAFT",
+          }).catch(() => {});
+        }
+
         await axiosPrivate.post("/questions/create", payload);
         toast.success("New question added to repository!");
       }
-      navigate("/question-bank");
+      handleBackNav();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save question.");
     } finally {
@@ -228,21 +258,204 @@ export default function AddQuestion() {
     }
   };
 
-  const handleCancel = () => {
-    navigate(-1);
+  const [isSynthesizerOpen, setIsSynthesizerOpen] = useState(false);
+
+  const getFormPayload = () => {
+    let computedCorrectAnswer = "";
+    let finalChoices: string[] = [];
+
+    if (format === "MCQ") {
+      computedCorrectAnswer = mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
+      finalChoices = mcqChoices;
+    } else if (format === "TRUE_FALSE") {
+      computedCorrectAnswer = tfCorrect;
+      finalChoices = ["True", "False"];
+    } else if (format === "SHORT_ANSWER") {
+      computedCorrectAnswer = saCorrectAnswer.trim();
+      finalChoices = [];
+    }
+
+    return {
+      question: questionWording,
+      type: format,
+      categoryId,
+      topic: topic || "General",
+      difficulty,
+      correctAnswer: computedCorrectAnswer,
+      choices: finalChoices,
+    };
   };
+
+  const [originalQuestionDraft, setOriginalQuestionDraft] = useState<string | null>(null);
+  const [originalBackup, setOriginalBackup] = useState<{
+    question: string;
+    choices: string[];
+    correctAnswer: string;
+    difficulty: "EASY" | "MEDIUM" | "HARD";
+    format: QuestionFormat;
+  } | null>(null);
+
+  const captureOriginalBackup = () => {
+    if (!originalBackup && questionWording.trim()) {
+      let computedCorrectAnswer = "";
+      let finalChoices: string[] = [];
+
+      if (format === "MCQ") {
+        computedCorrectAnswer = mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
+        finalChoices = [...mcqChoices];
+      } else if (format === "TRUE_FALSE") {
+        computedCorrectAnswer = tfCorrect;
+        finalChoices = ["True", "False"];
+      } else if (format === "SHORT_ANSWER") {
+        computedCorrectAnswer = saCorrectAnswer.trim();
+        finalChoices = [];
+      }
+
+      setOriginalBackup({
+        question: questionWording,
+        choices: finalChoices,
+        correctAnswer: computedCorrectAnswer,
+        difficulty: (difficulty as any) || "MEDIUM",
+        format: format as QuestionFormat,
+      });
+    }
+  };
+
+  const handleRestoreOriginal = () => {
+    if (!originalBackup) return;
+    setQuestionWording(originalBackup.question);
+    setDifficulty(originalBackup.difficulty);
+    setFormat(originalBackup.format);
+
+    if (originalBackup.format === "MCQ") {
+      setMcqChoices(originalBackup.choices);
+      const matchIndex = originalBackup.choices.findIndex(
+        (c) => c.trim().toLowerCase() === originalBackup.correctAnswer.trim().toLowerCase()
+      );
+      setMcqCorrectIndex(matchIndex >= 0 ? matchIndex : 0);
+    } else if (originalBackup.format === "TRUE_FALSE") {
+      setTfCorrect(originalBackup.correctAnswer === "True" ? "True" : "False");
+    } else if (originalBackup.format === "SHORT_ANSWER") {
+      setSaCorrectAnswer(originalBackup.correctAnswer);
+    }
+
+    toast.success("Restored original base question to form!");
+  };
+
+  const handleOpenSynthesizer = () => {
+    if (!questionWording.trim()) {
+      toast.error("Please enter the question text before synthesizing with AI.");
+      return;
+    }
+    if (!categoryId) {
+      toast.error("Please select an academic subject category.");
+      return;
+    }
+    // Track original question draft & full backup
+    setOriginalQuestionDraft(questionWording);
+    captureOriginalBackup();
+    setIsSynthesizerOpen(true);
+  };
+
+  const handleSaveBoth = async (synthesized: SynthesizedResult) => {
+    const originalPayload = getFormPayload();
+    if (originalQuestionDraft) {
+      originalPayload.question = originalQuestionDraft;
+    }
+    const synthesizedPayload = {
+      ...originalPayload,
+      question: synthesized.question,
+      choices: synthesized.choices,
+      correctAnswer: synthesized.correctAnswer,
+      difficulty: synthesized.difficulty,
+    };
+
+    try {
+      // Save Original Question Draft
+      await axiosPrivate.post("/questions/create", {
+        ...originalPayload,
+        status: "DRAFT",
+      });
+      // Save AI Synthesized Question Variant
+      await axiosPrivate.post("/questions/create", synthesizedPayload);
+
+      toast.success("Both Original Draft and AI Synthesized question saved to MongoDB!");
+      handleBackNav();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save questions.");
+      throw err;
+    }
+  };
+
+  const handleSaveSynthesizedOnly = async (synthesized: SynthesizedResult) => {
+    const originalPayload = getFormPayload();
+    if (originalQuestionDraft) {
+      originalPayload.question = originalQuestionDraft;
+    }
+    const synthesizedPayload = {
+      ...originalPayload,
+      question: synthesized.question,
+      choices: synthesized.choices,
+      correctAnswer: synthesized.correctAnswer,
+      difficulty: synthesized.difficulty,
+    };
+
+    try {
+      // Preserve Original Base Question in DB
+      await axiosPrivate.post("/questions/create", {
+        ...originalPayload,
+        status: "DRAFT",
+      }).catch(() => {});
+
+      // Save AI Synthesized Question
+      await axiosPrivate.post("/questions/create", synthesizedPayload);
+
+      toast.success("AI Synthesized Question saved (Original Draft preserved in MongoDB)!");
+      handleBackNav();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save synthesized question.");
+      throw err;
+    }
+  };
+
+  const handleApplyToForm = (synthesized: SynthesizedResult) => {
+    captureOriginalBackup();
+    if (!originalQuestionDraft) {
+      setOriginalQuestionDraft(questionWording);
+    }
+    setQuestionWording(synthesized.question);
+    setDifficulty(synthesized.difficulty);
+    if (format === "MCQ") {
+      setMcqChoices(synthesized.choices);
+      const matchIndex = synthesized.choices.findIndex(
+        (c) => c.trim().toLowerCase() === synthesized.correctAnswer.trim().toLowerCase()
+      );
+      setMcqCorrectIndex(matchIndex >= 0 ? matchIndex : 0);
+    } else if (format === "SHORT_ANSWER") {
+      setSaCorrectAnswer(synthesized.correctAnswer);
+    }
+  };
+
+  const handleCancel = () => {
+    handleBackNav();
+  };
+
+  const isNotOriginalQuestion =
+    originalBackup !== null &&
+    questionWording.trim().toLowerCase() !== originalBackup.question.trim().toLowerCase();
 
   return (
     <div className="flex flex-col gap-6 p-6 md:p-8 w-full max-w-6xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
       {/* Back Button */}
       <div className="flex items-center gap-2">
-        <Link
-          to="/question-bank"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group"
+        <button
+          type="button"
+          onClick={handleBackNav}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           Back to Question Bank
-        </Link>
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
@@ -269,8 +482,8 @@ export default function AddQuestion() {
         {/* Form Body */}
         <div className="p-6 md:p-8 flex flex-col gap-6">
 
-          {/* Section 1: Subject, Topic, Difficulty, Status */}
-          <div className={`grid grid-cols-1 ${currentUserRole !== 'TEACHER' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
+          {/* Section 1: Subject, Topic, Difficulty */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Category selection */}
             <div className="flex flex-col gap-1.5">
@@ -317,23 +530,6 @@ export default function AddQuestion() {
               </CustomSelectWithLabel>
             </div>
 
-            {/* Status Selection (only for non-teachers) */}
-            {currentUserRole !== "TEACHER" && (
-              <div className="flex flex-col gap-1.5">
-                <CustomSelectWithLabel
-                  label="Review Status"
-                  value={status}
-                  onValueChange={setStatus}
-                >
-                  {getStatusOptions().map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </CustomSelectWithLabel>
-              </div>
-            )}
-
           </div>
 
           {/* Section 2: Question Format */}
@@ -356,6 +552,23 @@ export default function AddQuestion() {
 
           {/* Section 3: Question Wording / Prompt */}
           <div className="flex flex-col gap-1.5">
+            {isNotOriginalQuestion && (
+              <div className="flex items-center justify-between pb-1 animate-in fade-in duration-200">
+                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <RotateCcw size={12} /> AI Synthesized Wording Active
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestoreOriginal}
+                  className="text-xs font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-7 px-3 rounded-lg flex items-center gap-1.5 shadow-2xs"
+                >
+                  <RotateCcw size={13} />
+                  Use Original Question
+                </Button>
+              </div>
+            )}
             <QuestionInput
               questionWording={questionWording}
               setQuestionWording={setQuestionWording}
@@ -395,16 +608,38 @@ export default function AddQuestion() {
           </div>
         </div>
 
-        {/* Bottom Actions Bar */}
-        <div className="p-6 border-t border-border bg-muted/40 flex justify-end gap-3.5">
+        {/* Section 5: Action Bar */}
+        <div className="p-6 border-t border-border flex flex-wrap items-center justify-end gap-3 bg-muted/20">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancel}
-            disabled={isSubmitting}
             className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-6 py-2.5 rounded-xl h-auto"
           >
             Cancel Draft
+          </Button>
+
+          {isNotOriginalQuestion && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleRestoreOriginal}
+              className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold px-5 py-2.5 rounded-xl h-auto flex items-center gap-1.5 cursor-pointer shadow-2xs animate-in fade-in duration-200"
+            >
+              <RotateCcw size={16} />
+              Use Original Question
+            </Button>
+          )}
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOpenSynthesizer}
+            disabled={isSubmitting}
+            className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-2xs"
+          >
+            <Sparkles size={16} className="text-primary" />
+            AI Synthesizer & Preview
           </Button>
           
           <Button
@@ -421,6 +656,26 @@ export default function AddQuestion() {
           </Button>
         </div>
       </form>
+
+      {/* AI Question Synthesizer Preview Modal */}
+      <QuestionSynthesizerDialog
+        open={isSynthesizerOpen}
+        onOpenChange={setIsSynthesizerOpen}
+        originalData={{
+          question: originalBackup?.question || questionWording,
+          choices: originalBackup?.choices || (format === "MCQ" ? mcqChoices : format === "TRUE_FALSE" ? ["True", "False"] : []),
+          correctAnswer: originalBackup?.correctAnswer || (format === "MCQ" ? (mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "") : format === "TRUE_FALSE" ? tfCorrect : saCorrectAnswer),
+          topic: topic || "General",
+          difficulty: (difficulty as "EASY" | "MEDIUM" | "HARD") || "MEDIUM",
+          type: (format as "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER") || "MCQ",
+          categoryId,
+          status,
+        }}
+        onSaveBoth={handleSaveBoth}
+        onSaveSynthesizedOnly={handleSaveSynthesizedOnly}
+        onApplyToForm={handleApplyToForm}
+        onRestoreOriginal={isNotOriginalQuestion ? handleRestoreOriginal : undefined}
+      />
     </div>
   );
 }

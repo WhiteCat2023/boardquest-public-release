@@ -9,13 +9,19 @@ import type {
   UpdateReviewSchedulePayload
 } from "../types";
 
-export function useReviewCenters() {
+export function useReviewCenters(params?: {
+  search?: string;
+  location?: string;
+  company?: string;
+}) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<ReviewCenterRepresentative[]>({
-    queryKey: ["reviewCenters"],
+    queryKey: ["reviewCenters", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/review-center");
+      const response = await axiosPrivate.get("/review-center", {
+        params,
+      });
       const resData = response.data?.data;
       if (Array.isArray(resData)) return resData;
       if (Array.isArray(resData?.reviewCenters)) return resData.reviewCenters;

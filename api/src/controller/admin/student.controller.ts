@@ -19,9 +19,19 @@ export const createStudent = asyncHandler(async (req: Request, res: Response) =>
  * Query: skip?, take?
  */
 export const getAllStudents = asyncHandler(async (req: Request, res: Response) => {
+  const search = req.query.search as string;
+  const level = req.query.level as string;
+  const location = req.query.location as string;
   const skip = parseInt(req.query.skip as string) || 0;
-  const take = parseInt(req.query.take as string) || 10;
-  const result = await studentService.getAllStudents(skip, take);
+  const take = parseInt(req.query.take as string) || 50;
+
+  const result = await studentService.getAllStudents({
+    search,
+    level,
+    location,
+    skip,
+    take,
+  });
   return new ApiResponse(200, result, "Students retrieved successfully").send(res);
 });
 

@@ -18,13 +18,15 @@ const sidebarMenuMap: Record<string, any[]> = {
 
 function DashboardLayout() {
     const { auth, logout } = useAuth();
-    const currentNavItems = sidebarMenuMap[(auth as any)?.data?.user?.role?.toLowerCase() as string] || [];
+    const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
+    const userRole = currentUser?.role?.toLowerCase();
+    const currentNavItems = sidebarMenuMap[userRole as string] || [];
 
     return (
       <SidebarProvider style={{ '--sidebar-width': '300px' } as React.CSSProperties}>
         <Sidebar navItem={currentNavItems} logout={logout} />
         <main className="flex flex-col flex-1 w-full bg-background min-h-screen">
-          <div className="p-4 border-b bg-card border-border flex items-center justify-between sticky top-0 z-10">
+          <div className="px-4 py-2 border-b bg-card border-border flex items-center justify-between sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
               <div className="h-4 w-px bg-border" />

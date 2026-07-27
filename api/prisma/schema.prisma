@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -40,6 +40,19 @@ enum QuestionStatus {
   DRAFT
 }
 
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum GuidanceStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
 // [ Admin Schema ]
 
 model AdminUser {
@@ -62,6 +75,8 @@ model AdminUser {
   createdDepartments Department[] @relation("DepartmentAuthor")
   updatedDepartments Department[] @relation("DepartmentUpdater")
 
+  questionPermissions Json?
+
   location  String?  @default("Philippines")
   isActive  Boolean  @default(false)
   lastActiveAt DateTime? @default(now())
@@ -70,6 +85,10 @@ model AdminUser {
 
   questions Question[] @relation("QuestionAuthor")
   createdRevisions QuestionThatNeedsRevision[] @relation("RevisionCreator")
+  permissionRequests PermissionRequest[] @relation("UserPermissionRequests")
+  reviewedRequests PermissionRequest[] @relation("RequestReviewer")
+  assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
+  createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
 }
 
 model Department {
@@ -109,6 +128,7 @@ model Question {
 
   author   AdminUser @relation("QuestionAuthor", fields: [authorId], references: [id])
   authorId String    @db.ObjectId
+  collaboratorIds String[] @db.ObjectId
 
   feedback String? @default("")
   schoolYear String? @default("S.Y. 2025-2026")
@@ -122,6 +142,24 @@ model QuestionThatNeedsRevision {
   createdBy   AdminUser? @relation("RevisionCreator", fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model PermissionRequest {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  user                 AdminUser @relation("UserPermissionRequests", fields: [userId], references: [id], onDelete: Cascade)
+  userId               String   @db.ObjectId
+  targetQuestionId     String?  @db.ObjectId
+  targetUserId         String?  @db.ObjectId
+  requestedRole        Role?
+  requestedPermissions Json?
+  requestedCategoryIds String[] @db.ObjectId
+  reason               String
+  status               RequestStatus @default(PENDING)
+  reviewedBy           AdminUser? @relation("RequestReviewer", fields: [reviewedById], references: [id])
+  reviewedById         String?  @db.ObjectId
+  reviewNote           String?  @default("")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model SchoolYear {
@@ -218,6 +256,7 @@ model User {
   achievements       Achievement[]
   examResults        ExamResult[]
   lessonCompletions  LessonCompletion[]
+  guidanceAssignments GuidanceAssignment[] @relation("StudentGuidance")
 }
 
 model SubjectMastery {
@@ -313,5 +352,22 @@ model AiAnalysis {
   analysis  String   // JSON string of the analysis
   hash      String   // Hash of the data used to generate the analysis
   updatedAt DateTime @updatedAt
+}
+
+model GuidanceAssignment {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  student          User           @relation("StudentGuidance", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId        String         @db.ObjectId
+  advisor          AdminUser      @relation("AdvisorGuidance", fields: [advisorId], references: [id], onDelete: Cascade)
+  advisorId        String         @db.ObjectId
+  assignedBy       AdminUser      @relation("AssignerGuidance", fields: [assignedById], references: [id], onDelete: Cascade)
+  assignedById     String         @db.ObjectId
+  status           GuidanceStatus @default(PENDING)
+  subjectCategory  String?
+  reason           String
+  guidanceNotes    String?        @default("")
+  resolutionNotes  String?        @default("")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 

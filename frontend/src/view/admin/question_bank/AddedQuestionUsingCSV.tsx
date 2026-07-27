@@ -20,10 +20,9 @@ export default function AddedQuestionUsingCSV() {
       return response.data?.data?.categories ?? response.data?.data ?? [];
     },
   });
-  // Local actions
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-7xl mx-auto animate-in fade-in duration-300 font-sans">
+    <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full max-w-full animate-in fade-in duration-300 font-sans bg-background text-foreground">
       {/* Back link */}
       <button 
         onClick={() => {
@@ -33,9 +32,9 @@ export default function AddedQuestionUsingCSV() {
             navigate("/question-bank");
           }
         }}
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#A70202] transition-colors cursor-pointer w-fit"
+        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={14} />
         {extractedQuestions.length > 0 ? "Back to File Upload" : "Back to Question Bank"}
       </button>
 

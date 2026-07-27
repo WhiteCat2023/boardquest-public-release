@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { ApiResponse } from "../../utils/ApiResponse";
+import { ApiResponse } from "../../utils/apiResponse";
 import {
   getSystemLogs,
   getSystemLogStats,

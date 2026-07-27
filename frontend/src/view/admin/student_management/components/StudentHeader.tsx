@@ -13,19 +13,19 @@ export default function StudentHeader({
   description = "Manage enrolled students, academic programs, and evaluation eligibility.",
 }: StudentHeaderProps) {
   return (
-    <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-4 pt-6 -mt-6 -mx-6 md:-mt-8 md:-mx-8 px-6 md:px-8 border-b border-border z-10">
+    <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-4 -mx-4 md:-mt-6 md:-mx-6 px-4 md:px-6 border-b border-border z-10 font-sans">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-          <GraduationCap className="text-primary" size={26} />
+        <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
+          <GraduationCap className="text-primary size-5" />
           {title}
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {description}
         </p>
       </div>
 
       {canAddStudent && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <AddStudentButton />
         </div>
       )}

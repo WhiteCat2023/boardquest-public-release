@@ -9,6 +9,7 @@ interface AuthenticatedRequest extends Request {
     username: string;
     name: string;
     role?: string;
+    isActive?: boolean;
   };
 }
 

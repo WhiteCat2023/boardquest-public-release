@@ -58,18 +58,60 @@ export class CategoryService {
     return newCategory;
   }
 
-  async getAllCategories() {
+  async getAllCategories(options?: {
+    isPublished?: boolean | string;
+    status?: string;
+    authorId?: string;
+  }) {
+    const { isPublished, status, authorId } = options || {};
+
+    const questionWhere: any = {};
+
+    if (isPublished !== undefined && isPublished !== "") {
+      const isPublishedBool = typeof isPublished === "boolean"
+        ? isPublished
+        : isPublished === "true";
+      questionWhere.isPublished = isPublishedBool;
+    }
+
+    if (status && status !== "ALL") {
+      questionWhere.status = status;
+    }
+
+    if (authorId) {
+      let targetAuthorId = authorId;
+      if (targetAuthorId === "superadmin-env-id") {
+        targetAuthorId = "507f1f77bcf86cd799439011";
+      }
+      questionWhere.authorId = targetAuthorId;
+    }
+
     const categories = await this.db.category.findMany({
-        include: {
-            questions: true,
-            author: {
-                select: {
-                    name: true,
-                },
-            },
+      select: {
+        id: true,
+        name: true,
+        authorId: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            name: true,
+          },
         },
+        _count: {
+          select: {
+            questions: {
+              where: questionWhere,
+            },
+          },
+        },
+      },
     });
-    return categories;
+
+    return categories.map((cat: any) => ({
+      ...cat,
+      questionCount: cat._count?.questions ?? 0,
+    }));
   }
 
   async getCategoryById(categoryId: string) {

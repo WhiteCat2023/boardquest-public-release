@@ -1,4 +1,4 @@
-import { IdCard, User, Mail, Phone, Briefcase, BookOpen, Check } from "lucide-react";
+import { IdCard, User, Mail, Phone, Briefcase, BookOpen, Check, Shield, AtSign } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -8,23 +8,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Department, CreateFacultyPayload } from "../types";
+import type { Department, CreateFacultyPayload, RoleOption, RoleType } from "../types";
 import { useCategories } from "../hooks/useFaculty";
 
 interface FacultyProfileFormProps {
   formData: CreateFacultyPayload;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  allowedRoles: RoleOption[];
   departments: Department[];
   isDepartmentsLoading: boolean;
-  onChange: (field: keyof CreateFacultyPayload, value: string) => void;
+  onFirstNameChange: (val: string) => void;
+  onMiddleNameChange: (val: string) => void;
+  onLastNameChange: (val: string) => void;
+  onChange: (field: keyof CreateFacultyPayload, value: any) => void;
   onCategoryChange: (categoryIds: string[]) => void;
+  username: string;
+  onUsernameChange: (val: string) => void;
 }
 
 export default function FacultyProfileForm({
   formData,
+  firstName,
+  middleName,
+  lastName,
+  allowedRoles,
   departments,
   isDepartmentsLoading,
+  onFirstNameChange,
+  onMiddleNameChange,
+  onLastNameChange,
   onChange,
   onCategoryChange,
+  username,
+  onUsernameChange,
 }: FacultyProfileFormProps) {
   const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
 
@@ -36,12 +54,59 @@ export default function FacultyProfileForm({
         </div>
         <div>
           <h2 className="text-base font-bold text-foreground">Employee Profile & Department</h2>
-          <p className="text-xs text-muted-foreground">Basic identification details, department, and assigned subjects</p>
+          <p className="text-xs text-muted-foreground">Basic identification details, department, role, and assigned subjects</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Employee ID */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* First Name */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <User size={14} className="text-muted-foreground" />
+            First Name <span className="text-primary">*</span>
+          </Label>
+          <Input
+            type="text"
+            required
+            placeholder="e.g. Jane"
+            value={firstName}
+            onChange={(e) => onFirstNameChange(e.target.value)}
+            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Middle Name (Optional) */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <User size={14} className="text-muted-foreground" />
+            Middle Name <span className="text-muted-foreground font-normal text-[10px]">(Optional)</span>
+          </Label>
+          <Input
+            type="text"
+            placeholder="e.g. Smith"
+            value={middleName}
+            onChange={(e) => onMiddleNameChange(e.target.value)}
+            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Last Name */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <User size={14} className="text-muted-foreground" />
+            Last Name <span className="text-primary">*</span>
+          </Label>
+          <Input
+            type="text"
+            required
+            placeholder="e.g. Doe"
+            value={lastName}
+            onChange={(e) => onLastNameChange(e.target.value)}
+            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Employee ID (4th Placement) */}
         <div className="flex flex-col gap-2">
           <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <IdCard size={14} className="text-muted-foreground" />
@@ -53,22 +118,6 @@ export default function FacultyProfileForm({
             placeholder="e.g. EMP-2024-0102"
             value={formData.employeeId}
             onChange={(e) => onChange("employeeId", e.target.value)}
-            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
-          />
-        </div>
-
-        {/* Full Name */}
-        <div className="flex flex-col gap-2">
-          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <User size={14} className="text-muted-foreground" />
-            Full Name <span className="text-primary">*</span>
-          </Label>
-          <Input
-            type="text"
-            required
-            placeholder="e.g. Dr. Jane Doe"
-            value={formData.name}
-            onChange={(e) => onChange("name", e.target.value)}
             className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
           />
         </div>
@@ -105,7 +154,50 @@ export default function FacultyProfileForm({
           />
         </div>
 
-        {/* Department */}
+        {/* Username */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <AtSign size={14} className="text-muted-foreground" />
+            Username <span className="text-primary">*</span>
+          </Label>
+          <Input
+            type="text"
+            required
+            placeholder="e.g. jdoe_admin"
+            value={username}
+            onChange={(e) => onUsernameChange(e.target.value)}
+            className="h-11 bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Authority Role Dropdown */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Shield size={14} className="text-muted-foreground" />
+            Authority Role <span className="text-primary">*</span>
+          </Label>
+          <Select
+            value={formData.role}
+            onValueChange={(val) => onChange("role", val as RoleType)}
+          >
+            <SelectTrigger className="w-full h-11 px-3.5 bg-muted/40 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-sm text-foreground font-medium">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border border-border rounded-xl shadow-lg z-50 text-popover-foreground">
+              {allowedRoles.map((roleOpt) => (
+                <SelectItem
+                  key={roleOpt.value}
+                  value={roleOpt.value}
+                  className="cursor-pointer text-sm font-medium hover:bg-accent"
+                >
+                  {roleOpt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Department Dropdown */}
         <div className="flex flex-col gap-2 md:col-span-2">
           <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Briefcase size={14} className="text-muted-foreground" />
