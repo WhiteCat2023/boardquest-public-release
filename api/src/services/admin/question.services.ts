@@ -326,6 +326,63 @@ export class QuestionService {
     }
   }
 
+  async getQuestionStats(authorId?: string) {
+    const isValidObjectId = (id?: string) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
+    const targetAuthorId = isValidObjectId(authorId) ? authorId : undefined;
+
+    const [
+      totalQuestions,
+      publishedQuestions,
+      pendingReviewQuestions,
+      teacherAuthoredCount,
+      teacherPublishedCount,
+      teacherDraftCount,
+    ] = await Promise.all([
+      this.db.question.count(),
+      this.db.question.count({
+        where: {
+          OR: [{ isPublished: true }, { status: QuestionStatus.APPROVED }],
+        },
+      }),
+      this.db.question.count({
+        where: {
+          status: QuestionStatus.PENDING_REVIEW,
+        },
+      }),
+      targetAuthorId
+        ? this.db.question.count({ where: { authorId: targetAuthorId } })
+        : Promise.resolve(0),
+      targetAuthorId
+        ? this.db.question.count({
+            where: {
+              authorId: targetAuthorId,
+              OR: [{ isPublished: true }, { status: QuestionStatus.APPROVED }],
+            },
+          })
+        : Promise.resolve(0),
+      targetAuthorId
+        ? this.db.question.count({
+            where: {
+              authorId: targetAuthorId,
+              isPublished: false,
+              status: { not: QuestionStatus.APPROVED },
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+    return {
+      totalQuestions,
+      publishedQuestions,
+      pendingReviewQuestions,
+      teacherAuthoredCount,
+      teacherPublishedCount,
+      teacherDraftCount,
+    };
+  }
+
+
+
   async getQuestionById(questionId: string) {
     const question = await this.db.question.findUnique({
       where: {
@@ -804,3 +861,6 @@ export const createSynthesizedQuestion =
   questionService.createSynthesizedQuestion.bind(questionService);
 export const getPendingReviewAuthors =
   questionService.getPendingReviewAuthors.bind(questionService);
+export const getQuestionStats =
+  questionService.getQuestionStats.bind(questionService);
+

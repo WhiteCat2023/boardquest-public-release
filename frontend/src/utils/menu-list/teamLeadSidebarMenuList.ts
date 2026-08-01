@@ -29,11 +29,6 @@ export const teamLeadNavItem: NavItemProps[] = [
                 ]
             },
             {
-                title: "Curriculum",
-                path: "/curriculum",
-                icon: "BookOpenCheck"
-            },
-            {
                 title: "Subject Management",
                 path: "/subject-management",
                 icon: "BookMarked"

@@ -107,7 +107,7 @@ export function useToggleFacultyStatus() {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
     },
   });
-}
+} 
 
 export function useCategories(params?: { isPublished?: boolean; status?: string; authorId?: string }) {
   const axiosPrivate = useAxiosPrivate();

@@ -13,6 +13,7 @@ import { DashboardKpiCards } from "./components/DashboardKpiCards";
 import { SubjectOverviewSection } from "./components/SubjectOverviewSection";
 import { RecentQuestionsCard } from "./components/RecentQuestionsCard";
 import { StudentRosterCard } from "./components/StudentRosterCard";
+import { useCategoriesTotalCount } from "@/hooks/useCategories";
 
 export default function Dashboard() {
   const axiosPrivate = useAxiosPrivate();
@@ -24,16 +25,30 @@ export default function Dashboard() {
   const isTeamLead = userRole === "TEAMLEAD";
 
   // Data Queries
-  const { data: facultyData, isLoading: isFacultyLoading } = useFaculties();
+  const { data: facultyData, isLoading: isFacultyLoading } = useFaculties({ limit: 1 });
   const { data: studentData, isLoading: isStudentLoading } = useStudents({ skip: 0, take: 10 });
-  const { data: categoryData, isLoading: isCategoryLoading } = useCategories();
+  const { data: categoriesTotalCount, isLoading: isCategoriesTotalCountLoading } = useCategoriesTotalCount();
 
-  // Fetch Questions
+
+  // Fetch Question Stats directly from database backend
+  const { data: statsData, isLoading: isStatsLoading } = useQuery({
+    queryKey: ["dashboard-question-stats", userRole, currentUser?.id],
+    queryFn: async () => {
+      const url = isTeacher
+        ? `/questions/stats?authorId=${currentUser?.id}`
+        : "/questions/stats";
+      const response = await axiosPrivate.get(url);
+      return response.data?.data?.stats;
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+
+  // Fetch Recent Questions for display card
   const { data: questionData, isLoading: isQuestionLoading } = useQuery({
     queryKey: ["dashboard-questions", userRole, currentUser?.id],
     queryFn: async () => {
       const url = isTeacher
-        ? `/questions/get?authorId=${currentUser?.id}`
+        ? `/questions/get?authorId=${currentUser?.id}&limit=20`
         : "/questions/get?limit=20";
       const response = await axiosPrivate.get(url);
       return response.data?.data;
@@ -44,16 +59,14 @@ export default function Dashboard() {
   const isLoading =
     isFacultyLoading ||
     isStudentLoading ||
-    isCategoryLoading ||
+    isCategoriesTotalCountLoading ||
+    isStatsLoading ||
     isQuestionLoading;
 
   const totalFaculties =
     (facultyData as any)?.total ?? (Array.isArray(facultyData) ? facultyData.length : (facultyData as any)?.faculties?.length || 0);
   const totalStudents =
     (studentData as any)?.total ?? (Array.isArray(studentData) ? studentData.length : (studentData as any)?.students?.length || 0);
-  const totalCategories = (categoryData || []).length;
-  const handledCategoriesCount =
-    currentUser?.handledCategories?.length || (categoryData || []).length;
 
   const rawQuestions = Array.isArray(questionData?.questions)
     ? questionData.questions
@@ -63,31 +76,16 @@ export default function Dashboard() {
         ? questionData
         : [];
 
-  const teacherAuthoredQuestions = isTeacher
-    ? rawQuestions
-    : rawQuestions.filter(
-        (q: any) =>
-          q.authorId === currentUser?.id || q.author?.id === currentUser?.id,
-      );
-
-  const teacherDraftCount = teacherAuthoredQuestions.filter(
-    (q: any) => !q.isPublished && q.status !== "APPROVED",
-  ).length;
-  const teacherPublishedCount = teacherAuthoredQuestions.filter(
-    (q: any) => q.isPublished || q.status === "APPROVED",
-  ).length;
-
   const totalQuestions = isTeacher
-    ? teacherAuthoredQuestions.length
-    : questionData?.total || rawQuestions.length;
-  const publishedQuestions = rawQuestions.filter(
-    (q: any) => q.isPublished || q.status === "APPROVED",
-  ).length;
-  const pendingReviewQuestions = rawQuestions.filter(
-    (q: any) => !q.isPublished && q.status !== "APPROVED",
-  ).length;
+    ? (statsData?.teacherAuthoredCount ?? 0)
+    : (statsData?.totalQuestions ?? 0);
+  const publishedQuestions = statsData?.publishedQuestions ?? 0;
+  const pendingReviewQuestions = statsData?.pendingReviewQuestions ?? 0;
+  const teacherAuthoredCount = statsData?.teacherAuthoredCount ?? 0;
+  const teacherPublishedCount = statsData?.teacherPublishedCount ?? 0;
+  const teacherDraftCount = statsData?.teacherDraftCount ?? 0;
 
-  const activeQuestions = isTeacher ? teacherAuthoredQuestions : rawQuestions;
+  const activeQuestions = rawQuestions;
   const studentsList = studentData?.students || [];
 
   return (
@@ -104,17 +102,19 @@ export default function Dashboard() {
         {/* Dynamic KPI Cards */}
         <DashboardKpiCards
           userRole={userRole}
-          teacherAuthoredCount={teacherAuthoredQuestions.length}
+          teacherAuthoredCount={teacherAuthoredCount}
           teacherPublishedCount={teacherPublishedCount}
           teacherDraftCount={teacherDraftCount}
           pendingReviewQuestions={pendingReviewQuestions}
           totalQuestions={totalQuestions}
           publishedQuestions={publishedQuestions}
-          handledCategoriesCount={handledCategoriesCount}
-          totalCategories={totalCategories}
+          handledCategoriesCount={currentUser?.handledCategories?.length || 0}
+          totalCategories={typeof categoriesTotalCount === "number" ? categoriesTotalCount : (categoriesTotalCount?.totalCount ?? 0)}
           totalStudents={totalStudents}
           totalFaculties={totalFaculties}
         />
+
+
 
         {/* 6 Major Licensure Examination Subjects Overview */}
         <SubjectOverviewSection />

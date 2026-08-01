@@ -19,6 +19,11 @@ export const getCategories = asyncHandler(async (req: AuthenticatedRequest, res:
   return new ApiResponse(200, { categories }, "Categories retrieved successfully").send(res);
 });
 
+export const getCategoriesTotalCount = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const totalCount = await categoryServices.getCategoriesTotalCount();
+  return new ApiResponse(200, { totalCount }, "Categories total count retrieved successfully").send(res);
+});
+
 export const getCategory = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
   const { categoryId } = (req as any).params;
   const category = await categoryServices.getCategoryById(categoryId as string);
@@ -34,4 +39,30 @@ export const deleteCategory = asyncHandler(async (req: AuthenticatedRequest | Re
   const { categoryId } = (req as any).params;
   const deletedCategory = await categoryServices.deleteCategory(categoryId as string);
   return new ApiResponse(200, { category: deletedCategory }, "Category deleted successfully").send(res);
+});
+
+export const getModulesByCategory = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
+  const { categoryId } = (req as any).params;
+  const modules = await categoryServices.getModulesByCategory(categoryId as string);
+  return new ApiResponse(200, { modules }, "Learning modules retrieved successfully").send(res);
+});
+
+export const createModule = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
+  const { categoryId } = (req as any).params;
+  const userId = (req as any)?.user?.id || (req as any)?.data?.id;
+  const moduleData = { ...req.body, authorId: userId };
+  const module = await categoryServices.createLearningModule(categoryId as string, moduleData);
+  return new ApiResponse(201, { module }, "Learning module created successfully").send(res);
+});
+
+export const updateModule = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
+  const { moduleId } = (req as any).params;
+  const updatedModule = await categoryServices.updateLearningModule(moduleId as string, req.body);
+  return new ApiResponse(200, { module: updatedModule }, "Learning module updated successfully").send(res);
+});
+
+export const deleteModule = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
+  const { moduleId } = (req as any).params;
+  const deletedModule = await categoryServices.deleteLearningModule(moduleId as string);
+  return new ApiResponse(200, { module: deletedModule }, "Learning module deleted successfully").send(res);
 });

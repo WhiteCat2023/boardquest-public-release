@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 
-router.get("/get", authenticateToken, getLogsController);
-router.get("/stats", authenticateToken, getLogStatsController);
+router.get("/get", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), getLogsController);
+router.get("/stats", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), getLogStatsController);
 router.post("/clear", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), clearLogsController);
 
 export default router;

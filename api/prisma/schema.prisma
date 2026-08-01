@@ -71,6 +71,7 @@ model AdminUser {
   createdCategory Category[] @relation("CategoryAuthor")
   handledCategories Category[] @relation("HandledCategories", fields: [handledCategoryIds], references: [id])
   handledCategoryIds String[] @db.ObjectId
+  authoredModules LearningModule[] @relation("ModuleAuthor")
 
   createdDepartments Department[] @relation("DepartmentAuthor")
   updatedDepartments Department[] @relation("DepartmentUpdater")
@@ -173,7 +174,9 @@ model SchoolYear {
 model Category {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name String
+  icon String?
   questions Question[]
+  modules   LearningModule[]
 
   handlers    AdminUser[] @relation("HandledCategories", fields: [handlerIds], references: [id])
   handlerIds  String[]    @db.ObjectId
@@ -183,6 +186,24 @@ model Category {
 
   author   AdminUser @relation("CategoryAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   authorId String    @db.ObjectId
+}
+
+model LearningModule {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  fileUrl     String?
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+
+  categoryId  String   @db.ObjectId
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  authorId    String?  @db.ObjectId
+  author      AdminUser? @relation("ModuleAuthor", fields: [authorId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // [ Review Center Schema ]

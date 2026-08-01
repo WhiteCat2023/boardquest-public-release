@@ -175,8 +175,9 @@ export class StudentService {
       if (!student) {
         throw new ApiError(404, "Student not found");
       }
-
-      return student;
+      const { password: _password, ...sanitizedStudent } = student;
+      
+      return sanitizedStudent;
     } catch (err: any) {
       if (err instanceof ApiError) throw err;
       throw new ApiError(404, "Student not found");

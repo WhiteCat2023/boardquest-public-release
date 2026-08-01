@@ -5,19 +5,40 @@ import prisma from "../prisma";
 // ============ Validation Schemas ============
 
 export const createNewCategorySchema = z.object({
-    name: z.string().min(1, "Category name is required"),
-    authorId: z.string().min(1, "Author ID is required"),
+  name: z.string().min(1, "Category name is required"),
+  authorId: z.string().min(1, "Author ID is required"),
+  icon: z.string().optional(),
 });
 
 export const updateCategorySchema = z.object({
-    name: z.string().min(1, "Category name is required"),
-    categoryId: z.string().min(1, "Category ID is required"),
+  name: z.string().min(1, "Category name is required"),
+  categoryId: z.string().min(1, "Category ID is required"),
+  icon: z.string().optional(),
+});
+
+export const createModuleSchema = z.object({
+  title: z.string().min(1, "Module title is required"),
+  description: z.string().optional(),
+  fileUrl: z.string().optional(),
+  order: z.number().optional(),
+  isPublished: z.boolean().optional(),
+  authorId: z.string().optional(),
+});
+
+export const updateModuleSchema = z.object({
+  title: z.string().min(1, "Module title is required").optional(),
+  description: z.string().optional(),
+  fileUrl: z.string().optional(),
+  order: z.number().optional(),
+  isPublished: z.boolean().optional(),
 });
 
 // ============ Type Definitions ============
 
 export type CreateNewCategoryInput = z.infer<typeof createNewCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+export type CreateModuleInput = z.infer<typeof createModuleSchema>;
+export type UpdateModuleInput = z.infer<typeof updateModuleSchema>;
 
 // ============ Category Services ============
 
@@ -28,31 +49,32 @@ export class CategoryService {
     const parsed = createNewCategorySchema.safeParse(data);
 
     if (!parsed.success) {
-        const errors = parsed.error.flatten().fieldErrors;
-        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { name, authorId } = parsed.data;
+    const { name, authorId, icon } = parsed.data;
 
     // Check if category with the same name (case-insensitive) already exists
     const existingCategory = await this.db.category.findFirst({
-        where: {
-            name: {
-                equals: name.trim(),
-                mode: "insensitive",
-            },
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: "insensitive",
         },
+      },
     });
 
     if (existingCategory) {
-        throw new ApiError(400, "Category with this name already exists");
+      throw new ApiError(400, "Category with this name already exists");
     }
 
     const newCategory = await this.db.category.create({
-        data: {
-            name: name.trim(),
-            authorId,
-        },
+      data: {
+        name: name.trim(),
+        authorId,
+        ...(icon ? { icon } : {}),
+      },
     });
 
     return newCategory;
@@ -68,9 +90,10 @@ export class CategoryService {
     const questionWhere: any = {};
 
     if (isPublished !== undefined && isPublished !== "") {
-      const isPublishedBool = typeof isPublished === "boolean"
-        ? isPublished
-        : isPublished === "true";
+      const isPublishedBool =
+        typeof isPublished === "boolean"
+          ? isPublished
+          : isPublished === "true";
       questionWhere.isPublished = isPublishedBool;
     }
 
@@ -86,13 +109,8 @@ export class CategoryService {
       questionWhere.authorId = targetAuthorId;
     }
 
-    const categories = await this.db.category.findMany({
-      select: {
-        id: true,
-        name: true,
-        authorId: true,
-        createdAt: true,
-        updatedAt: true,
+    const categories = await (this.db as any).category.findMany({
+      include: {
         author: {
           select: {
             name: true,
@@ -114,21 +132,40 @@ export class CategoryService {
     }));
   }
 
+  async getCategoriesTotalCount() {
+    const categories = await this.db.category.count();
+    return categories;
+  }
+
   async getCategoryById(categoryId: string) {
     const category = await this.db.category.findUnique({
-        where: { id: categoryId },
-        include: {
-            questions: true,
-            author: {
-                select: {
-                    name: true,
-                },
-            },
+      where: { id: categoryId },
+      include: {
+        author: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+          },
         },
+        handlers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
     });
 
     if (!category) {
-        throw new ApiError(404, "Category not found");
+      throw new ApiError(404, "Category not found");
     }
 
     return category;
@@ -138,42 +175,43 @@ export class CategoryService {
     const parsed = updateCategorySchema.safeParse(data);
 
     if (!parsed.success) {
-        const errors = parsed.error.flatten().fieldErrors;
-        throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { name, categoryId } = parsed.data;
+    const { name, categoryId, icon } = parsed.data;
 
     const existingCategory = await this.db.category.findUnique({
-        where: { id: categoryId },
+      where: { id: categoryId },
     });
 
     if (!existingCategory) {
-        throw new ApiError(404, "Category not found");
+      throw new ApiError(404, "Category not found");
     }
 
     // Check if another category with the same name already exists
     const duplicateCategory = await this.db.category.findFirst({
-        where: {
-            name: {
-                equals: name.trim(),
-                mode: "insensitive",
-            },
-            id: {
-                not: categoryId,
-            },
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: "insensitive",
         },
+        id: {
+          not: categoryId,
+        },
+      },
     });
 
     if (duplicateCategory) {
-        throw new ApiError(400, "Category with this name already exists");
+      throw new ApiError(400, "Category with this name already exists");
     }
 
     const updatedCategory = await this.db.category.update({
-        where: { id: categoryId },
-        data: {
-            name: name.trim(),
-        },
+      where: { id: categoryId },
+      data: {
+        name: name.trim(),
+        ...(icon !== undefined ? { icon } : {}),
+      },
     });
 
     return updatedCategory;
@@ -181,18 +219,100 @@ export class CategoryService {
 
   async deleteCategory(categoryId: string) {
     const existingCategory = await this.db.category.findUnique({
-        where: { id: categoryId },
+      where: { id: categoryId },
     });
 
     if (!existingCategory) {
-        throw new ApiError(404, "Category not found");
+      throw new ApiError(404, "Category not found");
     }
 
     const deletedCategory = await this.db.category.delete({
-        where: { id: categoryId },
+      where: { id: categoryId },
     });
 
     return deletedCategory;
+  }
+
+  // ============ Learning Module Methods ============
+
+  async getModulesByCategory(categoryId: string) {
+    const modules = await (this.db as any).learningModule.findMany({
+      where: { categoryId },
+      orderBy: { order: "asc" },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    return modules;
+  }
+
+  async createLearningModule(categoryId: string, data: CreateModuleInput) {
+    const parsed = createModuleSchema.safeParse(data);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+    }
+
+    const { title, description, fileUrl, order, isPublished, authorId } =
+      parsed.data;
+
+    const module = await (this.db as any).learningModule.create({
+      data: {
+        title: title.trim(),
+        description: description?.trim() || null,
+        fileUrl: fileUrl?.trim() || null,
+        order: order ?? 0,
+        isPublished: isPublished ?? true,
+        categoryId,
+        ...(authorId ? { authorId } : {}),
+      },
+    });
+
+    return module;
+  }
+
+  async updateLearningModule(moduleId: string, data: UpdateModuleInput) {
+    const parsed = updateModuleSchema.safeParse(data);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
+    }
+
+    const existing = await (this.db as any).learningModule.findUnique({
+      where: { id: moduleId },
+    });
+    if (!existing) {
+      throw new ApiError(404, "Learning module not found");
+    }
+
+    const updated = await (this.db as any).learningModule.update({
+      where: { id: moduleId },
+      data: {
+        ...parsed.data,
+        ...(parsed.data.title ? { title: parsed.data.title.trim() } : {}),
+      },
+    });
+
+    return updated;
+  }
+
+  async deleteLearningModule(moduleId: string) {
+    const existing = await (this.db as any).learningModule.findUnique({
+      where: { id: moduleId },
+    });
+    if (!existing) {
+      throw new ApiError(404, "Learning module not found");
+    }
+
+    const deleted = await (this.db as any).learningModule.delete({
+      where: { id: moduleId },
+    });
+
+    return deleted;
   }
 }
 
@@ -203,3 +323,9 @@ export const getAllCategories = categoryService.getAllCategories.bind(categorySe
 export const getCategoryById = categoryService.getCategoryById.bind(categoryService);
 export const updateCategory = categoryService.updateCategory.bind(categoryService);
 export const deleteCategory = categoryService.deleteCategory.bind(categoryService);
+export const getCategoriesCount = categoryService.getCategoriesTotalCount.bind(categoryService);
+export const getCategoriesTotalCount = categoryService.getCategoriesTotalCount.bind(categoryService);
+export const getModulesByCategory = categoryService.getModulesByCategory.bind(categoryService);
+export const createLearningModule = categoryService.createLearningModule.bind(categoryService);
+export const updateLearningModule = categoryService.updateLearningModule.bind(categoryService);
+export const deleteLearningModule = categoryService.deleteLearningModule.bind(categoryService);

@@ -89,12 +89,12 @@ export class AuthService {
     const { email, password } = parsed.data;
 
     // Environment Super Admin check (Bypasses database storage completely)
-    const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
-    const envSuperAdminUsername = (process.env.SUPERADMIN_USERNAME || "superadmin").toLowerCase();
-    const envSuperAdminPassword = process.env.SUPERADMIN_PASSWORD || "superadmin123";
+    const envSuperAdminEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase();
+    const envSuperAdminUsername = process.env.SUPERADMIN_USERNAME?.toLowerCase();
+    const envSuperAdminPassword = process.env.SUPERADMIN_PASSWORD;
 
     const inputIdent = email.trim().toLowerCase();
-    if (inputIdent === envSuperAdminEmail || inputIdent === envSuperAdminUsername) {
+    if (envSuperAdminPassword && (inputIdent === envSuperAdminEmail || (envSuperAdminUsername && inputIdent === envSuperAdminUsername))) {
       if (password !== envSuperAdminPassword) {
         throw new ApiError(401, "Invalid email or password");
       }
@@ -114,7 +114,24 @@ export class AuthService {
       };
     }
 
-    const user = await this.db.adminUser.findUnique({ where: { email } });
+    const user = await this.db.adminUser.findUnique({
+      where: { email },
+      select: {
+        password: true,
+        id: true,
+        employeeId: true,
+        email: true,
+        name: true,
+        username: true,
+        role: true,
+        phoneNumber: true,
+        departmentId: true,
+        isActive: true,
+        lastActiveAt: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
 
     if (!user) {
       throw new ApiError(401, "Invalid email or password");
@@ -135,8 +152,8 @@ export class AuthService {
         lastActiveAt: new Date(),
       },
     });
-
-    return user;
+    const { password: _password, ...sanitizeUser } = user;
+    return sanitizeUser;
   }
 
   async createNewAdminUser(data: addNewAdminUserInput) {

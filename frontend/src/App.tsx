@@ -14,7 +14,6 @@ import {
   ViewFacultyMember,
 } from "./view/admin/faculty";
 import StudentManagement from "./view/admin/StudentManagement";
-import Curriculum from "./view/admin/Curriculum";
 import ReviewCenterManagement from "./view/admin/review_center/ReviewCenterManagement";
 import CalendarManagement from "./view/admin/CalendarManagement";
 import LogsManagement from "./view/admin/logs_management/LogsManagement";
@@ -39,6 +38,7 @@ import AddedStudentUsingCSV from "./view/admin/student_management/AddedStudentUs
 import EnrollStudentPage from "./view/admin/student_management/EnrollStudentPage";
 import ViewStudent from "./view/admin/student_management/ViewStudent";
 import SubjectManagement from "./view/admin/subject_management/SubjectManagement";
+import SubjectDetailsPage from "./view/admin/subject_management/SubjectDetailsPage";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -113,7 +113,6 @@ function App() {
                   path="student-management/view/:studentId"
                   element={<ViewStudent />}
                 />
-                <Route path="curriculum" element={<Curriculum />} />
               </Route>
 
               <Route
@@ -149,6 +148,14 @@ function App() {
                 <Route
                   path="subject-management"
                   element={<SubjectManagement />}
+                />
+                <Route
+                  path="subject-management/:categoryId"
+                  element={<SubjectDetailsPage />}
+                />
+                <Route
+                  path="subject-management/view/:categoryId"
+                  element={<SubjectDetailsPage />}
                 />
                 <Route path="question-bank" element={<QuestionBank />} />
                 <Route

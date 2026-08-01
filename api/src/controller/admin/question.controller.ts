@@ -179,6 +179,27 @@ export const getQuestions = asyncHandler(
   },
 );
 
+export const getQuestionStats = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const { authorId } = req.query;
+    const rawAuthorId =
+      user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
+
+    const stats = await QuesitonServices.getQuestionStats(rawAuthorId);
+    return new ApiResponse(
+      200,
+      { stats },
+      "Question statistics retrieved successfully",
+    ).send(res);
+  },
+);
+
+
 export const getQuestionById = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { questionId } = req.params;

@@ -54,7 +54,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      navigate("/home");
+      setAuth("");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout failed:", error);
     }

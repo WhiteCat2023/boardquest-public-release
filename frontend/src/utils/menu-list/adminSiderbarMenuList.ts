@@ -30,11 +30,6 @@ export const adminNavItem: NavItemProps[] = [
         sideBarCategoryName: "LEARNING MANAGEMENT",
         content: [
             {
-                title: "Curriculum",
-                path: "/curriculum",
-                icon: "BookOpenCheck"
-            },
-            {
                 title: "Subject Management",
                 path: "/subject-management",
                 icon: "BookMarked"

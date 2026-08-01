@@ -186,14 +186,17 @@ export class FacultyService {
     const hasNextPage = sliced.length > limitNum;
     if (hasNextPage) sliced.pop();
 
-    const nextCursor = sliced.length > 0 ? sliced[sliced.length - 1].id : null;
+    const totalCount = (await this.db.adminUser.count({ where })) + (matchesEnvSuperAdmin ? 1 : 0);
+    const nextCursor = hasNextPage && sliced.length > 0 ? sliced[sliced.length - 1].id : null;
 
     return {
+      total: totalCount,
       faculties: sliced,
       nextCursor,
       hasNextPage,
     };
   }
+
 
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
     const parsed = createFacultySchema.safeParse(data);

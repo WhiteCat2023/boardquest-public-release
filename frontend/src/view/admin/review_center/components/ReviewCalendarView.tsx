@@ -30,7 +30,7 @@ export default function ReviewCalendarView({
   onEditSchedule,
   onDeleteSchedule,
 }: ReviewCalendarViewProps) {
-  // Calendar month state (default to July 2026 or current month)
+  // Calendar month state (default to current or July 2026)
   const [currentDate, setCurrentDate] = useState(new Date("2026-07-01"));
 
   const year = currentDate.getFullYear();
@@ -87,19 +87,19 @@ export default function ReviewCalendarView({
     switch (status?.toUpperCase()) {
       case "ACTIVE":
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
             <CheckCircle2 size={10} /> Active
           </span>
         );
       case "COMPLETED":
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-semibold text-muted-foreground bg-muted border border-border px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
             Completed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
             <Clock size={10} /> Upcoming
           </span>
         );
@@ -107,76 +107,82 @@ export default function ReviewCalendarView({
   };
 
   return (
-    <div className="flex flex-col gap-6 font-sans">
+    <div className="flex flex-col gap-3.5 sm:gap-4 font-sans flex-1 h-full min-h-0">
       {/* Calendar Top Control Header */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-            <CalendarIcon size={20} />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 bg-card border border-border p-2.5 sm:p-3 px-3 sm:px-4 rounded-xl shadow-2xs shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="size-7 sm:size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 shadow-2xs">
+            <CalendarIcon size={16} className="sm:size-4.5" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground tracking-tight">
+          <div className="min-w-0">
+            <h2 className="text-xs sm:text-sm md:text-base font-bold text-foreground tracking-tight truncate">
               {monthNames[month]} {year}
             </h2>
-            <p className="text-xs text-muted-foreground">Review schedule and date range overview</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+              Review schedule and timeline overview
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToday}
-            className="h-9 text-xs font-semibold text-foreground border-border bg-card hover:bg-accent rounded-xl px-3 cursor-pointer"
-          >
-            Today
-          </Button>
+        <div className="flex items-center gap-1.5 sm:gap-2 self-stretch sm:self-auto justify-between sm:justify-end shrink-0 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToday}
+              className="h-7 sm:h-8 text-[11px] sm:text-xs font-semibold text-foreground border-border bg-card hover:bg-accent rounded-lg px-2 sm:px-2.5 cursor-pointer"
+            >
+              Today
+            </Button>
 
-          <div className="flex items-center border border-border rounded-xl bg-muted/40 p-0.5">
-            <button
-              onClick={handlePrevMonth}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-card rounded-lg transition-colors cursor-pointer"
-              title="Previous Month"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={handleNextMonth}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-card rounded-lg transition-colors cursor-pointer"
-              title="Next Month"
-            >
-              <ChevronRight size={16} />
-            </button>
+            <div className="flex items-center border border-border rounded-lg bg-muted/40 p-0.5">
+              <button
+                onClick={handlePrevMonth}
+                className="p-1 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
+                title="Previous Month"
+              >
+                <ChevronLeft size={14} className="sm:size-[15px]" />
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="p-1 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
+                title="Next Month"
+              >
+                <ChevronRight size={14} className="sm:size-[15px]" />
+              </button>
+            </div>
           </div>
 
           <Button
             onClick={onAddSchedule}
-            className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer ml-1"
+            className="h-7 sm:h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-[11px] sm:text-xs px-2.5 sm:px-3 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
           >
-            <Plus size={15} />
-            Schedule Review Period
+            <Plus size={14} />
+            <span className="hidden sm:inline">Schedule Review Period</span>
+            <span className="sm:hidden">Add Period</span>
           </Button>
         </div>
       </div>
 
       {/* Main Grid & Side Panel Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Monthly Grid View (2 Columns) */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-3xl p-5 shadow-2xs space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 flex-1 h-full min-h-0">
+        {/* Monthly Grid View (2 Columns on lg) */}
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-2.5 sm:p-3.5 shadow-2xs space-y-2 sm:space-y-3 flex flex-col flex-1 h-full min-h-0 overflow-hidden">
           {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-1 text-center border-b border-border pb-3">
+          <div className="grid grid-cols-7 gap-1 text-center border-b border-border pb-1.5 sm:pb-2 shrink-0">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((dayName, idx) => (
-              <div key={idx} className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {dayName}
+              <div key={idx} className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                <span className="hidden sm:inline">{dayName}</span>
+                <span className="sm:hidden">{dayName[0]}</span>
               </div>
             ))}
           </div>
 
           {/* Month Days Grid */}
-          <div className="grid grid-cols-7 gap-1.5">
+          <div className="grid grid-cols-7 gap-1 flex-1 h-full min-h-0 auto-rows-fr">
             {/* Empty padding cells for start weekday */}
             {Array.from({ length: firstDayOfWeek }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="min-h-[84px] bg-muted/20 rounded-xl border border-transparent" />
+              <div key={`empty-${idx}`} className="h-full bg-muted/15 rounded-lg border border-transparent min-h-[50px] sm:min-h-[64px]" />
             ))}
 
             {/* Days of the month */}
@@ -188,42 +194,43 @@ export default function ReviewCalendarView({
               return (
                 <div
                   key={`day-${dayNum}`}
-                  className={`min-h-[84px] p-1.5 rounded-xl border transition-all flex flex-col justify-between group ${
+                  className={`h-full min-h-[50px] sm:min-h-[64px] p-1 sm:p-1.5 rounded-lg border transition-all flex flex-col justify-between group overflow-hidden ${
                     currentDayIsToday
-                      ? "bg-primary/5 border-primary/40 shadow-xs"
-                      : "bg-card border-border/80 hover:border-border hover:bg-muted/30"
+                      ? "bg-primary/5 border-primary/40 shadow-2xs"
+                      : "bg-card border-border/70 hover:border-border hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-1">
                     <span
-                      className={`text-xs font-semibold size-6 rounded-full flex items-center justify-center ${
+                      className={`text-[10px] sm:text-[11px] font-bold size-4.5 sm:size-5 rounded-full flex items-center justify-center shrink-0 ${
                         currentDayIsToday
-                          ? "bg-primary text-primary-foreground font-bold"
+                          ? "bg-primary text-primary-foreground"
                           : "text-foreground"
                       }`}
                     >
                       {dayNum}
                     </span>
                     {daySchedules.length > 0 && (
-                      <span className="size-2 rounded-full bg-primary animate-pulse" />
+                      <span className="size-1.5 rounded-full bg-primary animate-pulse shrink-0" />
                     )}
                   </div>
 
                   {/* Schedule Pills on Calendar Day */}
-                  <div className="space-y-1 mt-1">
+                  <div className="space-y-0.5 mt-0.5 overflow-hidden">
                     {daySchedules.slice(0, 2).map((sched) => (
                       <div
                         key={sched.id}
                         onClick={() => onEditSchedule(sched)}
-                        className="text-[9px] font-semibold p-1 rounded-md bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer truncate"
+                        className="text-[8px] sm:text-[8.5px] font-semibold p-0.5 px-1 rounded bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer truncate"
                         title={`${sched.title} (${sched.startDate} to ${sched.endDate})`}
                       >
-                        {sched.title}
+                        <span className="hidden sm:inline">{sched.title}</span>
+                        <span className="sm:hidden">{sched.title.slice(0, 4)}..</span>
                       </div>
                     ))}
                     {daySchedules.length > 2 && (
-                      <span className="text-[9px] font-bold text-muted-foreground pl-0.5">
-                        +{daySchedules.length - 2} more
+                      <span className="text-[8px] font-bold text-muted-foreground block truncate">
+                        +{daySchedules.length - 2}
                       </span>
                     )}
                   </div>
@@ -233,49 +240,54 @@ export default function ReviewCalendarView({
           </div>
         </div>
 
-        {/* Schedule List & Date Range Manager Side Panel (1 Column) */}
-        <div className="bg-card border border-border rounded-3xl p-5 shadow-2xs flex flex-col space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Clock size={16} className="text-primary" />
+        {/* Schedule List Side Panel (1 Column on lg) */}
+        <div className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col space-y-2.5 sm:space-y-3 flex-1 h-full min-h-0 max-h-[380px] lg:max-h-full">
+          <div className="flex items-center justify-between border-b border-border pb-2 shrink-0">
+            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <Clock size={14} className="text-primary shrink-0" />
               Scheduled Review Periods
             </h3>
-            <span className="text-xs font-mono font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border">
+            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
               {schedules.length}
             </span>
           </div>
 
           {/* List of Schedules with Start/End Dates */}
-          <div className="space-y-3 overflow-y-auto max-h-[520px] pr-1">
+          <div className="space-y-2 sm:space-y-2.5 overflow-y-auto flex-1 h-full min-h-0 pr-0.5">
             {schedules.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-8 text-center space-y-2">
-                <AlertCircle size={24} className="text-muted-foreground/40" />
-                <p className="text-xs font-semibold text-foreground">No Review Periods Scheduled</p>
-                <p className="text-[11px] text-muted-foreground">Click 'Schedule Review Period' to set review start and end dates.</p>
+              <div className="flex flex-col items-center justify-center p-6 text-center space-y-1.5 border border-dashed border-border rounded-xl bg-muted/20">
+                <AlertCircle size={20} className="text-muted-foreground/40" />
+                <p className="text-xs font-bold text-foreground">No Review Periods</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Click 'Schedule Review Period' to set dates.
+                </p>
               </div>
             ) : (
               schedules.map((sched) => (
                 <div
                   key={sched.id}
-                  className="bg-muted/40 hover:bg-muted/70 border border-border rounded-2xl p-4 transition-all space-y-2.5 group"
+                  className="bg-muted/30 hover:bg-muted/60 border border-border rounded-xl p-2 sm:p-2.5 transition-all space-y-2 group"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-foreground truncate" title={sched.title}>
+                      <h4
+                        className="text-xs font-bold text-foreground truncate"
+                        title={sched.title}
+                      >
                         {sched.title}
                       </h4>
-                      <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                        <Building2 size={12} className="text-muted-foreground/70 shrink-0" />
-                        {sched.companyName}
+                      <p className="text-[10px] sm:text-[10.5px] font-medium text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Building2 size={11} className="text-muted-foreground/70 shrink-0" />
+                        <span className="truncate">{sched.companyName}</span>
                       </p>
                     </div>
                     {getStatusBadge(sched.status)}
                   </div>
 
                   {/* START DATE & END DATE BADGES */}
-                  <div className="flex items-center gap-1.5 p-2 bg-card border border-border rounded-xl text-[11px]">
-                    <CalendarIcon size={13} className="text-primary shrink-0" />
-                    <div className="flex items-center gap-1 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5 p-1.5 bg-card border border-border rounded-lg text-[10px] sm:text-[10.5px]">
+                    <CalendarIcon size={12} className="text-primary shrink-0" />
+                    <div className="flex items-center gap-1 font-semibold text-foreground truncate">
                       <span>{sched.startDate}</span>
                       <span className="text-muted-foreground font-normal">to</span>
                       <span>{sched.endDate}</span>
@@ -284,20 +296,20 @@ export default function ReviewCalendarView({
 
                   {sched.category && (
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
-                      <Tag size={11} className="text-muted-foreground/70" />
-                      <span>{sched.category}</span>
+                      <Tag size={10} className="text-muted-foreground/70 shrink-0" />
+                      <span className="truncate">{sched.category}</span>
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onEditSchedule(sched)}
-                      className="h-7 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg px-2 cursor-pointer gap-1"
+                      className="h-6 text-[10px] sm:text-[10.5px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md px-1.5 cursor-pointer gap-1"
                     >
-                      <Edit3 size={12} />
+                      <Edit3 size={11} />
                       Set / Change Dates
                     </Button>
 
@@ -305,10 +317,10 @@ export default function ReviewCalendarView({
                       variant="ghost"
                       size="icon"
                       onClick={() => onDeleteSchedule(sched)}
-                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer"
+                      className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
                       title="Remove Schedule"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                     </Button>
                   </div>
                 </div>
