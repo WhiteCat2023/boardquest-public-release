@@ -26,7 +26,6 @@ import { QuestionStatus, UserRole } from "@/types/question";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 import useQuestionPermissions from "@/hooks/useQuestionPermissions";
 import { useQuestionDetail } from "@/hooks/useQuestionBank";
-import { RequestPermissionModal } from "./components/RequestPermissionModal";
 import AuthorReviewFeedbackModal from "./components/dialog/AuthorReviewFeedbackModal";
 
 export default function ViewQuestion() {
@@ -36,7 +35,6 @@ export default function ViewQuestion() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   const from = location.state?.from || null;
@@ -542,15 +540,6 @@ export default function ViewQuestion() {
         </div>
 
       </div>
-
-      <RequestPermissionModal
-        isOpen={isRequestModalOpen}
-        onClose={() => setIsRequestModalOpen(false)}
-        targetQuestionId={question?.id}
-        targetAuthorName={authorName}
-        targetAuthorId={typeof question?.author === "object" ? (question?.author as any).id : question?.authorId}
-        questionTitle={question?.question}
-      />
 
       <AuthorReviewFeedbackModal
         open={isFeedbackModalOpen}

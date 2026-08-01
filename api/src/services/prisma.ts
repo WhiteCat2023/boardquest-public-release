@@ -3,21 +3,13 @@ import { demoAdminUsers } from "../seeds/user";
 import { demoCategories } from "../seeds/category";
 import { demoQuestions } from "../seeds/questions";
 import { hashedPassword } from "../utils/hash";
+import { ensureSuperAdminExists } from "./admin/bootstrap.service";
 
 const prisma = new PrismaClient();
 
 export async function seedAdminUserDb() {
   try {
-    // Purge any lingering SUPERADMIN user records in the DB table as Super Admin is configured strictly via .env
-    await prisma.adminUser.deleteMany({
-      where: {
-        OR: [
-          { role: "SUPERADMIN" },
-          { username: process.env.SUPERADMIN_USERNAME || "superadmin" },
-          { email: process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph" },
-        ],
-      },
-    }).catch(() => {});
+    await ensureSuperAdminExists();
 
     console.log("Seeding users...");
     for (const user of demoAdminUsers) {

@@ -44,6 +44,9 @@ import {
   Layers,
   FileText,
   AlertTriangle,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -210,188 +213,266 @@ export default function SubjectDetailsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground animate-in fade-in duration-200">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-5xl mx-auto min-h-full font-sans bg-background text-foreground animate-in fade-in duration-200">
       {/* Top Header & Breadcrumb Bar */}
-      <div className="flex flex-col gap-4 border-b border-border pb-4">
-        <div>
+      <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-2.5 pt-1 -mt-1 z-10 border-b border-border/80">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => navigate("/subject-management")}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer group"
           >
-            <ArrowLeft size={14} /> Back to Subject Management
+            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+            Back to Subject Management
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="p-3.5 bg-primary/10 text-primary rounded-2xl border border-primary/20 shrink-0 shadow-2xs">
-              <IconComp size={28} className="stroke-[2.2]" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 shrink-0 shadow-2xs">
+              <IconComp size={22} className="stroke-[2.2]" />
             </div>
             <div className="space-y-0.5 min-w-0">
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold text-foreground tracking-tight truncate">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-foreground tracking-tight truncate">
                   {isCategoryLoading ? (
-                    <Skeleton className="h-7 w-52" />
+                    <Skeleton className="h-6 w-48" />
                   ) : (
                     category?.name || "Subject Details"
                   )}
                 </h1>
                 <Badge
                   variant="outline"
-                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0"
+                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[11px] font-bold px-2 py-0 rounded-full shrink-0"
                 >
-                  <CheckCircle2 size={12} className="mr-1 inline" /> Active
+                  <CheckCircle2 size={11} className="mr-1 inline" /> Active
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground font-mono">
-                Category ID: {categoryId || "—"}
+              <p className="text-[11px] text-muted-foreground font-mono">
+                ID: {categoryId || "—"}
               </p>
             </div>
           </div>
 
-          {canManage && category && (
-            <Button
-              onClick={handleOpenEditSubject}
-              variant="outline"
-              className="rounded-xl border-border hover:bg-muted text-xs font-semibold px-4 h-10 flex items-center gap-2 cursor-pointer shrink-0"
-            >
-              <Pencil size={15} /> Edit Subject
-            </Button>
-          )}
-        </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {canManage && category && (
+              <Button
+                onClick={handleOpenEditSubject}
+                variant="outline"
+                className="rounded-lg border-border hover:bg-muted text-xs font-semibold px-3 h-8 flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Pencil size={13} /> Edit Subject
+              </Button>
+            )}
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "overview"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("modules")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "modules"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
-            }`}
-          >
-            <Layers size={14} />
-            Learning Modules ({modules.length})
-          </button>
+            {/* Segmented Pill Tabs */}
+            <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "overview"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <BookOpen size={13} />
+                Overview
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("modules")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "modules"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Layers size={13} />
+                Learning Modules ({modules.length})
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
       {isCategoryLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-28 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
+        <div className="space-y-3">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
         </div>
       ) : activeTab === "overview" ? (
         /* TAB 1: OVERVIEW */
-        <div className="space-y-6 max-w-4xl animate-in fade-in duration-200">
+        <div className="space-y-4 animate-in fade-in duration-200">
           {/* Key Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="p-5 bg-card border border-border rounded-2xl flex items-center gap-4 shadow-2xs">
-              <div className="p-3 bg-primary/10 text-primary border border-primary/20 rounded-2xl shrink-0">
-                <HelpCircle size={22} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Total Evaluation Questions
-                </p>
-                <p className="text-2xl font-extrabold text-foreground mt-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
+              <div className="space-y-1 min-w-0">
+                <span className="text-xs font-semibold text-muted-foreground block truncate">
+                  Evaluation Questions
+                </span>
+                <p className="text-2xl font-extrabold text-foreground tracking-tight">
                   {totalQuestions}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/question-bank")}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline cursor-pointer pt-0.5"
+                >
+                  Question Bank <ArrowRight size={11} />
+                </button>
               </div>
-            </Card>
-
-            <Card className="p-5 bg-card border border-border rounded-2xl flex items-center gap-4 shadow-2xs">
-              <div className="p-3 bg-primary/10 text-primary border border-primary/20 rounded-2xl shrink-0">
-                <Users size={22} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Assigned Faculty Handlers
-                </p>
-                <p className="text-2xl font-extrabold text-foreground mt-0.5">
-                  {category?.handlers?.length || 0}
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Subject Metadata Card */}
-          <Card className="p-6 bg-card border border-border rounded-2xl space-y-4 shadow-2xs">
-            <h3 className="text-sm font-bold text-foreground tracking-tight border-b border-border pb-3">
-              Subject Information & Audit
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-3.5 bg-muted/20 border border-border/60 rounded-xl space-y-1">
-                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                  <User size={14} /> Created By
-                </span>
-                <p className="font-bold text-foreground text-sm">
-                  {category?.author?.name || "System Admin"}
-                </p>
-              </div>
-
-              <div className="p-3.5 bg-muted/20 border border-border/60 rounded-xl space-y-1">
-                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                  <Calendar size={14} /> Date Created
-                </span>
-                <p className="font-bold text-foreground text-sm">
-                  {formatDate(category?.createdAt)}
-                </p>
-              </div>
-
-              <div className="p-3.5 bg-muted/20 border border-border/60 rounded-xl space-y-1">
-                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                  <Calendar size={14} /> Last Modified
-                </span>
-                <p className="font-bold text-foreground text-sm">
-                  {formatDate(category?.updatedAt)}
-                </p>
+              <div className="p-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl shrink-0">
+                <HelpCircle size={20} />
               </div>
             </div>
-          </Card>
 
-          {/* Assigned Faculty Handlers List */}
-          {Array.isArray(category?.handlers) && category.handlers.length > 0 && (
-            <Card className="p-6 bg-card border border-border rounded-2xl space-y-3 shadow-2xs">
-              <h3 className="text-sm font-bold text-foreground tracking-tight flex items-center gap-2">
-                <Users size={16} className="text-primary" /> Assigned Faculty Members
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-                {category.handlers.map((handler: any) => (
-                  <div
-                    key={handler.id}
-                    className="p-3 bg-muted/30 border border-border rounded-xl flex items-center justify-between"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-foreground truncate">
-                        {handler.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {handler.email || "Faculty Member"}
-                      </p>
+            <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
+              <div className="space-y-1 min-w-0">
+                <span className="text-xs font-semibold text-muted-foreground block truncate">
+                  Learning Modules
+                </span>
+                <p className="text-2xl font-extrabold text-foreground tracking-tight">
+                  {modules.length}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("modules")}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline cursor-pointer pt-0.5"
+                >
+                  Curriculum modules <ArrowRight size={11} />
+                </button>
+              </div>
+              <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-xl shrink-0">
+                <Layers size={20} />
+              </div>
+            </div>
+
+            <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
+              <div className="space-y-1 min-w-0">
+                <span className="text-xs font-semibold text-muted-foreground block truncate">
+                  Faculty Handlers
+                </span>
+                <p className="text-2xl font-extrabold text-foreground tracking-tight">
+                  {category?.handlers?.length || 0}
+                </p>
+                <span className="text-[11px] text-muted-foreground block pt-0.5">
+                  Assigned teachers
+                </span>
+              </div>
+              <div className="p-2.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-xl shrink-0">
+                <Users size={20} />
+              </div>
+            </div>
+          </div>
+
+          {/* 2-Column Compact Layout for Audit & Handlers */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            {/* Subject Audit & Info Card (2 cols) */}
+            <Card className="lg:col-span-2 p-4 bg-card border border-border/80 rounded-xl space-y-3 shadow-2xs h-full">
+              <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
+                  <BookOpen size={14} className="text-primary" /> Subject Audit Trail
+                </h3>
+                <Badge variant="secondary" className="text-[10px] font-semibold px-2 py-0">
+                  Managed
+                </Badge>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="p-2.5 bg-muted/30 border border-border/60 rounded-lg flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1.5">
+                    <User size={13} className="text-primary" /> Created By
+                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px] shrink-0">
+                      {(category?.author?.name?.[0] || "A").toUpperCase()}
                     </div>
-                    <Badge variant="secondary" className="text-[10px] font-semibold">
-                      {handler.role || "TEACHER"}
-                    </Badge>
+                    <span className="font-bold text-foreground text-xs truncate">
+                      {category?.author?.name || "System Admin"}
+                    </span>
                   </div>
-                ))}
+                </div>
+
+                <div className="p-2.5 bg-muted/30 border border-border/60 rounded-lg flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1.5">
+                    <Calendar size={13} className="text-primary" /> Created
+                  </span>
+                  <span className="font-bold text-foreground text-xs">
+                    {formatDate(category?.createdAt)}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-muted/30 border border-border/60 rounded-lg flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground font-medium text-[11px] flex items-center gap-1.5">
+                    <Clock size={13} className="text-primary" /> Modified
+                  </span>
+                  <span className="font-bold text-foreground text-xs">
+                    {formatDate(category?.updatedAt)}
+                  </span>
+                </div>
               </div>
             </Card>
-          )}
+
+            {/* Assigned Faculty Handlers Card (3 cols) */}
+            <Card className="lg:col-span-3 p-4 bg-card border border-border/80 rounded-xl space-y-3 shadow-2xs h-full">
+              <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-primary" /> Assigned Faculty Handlers
+                </h3>
+                <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
+                  {category?.handlers?.length || 0} Member(s)
+                </Badge>
+              </div>
+
+              {Array.isArray(category?.handlers) && category.handlers.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {category.handlers.map((handler: any) => {
+                    const initials = handler.name
+                      ? handler.name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase()
+                      : "FC";
+                    return (
+                      <div
+                        key={handler.id}
+                        className="p-2.5 bg-muted/30 border border-border/60 rounded-lg flex items-center justify-between gap-2 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="size-7 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-[10px] shrink-0">
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate">
+                              {handler.name}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {handler.email || "Faculty Member"}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-[9px] font-semibold shrink-0 px-1.5 py-0">
+                          {handler.role || "TEACHER"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-6 px-4 text-center border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-1.5 bg-muted/20">
+                  <Users size={26} className="text-muted-foreground/40 stroke-[1.5]" />
+                  <p className="text-xs font-bold text-foreground">No Faculty Handlers Assigned</p>
+                  <p className="text-[10px] text-muted-foreground max-w-xs">
+                    No specific faculty members are explicitly assigned to this subject category yet.
+                  </p>
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       ) : (
         /* TAB 2: LEARNING MODULES */

@@ -3,6 +3,7 @@ import { hashedPassword, verifyPassword } from "../utils/hash";
 import { signJWT, verifyJWT } from "../utils/jwt.utils";
 import { sendPasswordResetEmail } from "./mail.service";
 import prisma from "./prisma";
+import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "./admin/bootstrap.service";
 import { z } from "zod";
 
 /*
@@ -25,7 +26,6 @@ export const createAdminUserSchema = z.object({
   email: z.string().email("Invalid email"),
   role: z.enum(["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"], "Role required"),
   phoneNumber: z.string().min(10, "Phone number must be at least 11 digits"),
-  departmentId: z.string().min(1, "Department ID is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters"),
@@ -98,11 +98,28 @@ export class AuthService {
       if (password !== envSuperAdminPassword) {
         throw new ApiError(401, "Invalid email or password");
       }
+      const dbSuperAdmin = await ensureSuperAdminExists();
+      if (dbSuperAdmin) {
+        return {
+          id: dbSuperAdmin.id,
+          employeeId: dbSuperAdmin.employeeId || "SA-0001",
+          email: dbSuperAdmin.email,
+          username: dbSuperAdmin.username,
+          name: dbSuperAdmin.name,
+          role: "SUPERADMIN" as const,
+          phoneNumber: dbSuperAdmin.phoneNumber || "+63-2-9999-0000",
+          location: "Main HQ",
+          isActive: true,
+          lastActiveAt: new Date(),
+          createdAt: dbSuperAdmin.createdAt,
+          updatedAt: dbSuperAdmin.updatedAt,
+        };
+      }
       return {
-        id: "superadmin-env-id",
+        id: SUPERADMIN_DEFAULT_ID,
         employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
-        email: envSuperAdminEmail,
-        username: envSuperAdminUsername,
+        email: envSuperAdminEmail || "superadmin@boardquest.edu.ph",
+        username: envSuperAdminUsername || "superadmin",
         name: process.env.SUPERADMIN_NAME || "System Super Administrator",
         role: "SUPERADMIN" as const,
         phoneNumber: "+63-2-9999-0000",
@@ -125,7 +142,6 @@ export class AuthService {
         username: true,
         role: true,
         phoneNumber: true,
-        departmentId: true,
         isActive: true,
         lastActiveAt: true,
         createdAt: true,
@@ -182,7 +198,7 @@ export class AuthService {
       ]);
     }
 
-    const { employeeId, name, email, role, phoneNumber, departmentId, username, password } = parsed.data;
+    const { employeeId, name, email, role, phoneNumber, username, password } = parsed.data;
 
     const existingUser = await this.db.adminUser.findFirst({
       where: { OR: [{ email }, { username }, { employeeId }] },
@@ -201,7 +217,6 @@ export class AuthService {
         name,
         role,
         phoneNumber,
-        departmentId,
         password: hash,
       },
       select: {

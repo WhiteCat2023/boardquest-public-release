@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -22,6 +24,7 @@ const formatSegment = (segment: string) => {
 export default function HeaderBreadcrumb() {
   const location = useLocation();
   const { auth } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
   const currentUserRole = (auth as any)?.data?.user?.role || (auth as any)?.user?.role;
 
   const getPortalTitle = (role?: string) => {
@@ -47,20 +50,45 @@ export default function HeaderBreadcrumb() {
   const isQuestionViewOrEdit =
     pathSegments[0] === "question-bank" &&
     (pathSegments[1] === "view" || pathSegments[1] === "edit");
+  const isSubjectView =
+    pathSegments[0] === "subject-management" && pathSegments.length >= 2;
 
   const questionId =
     isQuestionViewOrEdit && pathSegments[2] ? pathSegments[2] : null;
 
+  const subjectCategoryId = isSubjectView
+    ? pathSegments[1] === "view"
+      ? pathSegments[2]
+      : pathSegments[1]
+    : null;
+
   // Faculty Directory Data
-  const { data: faculties = [] } = useFaculties();
+  const { data: facultyResponse } = useFaculties();
+  const faculties = facultyResponse?.faculties ?? [];
 
   // Question Detail Hook
   const { data: questionData } = useQuestionDetail(questionId);
 
+  // Subject Category Detail Hook
+  const { data: categoryData } = useQuery({
+    queryKey: ["categoryDetail", subjectCategoryId],
+    queryFn: async () => {
+      if (!subjectCategoryId) return null;
+      const response = await axiosPrivate.get(
+        `/questions/category/single/${subjectCategoryId}`
+      );
+      return response.data?.data?.category ?? response.data?.category ?? null;
+    },
+    enabled: !!subjectCategoryId,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const filteredSegments = pathSegments.filter((seg, index) => {
-    // Skip 'view' segment for question-bank and faculty-management
+    // Skip 'view' segment for question-bank, faculty-management, and subject-management
     if (
-      (pathSegments[0] === "question-bank" || pathSegments[0] === "faculty-management") &&
+      (pathSegments[0] === "question-bank" ||
+        pathSegments[0] === "faculty-management" ||
+        pathSegments[0] === "subject-management") &&
       seg === "view" &&
       index === 1
     ) {
@@ -100,6 +128,11 @@ export default function HeaderBreadcrumb() {
               rawText.length > 40 ? `${rawText.slice(0, 40)}...` : rawText;
             displayLabel =
               truncatedText || `Q-${segment.slice(-6).toUpperCase()}`;
+          }
+
+          // Customize Subject View breadcrumb label
+          if (isSubjectView && segment === subjectCategoryId && categoryData?.name) {
+            displayLabel = categoryData.name;
           }
 
           return (

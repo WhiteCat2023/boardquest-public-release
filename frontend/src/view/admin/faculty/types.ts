@@ -2,11 +2,6 @@ import { UserRole } from "@/types/question";
 
 export type RoleType = UserRole;
 
-export interface Department {
-  id: string;
-  name: string;
-}
-
 export interface Category {
   id: string;
   name: string;
@@ -20,11 +15,6 @@ export interface FacultyMember {
   username: string;
   role: RoleType;
   phoneNumber: string;
-  departmentId: string;
-  department: {
-    id: string;
-    name: string;
-  };
   handledCategories?: Category[];
   handledCategoryIds?: string[];
   isActive?: boolean;
@@ -39,7 +29,7 @@ export interface CreateFacultyPayload {
   username: string;
   password: string;
   phoneNumber: string;
-  departmentId: string;
+  departmentId?: string;
   handledCategoryIds?: string[];
   role: RoleType;
 }
@@ -48,4 +38,14 @@ export interface RoleOption {
   value: RoleType;
   label: string;
   description: string;
+}
+
+export interface ParsedFacultyRow {
+  name: string;
+  email: string;
+  role: string;
+  employeeId?: string;
+  phoneNumber?: string;
+  isValid: boolean;
+  validationError?: string;
 }

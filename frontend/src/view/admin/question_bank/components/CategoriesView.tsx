@@ -73,11 +73,17 @@ export default function CategoriesView() {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
 
+    const authorId =
+      (auth as any)?.data?.user?.id ||
+      (auth as any)?.user?.id ||
+      (auth as any)?.data?.id;
+
     setIsSubmitting(true);
     try {
       await axiosPrivate.post("/questions/category/create", {
         name: newCategoryName.trim(),
         icon: newCategoryIcon,
+        authorId,
       });
       toast.success(`Category "${newCategoryName}" created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -393,13 +399,13 @@ export default function CategoriesView() {
                 >
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction
+                <Button
                   type="submit"
                   disabled={isSubmitting || !newCategoryName.trim()}
                   className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs"
                 >
                   {isSubmitting ? "Creating..." : "Save Subject"}
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
             </form>
           </AlertDialogContent>
@@ -457,13 +463,13 @@ export default function CategoriesView() {
                 >
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction
+                <Button
                   type="submit"
                   disabled={isEditingSubmitting || !editCategoryName.trim()}
                   className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs"
                 >
                   {isEditingSubmitting ? "Updating..." : "Update Subject"}
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
             </form>
           </AlertDialogContent>

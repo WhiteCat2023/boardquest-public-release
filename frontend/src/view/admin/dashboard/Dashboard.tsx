@@ -13,6 +13,7 @@ import { DashboardKpiCards } from "./components/DashboardKpiCards";
 import { SubjectOverviewSection } from "./components/SubjectOverviewSection";
 import { RecentQuestionsCard } from "./components/RecentQuestionsCard";
 import { StudentRosterCard } from "./components/StudentRosterCard";
+import { StudentPassingRateAnalytics } from "./components/StudentPassingRateAnalytics";
 import { useCategoriesTotalCount } from "@/hooks/useCategories";
 
 export default function Dashboard() {
@@ -114,7 +115,8 @@ export default function Dashboard() {
           totalFaculties={totalFaculties}
         />
 
-
+        {/* Student Passing Rate Analytics: Line Graph + Pie/Donut Chart */}
+        <StudentPassingRateAnalytics />
 
         {/* 6 Major Licensure Examination Subjects Overview */}
         <SubjectOverviewSection />

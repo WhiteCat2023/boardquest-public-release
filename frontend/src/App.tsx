@@ -20,9 +20,7 @@ import LogsManagement from "./view/admin/logs_management/LogsManagement";
 import QuestionBank from "./view/admin/question_bank/QuestionBank";
 import MyQuestions from "./view/admin/question_bank/MyQuestions";
 import ReviewQuestions from "./view/admin/question_bank/ReviewQuestions";
-import LiveQuestions from "./view/admin/question_bank/LiveQuestions";
 import SharedLibrary from "./view/admin/question_bank/SharedLibrary";
-import PermissionManagement from "./view/admin/question_bank/PermissionManagement";
 import Analytics from "./view/admin/Analytics";
 import Settings from "./view/admin/settings/Settings";
 import ProfileSettings from "./view/admin/ProfileSettings";
@@ -33,7 +31,6 @@ import AddQuestion from "./view/admin/question_bank/AddQuestion";
 import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
 import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
 import RevisionDesk from "./view/admin/question_bank/RevisionDesk";
-import AddedFacultyUsingCSV from "./view/admin/faculty/AddedFacultyUsingCSV";
 import AddedStudentUsingCSV from "./view/admin/student_management/AddedStudentUsingCSV";
 import EnrollStudentPage from "./view/admin/student_management/EnrollStudentPage";
 import ViewStudent from "./view/admin/student_management/ViewStudent";
@@ -95,7 +92,7 @@ function App() {
                 />
                 <Route
                   path="faculty-management/import"
-                  element={<AddedFacultyUsingCSV />}
+                  element={<AddFacultyMember />}
                 />
                 <Route
                   path="student-management"
@@ -170,14 +167,6 @@ function App() {
                   path="question-bank/review-questions"
                   element={<ReviewQuestions />}
                 />
-                <Route
-                  path="question-bank/published"
-                  element={<LiveQuestions />}
-                />
-                <Route
-                  path="question-bank/live-questions"
-                  element={<LiveQuestions />}
-                />
                 <Route path="question-bank/bank" element={<SharedLibrary />} />
                 <Route
                   path="question-bank/shared-library"
@@ -186,10 +175,6 @@ function App() {
                 <Route
                   path="question-bank/revisions"
                   element={<RevisionDesk />}
-                />
-                <Route
-                  path="question-bank/permissions"
-                  element={<PermissionManagement />}
                 />
                 <Route path="revisions" element={<RevisionDesk />} />
                 <Route path="question-bank/create" element={<AddQuestion />} />

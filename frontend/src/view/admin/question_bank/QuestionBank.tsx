@@ -16,10 +16,9 @@ import useAuth from "@/hooks/useAuth";
 import { useCategories } from "@/view/admin/faculty/hooks/useFaculty";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AuthorRequestsCard } from "./components/AuthorRequestsCard";
 
 export interface QuestionBankProps {
-  defaultView?: "bank" | "review" | "my-questions" | "published" | "revisions";
+  defaultView?: "bank" | "review" | "my-questions" | "revisions";
 }
 
 function QuestionBank({ defaultView }: QuestionBankProps = {}) {
@@ -52,11 +51,6 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
     if (currentUserId) {
       filters.authorId = currentUserId;
     }
-    if (selectedStatus && selectedStatus !== "ALL") {
-      filters.status = selectedStatus;
-    }
-  } else if (view === "published") {
-    filters.isPublished = true;
     if (selectedStatus && selectedStatus !== "ALL") {
       filters.status = selectedStatus;
     }
@@ -98,11 +92,6 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
         return {
           title: "My Questions",
           desc: "Browse and manage draft questions authored by you.",
-        };
-      case "published":
-        return {
-          title: "Live Questions",
-          desc: "Approved and published questions currently active for exams.",
         };
       case "revisions":
         return {
@@ -268,8 +257,6 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
 
       {/* ── Main Panel: Question Bank Content ── */}
       <main className="flex-1 overflow-y-auto flex flex-col p-6 md:p-8 space-y-6">
-        <AuthorRequestsCard />
-
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
@@ -298,7 +285,7 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
           <QuestionFilter />
           <QuestionList
             filters={filters}
-            isLiveView={view === "published"}
+            isLiveView={false}
             isBankView={view === "bank"}
           />
         </div>

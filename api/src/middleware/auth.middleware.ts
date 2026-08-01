@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
+import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "../services/admin/bootstrap.service";
 
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    username: string;
+    username?: string;
     name: string;
     role?: string;
     isActive?: boolean;
@@ -49,16 +50,28 @@ export const authenticateToken = async (
     const superAdminId = "superadmin-env-id";
     const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
 
-    let user;
-    if (decoded.id === superAdminId || decoded.id === envSuperAdminEmail) {
-      user = {
-        id: superAdminId,
-        email: envSuperAdminEmail,
-        username: process.env.SUPERADMIN_USERNAME || "superadmin",
-        name: process.env.SUPERADMIN_NAME || "System Super Administrator",
-        role: "SUPERADMIN",
-        isActive: true,
-      };
+    let user: any;
+    if (decoded.id === superAdminId || decoded.id === envSuperAdminEmail || decoded.id === SUPERADMIN_DEFAULT_ID) {
+      const dbSuperAdmin = await ensureSuperAdminExists();
+      if (dbSuperAdmin) {
+        user = {
+          id: dbSuperAdmin.id,
+          email: dbSuperAdmin.email,
+          username: dbSuperAdmin.username,
+          name: dbSuperAdmin.name,
+          role: dbSuperAdmin.role,
+          isActive: true,
+        };
+      } else {
+        user = {
+          id: SUPERADMIN_DEFAULT_ID,
+          email: envSuperAdminEmail,
+          username: process.env.SUPERADMIN_USERNAME || "superadmin",
+          name: process.env.SUPERADMIN_NAME || "System Super Administrator",
+          role: "SUPERADMIN",
+          isActive: true,
+        };
+      }
     } else {
       user = await prisma.adminUser.findUnique({
         where: { id: decoded.id },
@@ -182,9 +195,7 @@ export const optionalAuth = async (
       select: {
         id: true,
         email: true,
-        username: true,
         name: true,
-        role: true,
       },
     });
 

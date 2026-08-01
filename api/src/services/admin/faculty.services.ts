@@ -13,8 +13,7 @@ export const createFacultySchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.nativeEnum(Role),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-  departmentId: z.string().min(1, "Department is required"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters").optional().default(""),
   password: z.string().optional().default(""),
   handledCategoryIds: z.array(z.string()).optional().default([]),
 });
@@ -24,7 +23,6 @@ export const updateFacultySchema = z.object({
   email: z.string().email("Invalid email address").optional(),
   role: z.nativeEnum(Role).optional(),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits").optional(),
-  departmentId: z.string().min(1, "Department is required").optional(),
   username: z.string().min(3, "Username must be at least 3 characters").optional(),
   password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
@@ -42,7 +40,6 @@ const facultySelect = {
   username: true,
   role: true,
   phoneNumber: true,
-  departmentId: true,
   handledCategoryIds: true,
   questionPermissions: true,
   isActive: true,
@@ -104,7 +101,6 @@ export class FacultyService {
       lastActiveAt: new Date(),
       createdAt: new Date("2026-01-01"),
       updatedAt: new Date(),
-      department: { id: "system-dept", name: "Executive Administration" },
       handledCategories: [],
     };
 
@@ -122,10 +118,6 @@ export class FacultyService {
 
     if (role && role !== "ALL") {
       where.role = role;
-    }
-
-    if (departmentId && departmentId !== "ALL") {
-      where.departmentId = departmentId;
     }
 
     if (status && status !== "ALL") {
@@ -149,10 +141,6 @@ export class FacultyService {
     }
 
     if (role && role !== "ALL" && envSuperAdmin.role !== role) {
-      matchesEnvSuperAdmin = false;
-    }
-
-    if (departmentId && departmentId !== "ALL" && envSuperAdmin.department.id !== departmentId && envSuperAdmin.department.name.toLowerCase() !== departmentId.toLowerCase()) {
       matchesEnvSuperAdmin = false;
     }
 
@@ -205,7 +193,12 @@ export class FacultyService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { employeeId, name, email, role, phoneNumber, departmentId, username, password, handledCategoryIds } = parsed.data;
+    const { employeeId, name, email, role, phoneNumber, username, password, handledCategoryIds } = parsed.data;
+
+    // Auto-generate username if omitted
+    const finalUsername = username && username.trim().length >= 3
+      ? username.trim()
+      : `${name.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}.${Math.floor(100 + Math.random() * 900)}`;
 
     // Role hierarchy validation
     if (!this.isAllowedToManageRole(creatorRole, role)) {
@@ -217,7 +210,7 @@ export class FacultyService {
       where: {
         OR: [
           { email },
-          { username },
+          { username: finalUsername },
           { employeeId }
         ]
       }
@@ -225,7 +218,7 @@ export class FacultyService {
 
     if (existing) {
       if (existing.email === email) throw new ApiError(409, "Email is already in use");
-      if (existing.username === username) throw new ApiError(409, "Username is already in use");
+      if (existing.username === finalUsername) throw new ApiError(409, "Username is already in use");
       if (existing.employeeId === employeeId) throw new ApiError(409, "Employee ID is already in use");
     }
 
@@ -243,8 +236,7 @@ export class FacultyService {
         email,
         role,
         phoneNumber,
-        departmentId,
-        username,
+        username: finalUsername,
         password: hash,
         handledCategoryIds: handledCategoryIds || [],
       },
@@ -331,16 +323,13 @@ export class FacultyService {
     email: string;
     role?: string;
     employeeId?: string;
-    username?: string;
     phoneNumber?: string;
-    departmentName?: string;
-    departmentId?: string;
+    username?: string;
   }>, creatorRole: string) {
     if (!Array.isArray(members) || members.length === 0) {
       throw new ApiError(400, "No faculty entries provided for import.");
     }
 
-    const departments = await this.db.department.findMany();
     const createdMembers: any[] = [];
     const errors: Array<{ email: string; name: string; error: string }> = [];
 
@@ -360,16 +349,8 @@ export class FacultyService {
         continue;
       }
 
-      let deptId = item.departmentId;
-      if (!deptId && item.departmentName) {
-        const found = departments.find(d => d.name.toLowerCase() === item.departmentName?.trim().toLowerCase());
-        if (found) {
-          deptId = found.id;
-        }
-      }
-
       const empId = item.employeeId?.trim() || `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
-      const uname = item.username?.trim().toLowerCase() || email.split("@")[0].replace(/[^a-z0-9]/g, "");
+      const uname = item.username?.trim().toLowerCase() || `${email.split("@")[0].replace(/[^a-z0-9]/g, "")}.${Math.floor(100 + Math.random() * 900)}`;
 
       const existing = await this.db.adminUser.findFirst({
         where: {
@@ -398,14 +379,10 @@ export class FacultyService {
             email,
             role: targetRole as any,
             phoneNumber: item.phoneNumber?.trim() || "N/A",
-            departmentId: deptId || null,
             username: uname,
             password: hash,
             handledCategoryIds: [],
           },
-          include: {
-            department: true,
-          }
         });
 
         sendFacultyCredentialsEmail({

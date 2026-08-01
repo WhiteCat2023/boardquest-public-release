@@ -26,7 +26,6 @@ describe('Faculty Routes', () => {
     username: 'janedoe',
     role: 'TEACHER',
     phoneNumber: '09171234567',
-    departmentId: 'dept-1',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -44,7 +43,7 @@ describe('Faculty Routes', () => {
     it('should retrieve all faculty members and sanitize passwords', async () => {
       const mockFacultyList = [
         { ...mockFacultyMember, password: 'hashedpassword' },
-        { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', username: 'johnsmith', role: 'TEAMLEAD', phoneNumber: '09177654321', departmentId: 'dept-1', password: 'hashedpassword2' }
+        { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', username: 'johnsmith', role: 'TEAMLEAD', phoneNumber: '09177654321', password: 'hashedpassword2' }
       ];
 
       (facultyService.getAllFaculty as jest.Mock).mockResolvedValue(mockFacultyList);
@@ -80,7 +79,6 @@ describe('Faculty Routes', () => {
       username: 'janedoe',
       password: 'password123',
       phoneNumber: '09171234567',
-      departmentId: 'dept-1',
       role: 'TEACHER'
     };
 

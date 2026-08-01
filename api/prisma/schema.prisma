@@ -65,16 +65,10 @@ model AdminUser {
   role      Role
   phoneNumber String
 
-  department    Department? @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  departmentId  String?     @db.ObjectId 
-
   createdCategory Category[] @relation("CategoryAuthor")
   handledCategories Category[] @relation("HandledCategories", fields: [handledCategoryIds], references: [id])
   handledCategoryIds String[] @db.ObjectId
   authoredModules LearningModule[] @relation("ModuleAuthor")
-
-  createdDepartments Department[] @relation("DepartmentAuthor")
-  updatedDepartments Department[] @relation("DepartmentUpdater")
 
   questionPermissions Json?
 
@@ -90,22 +84,6 @@ model AdminUser {
   reviewedRequests PermissionRequest[] @relation("RequestReviewer")
   assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
   createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
-}
-
-model Department {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name String @unique
-
-  author   AdminUser @relation("DepartmentAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  authorId String    @db.ObjectId
-
-  updater AdminUser? @relation("DepartmentUpdater", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedBy String?  @db.ObjectId
-
-  members AdminUser[] @relation("DepartmentMembers")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Question {

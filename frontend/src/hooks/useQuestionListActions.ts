@@ -148,7 +148,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             queryClient.invalidateQueries({ queryKey: ["questions"] });
             
             const actionText = variables.isPublished ? "Published" : "Unpublished";
-            const targetText = variables.isPublished ? "moved to Live Questions" : "moved back to Shared Library";
+            const targetText = variables.isPublished ? "published to system" : "unpublished to Shared Library";
 
             showUndoToast({
                 title: `Questions ${actionText}`,

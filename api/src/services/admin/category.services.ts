@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
+import { ensureSuperAdminExists } from "./bootstrap.service";
 
 // ============ Validation Schemas ============
 
 export const createNewCategorySchema = z.object({
   name: z.string().min(1, "Category name is required"),
-  authorId: z.string().min(1, "Author ID is required"),
+  authorId: z.string().optional().default(""),
   icon: z.string().optional(),
 });
 
@@ -69,10 +70,32 @@ export class CategoryService {
       throw new ApiError(400, "Category with this name already exists");
     }
 
+    let validAuthorId = authorId;
+    let authorExists = false;
+
+    if (validAuthorId && /^[0-9a-fA-F]{24}$/.test(validAuthorId)) {
+      const existingAuthor = await this.db.adminUser.findUnique({
+        where: { id: validAuthorId },
+        select: { id: true },
+      });
+      if (existingAuthor) {
+        authorExists = true;
+      }
+    }
+
+    if (!authorExists) {
+      const superAdmin = await ensureSuperAdminExists();
+      if (superAdmin?.id) {
+        validAuthorId = superAdmin.id;
+      } else {
+        throw new ApiError(400, "Valid author account required to create category.");
+      }
+    }
+
     const newCategory = await this.db.category.create({
       data: {
         name: name.trim(),
-        authorId,
+        authorId: validAuthorId,
         ...(icon ? { icon } : {}),
       },
     });

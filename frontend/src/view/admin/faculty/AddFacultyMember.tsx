@@ -1,28 +1,40 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { UserPlus, Users, ArrowLeft } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-import { ArrowLeft, UserPlus, AlertCircle, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { UserRole } from "@/types/question";
-import type { RoleType, CreateFacultyPayload } from "./types";
+import type { RoleType, CreateFacultyPayload, ParsedFacultyRow } from "./types";
 import { getAllowedRolesToCreate } from "./utils/facultyUtils";
-import { useDepartments, useCreateFaculty } from "./hooks/useFaculty";
-import FacultyProfileForm from "./components/FacultyProfileForm";
+import {
+  useDepartments,
+  useCreateFaculty,
+  useBulkCreateFaculty,
+} from "./hooks/useFaculty";
+import AddIndividualFacultyTab from "./components/AddIndividualFacultyTab";
+import AddBulkFacultyTab from "./components/AddBulkFacultyTab";
 
 export default function AddFacultyMember() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { auth } = useAuth();
-
   const currentUserRole = (auth as any)?.data?.user?.role as RoleType;
 
-  // Name State
+  // Active Tab: "individual" | "bulk"
+  const initialTab = searchParams.get("tab") === "bulk" ? "bulk" : "individual";
+  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+
+  const handleTabChange = (tab: "individual" | "bulk") => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
+
+  // ----------------------------------------------------
+  // INDIVIDUAL FORM STATE & HANDLERS
+  // ----------------------------------------------------
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-
-  // Form State
   const [formData, setFormData] = useState<CreateFacultyPayload>({
     employeeId: "",
     name: "",
@@ -30,24 +42,27 @@ export default function AddFacultyMember() {
     username: "",
     password: "",
     phoneNumber: "",
-    departmentId: "",
     role: UserRole.TEACHER as RoleType,
   });
-
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Queries & Mutations
-  const { data: departments = [], isLoading: isDepartmentsLoading } = useDepartments();
+  const { data: departments = [] } = useDepartments();
   const createMutation = useCreateFaculty();
 
-  // Set default department when loaded
   useEffect(() => {
     if (departments.length > 0 && !formData.departmentId) {
       setFormData((prev) => ({ ...prev, departmentId: departments[0].id }));
     }
   }, [departments]);
 
-  // Set default role based on current user permissions
+  // Auto-generate username from First Name & Last Name
+  const generateAutoUsername = (first: string, last: string) => {
+    const cleanFirst = first.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const cleanLast = last.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const base = cleanFirst && cleanLast ? `${cleanFirst}.${cleanLast}` : (cleanFirst || cleanLast || "faculty");
+    return `${base}.${Math.floor(100 + Math.random() * 900)}`;
+  };
+
   useEffect(() => {
     if (currentUserRole === UserRole.SUPERADMIN) {
       setFormData((prev) => ({ ...prev, role: UserRole.ADMIN }));
@@ -64,7 +79,7 @@ export default function AddFacultyMember() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleIndividualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
@@ -73,19 +88,17 @@ export default function AddFacultyMember() {
       return;
     }
 
-    if (!formData.departmentId) {
-      setErrorMsg("Please select a department.");
-      return;
-    }
-
     const fullName = [firstName.trim(), middleName.trim(), lastName.trim()]
       .filter(Boolean)
       .join(" ");
 
+    const autoUsername = generateAutoUsername(firstName, lastName);
+
     const payload: CreateFacultyPayload = {
       ...formData,
+      departmentId: formData.departmentId || (departments[0]?.id || ""),
       name: fullName,
-      username: username.trim(),
+      username: autoUsername,
     };
 
     createMutation.mutate(payload, {
@@ -101,86 +114,270 @@ export default function AddFacultyMember() {
     });
   };
 
+  // ----------------------------------------------------
+  // BULK CSV FORM STATE & HANDLERS
+  // ----------------------------------------------------
+  const [file, setFile] = useState<File | null>(null);
+  const [parsedRows, setParsedRows] = useState<ParsedFacultyRow[]>([]);
+  const [isParsing, setIsParsing] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const bulkCreateMutation = useBulkCreateFaculty();
+
+  const downloadSampleCSV = () => {
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      "Name,Email,Role,EmployeeID,PhoneNumber\n" +
+      "Dr. Jane Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567\n" +
+      "Prof. Mark Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321\n";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "boardquest_faculty_import_sample.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.info("Sample Faculty CSV template downloaded.");
+  };
+
+  const parseCSVText = (text: string) => {
+    const lines = text.split(/\r\n|\n/).filter((line) => line.trim().length > 0);
+    if (lines.length <= 1) {
+      toast.error("CSV file contains no records or header only.");
+      return [];
+    }
+
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ""));
+    const nameIdx = headers.findIndex((h) => h.includes("name"));
+    const emailIdx = headers.findIndex((h) => h.includes("email"));
+    const roleIdx = headers.findIndex((h) => h.includes("role"));
+    const empIdIdx = headers.findIndex((h) => h.includes("employee") || h.includes("empid") || h.includes("id"));
+    const phoneIdx = headers.findIndex((h) => h.includes("phone") || h.includes("number"));
+
+    const rows: ParsedFacultyRow[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const currentLine = lines[i].trim();
+      if (!currentLine) continue;
+
+      const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+      const name = nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : (values[0] || "");
+      const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
+      const role = roleIdx !== -1 && values[roleIdx] ? values[roleIdx].toUpperCase() : (values[2] ? values[2].toUpperCase() : "TEACHER");
+      const employeeId = empIdIdx !== -1 && values[empIdIdx] ? values[empIdIdx] : (values[3] || "");
+      const phoneNumber = phoneIdx !== -1 && values[phoneIdx] ? values[phoneIdx] : (values[4] || "");
+
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      let isValid = true;
+      let validationError = "";
+
+      if (!name) {
+        isValid = false;
+        validationError = "Missing Name";
+      } else if (!email || !isValidEmail) {
+        isValid = false;
+        validationError = "Invalid Email";
+      }
+
+      rows.push({
+        name,
+        email,
+        role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
+        employeeId: employeeId || undefined,
+        phoneNumber: phoneNumber || undefined,
+        isValid,
+        validationError,
+      });
+    }
+
+    return rows;
+  };
+
+  const processFile = (selectedFile: File) => {
+    if (!selectedFile.name.endsWith(".csv")) {
+      toast.error("Please upload a valid .csv file");
+      return;
+    }
+
+    setFile(selectedFile);
+    setIsParsing(true);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      const parsed = parseCSVText(text);
+      setParsedRows(parsed);
+      setIsParsing(false);
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read CSV file.");
+      setIsParsing(false);
+    };
+    reader.readAsText(selectedFile);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      processFile(selectedFile);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleRemoveRow = (index: number) => {
+    setParsedRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const validCount = parsedRows.filter((r) => r.isValid).length;
+
+  const handleBulkSubmit = () => {
+    const validMembers = parsedRows.filter((r) => r.isValid);
+    if (validMembers.length === 0) {
+      toast.error("No valid faculty entries to import.");
+      return;
+    }
+
+    bulkCreateMutation.mutate(
+      validMembers.map((m) => ({
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        employeeId: m.employeeId,
+        phoneNumber: m.phoneNumber,
+      })),
+      {
+        onSuccess: (res: any) => {
+          const createdCount = res?.createdCount || validMembers.length;
+          toast.success(`Successfully registered ${createdCount} faculty member(s)!`);
+          navigate("/faculty-management");
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || "Failed to process bulk faculty import.";
+          toast.error(msg);
+        },
+      }
+    );
+  };
+
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground max-w-5xl mx-auto">
+    <div className="flex flex-col gap-5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground max-w-5xl mx-auto animate-in fade-in duration-150">
       {/* Header & Back Navigation */}
-      <div className="flex flex-col gap-4 sticky top-0 bg-background/95 backdrop-blur-md pb-4 pt-4 -mt-4 z-10 border-b border-border">
+      <div className="flex flex-col gap-3 sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-2 -mt-2 z-10 border-b border-border/80">
         <div className="flex items-center gap-2">
           <Link
             to="/faculty-management"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group"
           >
-            <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-            Back to Faculty Directory
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            Back to Directory
           </Link>
         </div>
-        <div className="flex items-center justify-between">
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-              <div className="p-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/20">
-                <UserPlus size={22} className="stroke-[2.5]" />
+            <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
+                {activeTab === "individual" ? (
+                  <UserPlus size={18} className="stroke-[2.5]" />
+                ) : (
+                  <Users size={18} className="stroke-[2.5]" />
+                )}
               </div>
-              Add New Faculty Member
+              {activeTab === "individual" ? "Add New Faculty Member" : "Bulk Import Faculty Members"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create a new account for an instructor, course coordinator, or administrator.
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {activeTab === "individual"
+                ? "Register an individual faculty member account for academic access and management."
+                : "Batch upload multiple faculty accounts via CSV spreadsheet."}
             </p>
+          </div>
+
+          {/* ── Segmented Pill Tabs: Add User(individual) & Add Users(bulk) ── */}
+          <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
+            <button
+              type="button"
+              onClick={() => handleTabChange("individual")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "individual"
+                  ? "bg-card text-foreground shadow-2xs border border-border/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <UserPlus size={13} />
+              Add User(individual)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange("bulk")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "bulk"
+                  ? "bg-card text-foreground shadow-2xs border border-border/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={13} />
+              Add Users(bulk)
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Form Container */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {errorMsg && (
-          <div className="flex items-center gap-3 p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl text-xs font-semibold animate-in fade-in duration-200">
-            <AlertCircle size={18} className="shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* Modular Form Cards */}
-        <FacultyProfileForm
+      {/* ── TAB 1: Add User (individual) ── */}
+      {activeTab === "individual" && (
+        <AddIndividualFacultyTab
+          errorMsg={errorMsg}
           formData={formData}
           firstName={firstName}
           middleName={middleName}
           lastName={lastName}
           allowedRoles={allowedRoles}
-          departments={departments}
-          isDepartmentsLoading={isDepartmentsLoading}
+          isPending={createMutation.isPending}
           onFirstNameChange={setFirstName}
           onMiddleNameChange={setMiddleName}
           onLastNameChange={setLastName}
-          onChange={handleFieldChange}
-          onCategoryChange={(categoryIds) => setFormData((prev) => ({ ...prev, handledCategoryIds: categoryIds }))}
-          username={username}
-          onUsernameChange={setUsername}
+          onFieldChange={handleFieldChange}
+          onCategoryChange={(categoryIds) =>
+            setFormData((prev) => ({ ...prev, handledCategoryIds: categoryIds }))
+          }
+          onSubmit={handleIndividualSubmit}
+          onCancel={() => navigate("/faculty-management")}
         />
+      )}
 
-        {/* Actions Bar */}
-        <div className="flex items-center justify-end gap-4 pt-4 pb-8">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/faculty-management")}
-            disabled={createMutation.isPending}
-            className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-6 py-2.5 rounded-xl h-11"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-8 py-2.5 rounded-xl h-11 shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-          >
-            {createMutation.isPending ? (
-              <span className="inline-block animate-spin border-2 border-primary-foreground border-t-transparent rounded-full w-4 h-4" />
-            ) : (
-              <Sparkles size={16} />
-            )}
-            Register Faculty Account
-          </Button>
-        </div>
-      </form>
+      {/* ── TAB 2: Add Users (bulk) ── */}
+      {activeTab === "bulk" && (
+        <AddBulkFacultyTab
+          file={file}
+          parsedRows={parsedRows}
+          validCount={validCount}
+          isParsing={isParsing}
+          dragActive={dragActive}
+          currentUserRole={currentUserRole}
+          isPending={bulkCreateMutation.isPending}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+          onFileChange={handleFileChange}
+          onRemoveFile={() => {
+            setFile(null);
+            setParsedRows([]);
+          }}
+          onRemoveRow={handleRemoveRow}
+          onDownloadSampleCSV={downloadSampleCSV}
+          onSubmit={handleBulkSubmit}
+          onCancel={() => navigate("/faculty-management")}
+        />
+      )}
     </div>
   );
 }

@@ -54,7 +54,8 @@ export default function ViewFacultyMember() {
   const navigate = useNavigate();
   const { auth } = useAuth();
 
-  const { data: faculties = [], isLoading } = useFaculties();
+  const { data: facultyResponse, isLoading } = useFaculties();
+  const faculties = facultyResponse?.faculties ?? [];
   const { data: allCategories = [], isLoading: isCategoriesLoading } =
     useCategories();
 

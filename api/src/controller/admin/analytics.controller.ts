@@ -14,3 +14,8 @@ export const getStudentAnalyticsReport = asyncHandler(async (req: AuthenticatedR
   const report = await analyticsService.getStudentAnalytics(studentId as string);
   return new ApiResponse(200, report, "Student analytics generated successfully").send(res);
 });
+
+export const getDashboardAnalyticsSummary = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const summary = await analyticsService.getDashboardAnalyticsSummary();
+  return new ApiResponse(200, summary, "Dashboard analytics summary retrieved successfully").send(res);
+});

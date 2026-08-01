@@ -5,7 +5,17 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 
 export const createCategory = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
-  const category = await categoryServices.createNewCategory((req as any).body);
+  const reqAny = req as any;
+  const authorId =
+    reqAny.user?.id ||
+    req.body?.authorId ||
+    reqAny.data?.user?.id ||
+    reqAny.data?.id;
+
+  const category = await categoryServices.createNewCategory({
+    ...req.body,
+    authorId,
+  });
   return new ApiResponse(201, { category }, "Category created successfully").send(res);
 });
 

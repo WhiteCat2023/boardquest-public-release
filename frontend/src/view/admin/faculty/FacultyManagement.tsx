@@ -218,27 +218,6 @@ export default function FacultyManagement() {
             </SelectContent>
           </Select>
 
-          {/* Department Filter */}
-          <Select
-            value={selectedDept}
-            onValueChange={(v) => {
-              setSelectedDept(v);
-              resetPaginationOnFilterChange();
-            }}
-          >
-            <SelectTrigger className="h-8 w-[145px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-              <SelectValue placeholder="Department" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectItem value="ALL">All Departments</SelectItem>
-              {departments.map((dept) => (
-                <SelectItem key={dept.id} value={dept.id}>
-                  {dept.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           {/* Status Filter */}
           <Select
             value={selectedStatus}

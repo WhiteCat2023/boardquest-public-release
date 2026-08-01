@@ -19,11 +19,6 @@ export const superAdminNavItem: NavItemProps[] = [
                 path: "/faculty-management",
                 icon: "Users"
             },
-            {
-                title: "Permissions",
-                path: "/question-bank/permissions",
-                icon: "ShieldCheck"
-            },
         ]
     },
     {
@@ -51,7 +46,6 @@ export const superAdminNavItem: NavItemProps[] = [
                 subItems: [
                     { title: "My Questions", path: "/question-bank/my-questions" },
                     { title: "Review Questions", path: "/question-bank/review-questions" },
-                    { title: "Live Questions", path: "/question-bank/live-questions" },
                     { title: "Shared Library", path: "/question-bank/shared-library" },
                     { title: "Revisions", path: "/question-bank/revisions" }
                 ]
@@ -65,11 +59,6 @@ export const superAdminNavItem: NavItemProps[] = [
                 title: "Students",
                 path: "/student-management",
                 icon: "GraduationCap"
-            },
-            {
-                title: "Students Evaluation",
-                path: "/student-management?view=evaluation",
-                icon: "ClipboardCheck"
             },
             {
                 title: "Analytics",

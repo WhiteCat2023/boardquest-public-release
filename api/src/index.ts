@@ -14,6 +14,7 @@ import cors from "cors";
 // import gameRoutes from "./routes/admin/game_module/game.routes";
 import { seedAdminUserDb } from "./services/prisma";
 import { apiLimiter } from "./middleware/rateLimit.middleware";
+import { ensureSuperAdminExists } from "./services/admin/bootstrap.service";
 import { startQueue, stopQueue } from "./services/queue.service";
 
 const app = express();
@@ -26,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api", apiLimiter);
 
-// await seedAdminUserDb();
+await ensureSuperAdminExists();
 await startQueue();
 
 app.use("/api/auth", authRoutes);

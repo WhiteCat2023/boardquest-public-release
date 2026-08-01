@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Search, RotateCcw, X, GraduationCap, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,10 +19,6 @@ import QuestionListPagination from "@/components/custom/pagination/QuestionListP
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentManagement() {
-  const [searchParams] = useSearchParams();
-  const view = searchParams.get("view") || "students";
-  const isEvaluation = view === "evaluation";
-
   const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">("DIRECTORY");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
@@ -81,12 +76,8 @@ export default function StudentManagement() {
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <StudentHeader
-          title={isEvaluation ? "Students Evaluation" : "Student Directory & Enrollment"}
-          description={
-            isEvaluation
-              ? "Track student performance, exam evaluation history, and academic progress."
-              : "Manage enrolled students, academic programs, and evaluation eligibility."
-          }
+          title="Student Directory & Enrollment"
+          description="Manage enrolled students, academic programs, and evaluation eligibility."
         />
 
         {/* Tab Switcher */}
