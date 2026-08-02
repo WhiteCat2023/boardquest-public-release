@@ -8,7 +8,7 @@ export default function AddFacultyButton() {
   return (
     <MarronButton
       icon={<UserPlus size={18} />}
-      label="Add Faculty Member"
+      label="Add User"
       onClick={() => navigate("/faculty-management/create")}
     />
   );

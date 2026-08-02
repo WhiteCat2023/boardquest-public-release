@@ -8,6 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { MessageSquare, Sparkles, Check } from "lucide-react";
 
 interface AuthorReviewFeedbackModalProps {
@@ -155,7 +156,7 @@ export default function AuthorReviewFeedbackModal({
             >
               {isPending ? (
                 <>
-                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-3.5 h-3.5" />
+                  <Spinner size="xs" variant="current" />
                   Sending Feedback...
                 </>
               ) : (

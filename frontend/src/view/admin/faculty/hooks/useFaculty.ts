@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type { FacultyMember, Department, CreateFacultyPayload } from "../types";
+import type { FacultyMember, CreateFacultyPayload } from "../types";
 
 export function useFaculties(params?: {
   search?: string;
@@ -41,23 +41,24 @@ export function useFaculties(params?: {
   });
 }
 
-export function useDepartments() {
-  const axiosPrivate = useAxiosPrivate();
+// export function useDepartments() {
+//   const axiosPrivate = useAxiosPrivate();
 
-  return useQuery<Department[]>({
-    queryKey: ["departments"],
-    queryFn: async () => {
-      const response = await axiosPrivate.get("/departments/get");
-      const resData = response.data?.data;
-      if (Array.isArray(resData)) return resData;
-      if (Array.isArray(resData?.departments)) return resData.departments;
-      if (Array.isArray(response.data?.departments)) return response.data.departments;
-      return [];
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-  });
-}
+//   return useQuery<Department[]>({
+//     queryKey: ["departments"],
+//     queryFn: async () => {
+//       const response = await axiosPrivate.get("/departments/get");
+//       const resData = response.data?.data;
+//       if (Array.isArray(resData)) return resData;
+//       if (Array.isArray(resData?.departments)) return resData.departments;
+//       if (Array.isArray(response.data?.departments))
+//         return response.data.departments;
+//       return [];
+//     },
+//     staleTime: 1000 * 60 * 5,
+//     refetchOnWindowFocus: false,
+//   });
+// }
 
 export function useCreateFaculty() {
   const axiosPrivate = useAxiosPrivate();
@@ -78,15 +79,15 @@ export function useBulkCreateFaculty() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (members: Array<{
-      name: string;
-      email: string;
-      role?: string;
-      employeeId?: string;
-      phoneNumber?: string;
-      departmentName?: string;
-      departmentId?: string;
-    }>) => {
+    mutationFn: async (
+      members: Array<{
+        name: string;
+        email: string;
+        role?: string;
+        employeeId?: string;
+        phoneNumber?: string;
+      }>,
+    ) => {
       return await axiosPrivate.post("/faculty/bulk", { members });
     },
     onSuccess: () => {
@@ -107,9 +108,13 @@ export function useToggleFacultyStatus() {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
     },
   });
-} 
+}
 
-export function useCategories(params?: { isPublished?: boolean; status?: string; authorId?: string }) {
+export function useCategories(params?: {
+  isPublished?: boolean;
+  status?: string;
+  authorId?: string;
+}) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
@@ -130,8 +135,16 @@ export function useUpdateFacultyCategories() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, categoryIds }: { id: string; categoryIds: string[] }) => {
-      return await axiosPrivate.patch(`/faculty/${id}/categories`, { categoryIds });
+    mutationFn: async ({
+      id,
+      categoryIds,
+    }: {
+      id: string;
+      categoryIds: string[];
+    }) => {
+      return await axiosPrivate.patch(`/faculty/${id}/categories`, {
+        categoryIds,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });

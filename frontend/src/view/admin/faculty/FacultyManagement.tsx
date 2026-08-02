@@ -7,7 +7,6 @@ import { getAllowedRolesToCreate } from "./utils/facultyUtils";
 import {
   useFaculties,
   useToggleFacultyStatus,
-  useDepartments,
 } from "./hooks/useFaculty";
 import FacultyHeader from "./components/FacultyHeader";
 import FacultyTable from "./components/FacultyTable";
@@ -32,13 +31,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export default function FacultyManagement() {
   const { auth } = useAuth();
 
-  const currentUserRole = (auth as any)?.data?.user?.role as RoleType;
-  const currentUserId = (auth as any)?.data?.user?.id;
+  const currentUserRole = auth?.data?.user?.role as RoleType;
+  const currentUserId = auth?.data?.user?.id;
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,20 +50,21 @@ export default function FacultyManagement() {
   const [cursorsStack, setCursorsStack] = useState<(string | null)[]>([null]);
   const currentCursor = cursorsStack[currentPageIndex] || null;
 
-  const { data: facultyResponse, isLoading: isFacultiesLoading } = useFaculties({
-    search: searchTerm,
-    role: selectedRole,
-    departmentId: selectedDept,
-    status: selectedStatus,
-    cursor: currentCursor || undefined,
-    limit: ITEMS_PER_PAGE,
-  });
+  const { data: facultyResponse, isLoading: isFacultiesLoading } = useFaculties(
+    {
+      search: searchTerm,
+      role: selectedRole,
+      departmentId: selectedDept,
+      status: selectedStatus,
+      cursor: currentCursor || undefined,
+      limit: ITEMS_PER_PAGE,
+    },
+  );
 
   const faculties = facultyResponse?.faculties || [];
   const nextCursor = facultyResponse?.nextCursor || null;
   const hasNextPage = facultyResponse?.hasNextPage || false;
 
-  const { data: departments = [] } = useDepartments();
   const toggleStatusMutation = useToggleFacultyStatus();
 
   const resetPaginationOnFilterChange = () => {

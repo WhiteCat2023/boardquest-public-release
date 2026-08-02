@@ -8,10 +8,7 @@ import {
   createFaculty,
   toggleFacultyStatus,
   updateFacultyCategories,
-  updateFacultyPermissions,
-  createPermissionRequest,
-  getPermissionRequests,
-  reviewPermissionRequest,
+  bulkCreateFaculty
 } from "../../controller/admin/faculty.controller";
 
 const router = Router();
@@ -30,22 +27,11 @@ router.post(
   createFaculty,
 );
 
-// Permission Requests Endpoints
 router.post(
-  "/permission-requests",
+  "/bulk",
   authenticateToken,
-  createPermissionRequest,
-);
-router.get(
-  "/permission-requests",
-  authenticateToken,
-  getPermissionRequests,
-);
-router.put(
-  "/permission-requests/:id/review",
-  authenticateToken,
-  reviewPermissionRequest,
-);
+  requireRoles(["SUPERADMIN", "ADMIN"]),
+  bulkCreateFaculty);
 
 router.patch(
   "/:id/status",
@@ -58,12 +44,6 @@ router.patch(
   authenticateToken,
   requireRoles(["SUPERADMIN", "ADMIN"]),
   updateFacultyCategories,
-);
-router.put(
-  "/:id/permissions",
-  authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN"]),
-  updateFacultyPermissions,
 );
 
 export default router;

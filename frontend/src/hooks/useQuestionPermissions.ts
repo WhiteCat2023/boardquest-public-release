@@ -5,13 +5,11 @@ export interface QuestionPermissions {
   currentUserRole: string | undefined;
   currentUserId: string | undefined;
   isAuthor: boolean;
-  isLocked: boolean;
   canView: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canFeedback: boolean;
   canApprove: boolean;
-  canPublish: boolean;
   canComment: boolean;
 }
 
@@ -26,13 +24,11 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
       currentUserRole: undefined,
       currentUserId: undefined,
       isAuthor: false,
-      isLocked: false,
       canView: false,
       canEdit: false,
       canDelete: false,
       canFeedback: false,
       canApprove: false,
-      canPublish: false,
       canComment: false,
     };
   }
@@ -40,43 +36,39 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
   const isAuthor = Boolean(
     question && question.authorId && currentUserId && question.authorId === currentUserId
   );
-  const isLocked = Boolean(question && question.isPublished);
 
   // View Permissions
   const canView = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.ADMIN ||
       currentUserRole === UserRole.TEAMLEAD ||
-      (currentUserRole === UserRole.TEACHER && (question?.isPublished || isAuthor))
+      (currentUserRole === UserRole.TEACHER && isAuthor)
   );
 
-  // Edit Permissions: Cannot edit if published
+  // Edit Permissions
   const canEdit = Boolean(
-    !isLocked &&
-      (currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
-        currentUserRole === UserRole.TEAMLEAD ||
-        (currentUserRole === UserRole.TEACHER &&
-          isAuthor &&
-          (question?.status === QuestionStatus.DRAFT ||
-            question?.status === QuestionStatus.NEEDS_REVISION ||
-            question?.status === QuestionStatus.PENDING_REVIEW)))
+    currentUserRole === UserRole.SUPERADMIN ||
+      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.TEAMLEAD ||
+      (currentUserRole === UserRole.TEACHER &&
+        isAuthor &&
+        (question?.status === QuestionStatus.DRAFT ||
+          question?.status === QuestionStatus.NEEDS_REVISION ||
+          question?.status === QuestionStatus.PENDING_REVIEW))
   );
 
-  // Delete Permissions: Cannot delete if published
+  // Delete Permissions
   const canDelete = Boolean(
-    !isLocked &&
-      (currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
-        (currentUserRole === UserRole.TEACHER && isAuthor && question?.status === QuestionStatus.DRAFT))
+    currentUserRole === UserRole.SUPERADMIN ||
+      currentUserRole === UserRole.ADMIN ||
+      (currentUserRole === UserRole.TEACHER && isAuthor && question?.status === QuestionStatus.DRAFT)
   );
 
   // Feedback & Revision Request Permissions
   const canFeedback = Boolean(
-    !isLocked &&
-      (currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
-        currentUserRole === UserRole.TEAMLEAD)
+    currentUserRole === UserRole.SUPERADMIN ||
+      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.TEAMLEAD
   );
 
   // Approval Permissions
@@ -86,14 +78,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
       currentUserRole === UserRole.TEAMLEAD
   );
 
-  // Publish / Unpublish Permissions
-  const canPublish = Boolean(
-    currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
-      currentUserRole === UserRole.TEAMLEAD
-  );
-
-  // Comment / Feedback reply permissions (Authors can reply to feedback, Reviewers can leave comments)
+  // Comment / Feedback reply permissions
   const canComment = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.ADMIN ||
@@ -105,13 +90,11 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
     currentUserRole,
     currentUserId,
     isAuthor,
-    isLocked,
     canView,
     canEdit,
     canDelete,
     canFeedback,
     canApprove,
-    canPublish,
     canComment,
   };
 }

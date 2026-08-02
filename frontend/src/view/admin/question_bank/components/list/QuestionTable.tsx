@@ -28,19 +28,15 @@ interface QuestionTableProps {
   onItemsPerPageChange: (val: number) => void;
   canManageBulk: boolean;
   onApprove?: () => void;
-  onPublish: () => void;
-  onUnpublish: () => void;
   onFeedback: () => void;
   onResubmitReview?: () => void;
   onBulkDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
-  isPublishPending: boolean;
   isFeedbackPending: boolean;
   isResubmitPending?: boolean;
   isDeletePending: boolean;
   isRevisionsView?: boolean;
-  isLiveView?: boolean;
   isBankView?: boolean;
 }
 
@@ -54,19 +50,15 @@ export default function QuestionTable({
   onItemsPerPageChange,
   canManageBulk,
   onApprove,
-  onPublish,
-  onUnpublish,
   onFeedback,
   onResubmitReview,
   onBulkDelete,
   onClear,
   isApprovePending,
-  isPublishPending,
   isFeedbackPending,
   isResubmitPending,
   isDeletePending,
   isRevisionsView = false,
-  isLiveView = false,
   isBankView = false,
 }: QuestionTableProps) {
   const navigate = useNavigate();
@@ -108,19 +100,15 @@ export default function QuestionTable({
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
           onApprove={onApprove}
-          onPublish={onPublish}
-          onUnpublish={onUnpublish}
           onFeedback={onFeedback}
           onResubmitReview={onResubmitReview}
           onDelete={onBulkDelete}
           onClear={onClear}
           isApprovePending={isApprovePending}
-          isPublishPending={isPublishPending}
           isFeedbackPending={isFeedbackPending}
           isResubmitPending={isResubmitPending}
           isDeletePending={isDeletePending}
           isRevisionsView={isRevisionsView}
-          isLiveView={isLiveView}
           isBankView={isBankView}
         />
 

@@ -12,8 +12,6 @@ import {
   GraduationCap,
   Calendar,
   AlertCircle,
-  Globe,
-  EyeOff,
   Send,
   KeyRound,
   CheckCircle2,
@@ -22,10 +20,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
-import { QuestionStatus, UserRole } from "@/types/question";
+import { QuestionStatus } from "@/types/question";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 import useQuestionPermissions from "@/hooks/useQuestionPermissions";
+import QuestionLifecycleStepper from "./components/QuestionLifecycleStepper";
 import { useQuestionDetail } from "@/hooks/useQuestionBank";
+import { Spinner } from "@/components/ui/spinner";
 import AuthorReviewFeedbackModal from "./components/dialog/AuthorReviewFeedbackModal";
 
 export default function ViewQuestion() {
@@ -54,12 +54,9 @@ export default function ViewQuestion() {
   const {
     canEdit,
     canDelete,
-    canPublish,
     canApprove,
     canFeedback,
-    canComment,
     isAuthor,
-    isLocked,
   } = useQuestionPermissions(question);
 
   const approveMutation = useMutation({
@@ -166,44 +163,10 @@ export default function ViewQuestion() {
     });
   };
 
-  const publishMutation = useMutation({
-    mutationFn: async (isPublished: boolean) => {
-      await axiosPrivate.put(`/questions/publish/${questionId}`, { isPublished });
-    },
-    onSuccess: (_, isPublished) => {
-      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-      showUndoToast({
-        title: isPublished ? "Question Published" : "Question Unpublished",
-        message: isPublished ? "Question is now Live" : "Question moved to Shared Library",
-        duration: 5000,
-        onUndo: async () => {
-          try {
-            await axiosPrivate.put(`/questions/publish/${questionId}`, { isPublished: !isPublished });
-            toast.info("Reverted publish state.");
-            queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-          } catch (err: any) {
-            toast.error("Failed to undo publish action.");
-          }
-        },
-      });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update publish state.");
-    }
-  });
-
-  const handleTogglePublish = () => {
-    if (!question) return;
-    const nextState = !question.isPublished;
-    publishMutation.mutate(nextState);
-  };
-
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <div className="animate-spin border-4 border-primary border-t-transparent rounded-full w-12 h-12" />
+        <Spinner size="lg" variant="default" />
       </div>
     );
   }
@@ -232,18 +195,21 @@ export default function ViewQuestion() {
     : question?.author;
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-4xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
+    <div className="flex flex-col gap-5 p-4 md:p-6 w-full max-w-4xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
       {/* Back navigation */}
       <button 
         type="button"
         onClick={handleBackNav} 
-        className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
+        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={14} />
         {from?.includes("/review") ? "Back to Review Questions Desk" : "Back to Question Bank"}
       </button>
 
-      <div className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
+      {/* Visual Question Lifecycle Stepper */}
+      <QuestionLifecycleStepper status={question.status} />
+
+      <div className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col">
         
         {/* Header Section */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/40">
@@ -257,11 +223,6 @@ export default function ViewQuestion() {
           </div>
 
           <div className="flex items-center gap-3">
-            {question.isPublished && (
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Published
-              </span>
-            )}
             <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest ${getStatusColor(question.status)}`}>
               {question.status}
             </span>
@@ -271,16 +232,6 @@ export default function ViewQuestion() {
         {/* Question Details Section */}
         <div className="p-6 md:p-8 flex flex-col gap-8">
           
-          {/* Question is published warning banner */}
-          {question.isPublished && (
-            <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-              <Globe size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span>
-                This question is <strong>published</strong>. To edit or delete this question, you must unpublish it first.
-              </span>
-            </div>
-          )}
-
           {/* Question text */}
           <div className="flex flex-col gap-2">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Question Prompt</span>
@@ -439,18 +390,6 @@ export default function ViewQuestion() {
             </Button>
           )}
 
-          {!canEdit && !isAuthor && !question.isPublished && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsRequestModalOpen(true)}
-              className="border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary font-semibold px-5 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer"
-            >
-              <KeyRound size={16} />
-              Request Edit Access from Author
-            </Button>
-          )}
-
           {canEdit && (
             <Button
               type="button"
@@ -482,7 +421,7 @@ export default function ViewQuestion() {
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs border border-emerald-600/20"
               >
                 {approveMutation.isPending ? (
-                  <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+                  <Spinner size="sm" variant="current" />
                 ) : (
                   <>
                     <CheckCircle2 size={16} />
@@ -501,38 +440,11 @@ export default function ViewQuestion() {
               className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs"
             >
               {submitRevisionMutation.isPending ? (
-                <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
+                <Spinner size="sm" variant="current" />
               ) : (
                 <>
                   <Send size={16} />
                   Submit Revisions
-                </>
-              )}
-            </Button>
-          )}
-
-          {canPublish && question.status === QuestionStatus.APPROVED && (
-            <Button
-              type="button"
-              onClick={handleTogglePublish}
-              disabled={publishMutation.isPending}
-              className={`font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer transition-all ${
-                question.isPublished
-                  ? "border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
-            >
-              {publishMutation.isPending ? (
-                <span className="inline-block animate-spin border-2 border-current border-t-transparent rounded-full w-4 h-4" />
-              ) : question.isPublished ? (
-                <>
-                  <EyeOff size={16} />
-                  Unpublish Question
-                </>
-              ) : (
-                <>
-                  <Globe size={16} />
-                  Publish Question
                 </>
               )}
             </Button>

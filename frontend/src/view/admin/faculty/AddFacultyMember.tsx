@@ -7,7 +7,7 @@ import { UserRole } from "@/types/question";
 import type { RoleType, CreateFacultyPayload, ParsedFacultyRow } from "./types";
 import { getAllowedRolesToCreate } from "./utils/facultyUtils";
 import {
-  useDepartments,
+
   useCreateFaculty,
   useBulkCreateFaculty,
 } from "./hooks/useFaculty";
@@ -46,14 +46,14 @@ export default function AddFacultyMember() {
   });
   const [errorMsg, setErrorMsg] = useState("");
 
-  const { data: departments = [] } = useDepartments();
+  // const { data: departments = [] } = useDepartments();
   const createMutation = useCreateFaculty();
 
-  useEffect(() => {
-    if (departments.length > 0 && !formData.departmentId) {
-      setFormData((prev) => ({ ...prev, departmentId: departments[0].id }));
-    }
-  }, [departments]);
+  // useEffect(() => {
+  //   if (departments.length > 0 && !formData.departmentId) {
+  //     setFormData((prev) => ({ ...prev, departmentId: departments[0].id }));
+  //   }
+  // }, [departments]);
 
   // Auto-generate username from First Name & Last Name
   const generateAutoUsername = (first: string, last: string) => {
@@ -96,7 +96,7 @@ export default function AddFacultyMember() {
 
     const payload: CreateFacultyPayload = {
       ...formData,
-      departmentId: formData.departmentId || (departments[0]?.id || ""),
+      // departmentId: formData.departmentId || (departments[0]?.id || ""),
       name: fullName,
       username: autoUsername,
     };
@@ -310,7 +310,7 @@ export default function AddFacultyMember() {
               }`}
             >
               <UserPlus size={13} />
-              Add User(individual)
+              Add User
             </button>
 
             <button
@@ -323,7 +323,7 @@ export default function AddFacultyMember() {
               }`}
             >
               <Users size={13} />
-              Add Users(bulk)
+              Add Users
             </button>
           </div>
         </div>

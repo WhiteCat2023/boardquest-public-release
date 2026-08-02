@@ -139,40 +139,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         },
     });
 
-    const bulkPublishMutation = useMutation({
-        mutationFn: async ({ ids, isPublished }: { ids: string[]; isPublished: boolean }) => {
-            await axiosPrivate.post("/questions/bulk/publish", { ids, isPublished });
-        },
-        onSuccess: (_, variables) => {
-            clearRowSelection();
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-            
-            const actionText = variables.isPublished ? "Published" : "Unpublished";
-            const targetText = variables.isPublished ? "published to system" : "unpublished to Shared Library";
-
-            showUndoToast({
-                title: `Questions ${actionText}`,
-                message: `${variables.ids.length} question${variables.ids.length !== 1 ? "s" : ""} ${targetText}`,
-                duration: 5000,
-                onUndo: async () => {
-                    try {
-                        await axiosPrivate.post("/questions/bulk/publish", {
-                            ids: variables.ids,
-                            isPublished: !variables.isPublished,
-                        });
-                        toast.info(`Reverted publish status for ${variables.ids.length} question(s).`);
-                        queryClient.invalidateQueries({ queryKey: ["questions"] });
-                    } catch (err: any) {
-                        toast.error(err.response?.data?.message || "Failed to undo publishing change.");
-                    }
-                },
-            });
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to bulk update publish state.");
-        },
-    });
-
     const bulkFeedbackMutation = useMutation({
         mutationFn: async ({ ids, feedback }: { ids: string[]; feedback: string }) => {
             await axiosPrivate.post("/questions/bulk/feedback", { ids, feedback });
@@ -246,13 +212,8 @@ export function useQuestionListActions(filters?: QuestionFilters) {
 
         bulkApproveMutation.mutate(selectedIds);
     };
-    const handleBulkDelete = () => {
-        const hasPublished = selectedQuestions.some((q) => q.isPublished);
-        if (hasPublished) {
-            toast.error("Cannot delete published questions. Please unpublish them first.");
-            return;
-        }
 
+    const handleBulkDelete = () => {
         const canDeleteAll = selectedQuestions.every((q) => {
             const authorId = typeof q.author === "object" ? (q.author as any).id : q.authorId;
             return (
@@ -316,23 +277,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         });
     };
 
-    const handleBulkPublish = (isPublished: boolean) => {
-        if (!canManageBulk) {
-            toast.error("Only administrators can publish/unpublish questions.");
-            return;
-        }
-
-        if (isPublished) {
-            const hasUnapproved = selectedQuestions.some((q) => q.status !== "APPROVED");
-            if (hasUnapproved) {
-                toast.error("Only approved questions can be published. Please check your selection.");
-                return;
-            }
-        }
-
-        bulkPublishMutation.mutate({ ids: selectedIds, isPublished });
-    };
-
     const handleBulkFeedbackSubmit = async (feedback: string) => {
         await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
     };
@@ -340,12 +284,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     const handleBulkFeedbackOpen = () => {
         if (!canManageBulk) {
             toast.error("Only administrators can request question revisions.");
-            return;
-        }
-
-        const hasPublished = selectedQuestions.some((q) => q.isPublished);
-        if (hasPublished) {
-            toast.error("Cannot request revision on published questions. Please unpublish them first.");
             return;
         }
 
@@ -394,7 +332,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         isFeedbackOpen,
         canManageBulk,
         bulkApproveMutation,
-        bulkPublishMutation,
         bulkFeedbackMutation,
         bulkDeleteMutation,
         bulkStatusMutation,
@@ -403,7 +340,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         handleItemsPerPageChange,
         handleBulkApprove,
         handleBulkDelete,
-        handleBulkPublish,
         handleBulkFeedbackOpen,
         handleBulkFeedbackSubmit,
         handleBulkResubmitForReview,

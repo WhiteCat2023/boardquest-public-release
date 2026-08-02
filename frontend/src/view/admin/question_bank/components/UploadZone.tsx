@@ -11,6 +11,7 @@ import { SelectItem } from "@/components/ui/select";
 import { Upload, Download, AlertCircle, HelpCircle, CheckCircle2, Play, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 import { useBulkUploadQuestionStore, useUploadZoneState } from "../../../../store/QuestionBankStore";
 import { downloadSampleCSV } from "../../../../services/QuestionBankServices";
 
@@ -163,7 +164,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
             className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-5 h-9 rounded-xl text-xs flex items-center gap-2 shadow-2xs"
           >
             {isExtracting ? (
-              <span className="inline-block animate-spin border-2 border-primary-foreground border-t-transparent rounded-full w-3.5 h-3.5" />
+              <Spinner size="xs" variant="current" />
             ) : (
               <Play size={14} />
             )}

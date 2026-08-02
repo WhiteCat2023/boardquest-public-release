@@ -15,8 +15,8 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
   const navigate = useNavigate();
   const { auth } = useAuth();
 
-  const currentUserId = (auth as any)?.data?.user?.id;
-  const currentUserRole = (auth as any)?.data?.user?.role;
+  const currentUserId = auth?.data?.user?.id;
+  const currentUserRole = auth?.data?.user?.role;
 
   const authorName = typeof item?.author === 'object' 
     ? item?.author?.name 
@@ -27,8 +27,8 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
     : (item as any)?.authorId;
 
   const isAuthor = authorId === currentUserId;
-  const canEdit = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item?.isPublished;
-  const canDelete = (currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor)) && !item?.isPublished;
+  const canEdit = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor);
+  const canDelete = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor);
 
   return (
     <Card className="w-full border-border shadow-xs font-sans bg-card text-foreground overflow-hidden flex flex-col">
@@ -51,11 +51,6 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
             >
               {item?.status}
             </div>
-            {item?.isPublished && (
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                Published
-              </span>
-            )}
           </div>
         </div>
       </CardHeader>

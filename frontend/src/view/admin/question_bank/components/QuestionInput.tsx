@@ -8,19 +8,19 @@ interface QuestionInputProps {
 
 function QuestionInput({ questionWording, setQuestionWording }: QuestionInputProps) {
   return (
-    <>
-        <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+    <div className="flex flex-col gap-1.5">
+        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
             Question Wording / Prompt
         </Label>
         <Textarea
-            rows={4}
-            placeholder="Formulate the complete problem statement or testing prompt. Support Markdown formatting if needed."
+            rows={3}
+            placeholder="Formulate the complete problem statement or testing prompt."
             value={questionWording}
             onChange={(e) => setQuestionWording(e.target.value)}
-            className="w-full p-4 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#A70202]/10 focus:border-[#A70202] transition-all duration-150 resize-y"
+            className="w-full p-3 text-xs bg-muted/40 border border-border rounded-xl focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary text-foreground placeholder:text-muted-foreground transition-all duration-150 resize-y leading-relaxed"
         />
-    </>
+    </div>
   )
 }
 
-export default QuestionInput
+export default QuestionInput;

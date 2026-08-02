@@ -5,7 +5,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 const RequireAuth = ({ allowedRoles }: { allowedRoles: string[] }) => {
     const { auth } = useAuth();
     const location = useLocation();
-    const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
+    const currentUser = auth?.data?.user || auth?.user;
     const userRole = currentUser?.role;
 
     return (

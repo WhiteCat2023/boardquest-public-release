@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, EyeOff, MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2, RotateCcw, Send } from "lucide-react";
+import { MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2, RotateCcw } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/view/admin/question_bank/components/QuestionFilter";
 
@@ -10,19 +10,15 @@ interface UnifiedToolbarProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   onApprove?: () => void;
-  onPublish: () => void;
-  onUnpublish: () => void;
   onFeedback: () => void;
   onResubmitReview?: () => void;
   onDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
-  isPublishPending: boolean;
   isFeedbackPending: boolean;
   isResubmitPending?: boolean;
   isDeletePending: boolean;
   isRevisionsView?: boolean;
-  isLiveView?: boolean;
   isBankView?: boolean;
 }
 
@@ -33,19 +29,15 @@ export default function BulkActionsToolbar({
   itemsPerPage,
   onItemsPerPageChange,
   onApprove,
-  onPublish,
-  onUnpublish,
   onFeedback,
   onResubmitReview,
   onDelete,
   onClear,
   isApprovePending,
-  isPublishPending,
   isFeedbackPending,
   isResubmitPending,
   isDeletePending,
   isRevisionsView = false,
-  isLiveView = false,
   isBankView = false,
 }: UnifiedToolbarProps) {
   return (
@@ -83,17 +75,7 @@ export default function BulkActionsToolbar({
         {/* Bulk Action Buttons — ONLY SHOWN WHEN selectedCount > 0 */}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
-            {isLiveView ? (
-              <button
-                type="button"
-                onClick={onUnpublish}
-                disabled={isPublishPending}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
-              >
-                <EyeOff size={13} />
-                Unpublish
-              </button>
-            ) : isRevisionsView ? (
+            {isRevisionsView ? (
               <>
                 {onResubmitReview && (
                   <button
@@ -124,18 +106,6 @@ export default function BulkActionsToolbar({
 
                   <button
                     type="button"
-                    onClick={onPublish}
-                    disabled={isPublishPending}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <Globe size={13} />
-                    Publish
-                  </button>
-
-                  <div className="h-4 w-px bg-border" />
-
-                  <button
-                    type="button"
                     onClick={onFeedback}
                     disabled={isFeedbackPending}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition-all cursor-pointer disabled:opacity-50"
@@ -147,21 +117,16 @@ export default function BulkActionsToolbar({
               )
             )}
 
-            {!isLiveView && (
-              <>
-                <div className="h-4 w-px bg-border" />
-                <button
-                  type="button"
-                  onClick={onDelete}
-                  disabled={isDeletePending}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <Trash2 size={13} />
-                  Delete
-                </button>
-                <div className="h-4 w-px bg-border" />
-              </>
-            )}
+            <div className="h-4 w-px bg-border" />
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isDeletePending}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 size={13} />
+              Delete
+            </button>
           </div>
         )}
 
@@ -173,12 +138,11 @@ export default function BulkActionsToolbar({
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
             className="bg-muted text-foreground text-xs font-semibold rounded-lg px-2 py-0.5 border border-border shadow-2xs focus:outline-none cursor-pointer"
           >
-            <option value={6}>6</option>
-            <option value={9}>9</option>
-            <option value={12}>12</option>
-            <option value={18}>18</option>
-            <option value={24}>24</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
             <option value={30}>30</option>
+            <option value={40}>40</option>
+            <option value={50}>50</option>
           </select>
         </div>
 

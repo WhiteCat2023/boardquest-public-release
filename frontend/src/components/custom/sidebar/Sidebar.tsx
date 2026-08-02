@@ -153,7 +153,7 @@ function SidebarItem({
 function Sidebar({ navItem }: SidebarContentProps) {
   const location = useLocation();
   const { auth } = useAuth();
-  const currentUserRole = (auth as any)?.data?.user?.role || (auth as any)?.user?.role;
+  const currentUserRole = auth?.data?.user?.role || auth?.user?.role;
 
   const getPortalTitle = (role?: string) => {
     switch (role?.toUpperCase()) {

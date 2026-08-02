@@ -69,12 +69,12 @@ export default function FacultyTableRow({
       </TableCell>
 
       {/* Scope / Department */}
-      <TableCell className="py-2 px-3">
+      {/* <TableCell className="py-2 px-3">
         <div className="flex items-center gap-1 text-foreground text-[11px] font-medium">
           <Briefcase size={12} className="text-muted-foreground shrink-0" />
           <span className="capitalize truncate max-w-[130px]">{member.department?.name || "General"}</span>
         </div>
-      </TableCell>
+      </TableCell> */}
 
       {/* Authority Role */}
       <TableCell className="py-2 px-3">

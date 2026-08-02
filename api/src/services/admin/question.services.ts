@@ -29,7 +29,6 @@ export const CreateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
     z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
   ),
-  isPublished: z.boolean().optional().default(false),
 });
 
 export const UpdateQuestionSchema = z.object({
@@ -52,7 +51,6 @@ export const UpdateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
     z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
   ),
-  isPublished: z.boolean().optional(),
 });
 
 // ============ Type Definitions ============
@@ -93,7 +91,6 @@ export class QuestionService {
       difficulty,
       type,
       status,
-      isPublished,
     } = parsed.data;
 
     let finalAuthorId: string = authorId || "";
@@ -125,7 +122,6 @@ export class QuestionService {
         difficulty,
         type,
         status: computedStatus,
-        isPublished,
       },
     });
 
@@ -181,7 +177,6 @@ export class QuestionService {
       difficulty,
       type,
       status,
-      isPublished,
     } = parsed.data;
 
     const updatedQuestion = await this.db.question.update({
@@ -198,7 +193,6 @@ export class QuestionService {
         difficulty,
         type,
         status,
-        isPublished,
       },
     });
 
@@ -520,21 +514,6 @@ export class QuestionService {
     return createdQuestions;
   }
 
-  async togglePublishState(questionId: string, isPublished: boolean) {
-    const question = await this.getQuestionById(questionId);
-
-    // Enforce business logic: only APPROVED questions can be published
-    if (isPublished && question.status !== QuestionStatus.APPROVED) {
-      throw new ApiError(400, "Only approved questions can be published.");
-    }
-
-    const updated = await this.db.question.update({
-      where: { id: questionId },
-      data: { isPublished },
-    });
-    return updated;
-  }
-
   async bulkDeleteQuestions(ids: string[], user: any) {
     const questions = await this.db.question.findMany({
       where: { id: { in: ids } },
@@ -552,49 +531,10 @@ export class QuestionService {
           `You do not have permission to delete question Q-${question.id.slice(-4).toUpperCase()}`,
         );
       }
-      if (question.isPublished) {
-        throw new ApiError(
-          400,
-          `Cannot delete published question Q-${question.id.slice(-4).toUpperCase()}`,
-        );
-      }
     }
 
     await this.db.question.deleteMany({
       where: { id: { in: ids } },
-    });
-  }
-
-  async bulkPublishQuestions(ids: string[], isPublished: boolean, user: any) {
-    const canPublish =
-      user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
-      user.role === "TEAMLEAD";
-    if (!canPublish) {
-      throw new ApiError(
-        403,
-        "You do not have permission to publish/unpublish questions.",
-      );
-    }
-
-    const questions = await this.db.question.findMany({
-      where: { id: { in: ids } },
-    });
-
-    if (isPublished) {
-      for (const question of questions) {
-        if (question.status !== QuestionStatus.APPROVED) {
-          throw new ApiError(
-            400,
-            `Only approved questions can be published (Q-${question.id.slice(-4).toUpperCase()} is not approved).`,
-          );
-        }
-      }
-    }
-
-    await this.db.question.updateMany({
-      where: { id: { in: ids } },
-      data: { isPublished },
     });
   }
 
@@ -608,19 +548,6 @@ export class QuestionService {
         403,
         "You do not have permission to request revision on questions.",
       );
-    }
-
-    const questions = await this.db.question.findMany({
-      where: { id: { in: ids } },
-    });
-
-    for (const question of questions) {
-      if (question.isPublished) {
-        throw new ApiError(
-          400,
-          `Cannot request revision on published question Q-${question.id.slice(-4).toUpperCase()}.`,
-        );
-      }
     }
 
     await this.db.question.updateMany({
@@ -837,12 +764,8 @@ export const getQuestionBySearch =
   questionService.getQuestionBySearch.bind(questionService);
 export const importQuestions =
   questionService.importQuestions.bind(questionService);
-export const togglePublishState =
-  questionService.togglePublishState.bind(questionService);
 export const bulkDeleteQuestions =
   questionService.bulkDeleteQuestions.bind(questionService);
-export const bulkPublishQuestions =
-  questionService.bulkPublishQuestions.bind(questionService);
 export const bulkFeedbackQuestions =
   questionService.bulkFeedbackQuestions.bind(questionService);
 export const bulkApproveQuestions =

@@ -60,13 +60,11 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
       filters.authorId = currentUserId;
     }
   } else {
-    // Shared Library: show ONLY APPROVED questions that are not yet published
-    filters.isPublished = false;
+    // Shared Library: show ONLY APPROVED questions
     filters.status = "APPROVED";
   }
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useCategories({
-    isPublished: filters.isPublished,
     status: filters.status,
     authorId: filters.authorId,
   });

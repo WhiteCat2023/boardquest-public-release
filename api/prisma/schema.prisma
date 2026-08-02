@@ -80,8 +80,6 @@ model AdminUser {
 
   questions Question[] @relation("QuestionAuthor")
   createdRevisions QuestionThatNeedsRevision[] @relation("RevisionCreator")
-  permissionRequests PermissionRequest[] @relation("UserPermissionRequests")
-  reviewedRequests PermissionRequest[] @relation("RequestReviewer")
   assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
   createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
 }
@@ -92,7 +90,6 @@ model Question {
   choices       String[]
   correctAnswer String
   status        QuestionStatus
-  isPublished   Boolean  @default(false)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -121,24 +118,6 @@ model QuestionThatNeedsRevision {
   createdBy   AdminUser? @relation("RevisionCreator", fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-model PermissionRequest {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  user                 AdminUser @relation("UserPermissionRequests", fields: [userId], references: [id], onDelete: Cascade)
-  userId               String   @db.ObjectId
-  targetQuestionId     String?  @db.ObjectId
-  targetUserId         String?  @db.ObjectId
-  requestedRole        Role?
-  requestedPermissions Json?
-  requestedCategoryIds String[] @db.ObjectId
-  reason               String
-  status               RequestStatus @default(PENDING)
-  reviewedBy           AdminUser? @relation("RequestReviewer", fields: [reviewedById], references: [id])
-  reviewedById         String?  @db.ObjectId
-  reviewNote           String?  @default("")
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
 }
 
 model SchoolYear {

@@ -1,47 +1,63 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import LandingPage from "./view/LandingPage";
-import LoginPage from "./view/login/LoginPage";
-import ForgotPasswordPage from "./view/login/ForgotPasswordPage";
-import ResetPasswordPage from "./view/login/ResetPasswordPage";
-import Dashboard from "./view/admin/dashboard/Dashboard";
 import MainLayout from "./layout/MainLayout";
 import RequireAuth from "./components/RequireAuth";
 import PersistentSession from "./components/PersistentSession";
 import DashboardLayout from "./layout/DashboardLayout";
-import {
-  FacultyManagement,
-  AddFacultyMember,
-  ViewFacultyMember,
-} from "./view/admin/faculty";
-import StudentManagement from "./view/admin/StudentManagement";
-import ReviewCenterManagement from "./view/admin/review_center/ReviewCenterManagement";
-import CalendarManagement from "./view/admin/CalendarManagement";
-import LogsManagement from "./view/admin/logs_management/LogsManagement";
-import QuestionBank from "./view/admin/question_bank/QuestionBank";
-import MyQuestions from "./view/admin/question_bank/MyQuestions";
-import ReviewQuestions from "./view/admin/question_bank/ReviewQuestions";
-import SharedLibrary from "./view/admin/question_bank/SharedLibrary";
-import Analytics from "./view/admin/Analytics";
-import Settings from "./view/admin/settings/Settings";
-import ProfileSettings from "./view/admin/ProfileSettings";
 import SettingLayout from "./layout/SettingLayout";
-import Missing from "./view/admin/Missing";
-import Unauthorized from "./view/admin/Unauthorized";
-import AddQuestion from "./view/admin/question_bank/AddQuestion";
-import AddedQuestionUsingCSV from "./view/admin/question_bank/AddedQuestionUsingCSV";
-import ViewQuestion from "./view/admin/question_bank/ViewQuestion";
-import RevisionDesk from "./view/admin/question_bank/RevisionDesk";
-import AddedStudentUsingCSV from "./view/admin/student_management/AddedStudentUsingCSV";
-import EnrollStudentPage from "./view/admin/student_management/EnrollStudentPage";
-import ViewStudent from "./view/admin/student_management/ViewStudent";
-import SubjectManagement from "./view/admin/subject_management/SubjectManagement";
-import SubjectDetailsPage from "./view/admin/subject_management/SubjectDetailsPage";
 import { Toaster } from "@/components/ui/sonner";
+
+// Lazy-loaded page components for optimal bundle splitting
+const LoginPage = lazy(() => import("./view/login/LoginPage"));
+const ForgotPasswordPage = lazy(() => import("./view/login/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./view/login/ResetPasswordPage"));
+const Dashboard = lazy(() => import("./view/admin/dashboard/Dashboard"));
+
+const FacultyManagement = lazy(() => import("./view/admin/faculty/FacultyManagement"));
+const AddFacultyMember = lazy(() => import("./view/admin/faculty/AddFacultyMember"));
+const ViewFacultyMember = lazy(() => import("./view/admin/faculty/ViewFacultyMember"));
+
+const StudentManagement = lazy(() => import("./view/admin/StudentManagement"));
+const EnrollStudentPage = lazy(() => import("./view/admin/student_management/EnrollStudentPage"));
+const AddedStudentUsingCSV = lazy(() => import("./view/admin/student_management/AddedStudentUsingCSV"));
+const ViewStudent = lazy(() => import("./view/admin/student_management/ViewStudent"));
+
+const ReviewCenterManagement = lazy(() => import("./view/admin/review_center/ReviewCenterManagement"));
+const CalendarManagement = lazy(() => import("./view/admin/CalendarManagement"));
+const LogsManagement = lazy(() => import("./view/admin/logs_management/LogsManagement"));
+
+const SubjectManagement = lazy(() => import("./view/admin/subject_management/SubjectManagement"));
+const SubjectDetailsPage = lazy(() => import("./view/admin/subject_management/SubjectDetailsPage"));
+
+const QuestionBank = lazy(() => import("./view/admin/question_bank/QuestionBank"));
+const MyQuestions = lazy(() => import("./view/admin/question_bank/MyQuestions"));
+const ReviewQuestions = lazy(() => import("./view/admin/question_bank/ReviewQuestions"));
+const SharedLibrary = lazy(() => import("./view/admin/question_bank/SharedLibrary"));
+const RevisionDesk = lazy(() => import("./view/admin/question_bank/RevisionDesk"));
+const AddQuestion = lazy(() => import("./view/admin/question_bank/AddQuestion"));
+const ViewQuestion = lazy(() => import("./view/admin/question_bank/ViewQuestion"));
+const AddedQuestionUsingCSV = lazy(() => import("./view/admin/question_bank/AddedQuestionUsingCSV"));
+
+const Analytics = lazy(() => import("./view/admin/Analytics"));
+const Settings = lazy(() => import("./view/admin/settings/Settings"));
+const ProfileSettings = lazy(() => import("./view/admin/ProfileSettings"));
+
+const Missing = lazy(() => import("./view/admin/Missing"));
+const Unauthorized = lazy(() => import("./view/admin/Unauthorized"));
+
+function PageFallback() {
+  return (
+    <div className="flex h-64 w-full items-center justify-center font-sans text-sm text-muted-foreground animate-pulse">
+      Loading...
+    </div>
+  );
+}
 
 function App() {
   return (
     <>
-      <Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
         <Route path="/" element={<MainLayout />}>
           {/* public routes */}
           {/* <Route path="home" element={<LandingPage />} /> */}
@@ -82,10 +98,10 @@ function App() {
                   path="faculty-management/create"
                   element={<AddFacultyMember />}
                 />
-                <Route
+                {/* <Route
                   path="faculty-management/add"
                   element={<AddFacultyMember />}
-                />
+                /> */}
                 <Route
                   path="faculty-management/view/:facultyId"
                   element={<ViewFacultyMember />}
@@ -159,14 +175,6 @@ function App() {
                   path="question-bank/my-questions"
                   element={<MyQuestions />}
                 />
-                <Route
-                  path="question-bank/review"
-                  element={<ReviewQuestions />}
-                />
-                <Route
-                  path="question-bank/review-questions"
-                  element={<ReviewQuestions />}
-                />
                 <Route path="question-bank/bank" element={<SharedLibrary />} />
                 <Route
                   path="question-bank/shared-library"
@@ -203,6 +211,14 @@ function App() {
                   />
                 }
               >
+                <Route
+                  path="question-bank/review"
+                  element={<ReviewQuestions />}
+                />
+                <Route
+                  path="question-bank/review-questions"
+                  element={<ReviewQuestions />}
+                />
                 <Route path="analytics" element={<Analytics />} />
               </Route>
 
@@ -227,6 +243,7 @@ function App() {
           <Route path="unauthorized" element={<Unauthorized />} />
         </Route>
       </Routes>
+      </Suspense>
       <Toaster />
     </>
   );

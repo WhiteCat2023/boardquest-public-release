@@ -12,7 +12,6 @@ export const getFaculties = asyncHandler(
     const result = await facultyService.getAllFaculty({
       search: search as string,
       role: role as string,
-      departmentId: departmentId as string,
       status: status as string,
       cursor: cursor as string,
       limit: limit ? parseInt(limit as string, 10) : undefined,
@@ -68,6 +67,26 @@ export const createFaculty = asyncHandler(
   },
 );
 
+export const bulkCreateFaculty = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const creatorRole = req.user?.role;
+    if (!creatorRole) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const created = await facultyService.bulkCreateFaculty(req.body.members, creatorRole);
+
+    // Strip password before returning
+    const { password, ...faculty } = created as any;
+
+    return new ApiResponse(
+      201,
+      { faculty },
+      "Faculty members created successfully",
+    ).send(res);
+  },
+);
+
 export const toggleFacultyStatus = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;
@@ -116,108 +135,6 @@ export const updateFacultyCategories = asyncHandler(
       200,
       { faculty },
       "Handled categories updated successfully",
-    ).send(res);
-  },
-);
-
-export const updateFacultyPermissions = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const creatorRole = req.user?.role;
-    if (!creatorRole) {
-      throw new ApiError(401, "Unauthorized");
-    }
-
-    const { id } = req.params;
-    const faculty = await facultyService.updateUserPermissions(
-      id as string,
-      req.body,
-      creatorRole,
-    );
-
-    return new ApiResponse(
-      200,
-      { faculty },
-      "User permissions updated successfully",
-    ).send(res);
-  },
-);
-
-export const createPermissionRequest = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new ApiError(401, "Unauthorized");
-    }
-
-    const request = await facultyService.createPermissionRequest(userId, req.body);
-
-    return new ApiResponse(
-      201,
-      { request },
-      "Permission request submitted successfully",
-    ).send(res);
-  },
-);
-
-export const getPermissionRequests = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
-    if (!userId || !userRole) {
-      throw new ApiError(401, "Unauthorized");
-    }
-
-    const { status, targetUserId } = req.query;
-
-    let requests;
-    if (userRole === "TEACHER") {
-      requests = await facultyService.getPermissionRequests({
-        status: status as string,
-        userId,
-        targetUserId: targetUserId as string,
-      });
-    } else {
-      requests = await facultyService.getPermissionRequests({
-        status: status as string,
-        targetUserId: targetUserId as string,
-      });
-    }
-
-    return new ApiResponse(
-      200,
-      { requests },
-      "Permission requests retrieved successfully",
-    ).send(res);
-  },
-);
-
-export const reviewPermissionRequest = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const reviewerId = req.user?.id;
-    const reviewerRole = req.user?.role;
-    if (!reviewerId || !reviewerRole) {
-      throw new ApiError(401, "Unauthorized");
-    }
-
-    const { id } = req.params;
-    const { status, reviewNote } = req.body;
-
-    if (status !== "APPROVED" && status !== "DECLINED") {
-      throw new ApiError(400, "Status must be APPROVED or DECLINED.");
-    }
-
-    const request = await facultyService.reviewPermissionRequest(
-      id as string,
-      reviewerId,
-      status,
-      reviewNote,
-      reviewerRole,
-    );
-
-    return new ApiResponse(
-      200,
-      { request },
-      `Permission request ${status.toLowerCase()} successfully`,
     ).send(res);
   },
 );

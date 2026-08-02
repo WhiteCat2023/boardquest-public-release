@@ -39,7 +39,6 @@ export interface Question {
   status: QuestionStatus;
   feedback?: string;
   createdAt: string;
-  isPublished?: boolean;
 }
 
 export interface Category {

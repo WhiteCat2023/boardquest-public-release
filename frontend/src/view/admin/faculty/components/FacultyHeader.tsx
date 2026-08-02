@@ -11,7 +11,7 @@ export default function FacultyHeader({ canAddFaculty }: FacultyHeaderProps) {
       <div>
         <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
           <Users className="text-primary size-5" />
-          Faculty & Administrative Directory
+          User Directory
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Manage academic staff, course leads, and administrator privileges.

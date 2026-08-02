@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import {
   Sparkles, 
   PlusCircle, 
   RotateCcw,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,11 @@ import ShortAnswerInput from "./components/ShortAnswerInput";
 import MultipleChoiceInput from "./components/MCQInput";
 import QuestionInput from "./components/QuestionInput";
 import QuestionSynthesizerDialog, { type SynthesizedResult } from "./components/dialog/QuestionSynthesizerDialog";
-import { useQuestionFormStore } from "../../../store/QuestionBankStore";
+import { useQuestionFormStore, useExtractedQuestionsStore } from "../../../store/QuestionBankStore";
+import UploadZone from "./components/UploadZone";
+import ExtractedFilePreview from "./components/ExtractedFilePreview";
+import { Spinner } from "@/components/ui/spinner";
+import { useQuestionQualityCheck } from "./hooks/useQuestionQualityCheck";
 
 type QuestionFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
 
@@ -32,9 +37,21 @@ export default function AddQuestion() {
   const location = useLocation();
   const { questionId } = useParams();
   const { auth } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isEditMode = !!questionId;
   const currentUserRole = (auth as any)?.data?.user?.role;
+
+  // Active Tab: "individual" | "bulk"
+  const initialTab = searchParams.get("tab") === "bulk" || location.pathname.includes("/import") ? "bulk" : "individual";
+  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+
+  const handleTabChange = (tab: "individual" | "bulk") => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
+
+  const { extractedQuestions } = useExtractedQuestionsStore();
 
   const from = location.state?.from?.pathname
     ? `${location.state.from.pathname}${location.state.from.search || ""}`
@@ -87,7 +104,7 @@ export default function AddQuestion() {
     {
       value: "MCQ",
       label: "MCQ",
-      description: "Multiple Option Keys",
+      description: "Multiple Options",
     },
     {
       value: "TRUE_FALSE",
@@ -167,55 +184,33 @@ export default function AddQuestion() {
     }
   };
 
-  const getStatusOptions = () => {
-    if (currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN") {
-      return [
-        { value: "DRAFT", label: "Drafting Mode" },
-        { value: "NEEDS_REVISION", label: "Needs Revision" },
-        { value: "APPROVED", label: "Approved for Pool" },
-      ];
-    }
-    return [
-      { value: "DRAFT", label: "Drafting Mode" },
-      { value: "PENDING_REVIEW", label: "Submit for Approval" },
-    ];
-  };
+  const { validateQuestionQuality } = useQuestionQualityCheck();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!questionWording.trim()) {
-      toast.error("Please enter the question text/wording.");
-      return;
-    }
+    const isValid = validateQuestionQuality({
+      questionWording,
+      format,
+      mcqChoices,
+      mcqCorrectIndex,
+      tfCorrect,
+      saCorrectAnswer,
+      categoryId,
+    });
 
-    if (!categoryId) {
-      toast.error("Please select an academic subject category.");
-      return;
-    }
+    if (!isValid) return;
 
     let computedCorrectAnswer = "";
     let finalChoices: string[] = [];
 
     if (format === "MCQ") {
-      if (mcqChoices.length < 2) {
-        toast.error("Please add at least 2 options for multiple choice.");
-        return;
-      }
-      if (mcqChoices.some((c) => !c.trim())) {
-        toast.error("Please fill in all multiple choice options.");
-        return;
-      }
       computedCorrectAnswer = mcqChoices[mcqCorrectIndex];
       finalChoices = mcqChoices;
     } else if (format === "TRUE_FALSE") {
       computedCorrectAnswer = tfCorrect;
       finalChoices = ["True", "False"];
     } else if (format === "SHORT_ANSWER") {
-      if (!saCorrectAnswer.trim()) {
-        toast.error("Please specify the expected short answer key.");
-        return;
-      }
       computedCorrectAnswer = saCorrectAnswer.trim();
       finalChoices = [];
     }
@@ -379,7 +374,7 @@ export default function AddQuestion() {
       // Save AI Synthesized Question Variant
       await axiosPrivate.post("/questions/create", synthesizedPayload);
 
-      toast.success("Both Original Draft and AI Synthesized question saved to MongoDB!");
+      toast.success("Both Original Draft and AI Synthesized question saved to database!");
       handleBackNav();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save questions.");
@@ -410,7 +405,7 @@ export default function AddQuestion() {
       // Save AI Synthesized Question
       await axiosPrivate.post("/questions/create", synthesizedPayload);
 
-      toast.success("AI Synthesized Question saved (Original Draft preserved in MongoDB)!");
+      toast.success("AI Synthesized Question saved (Original Draft preserved in database)!");
       handleBackNav();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save synthesized question.");
@@ -445,217 +440,285 @@ export default function AddQuestion() {
     questionWording.trim().toLowerCase() !== originalBackup.question.trim().toLowerCase();
 
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 w-full max-w-6xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
-      {/* Back Button */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleBackNav}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
-        >
-          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-          Back to Question Bank
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
-        {/* Header Bar */}
-        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/40">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
-              <PlusCircle size={22} className="stroke-[2.5]" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-foreground tracking-tight">
-                {isEditMode ? "Curriculum Revision Desk" : "Curriculum Drafting Desk"}
-              </h2>
-              <p className="text-xs text-muted-foreground font-medium">Formulate evaluation questions linked to standard benchmarks</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
-            <span className="text-[10px] text-muted-foreground/70 font-semibold uppercase tracking-wider">Authoring profile</span>
-            <span className="text-foreground font-bold text-sm">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
-          </div>
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-5xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
+      
+      {/* ── Header & Back Navigation with Segmented Pill Tabs ── */}
+      <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-2.5 pt-1 -mt-1 z-10 border-b border-border/80">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBackNav}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
+          >
+            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+            Back to Question Bank
+          </button>
         </div>
 
-        {/* Form Body */}
-        <div className="p-6 md:p-8 flex flex-col gap-6">
-
-          {/* Section 1: Subject, Topic, Difficulty */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Category selection */}
-            <div className="flex flex-col gap-1.5">
-              <CustomSelectWithLabel
-                label="Academic Subject"
-                value={categoryId}
-                onValueChange={setCategoryId}
-              >
-                {categories.length === 0 && (
-                  <SelectItem value="loading" disabled>Loading Subjects...</SelectItem>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <h1 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
+                {activeTab === "individual" ? (
+                  <PlusCircle size={16} className="stroke-[2.5]" />
+                ) : (
+                  <FileSpreadsheet size={16} className="stroke-[2.5]" />
                 )}
-                {categories.map((cat: any) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </CustomSelectWithLabel>
+              </div>
+              {activeTab === "individual"
+                ? (isEditMode ? "Curriculum Revision Desk" : "Add New Question")
+                : "Bulk Import Questions"}
+            </h1>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {activeTab === "individual"
+                ? "Formulate evaluation questions linked to standard benchmarks"
+                : "Batch upload multiple exam questions via CSV file spreadsheet."}
+            </p>
+          </div>
+
+          {/* ── Segmented Pill Tabs: Add Question(individual) & Add Questions(bulk) ── */}
+          {!isEditMode && (
+            <div className="flex items-center p-0.5 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
+              <button
+                type="button"
+                onClick={() => handleTabChange("individual")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "individual"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <PlusCircle size={13} />
+                Add Question(individual)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTabChange("bulk")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "bulk"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileSpreadsheet size={13} />
+                Add Questions(bulk)
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── TAB CONTENT ── */}
+      {activeTab === "individual" ? (
+        <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col">
+          {/* Header Bar */}
+          <div className="p-4 md:p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3 bg-muted/40">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+                <PlusCircle size={18} className="stroke-[2.5]" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground tracking-tight">
+                  {isEditMode ? "Curriculum Revision Desk" : "Curriculum Drafting Desk"}
+                </h2>
+                <p className="text-[11px] text-muted-foreground font-medium">Formulate evaluation questions linked to standard benchmarks</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
+              <span className="text-[9px] text-muted-foreground/70 font-semibold uppercase tracking-wider">Authoring profile</span>
+              <span className="text-foreground font-bold text-xs">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
+            </div>
+          </div>
+
+          {/* Form Body */}
+          <div className="p-4 md:p-6 flex flex-col gap-4 md:gap-5">
+
+            {/* Section 1: Subject, Topic, Difficulty */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* Category selection */}
+              <div className="flex flex-col gap-1.5">
+                <CustomSelectWithLabel
+                  label="Academic Subject"
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                >
+                  {categories.length === 0 && (
+                    <SelectItem value="loading" disabled>Loading Subjects...</SelectItem>
+                  )}
+                  {categories.map((cat: any) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </CustomSelectWithLabel>
+              </div>
+
+              {/* Benchmark Topic */}
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Benchmark Topic
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Clinical Chemistry"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-xs h-9 placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {/* Difficulty Level */}
+              <div className="flex flex-col gap-1.5">
+                <CustomSelectWithLabel
+                  label="Curriculum Difficulty"
+                  value={difficulty}
+                  onValueChange={setDifficulty}
+                >
+                  <SelectItem value="EASY">Easy Level</SelectItem>
+                  <SelectItem value="MEDIUM">Medium Level</SelectItem>
+                  <SelectItem value="HARD">Hard Level</SelectItem>
+                </CustomSelectWithLabel>
+              </div>
+
             </div>
 
-            {/* Benchmark Topic */}
+            {/* Section 2: Question Format */}
             <div className="flex flex-col gap-1.5">
-              <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                Benchmark Topic
+              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Question Format
               </Label>
-              <Input
-                type="text"
-                placeholder="e.g. Clinical Chemistry"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-sm placeholder:text-muted-foreground"
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {QuestionFormatOptions.map((opt) => (
+                  <CardButton
+                    key={opt.value}
+                    title={opt.label}
+                    description={opt.description}
+                    selected={format === opt.value}
+                    onClick={() => setFormat(opt.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Section 3: Question Wording / Prompt */}
+            <div className="flex flex-col gap-1.5">
+              {isNotOriginalQuestion && (
+                <div className="flex items-center justify-between pb-1 animate-in fade-in duration-200">
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <RotateCcw size={11} /> AI Synthesized Wording Active
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRestoreOriginal}
+                    className="text-[11px] font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-6 px-2.5 rounded-md flex items-center gap-1 shadow-2xs"
+                  >
+                    <RotateCcw size={12} />
+                    Use Original Question
+                  </Button>
+                </div>
+              )}
+              <QuestionInput
+                questionWording={questionWording}
+                setQuestionWording={setQuestionWording}
               />
             </div>
 
-            {/* Difficulty Level */}
-            <div className="flex flex-col gap-1.5">
-              <CustomSelectWithLabel
-                label="Curriculum Difficulty"
-                value={difficulty}
-                onValueChange={setDifficulty}
-              >
-                <SelectItem value="EASY">Easy Level</SelectItem>
-                <SelectItem value="MEDIUM">Medium Level</SelectItem>
-                <SelectItem value="HARD">Hard Level</SelectItem>
-              </CustomSelectWithLabel>
-            </div>
-
-          </div>
-
-          {/* Section 2: Question Format */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-              Question Format
-            </Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {QuestionFormatOptions.map((opt) => (
-                <CardButton
-                  key={opt.value}
-                  title={opt.label}
-                  description={opt.description}
-                  selected={format === opt.value}
-                  onClick={() => setFormat(opt.value)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Section 3: Question Wording / Prompt */}
-          <div className="flex flex-col gap-1.5">
-            {isNotOriginalQuestion && (
-              <div className="flex items-center justify-between pb-1 animate-in fade-in duration-200">
-                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <RotateCcw size={12} /> AI Synthesized Wording Active
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRestoreOriginal}
-                  className="text-xs font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-7 px-3 rounded-lg flex items-center gap-1.5 shadow-2xs"
-                >
-                  <RotateCcw size={13} />
-                  Use Original Question
-                </Button>
-              </div>
-            )}
-            <QuestionInput
-              questionWording={questionWording}
-              setQuestionWording={setQuestionWording}
-            />
-          </div>
-
-          {/* Section 4: Option Specifications & Correct Key Designation */}
-          <div className="border border-border rounded-2xl bg-muted/20 overflow-hidden">
-            <div className="p-4 border-b border-border bg-muted/40 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-              <div className="flex items-center gap-2">
-                <HelpCircle size={15} className="text-primary" />
-                <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
-                  Option Specifications & Correct Key Designation
+            {/* Section 4: Option Specifications & Correct Key Designation */}
+            <div className="border border-border rounded-xl bg-muted/20 overflow-hidden">
+              <div className="p-3 px-4 border-b border-border bg-muted/40 flex flex-col sm:flex-row justify-between sm:items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <HelpCircle size={14} className="text-primary" />
+                  <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                    Option Specifications & Correct Key Designation
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-wide">
+                  Toggle selection to set answer key
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                Toggle the selection to set the correct answer
-              </span>
-            </div>
 
-            <div className="p-6 flex flex-col gap-4">
-              {format === "MCQ" ?(
-                <MultipleChoiceInput
-                  mcqChoices={mcqChoices}
-                  mcqCorrectIndex={mcqCorrectIndex}
-                  handleChange={handleMcqChoiceChange}
-                  setMcqCorrectIndex={setMcqCorrectIndex}
-                  handleAddChoice={handleAddChoice}
-                  handleRemoveChoice={handleRemoveChoice}
-                />
-              ) : format === "TRUE_FALSE" ? (
-                <TrueOrFalseInput tfCorrect={tfCorrect} setTfCorrect={setTfCorrect} />
-              ) : (
-                <ShortAnswerInput saCorrectAnswer={saCorrectAnswer} setSaCorrectAnswer={setSaCorrectAnswer} />
-              )}
+              <div className="p-4 flex flex-col gap-3">
+                {format === "MCQ" ?(
+                  <MultipleChoiceInput
+                    mcqChoices={mcqChoices}
+                    mcqCorrectIndex={mcqCorrectIndex}
+                    handleChange={handleMcqChoiceChange}
+                    setMcqCorrectIndex={setMcqCorrectIndex}
+                    handleAddChoice={handleAddChoice}
+                    handleRemoveChoice={handleRemoveChoice}
+                  />
+                ) : format === "TRUE_FALSE" ? (
+                  <TrueOrFalseInput tfCorrect={tfCorrect} setTfCorrect={setTfCorrect} />
+                ) : (
+                  <ShortAnswerInput saCorrectAnswer={saCorrectAnswer} setSaCorrectAnswer={setSaCorrectAnswer} />
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Section 5: Action Bar */}
-        <div className="p-6 border-t border-border flex flex-wrap items-center justify-end gap-3 bg-muted/20">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-6 py-2.5 rounded-xl h-auto"
-          >
-            Cancel Draft
-          </Button>
-
-          {isNotOriginalQuestion && (
+          {/* Section 5: Action Bar */}
+          <div className="p-4 border-t border-border flex flex-wrap items-center justify-end gap-2.5 bg-muted/20">
             <Button
               type="button"
               variant="outline"
-              onClick={handleRestoreOriginal}
-              className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold px-5 py-2.5 rounded-xl h-auto flex items-center gap-1.5 cursor-pointer shadow-2xs animate-in fade-in duration-200"
+              onClick={handleCancel}
+              className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-4 h-9 rounded-xl text-xs"
             >
-              <RotateCcw size={16} />
-              Use Original Question
+              Cancel Draft
             </Button>
-          )}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleOpenSynthesizer}
-            disabled={isSubmitting}
-            className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-2xs"
-          >
-            <Sparkles size={16} className="text-primary" />
-            AI Synthesizer & Preview
-          </Button>
-          
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 shadow-xs"
-          >
-            {isSubmitting ? (
-              <span className="inline-block animate-spin border-2 border-primary-foreground border-t-transparent rounded-full w-4 h-4" />
-            ) : (
-              <Sparkles size={16} />
+            {isNotOriginalQuestion && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleRestoreOriginal}
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold px-4 h-9 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs animate-in fade-in duration-200"
+              >
+                <RotateCcw size={14} />
+                Use Original Question
+              </Button>
             )}
-            Save & Submit Draft
-          </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleOpenSynthesizer}
+              disabled={isSubmitting}
+              className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-4 h-9 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Sparkles size={14} className="text-primary" />
+              AI Synthesizer & Preview
+            </Button>
+            
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-5 h-9 rounded-xl text-xs flex items-center gap-1.5 shadow-xs"
+            >
+              {isSubmitting ? (
+                <Spinner size="xs" variant="current" />
+              ) : (
+                <Sparkles size={14} />
+              )}
+              Save & Submit Draft
+            </Button>
+          </div>
+        </form>
+      ) : (
+        /* ── BULK CSV UPLOAD TAB ── */
+        <div className="animate-in fade-in duration-200">
+          {extractedQuestions.length === 0 ? (
+            <UploadZone categories={categories} />
+          ) : (
+            <ExtractedFilePreview />
+          )}
         </div>
-      </form>
+      )}
 
       {/* AI Question Synthesizer Preview Modal */}
       <QuestionSynthesizerDialog

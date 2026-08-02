@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import type { ReviewCenterRepresentative } from "../types";
 import { useCreateReviewCenter, useUpdateReviewCenter } from "../hooks/useReviewCenter";
@@ -278,7 +279,7 @@ export default function AddEditReviewCenterModal({
               disabled={isSubmitting}
               className="h-10 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 cursor-pointer flex items-center gap-2 shadow-xs"
             >
-              {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+              {isSubmitting && <Spinner size="sm" variant="current" />}
               {isEditing ? "Save Changes" : "Create Review Center"}
             </Button>
           </DialogFooter>

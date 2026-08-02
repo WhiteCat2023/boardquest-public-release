@@ -19,7 +19,7 @@ interface QuestionListState {
 export const useQuestionListStore = create<QuestionListState>((set) => ({
   cursorsStack: [undefined],
   currentPageIndex: 0,
-  itemsPerPage: 9,
+  itemsPerPage: 10,
   rowSelection: {},
   isFeedbackOpen: false,
 

@@ -18,7 +18,7 @@ const sidebarMenuMap: Record<string, any[]> = {
 
 function DashboardLayout() {
     const { auth, logout } = useAuth();
-    const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
+    const currentUser = auth?.data?.user || auth?.user;
     const userRole = currentUser?.role?.toLowerCase();
     const currentNavItems = sidebarMenuMap[userRole as string] || [];
 

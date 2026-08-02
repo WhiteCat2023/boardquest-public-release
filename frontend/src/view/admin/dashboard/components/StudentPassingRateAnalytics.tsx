@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   TrendingUp, 
   PieChart, 
@@ -93,17 +93,19 @@ export function StudentPassingRateAnalytics() {
   const donutRadius = 65;
   const circumference = 2 * Math.PI * donutRadius;
   
-  let cumulativeOffset = 0;
-  const donutSlices = distributionData.map((item) => {
-    const dashLength = (item.value / 100) * circumference;
-    const offset = cumulativeOffset;
-    cumulativeOffset += dashLength;
-    return {
-      ...item,
-      dashArray: `${dashLength} ${circumference - dashLength}`,
-      dashOffset: -offset,
-    };
-  });
+  const donutSlices = useMemo(() => {
+    return distributionData.map((item, index) => {
+      const dashLength = (item.value / 100) * circumference;
+      const offset = distributionData
+        .slice(0, index)
+        .reduce((sum, prevItem) => sum + (prevItem.value / 100) * circumference, 0);
+      return {
+        ...item,
+        dashArray: `${dashLength} ${circumference - dashLength}`,
+        dashOffset: -offset,
+      };
+    });
+  }, [distributionData, circumference]);
 
   if (isLoading) {
     return (

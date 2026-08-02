@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { ReviewSchedule, ReviewCenterRepresentative } from "../types";
-import { useCreateReviewSchedule, useUpdateReviewSchedule } from "../hooks/useReviewCenter";
+import { useCreateReviewSchedule, useUpdateReviewSchedule } from "../hooks/useCalendar";
 
 interface SetReviewScheduleModalProps {
   isOpen: boolean;
@@ -349,7 +350,7 @@ export default function SetReviewScheduleModal({
               disabled={isSubmitting}
               className="h-10 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 cursor-pointer shadow-md flex items-center gap-2 transition-all"
             >
-              {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+              {isSubmitting && <Spinner size="sm" variant="current" />}
               {isEditing ? "Save Date Changes" : "Create Review Schedule"}
             </Button>
           </div>

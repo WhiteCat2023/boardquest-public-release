@@ -57,9 +57,9 @@ export default function FacultyTable({
                   <TableHead className="py-2.5 px-4 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Employee Profile
                   </TableHead>
-                  <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                  {/* <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Department
-                  </TableHead>
+                  </TableHead> */}
                   <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Authority Role
                   </TableHead>

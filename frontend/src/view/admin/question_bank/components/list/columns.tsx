@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { UserRole, type Question } from "@/types/question";
+import { UserRole, QuestionStatus, type Question } from "@/types/question";
 import { Eye, Trash2, Edit, Tag } from "lucide-react";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 
@@ -137,11 +137,6 @@ export const getQuestionColumns = ({
         >
           {row.original.status}
         </span>
-        {row.original.isPublished && (
-          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-            Published
-          </span>
-        )}
       </div>
     ),
   },
@@ -156,20 +151,18 @@ export const getQuestionColumns = ({
           : item.authorId;
       const isAuthor = authorId === currentUserId;
       const canEdit =
-        !item.isPublished &&
-        (currentUserRole === UserRole.SUPERADMIN ||
-          currentUserRole === UserRole.ADMIN ||
-          currentUserRole === UserRole.TEAMLEAD ||
-          (currentUserRole === UserRole.TEACHER &&
-            isAuthor &&
-            item.status !== QuestionStatus.APPROVED));
+        currentUserRole === UserRole.SUPERADMIN ||
+        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.TEAMLEAD ||
+        (currentUserRole === UserRole.TEACHER &&
+          isAuthor &&
+          item.status !== QuestionStatus.APPROVED);
       const canDelete =
-        !item.isPublished &&
-        (currentUserRole === UserRole.SUPERADMIN ||
-          currentUserRole === UserRole.ADMIN ||
-          (currentUserRole === UserRole.TEACHER &&
-            isAuthor &&
-            item.status === QuestionStatus.DRAFT));
+        currentUserRole === UserRole.SUPERADMIN ||
+        currentUserRole === UserRole.ADMIN ||
+        (currentUserRole === UserRole.TEACHER &&
+          isAuthor &&
+          item.status === QuestionStatus.DRAFT);
 
       return (
         <div className="flex items-center justify-end gap-1.5 pr-6">

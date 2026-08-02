@@ -11,7 +11,6 @@ export interface QuestionFilters {
     cursor?: string;
     limit?: number;
     authorId?: string;
-    isPublished?: boolean;
 }
 
 export function useQuestionBank(filters?: QuestionFilters) {

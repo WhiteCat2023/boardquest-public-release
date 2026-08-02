@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
@@ -49,6 +49,21 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+
+function SubjectCategoryIcon({
+  icon,
+  name,
+  size = 22,
+  className = "",
+}: {
+  icon?: string | null;
+  name?: string;
+  size?: number;
+  className?: string;
+}) {
+  const IconComp = getCategoryIcon(icon, name);
+  return React.createElement(IconComp, { size, className });
+}
 
 export default function SubjectDetailsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -106,9 +121,7 @@ export default function SubjectDetailsPage() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const IconComp = category
-    ? getCategoryIcon(category.icon, category.name)
-    : BookOpen;
+
 
   const totalQuestions =
     typeof category?._count?.questions === "number"
@@ -229,7 +242,12 @@ export default function SubjectDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 shrink-0 shadow-2xs">
-              <IconComp size={22} className="stroke-[2.2]" />
+              <SubjectCategoryIcon
+                icon={category?.icon}
+                name={category?.name}
+                size={22}
+                className="stroke-[2.2]"
+              />
             </div>
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center gap-2">
