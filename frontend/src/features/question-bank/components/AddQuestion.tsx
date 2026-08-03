@@ -489,7 +489,7 @@ export default function AddQuestion() {
                 }`}
               >
                 <PlusCircle size={13} />
-                Add Question(individual)
+                Add Question
               </button>
 
               <button
@@ -502,7 +502,7 @@ export default function AddQuestion() {
                 }`}
               >
                 <FileSpreadsheet size={13} />
-                Add Questions(bulk)
+                Add Questions
               </button>
             </div>
           )}
