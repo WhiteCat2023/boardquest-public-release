@@ -4,10 +4,12 @@ import * as facultyService from "../../services/admin/faculty.services";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
+import { Role } from "../../../generated/prisma";
 
 export const getFaculties = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { search, role, departmentId, status, cursor, limit } = req.query;
+    const { search, role, status, cursor, limit } = req.query;
+    const requesterRole = req.user?.role;
 
     const result = await facultyService.getAllFaculty({
       search: search as string,
@@ -15,6 +17,7 @@ export const getFaculties = asyncHandler(
       status: status as string,
       cursor: cursor as string,
       limit: limit ? parseInt(limit as string, 10) : undefined,
+      requesterRole,
     });
 
     if (result && typeof result === "object" && "faculties" in result) {

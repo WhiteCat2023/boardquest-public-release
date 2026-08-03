@@ -155,8 +155,9 @@ export class FacultyService {
     status?: string;
     cursor?: string;
     limit?: number;
+    requesterRole?: string;
   }) {
-    const { search, role, status, cursor, limit } = filters || {};
+    const { search, role, status, cursor, limit, requesterRole } = filters || {};
 
     const where: any = {};
 
@@ -170,7 +171,21 @@ export class FacultyService {
       ];
     }
 
-    if (role && role !== "ALL") {
+    // Role-based account visibility scoping rules:
+    // 1. SUPERADMIN -> Only returns ADMIN accounts
+    // 2. ADMIN -> Returns both TEAMLEAD and TEACHER accounts
+    // 3. TEAMLEAD -> Only returns TEACHER accounts
+    if (requesterRole === "SUPERADMIN") {
+      where.role = { in: ["ADMIN", "TEAMLEAD", "TEACHER"] }
+    } else if (requesterRole === "ADMIN") {
+      if (role && role !== "ALL" && ["TEAMLEAD", "TEACHER"].includes(role)) {
+        where.role = role;
+      } else {
+        where.role = { in: ["TEAMLEAD", "TEACHER"] };
+      }
+    } else if (requesterRole === "TEAMLEAD") {
+      where.role = "TEACHER";
+    } else if (role && role !== "ALL") {
       where.role = role;
     }
 
