@@ -97,9 +97,10 @@ export function SubjectDetailModal({
     staleTime: 1000 * 60 * 2,
   });
 
-  const IconComp = category
-    ? getCategoryIcon(category.icon, category.name)
-    : BookOpen;
+  const categoryIconElement = useMemo(() => {
+    const Icon = category ? getCategoryIcon(category.icon, category.name) : BookOpen;
+    return React.createElement(Icon, { size: 24, className: "stroke-[2.2]" });
+  }, [category]);
 
   const totalQuestions =
     typeof category?._count?.questions === "number"
@@ -183,7 +184,7 @@ export function SubjectDetailModal({
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="p-3 bg-primary/10 text-primary rounded-2xl border border-primary/20 shrink-0 shadow-2xs">
-                  <IconComp size={24} className="stroke-[2.2]" />
+                  {categoryIconElement}
                 </div>
                 <div className="space-y-0.5 min-w-0">
                   <DialogTitle className="text-lg font-bold text-foreground leading-snug truncate">
