@@ -10,8 +10,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useFaculties } from "@/view/admin/faculty/hooks/useFaculty";
-import { useQuestionDetail } from "@/hooks/useQuestionBank";
+import { useFaculties } from "@/features/faculty";
+import { useQuestionDetail } from "@/features/question-bank";
 import useAuth from "@/hooks/useAuth";
 
 const formatSegment = (segment: string) => {

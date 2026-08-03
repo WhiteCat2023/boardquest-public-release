@@ -1,6 +1,6 @@
 
 import { AxiosInstance } from "../utils/AxiosInstance";
-import useAuth from "./useAuth";
+import useAuth from "@/hooks/useAuth";
 
 const useRefreshToken = () => {
   const { setAuth } = useAuth();
