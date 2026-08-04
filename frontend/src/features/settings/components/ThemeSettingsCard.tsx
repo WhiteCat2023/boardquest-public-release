@@ -10,37 +10,34 @@ export default function ThemeSettingsCard() {
     {
       id: "light",
       name: "Light Mode",
-      description: "Clean, bright aesthetic tailored for day usage.",
+      description: "Clean, bright day aesthetic.",
       icon: Sun,
     },
     {
       id: "dark",
       name: "Dark Mode",
-      description: "Sleek, low-light aesthetic tailored for night usage.",
+      description: "Sleek, low-light night aesthetic.",
       icon: Moon,
     },
     {
       id: "system",
       name: "System Default",
-      description: "Automatically matches your operating system setting.",
+      description: "Sync with OS theme settings.",
       icon: Laptop,
     },
   ];
 
   return (
-    <Card id="theme" className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden scroll-mt-6 font-sans">
-      <CardHeader className="border-b border-border pb-4 pt-6 px-6 bg-card">
-        <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-          <Sparkles size={18} className="text-primary" />
-          Theme & Color Appearance
+    <Card id="theme" className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden scroll-mt-6 font-sans">
+      <CardHeader className="border-b border-border py-3 px-4 md:px-5 bg-card">
+        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+          <Sparkles size={16} className="text-primary" />
+          Theme & Appearance
         </CardTitle>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Select your preferred visual mode for BoardQuest.
-        </p>
       </CardHeader>
 
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <CardContent className="p-4 md:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {themeOptions.map((opt) => {
             const Icon = opt.icon;
             const isSelected = theme === opt.id;
@@ -53,32 +50,28 @@ export default function ThemeSettingsCard() {
                   setTheme(opt.id);
                   toast.success(`Theme set to ${opt.name}`);
                 }}
-                className={`relative flex flex-col justify-between p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`relative flex items-center gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-primary/10 border-primary ring-2 ring-primary/20 text-foreground shadow-xs"
-                    : "bg-muted/50 border-border hover:bg-accent text-muted-foreground hover:text-foreground"
+                    ? "bg-primary/10 border-primary ring-1 ring-primary/20 text-foreground shadow-2xs"
+                    : "bg-muted/30 border-border hover:bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div
-                    className={`p-2.5 rounded-xl border ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card text-muted-foreground border-border"
-                    }`}
-                  >
-                    <Icon size={18} />
-                  </div>
-                  {isSelected && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                      <Check size={12} /> Active
-                    </span>
-                  )}
+                <div
+                  className={`p-2 rounded-lg border shrink-0 ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-muted-foreground border-border"
+                  }`}
+                >
+                  <Icon size={16} />
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">{opt.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <h3 className="text-xs font-bold text-foreground truncate">{opt.name}</h3>
+                    {isSelected && <Check size={13} className="text-primary shrink-0" />}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate leading-snug mt-0.5">
                     {opt.description}
                   </p>
                 </div>

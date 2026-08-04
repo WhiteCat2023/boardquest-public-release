@@ -2,16 +2,20 @@ import { Sliders } from "lucide-react";
 
 export default function SettingsHeader() {
   return (
-    <div className="flex flex-col gap-1.5 pb-2 border-b border-border font-sans">
-      <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-        <div className="p-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/20">
-          <Sliders size={22} className="stroke-[2.5]" />
+    <div className="flex items-center justify-between gap-4 pb-3 border-b border-border font-sans">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 shrink-0">
+          <Sliders size={18} className="stroke-[2.5]" />
         </div>
-        System & Appearance Settings
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Customize your application theme, notification preferences, and visual display defaults.
-      </p>
+        <div>
+          <h1 className="text-lg font-bold text-foreground tracking-tight">
+            System & Appearance Settings
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Manage application themes, notification preferences, and display density defaults.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

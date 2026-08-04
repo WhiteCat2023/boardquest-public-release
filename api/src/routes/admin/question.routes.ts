@@ -14,12 +14,8 @@ import {
   bulkUploadQuestions,
   extractQuestions,
   bulkDeleteQuestions,
-  bulkFeedbackQuestions,
   bulkApproveQuestions,
   bulkUpdateStatusQuestions,
-  getQuestionsThatNeedRevision,
-  updateRevisionFeedback,
-  deleteRevisionFeedback,
   synthesizeQuestion,
   createSynthesizedQuestion,
   getPendingReviewAuthors,
@@ -50,15 +46,12 @@ router.post("/create-synthesized", authenticateToken, createSynthesizedQuestion)
 router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
 router.post("/extract", authenticateToken, extractQuestions);
 router.post("/bulk/delete", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), bulkDeleteQuestions);
-router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), bulkFeedbackQuestions);
 router.post("/bulk/approve", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), bulkApproveQuestions);
 router.post("/bulk/status", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), bulkUpdateStatusQuestions);
-router.get("/revisions/get", authenticateToken, getQuestionsThatNeedRevision);
-router.put("/revisions/:revisionId", authenticateToken, updateRevisionFeedback);
-router.delete("/revisions/:revisionId", authenticateToken, deleteRevisionFeedback);
 router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
+router.put("/update/:questionId", authenticateToken, updateQuestion);
 router.put("/:questionId", authenticateToken, updateQuestion);
 router.delete("/:questionId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), deleteQuestion);
 

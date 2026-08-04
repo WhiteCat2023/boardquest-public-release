@@ -1,4 +1,4 @@
-import * as QuesitonServices from "../../services/admin/question.services";
+import * as QuestionService from "../../services/admin/question.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Response } from "express";
@@ -6,7 +6,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "../../../generated/prisma/enums";
+} from "../../../generated/prisma";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
@@ -36,7 +36,7 @@ export const createQuestion = asyncHandler(
       }
     }
 
-    const question = await QuesitonServices.createNewQuestion(req.body);
+    const question = await QuestionService.createNewQuestion(req.body);
     await logInfo(
       "CREATE_QUESTION",
       `Created question: "${(question.question || "").slice(0, 45)}..." (${question.type}, ${question.difficulty})`,
@@ -60,7 +60,7 @@ export const updateQuestion = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const question = await QuesitonServices.getQuestionById(
+    const question = await QuestionService.getQuestionById(
       questionId as string,
     );
 
@@ -68,19 +68,21 @@ export const updateQuestion = asyncHandler(
       if (question.authorId !== user.id) {
         throw new ApiError(403, "You can only update your own questions");
       }
-      // Teachers can only save questions as DRAFT
-      req.body.status = "DRAFT";
+      // Teachers can save questions as DRAFT or submit/resubmit as PENDING_REVIEW
+      if (req.body.status !== "PENDING_REVIEW" && req.body.status !== "DRAFT") {
+        req.body.status = "PENDING_REVIEW";
+      }
       req.body.authorId = user.id; // force ownership
     } else if (user.role === "TEAMLEAD") {
       if (req.body.status === "APPROVED") {
         throw new ApiError(
           403,
-          "Co-Admins/Team Leads cannot approve questions",
+          "Teacher/Team Leads cannot approve questions",
         );
       }
     }
 
-    const updatedQuestion = await QuesitonServices.updateQuestion(
+    const updatedQuestion = await QuestionService.updateQuestion(
       questionId as string,
       req.body,
     );
@@ -119,15 +121,14 @@ export const getQuestions = asyncHandler(
           : undefined;
 
     const isValidObjectId = (id?: string) =>
-      typeof id === "string" && (/^[0-9a-fA-F]{24}$/.test(id) || id === "superadmin-env-id");
+      typeof id === "string" &&
+      (/^[0-9a-fA-F]{24}$/.test(id) || id === "superadmin-env-id");
 
     // If teacher, they can only see their own questions.
     // Admin/Co-Admin can filter specifically by any authorId.
     const rawAuthorId =
       user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
-    let authorIdFilter = isValidObjectId(rawAuthorId)
-      ? rawAuthorId
-      : undefined;
+    let authorIdFilter = isValidObjectId(rawAuthorId) ? rawAuthorId : undefined;
     if (authorIdFilter === "superadmin-env-id") {
       authorIdFilter = "507f1f77bcf86cd799439011";
     }
@@ -144,7 +145,7 @@ export const getQuestions = asyncHandler(
 
     let result;
     if (hasFilter) {
-      result = await QuesitonServices.getFilteredQuestions(
+      result = await QuestionService.getFilteredQuestions(
         search as string,
         difficulty as QuestionDifficulty,
         category as string,
@@ -156,7 +157,7 @@ export const getQuestions = asyncHandler(
         isPublishedBool,
       );
     } else {
-      result = await QuesitonServices.getAllQuestions(
+      result = await QuestionService.getAllQuestions(
         cursor as string,
         limitNum,
         authorIdFilter,
@@ -190,7 +191,7 @@ export const getQuestionStats = asyncHandler(
     const rawAuthorId =
       user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
 
-    const stats = await QuesitonServices.getQuestionStats(rawAuthorId);
+    const stats = await QuestionService.getQuestionStats(rawAuthorId);
     return new ApiResponse(
       200,
       { stats },
@@ -198,7 +199,6 @@ export const getQuestionStats = asyncHandler(
     ).send(res);
   },
 );
-
 
 export const getQuestionById = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -208,7 +208,7 @@ export const getQuestionById = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const question = await QuesitonServices.getQuestionById(
+    const question = await QuestionService.getQuestionById(
       questionId as string,
     );
     if (user.role === "TEACHER" && question.authorId !== user.id) {
@@ -226,7 +226,7 @@ export const getQuestionById = asyncHandler(
 export const getQuestionsByCategory = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { categoryId } = req.params;
-    const questions = await QuesitonServices.getQuestionsByCategory(
+    const questions = await QuestionService.getQuestionsByCategory(
       categoryId as string,
     );
     return new ApiResponse(
@@ -245,14 +245,14 @@ export const deleteQuestion = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const questionObj = await QuesitonServices.getQuestionById(
+    const questionObj = await QuestionService.getQuestionById(
       questionId as string,
     );
     if (user.role === "TEACHER" && questionObj.authorId !== user.id) {
       throw new ApiError(403, "You can only delete your own questions");
     }
 
-    const question = await QuesitonServices.deleteQuestion(
+    const question = await QuestionService.deleteQuestion(
       questionId as string,
     );
     return new ApiResponse(
@@ -347,37 +347,11 @@ export const bulkDeleteQuestions = asyncHandler(
       throw new ApiError(400, "ids must be a non-empty array of strings");
     }
 
-    await QuesitonServices.bulkDeleteQuestions(ids, user);
+    await QuestionService.bulkDeleteQuestions(ids, user);
     return new ApiResponse(
       200,
       null,
       `${ids.length} questions deleted successfully`,
-    ).send(res);
-  },
-);
-
-export const bulkFeedbackQuestions = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { ids, feedback } = req.body;
-    const user = req.user;
-
-    if (!user) {
-      throw new ApiError(401, "Authentication required");
-    }
-
-    if (!Array.isArray(ids) || ids.length === 0) {
-      throw new ApiError(400, "ids must be a non-empty array of strings");
-    }
-
-    if (typeof feedback !== "string" || !feedback.trim()) {
-      throw new ApiError(400, "feedback must be a non-empty string");
-    }
-
-    await QuesitonServices.bulkFeedbackQuestions(ids, feedback, user);
-    return new ApiResponse(
-      200,
-      null,
-      `Feedback sent successfully for ${ids.length} questions`,
     ).send(res);
   },
 );
@@ -395,7 +369,7 @@ export const bulkApproveQuestions = asyncHandler(
       throw new ApiError(400, "ids must be a non-empty array of strings");
     }
 
-    await QuesitonServices.bulkApproveQuestions(ids, user);
+    await QuestionService.bulkApproveQuestions(ids, user);
     await logInfo(
       "BULK_APPROVE_QUESTION",
       `Approved ${ids.length} question(s) in bulk`,
@@ -428,7 +402,7 @@ export const bulkUpdateStatusQuestions = asyncHandler(
       throw new ApiError(400, "status is required");
     }
 
-    await QuesitonServices.bulkUpdateStatusQuestions(ids, status, user);
+    await QuestionService.bulkUpdateStatusQuestions(ids, status, user);
     await logInfo(
       "BULK_UPDATE_STATUS_QUESTION",
       `Updated status for ${ids.length} question(s) to ${status}`,
@@ -444,50 +418,6 @@ export const bulkUpdateStatusQuestions = asyncHandler(
   },
 );
 
-export const getQuestionsThatNeedRevision = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const revisions = await QuesitonServices.getQuestionsThatNeedRevision();
-    return new ApiResponse(
-      200,
-      { revisions },
-      "Revision questions retrieved successfully",
-    ).send(res);
-  },
-);
-
-export const updateRevisionFeedback = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const revisionId = req.params.revisionId as string;
-    const { feedback } = req.body;
-    const user = req.user;
-    if (!user) throw new ApiError(401, "Authentication required");
-
-    if (!feedback) throw new ApiError(400, "Feedback text is required");
-
-    await QuesitonServices.updateRevisionFeedback(revisionId, feedback, user);
-    return new ApiResponse(
-      200,
-      null,
-      "Revision feedback updated successfully",
-    ).send(res);
-  },
-);
-
-export const deleteRevisionFeedback = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const revisionId = req.params.revisionId as string;
-    const user = req.user;
-    if (!user) throw new ApiError(401, "Authentication required");
-
-    await QuesitonServices.deleteRevisionFeedback(revisionId, user);
-    return new ApiResponse(
-      200,
-      null,
-      "Revision request deleted successfully",
-    ).send(res);
-  },
-);
-
 export const synthesizeQuestion = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user;
@@ -495,12 +425,29 @@ export const synthesizeQuestion = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const { question, choices, correctAnswer, topic, targetDifficulty, type, additionalContext } = req.body;
-    if (!question || !choices || !correctAnswer || !topic || !targetDifficulty) {
-      throw new ApiError(400, "Missing required question synthesis fields: question, choices, correctAnswer, topic, targetDifficulty");
+    const {
+      question,
+      choices,
+      correctAnswer,
+      topic,
+      targetDifficulty,
+      type,
+      additionalContext,
+    } = req.body;
+    if (
+      !question ||
+      !choices ||
+      !correctAnswer ||
+      !topic ||
+      !targetDifficulty
+    ) {
+      throw new ApiError(
+        400,
+        "Missing required question synthesis fields: question, choices, correctAnswer, topic, targetDifficulty",
+      );
     }
 
-    const result = await QuesitonServices.synthesizeQuestion({
+    const result = await QuestionService.synthesizeQuestion({
       question,
       choices,
       correctAnswer,
@@ -539,7 +486,7 @@ export const createSynthesizedQuestion = asyncHandler(
       req.body.status = "DRAFT";
     }
 
-    const question = await QuesitonServices.createSynthesizedQuestion(req.body);
+    const question = await QuestionService.createSynthesizedQuestion(req.body);
 
     await logInfo(
       "CREATE_SYNTHESIZED_QUESTION",
@@ -559,7 +506,7 @@ export const createSynthesizedQuestion = asyncHandler(
 
 export const getPendingReviewAuthors = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const authors = await QuesitonServices.getPendingReviewAuthors();
+    const authors = await QuestionService.getPendingReviewAuthors();
     return new ApiResponse(
       200,
       { authors },
@@ -567,4 +514,3 @@ export const getPendingReviewAuthors = asyncHandler(
     ).send(res);
   },
 );
-

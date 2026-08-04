@@ -5,15 +5,14 @@ import DisplaySettingsCard from "./DisplaySettingsCard";
 
 function Settings() {
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full font-sans bg-background text-foreground animate-in fade-in duration-150">
       {/* Header Summary Banner */}
       <SettingsHeader />
 
       {/* Settings Cards Section */}
-      <div className="flex flex-col gap-6 w-full min-w-0">
+      <div className="flex flex-col gap-4 w-full min-w-0">
         <ThemeSettingsCard />
         <NotificationSettingsCard />
-        <DisplaySettingsCard />
       </div>
     </div>
   );

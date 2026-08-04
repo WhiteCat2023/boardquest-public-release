@@ -1,6 +1,7 @@
 import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
-import { GuidanceStatus, Role } from "../../../generated/prisma/enums";
+import { GuidanceStatus, Role } from "../../../generated/prisma";
+import { createNotification } from "./notification.service";
 
 export interface CreateGuidancePayload {
   studentId: string;
@@ -67,6 +68,15 @@ export const createGuidanceAssignment = async (
       },
     },
   });
+
+  createNotification({
+    recipientId: advisorId,
+    recipientRole: advisor.role,
+    title: "New Student Guidance Assigned",
+    message: `Student ${student.name} was assigned to you for academic guidance.`,
+    type: "STUDENT_ASSIGNED",
+    link: "/student-management",
+  }).catch((err) => console.warn("Notification error:", err?.message));
 
   return assignment;
 };

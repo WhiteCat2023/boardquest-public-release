@@ -59,6 +59,9 @@ const CalendarManagement = lazy(() =>
 const LogsManagement = lazy(() =>
   import("@/features/logs").then((m) => ({ default: m.LogsManagement })),
 );
+const NotificationsPage = lazy(() =>
+  import("@/features/notifications").then((m) => ({ default: m.NotificationsPage })),
+);
 
 const SubjectManagement = lazy(() =>
   import("@/features/question-bank").then((m) => ({
@@ -86,9 +89,6 @@ const SharedLibrary = lazy(() =>
   import("@/features/question-bank").then((m) => ({
     default: m.SharedLibrary,
   })),
-);
-const RevisionDesk = lazy(() =>
-  import("@/features/question-bank").then((m) => ({ default: m.RevisionDesk })),
 );
 const AddQuestion = lazy(() =>
   import("@/features/question-bank").then((m) => ({ default: m.AddQuestion })),
@@ -157,6 +157,12 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                 </Route>
 
+                {/* Faculty Management Routes
+                
+                Managed by SUPERADMIN, ADMIN and TEAMLEAD
+                
+                */}
+
                 <Route
                   element={
                     <RequireAuth
@@ -172,10 +178,6 @@ function App() {
                     path="faculty-management/create"
                     element={<AddFacultyMember />}
                   />
-                  {/* <Route
-                  path="faculty-management/add"
-                  element={<AddFacultyMember />}
-                /> */}
                   <Route
                     path="faculty-management/view/:facultyId"
                     element={<ViewFacultyMember />}
@@ -184,6 +186,20 @@ function App() {
                     path="faculty-management/import"
                     element={<AddFacultyMember />}
                   />
+                </Route>
+
+                {/* Student Management Routes
+                
+                Managed by ADMIN and TEAMLEAD
+                
+                */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={["ADMIN", "TEAMLEAD"]}
+                    />
+                  }
+                >
                   <Route
                     path="student-management"
                     element={<StudentManagement />}
@@ -197,17 +213,19 @@ function App() {
                     element={<AddedStudentUsingCSV />}
                   />
                   <Route
-                    path="student-management/view/:studentId"
+                    path="student-management/:studentId"
                     element={<ViewStudent />}
                   />
                 </Route>
 
+                {/* Review Center Management Routes
+                
+                Managed by ADMIN and TEAMLEAD
+                
+                */}
+
                 <Route
-                  element={
-                    <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
-                    />
-                  }
+                  element={<RequireAuth allowedRoles={["ADMIN", "TEAMLEAD"]} />}
                 >
                   <Route
                     path="review-center"
@@ -217,18 +235,32 @@ function App() {
                     path="calendar-management"
                     element={<CalendarManagement />}
                   />
+                </Route>
+
+                {/* Logs Management Routes
+                
+                Managed by SUPERADMIN and ADMIN
+                
+                */}
+
+                <Route
+                  element={
+                    <RequireAuth allowedRoles={["SUPERADMIN", "ADMIN"]} />
+                  }
+                >
                   <Route path="logs-management" element={<LogsManagement />} />
                 </Route>
+
+                {/* Question Bank Routes
+                
+                Managed by ADMIN, TEAMLEAD and TEACHER
+                
+                */}
 
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={[
-                        "SUPERADMIN",
-                        "ADMIN",
-                        "TEAMLEAD",
-                        "TEACHER",
-                      ]}
+                      allowedRoles={["ADMIN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -258,11 +290,6 @@ function App() {
                     element={<SharedLibrary />}
                   />
                   <Route
-                    path="question-bank/revisions"
-                    element={<RevisionDesk />}
-                  />
-                  <Route path="revisions" element={<RevisionDesk />} />
-                  <Route
                     path="question-bank/create"
                     element={<AddQuestion />}
                   />
@@ -284,12 +311,10 @@ function App() {
                   />
                 </Route>
 
+                {/* Admin and Teamlead Only Routes */}
+
                 <Route
-                  element={
-                    <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
-                    />
-                  }
+                  element={<RequireAuth allowedRoles={["ADMIN", "TEAMLEAD"]} />}
                 >
                   <Route
                     path="question-bank/review"
@@ -302,10 +327,12 @@ function App() {
                   <Route path="analytics" element={<Analytics />} />
                 </Route>
 
+
+
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
+                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -315,6 +342,7 @@ function App() {
                 </Route>
 
                 <Route path="profile-settings" element={<ProfileSettings />} />
+                <Route path="notifications" element={<NotificationsPage />} />
               </Route>
             </Route>
 

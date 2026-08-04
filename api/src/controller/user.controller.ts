@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { decodedId } from "../services/user.services";
+import { decodedId } from "../services/user.service";
 import prisma from "../services/prisma";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/apiResponse";

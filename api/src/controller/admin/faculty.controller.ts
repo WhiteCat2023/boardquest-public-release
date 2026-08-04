@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
-import * as facultyService from "../../services/admin/faculty.services";
+import * as facultyService from "../../services/admin/faculty.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";

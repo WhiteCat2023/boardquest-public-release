@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useStudents } from "@/features/students";
-import StudentHeader from "./StudentHeader";
-import StudentTable from "./StudentTable";
-import GuidanceAssignmentsDesk from "./GuidanceAssignmentsDesk";
-import AssignGuidanceModal from "./AssignGuidanceModal";
+import StudentHeader from "../components/StudentHeader";
+import StudentTable from "../components/StudentTable";
+import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
+import AssignGuidanceModal from "../components/AssignGuidanceModal";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
 const ITEMS_PER_PAGE = 10;
@@ -215,4 +215,3 @@ export default function StudentManagement() {
     </div>
   );
 }
-

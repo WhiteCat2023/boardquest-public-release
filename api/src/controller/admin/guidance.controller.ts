@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
-import * as guidanceService from "../../services/admin/guidance.services";
+import * as guidanceService from "../../services/admin/guidance.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 
-import { Role } from "../../../generated/prisma/enums";
+import { Role } from "../../../generated/prisma";
 
 export const createGuidanceAssignment = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {

@@ -13,6 +13,7 @@ import {
 import { useFaculties } from "@/features/faculty";
 import { useQuestionDetail } from "@/features/question-bank";
 import useAuth from "@/hooks/useAuth";
+import { Home } from "lucide-react";
 
 const formatSegment = (segment: string) => {
   return segment
@@ -102,7 +103,9 @@ export default function HeaderBreadcrumb() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="/">{portalTitle}</Link>
+            <Link to="/">
+              <Home size={16} />
+            </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {filteredSegments.length > 0 && <BreadcrumbSeparator />}

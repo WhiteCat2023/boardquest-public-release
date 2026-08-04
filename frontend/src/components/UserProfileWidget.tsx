@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationDropdown } from "@/features/notifications";
 import appContent from "../locales/en.appcontent.json";
 
 export default function UserProfileWidget() {
@@ -52,91 +53,97 @@ export default function UserProfileWidget() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3 p-1.5 px-2.5 rounded-2xl hover:bg-accent transition-all duration-150 outline-hidden group cursor-pointer focus:ring-2 focus:ring-ring/20 border border-transparent hover:border-border font-sans">
-          <div className="flex flex-col items-end hidden sm:flex text-right">
-            <span className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
-              {userName}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-medium leading-none mt-0.5">
-              {userEmail}
-            </span>
-          </div>
+    <div className="flex items-center gap-2 font-sans">
+      {/* Notification Dropdown Feature */}
+      <NotificationDropdown />
 
-          <Avatar className="h-9 w-9 border border-border shadow-2xs group-hover:border-primary/30 transition-colors bg-muted">
-            <AvatarImage src="" alt={userName} />
-            <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+      {/* User Profile Widget Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-3 p-1.5 px-2.5 rounded-2xl hover:bg-accent transition-all duration-150 outline-hidden group cursor-pointer focus:ring-2 focus:ring-ring/20 border border-transparent hover:border-border font-sans">
+            <div className="flex flex-col items-end hidden sm:flex text-right">
+              <span className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+                {userName}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium leading-none mt-0.5">
+                {userEmail}
+              </span>
+            </div>
 
-          <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-        </button>
-      </DropdownMenuTrigger>
+            <Avatar className="h-9 w-9 border border-border shadow-2xs group-hover:border-primary/30 transition-colors bg-muted">
+              <AvatarImage src="" alt={userName} />
+              <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
 
-      <DropdownMenuContent
-        align="end"
-        className="w-64 p-2 bg-popover rounded-2xl border border-border shadow-xl animate-in fade-in-80 slide-in-from-top-2 duration-150 font-sans text-popover-foreground"
-      >
-        {/* User Details Header */}
-        <DropdownMenuLabel className="p-3 bg-muted/50 border border-border rounded-xl mb-1 flex items-start gap-3">
-          <Avatar className="h-10 w-10 border border-border bg-primary/10 text-primary shrink-0">
-            <AvatarFallback className="font-extrabold text-xs bg-primary/10 text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+            <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
 
-          <div className="flex flex-col overflow-hidden min-w-0">
-            <span className="text-sm font-bold text-foreground truncate leading-snug">
-              {userName}
-            </span>
-            <span className="text-[11px] text-muted-foreground truncate leading-none mb-1.5">
-              {userEmail}
-            </span>
-            <Badge
-              variant="outline"
-              className={`w-fit text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full ${getRoleBadgeStyle(userRole)}`}
-            >
-              {userRole}
-            </Badge>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuContent
+          align="end"
+          className="w-64 p-2 bg-popover rounded-2xl border border-border shadow-xl animate-in fade-in-80 slide-in-from-top-2 duration-150 font-sans text-popover-foreground"
+        >
+          {/* User Details Header */}
+          <DropdownMenuLabel className="p-3 bg-muted/50 border border-border rounded-xl mb-1 flex items-start gap-3">
+            <Avatar className="h-10 w-10 border border-border bg-primary/10 text-primary shrink-0">
+              <AvatarFallback className="font-extrabold text-xs bg-primary/10 text-primary">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
 
-        <DropdownMenuSeparator className="my-1.5 bg-border" />
+            <div className="flex flex-col overflow-hidden min-w-0">
+              <span className="text-sm font-bold text-foreground truncate leading-snug">
+                {userName}
+              </span>
+              <span className="text-[11px] text-muted-foreground truncate leading-none mb-1.5">
+                {userEmail}
+              </span>
+              <Badge
+                variant="outline"
+                className={`w-fit text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full ${getRoleBadgeStyle(userRole)}`}
+              >
+                {userRole}
+              </Badge>
+            </div>
+          </DropdownMenuLabel>
 
-        {/* Menu Items */}
-        <DropdownMenuGroup className="space-y-0.5">
-          <DropdownMenuItem
-            onClick={() => navigate("/profile-settings")}
-            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"
-          >
-            <User size={15} className="text-muted-foreground group-hover:text-primary" />
-            <span>Profile Settings</span>
-          </DropdownMenuItem>
+          <DropdownMenuSeparator className="my-1.5 bg-border" />
 
-          {["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole.toUpperCase()) && (
+          {/* Menu Items */}
+          <DropdownMenuGroup className="space-y-0.5">
             <DropdownMenuItem
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate("/profile-settings")}
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"
             >
-              <Settings size={15} className="text-muted-foreground" />
-              <span>System Settings</span>
+              <User size={15} className="text-muted-foreground group-hover:text-primary" />
+              <span>Profile Settings</span>
             </DropdownMenuItem>
-          )}
-        </DropdownMenuGroup>
 
-        <DropdownMenuSeparator className="my-1.5 bg-border" />
+            {["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole.toUpperCase()) && (
+              <DropdownMenuItem
+                onClick={() => navigate("/settings")}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"
+              >
+                <Settings size={15} className="text-muted-foreground" />
+                <span>System Settings</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
 
-        {/* Sign Out */}
-        <DropdownMenuItem
-          onClick={logout}
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-        >
-          <LogOut size={15} className="text-destructive" />
-          <span>Sign Out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuSeparator className="my-1.5 bg-border" />
+
+          {/* Sign Out */}
+          <DropdownMenuItem
+            onClick={logout}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+          >
+            <LogOut size={15} className="text-destructive" />
+            <span>Sign Out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

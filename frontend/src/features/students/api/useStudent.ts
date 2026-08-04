@@ -1,20 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-
-export interface Student {
-  id: string;
-  email: string;
-  name: string;
-  level: number;
-  xp: number;
-  streak: number;
-  location?: string;
-  createdAt: string;
-  mastery?: any[];
-  studyPlans?: any[];
-  examResults?: any[];
-  lessonCompletions?: any[];
-}
+import type {Student} from "@/features/students/types/types";
 
 export function useStudents(params?: {
   search?: string;

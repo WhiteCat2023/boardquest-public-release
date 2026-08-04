@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface QuestionBankProps {
-  defaultView?: "bank" | "review" | "my-questions" | "revisions";
+  defaultView?: "bank" | "review" | "my-questions";
 }
 
 function QuestionBank({ defaultView }: QuestionBankProps = {}) {
@@ -54,11 +54,6 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
     if (selectedStatus && selectedStatus !== "ALL") {
       filters.status = selectedStatus;
     }
-  } else if (view === "revisions") {
-    filters.status = "NEEDS_REVISION";
-    if ((auth as any)?.data?.user?.role === "TEACHER") {
-      filters.authorId = currentUserId;
-    }
   } else {
     // Shared Library: show ONLY APPROVED questions
     filters.status = "APPROVED";
@@ -90,11 +85,6 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
         return {
           title: "My Questions",
           desc: "Browse and manage draft questions authored by you.",
-        };
-      case "revisions":
-        return {
-          title: "Revision Desk",
-          desc: "Questions flagged by administrators requiring review edits.",
         };
       case "bank":
       default:

@@ -1,5 +1,5 @@
 import { asyncHandler } from "../../utils/asyncHandler";
-import * as categoryServices from "../../services/admin/category.services";
+import * as categoryServices from "../../services/admin/category.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
@@ -41,7 +41,11 @@ export const getCategory = asyncHandler(async (req: AuthenticatedRequest | Reque
 });
 
 export const updateCategory = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
-  const updatedCategory = await categoryServices.updateCategory((req as any).body);
+  const categoryId = (req as any).params?.categoryId || (req as any).body?.categoryId;
+  const updatedCategory = await categoryServices.updateCategory({
+    ...(req as any).body,
+    categoryId,
+  });
   return new ApiResponse(200, { category: updatedCategory }, "Category updated successfully").send(res);
 });
 

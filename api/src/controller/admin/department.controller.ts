@@ -1,5 +1,5 @@
 import { asyncHandler } from "../../utils/asyncHandler";
-import * as departmentService from "../../services/admin/department.services";
+import * as departmentService from "../../services/admin/department.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Request, Response } from "express";
 

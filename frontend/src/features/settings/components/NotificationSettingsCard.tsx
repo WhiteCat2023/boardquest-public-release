@@ -9,26 +9,24 @@ export default function NotificationSettingsCard() {
   const [weeklyDigest, setWeeklyDigest] = useState(false);
 
   return (
-    <Card id="notifications" className="bg-card border border-border rounded-3xl shadow-xs overflow-hidden scroll-mt-6 font-sans">
-      <CardHeader className="border-b border-border pb-4 pt-6 px-6 bg-card">
-        <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-          <Bell size={18} className="text-primary" />
+    <Card id="notifications" className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden scroll-mt-6 font-sans">
+      <CardHeader className="border-b border-border py-3 px-4 md:px-5 bg-card">
+        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+          <Bell size={16} className="text-primary" />
           Notification Preferences
         </CardTitle>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Configure how and when you receive system alerts and security notifications.
-        </p>
       </CardHeader>
 
-      <CardContent className="p-6 flex flex-col gap-4">
-        <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-2xl">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Bell size={15} className="text-primary" /> Email Notifications
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Receive email alerts for question approvals and system changes.
-            </span>
+      <CardContent className="p-4 md:p-5 flex flex-col gap-2.5">
+        <div className="flex items-center justify-between p-3 px-3.5 bg-muted/30 border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <Bell size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-foreground block">Email Notifications</span>
+              <span className="text-[11px] text-muted-foreground">Alerts for question approvals & system updates.</span>
+            </div>
           </div>
           <input
             type="checkbox"
@@ -37,18 +35,19 @@ export default function NotificationSettingsCard() {
               setEmailNotifications(e.target.checked);
               toast.info(`Email notifications ${e.target.checked ? "enabled" : "disabled"}`);
             }}
-            className="h-5 w-5 accent-primary rounded cursor-pointer"
+            className="h-4 w-4 accent-primary rounded cursor-pointer"
           />
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-2xl">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-foreground flex items-center gap-2">
-              <ShieldCheck size={15} className="text-primary" /> Security & Login Alerts
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Get notified whenever logins from new devices occur.
-            </span>
+        <div className="flex items-center justify-between p-3 px-3.5 bg-muted/30 border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <ShieldCheck size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-foreground block">Security & Login Alerts</span>
+              <span className="text-[11px] text-muted-foreground">Alerts for logins from new devices.</span>
+            </div>
           </div>
           <input
             type="checkbox"
@@ -57,18 +56,19 @@ export default function NotificationSettingsCard() {
               setSecurityAlerts(e.target.checked);
               toast.info(`Security alerts ${e.target.checked ? "enabled" : "disabled"}`);
             }}
-            className="h-5 w-5 accent-primary rounded cursor-pointer"
+            className="h-4 w-4 accent-primary rounded cursor-pointer"
           />
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-2xl">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Globe size={15} className="text-primary" /> Weekly Performance Digest
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Summary email of faculty and student review activity.
-            </span>
+        <div className="flex items-center justify-between p-3 px-3.5 bg-muted/30 border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <Globe size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-foreground block">Weekly Performance Digest</span>
+              <span className="text-[11px] text-muted-foreground">Summary email of faculty and student review activity.</span>
+            </div>
           </div>
           <input
             type="checkbox"
@@ -77,7 +77,7 @@ export default function NotificationSettingsCard() {
               setWeeklyDigest(e.target.checked);
               toast.info(`Weekly digest ${e.target.checked ? "enabled" : "disabled"}`);
             }}
-            className="h-5 w-5 accent-primary rounded cursor-pointer"
+            className="h-4 w-4 accent-primary rounded cursor-pointer"
           />
         </div>
       </CardContent>

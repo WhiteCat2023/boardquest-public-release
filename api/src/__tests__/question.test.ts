@@ -2,14 +2,14 @@ import './setup';
 import request from 'supertest';
 import express, { Express } from 'express';
 import questionRouter from '../routes/admin/question.routes';
-import * as questionService from '../services/admin/question.services';
-import * as categoryService from '../services/admin/category.services';
+import * as questionService from '../services/admin/question.service';
+import * as categoryService from '../services/admin/category.service';
 import { ApiError } from '../utils/apiError';
 
 // Mock question services
-jest.mock('../services/admin/question.services');
+jest.mock('../services/admin/question.service');
 // Mock category services
-jest.mock('../services/admin/category.services');
+jest.mock('../services/admin/category.service');
 // Mock background queue service to avoid DB connection leaks during tests
 jest.mock('../services/queue.service', () => ({
   agenda: {
@@ -327,29 +327,7 @@ describe('Question Routes', () => {
     });
   });
 
-  // ── POST /bulk/feedback ───────────────────────────────────────────────────
 
-  describe('POST /api/questions/bulk/feedback', () => {
-    it('should bulk send revision feedback and return 200', async () => {
-      (questionService.bulkFeedbackQuestions as jest.Mock).mockResolvedValue(undefined);
-
-      const response = await request(app)
-        .post('/api/questions/bulk/feedback')
-        .send({ ids: ['question-1', 'question-2'], feedback: 'Please update grammar' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toContain('Feedback sent successfully');
-      expect(questionService.bulkFeedbackQuestions).toHaveBeenCalled();
-    });
-
-    it('should return 400 if feedback is empty', async () => {
-      const response = await request(app)
-        .post('/api/questions/bulk/feedback')
-        .send({ ids: ['question-1'], feedback: '   ' });
-
-      expect(response.status).toBe(400);
-    });
-  });
 
   // ── Category routes ────────────────────────────────────────────────────────
 

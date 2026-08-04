@@ -2,7 +2,6 @@ import { AlertCircle, FileQuestion } from "lucide-react";
 import { type QuestionFilters } from "@/features/question-bank";
 import QuestionTable from "./QuestionTable";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
-import BulkFeedbackDialog from "../dialog/BulkFeedbackDialog";
 import { useQuestionListActions } from "@/features/question-bank";
 
 interface QuestionListProps {
@@ -10,13 +9,21 @@ interface QuestionListProps {
   isRevisionsView?: boolean;
   isLiveView?: boolean;
   isBankView?: boolean;
+  overrideQuestions?: any[];
+  isLoadingOverride?: boolean;
 }
 
-export default function QuestionList({ filters, isRevisionsView, isBankView }: QuestionListProps) {
+export default function QuestionList({
+  filters,
+  isRevisionsView,
+  isBankView,
+  overrideQuestions,
+  isLoadingOverride,
+}: QuestionListProps) {
   const {
-    questions,
+    questions: hookQuestions,
     hasNextPage,
-    loading,
+    loading: hookLoading,
     error,
     fetchQuestions,
     currentPageIndex,
@@ -44,6 +51,9 @@ export default function QuestionList({ filters, isRevisionsView, isBankView }: Q
     setRowSelection,
     setIsFeedbackOpen,
   } = useQuestionListActions(filters);
+
+  const questions = overrideQuestions ?? hookQuestions;
+  const loading = isLoadingOverride ?? hookLoading;
 
   const isRevisions = isRevisionsView || filters?.status === "NEEDS_REVISION";
   const isBank = isBankView || filters?.status === "APPROVED";
@@ -118,15 +128,6 @@ export default function QuestionList({ filters, isRevisionsView, isBankView }: Q
             onPrevious={handlePrevious}
             onPageSelect={handlePageSelect}
             maxPageReached={cursorsStack.length}
-          />
-
-          {/* Bulk Revision Feedback Dialog */}
-          <BulkFeedbackDialog
-            open={isFeedbackOpen}
-            onOpenChange={setIsFeedbackOpen}
-            onSubmit={handleBulkFeedbackSubmit}
-            isPending={bulkFeedbackMutation.isPending}
-            selectedCount={selectedIds.length}
           />
         </div>
       </phantom-ui>

@@ -26,7 +26,6 @@ import { useQuestionPermissions } from "@/features/question-bank";
 import QuestionLifecycleStepper from "./QuestionLifecycleStepper";
 import { useQuestionDetail } from "@/features/question-bank";
 import { Spinner } from "@/components/ui/spinner";
-import AuthorReviewFeedbackModal from "./dialog/AuthorReviewFeedbackModal";
 
 export default function ViewQuestion() {
   const { questionId } = useParams();
@@ -35,7 +34,6 @@ export default function ViewQuestion() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   const from = location.state?.from || null;
 
@@ -55,7 +53,6 @@ export default function ViewQuestion() {
     canEdit,
     canDelete,
     canApprove,
-    canFeedback,
     isAuthor,
   } = useQuestionPermissions(question);
 
@@ -70,24 +67,6 @@ export default function ViewQuestion() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to approve question.");
-    },
-  });
-
-  const feedbackMutation = useMutation({
-    mutationFn: async (feedback: string) => {
-      await axiosPrivate.post("/questions/bulk/feedback", {
-        ids: [questionId],
-        feedback,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-      setIsFeedbackModalOpen(false);
-      toast.success("Revision feedback sent to author.");
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to send revision feedback.");
     },
   });
 
@@ -401,35 +380,22 @@ export default function ViewQuestion() {
             </Button>
           )}
 
-          {question.status === QuestionStatus.PENDING_REVIEW && (canApprove || canFeedback) && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFeedbackModalOpen(true)}
-                disabled={feedbackMutation.isPending}
-                className="border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold px-5 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer"
-              >
-                <MessageSquare size={16} />
-                Request Revision
-              </Button>
-
-              <Button
-                type="button"
-                onClick={() => approveMutation.mutate()}
-                disabled={approveMutation.isPending}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs border border-emerald-600/20"
-              >
-                {approveMutation.isPending ? (
-                  <Spinner size="sm" variant="current" />
-                ) : (
-                  <>
-                    <CheckCircle2 size={16} />
-                    Approve Question
-                  </>
-                )}
-              </Button>
-            </>
+          {question.status === QuestionStatus.PENDING_REVIEW && canApprove && (
+            <Button
+              type="button"
+              onClick={() => approveMutation.mutate()}
+              disabled={approveMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs border border-emerald-600/20"
+            >
+              {approveMutation.isPending ? (
+                <Spinner size="sm" variant="current" />
+              ) : (
+                <>
+                  <CheckCircle2 size={16} />
+                  Approve Question
+                </>
+              )}
+            </Button>
           )}
 
           {question.status === QuestionStatus.NEEDS_REVISION && (
@@ -452,17 +418,6 @@ export default function ViewQuestion() {
         </div>
 
       </div>
-
-      <AuthorReviewFeedbackModal
-        open={isFeedbackModalOpen}
-        onOpenChange={setIsFeedbackModalOpen}
-        onSubmit={async (feedback) => {
-          await feedbackMutation.mutateAsync(feedback);
-        }}
-        isPending={feedbackMutation.isPending}
-        selectedCount={1}
-        authorName={authorName}
-      />
     </div>
   );
 }

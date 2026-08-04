@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
-import { 
-  ArrowLeft, 
-  HelpCircle, 
-  Sparkles, 
-  PlusCircle, 
+import {
+  ArrowLeft,
+  HelpCircle,
+  Sparkles,
+  PlusCircle,
   RotateCcw,
   FileSpreadsheet,
 } from "lucide-react";
@@ -22,8 +28,13 @@ import TrueOrFalseInput from "./TOFInput";
 import ShortAnswerInput from "./ShortAnswerInput";
 import MultipleChoiceInput from "./MCQInput";
 import QuestionInput from "./QuestionInput";
-import QuestionSynthesizerDialog, { type SynthesizedResult } from "./dialog/QuestionSynthesizerDialog";
-import { useQuestionFormStore, useExtractedQuestionsStore } from "@/store/QuestionBankStore";
+import QuestionSynthesizerDialog, {
+  type SynthesizedResult,
+} from "./dialog/QuestionSynthesizerDialog";
+import {
+  useQuestionFormStore,
+  useExtractedQuestionsStore,
+} from "@/store/QuestionBankStore";
 import UploadZone from "./UploadZone";
 import ExtractedFilePreview from "./ExtractedFilePreview";
 import { Spinner } from "@/components/ui/spinner";
@@ -37,13 +48,17 @@ export default function AddQuestion() {
   const location = useLocation();
   const { questionId } = useParams();
   const { auth } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isEditMode = !!questionId;
   const currentUserRole = (auth as any)?.data?.user?.role;
 
   // Active Tab: "individual" | "bulk"
-  const initialTab = searchParams.get("tab") === "bulk" || location.pathname.includes("/import") ? "bulk" : "individual";
+  const initialTab =
+    searchParams.get("tab") === "bulk" || location.pathname.includes("/import")
+      ? "bulk"
+      : "individual";
   const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
 
   const handleTabChange = (tab: "individual" | "bulk") => {
@@ -81,7 +96,7 @@ export default function AddQuestion() {
     status,
     setStatus,
   } = useQuestionFormStore();
-  
+
   // MCQ States
   const [mcqChoices, setMcqChoices] = useState<string[]>(["", ""]);
   const [mcqCorrectIndex, setMcqCorrectIndex] = useState<number>(0);
@@ -140,19 +155,29 @@ export default function AddQuestion() {
   // Pre-populate form when editing or initialize defaults
   useEffect(() => {
     if (isEditMode && existingQuestion) {
-      setCategoryId(existingQuestion.categoryId || existingQuestion.category?.id || "");
+      setCategoryId(
+        existingQuestion.categoryId || existingQuestion.category?.id || "",
+      );
       setTopic(existingQuestion.topic || "");
       setDifficulty(existingQuestion.difficulty || "MEDIUM");
       setFormat(existingQuestion.type || "MCQ");
       setQuestionWording(existingQuestion.question || "");
       setStatus(existingQuestion.status || "PENDING_REVIEW");
-      
+
       if (existingQuestion.type === "MCQ") {
-        setMcqChoices(existingQuestion.choices && existingQuestion.choices.length >= 2 ? existingQuestion.choices : ["", ""]);
-        const correctIdx = existingQuestion.choices ? existingQuestion.choices.indexOf(existingQuestion.correctAnswer) : -1;
+        setMcqChoices(
+          existingQuestion.choices && existingQuestion.choices.length >= 2
+            ? existingQuestion.choices
+            : ["", ""],
+        );
+        const correctIdx = existingQuestion.choices
+          ? existingQuestion.choices.indexOf(existingQuestion.correctAnswer)
+          : -1;
         setMcqCorrectIndex(correctIdx >= 0 ? correctIdx : 0);
       } else if (existingQuestion.type === "TRUE_FALSE") {
-        setTfCorrect(existingQuestion.correctAnswer === "True" ? "True" : "False");
+        setTfCorrect(
+          existingQuestion.correctAnswer === "True" ? "True" : "False",
+        );
       } else if (existingQuestion.type === "SHORT_ANSWER") {
         setSaCorrectAnswer(existingQuestion.correctAnswer || "");
       }
@@ -161,7 +186,16 @@ export default function AddQuestion() {
       if (!format) setFormat("MCQ");
       if (!status) setStatus("PENDING_REVIEW");
     }
-  }, [existingQuestion, isEditMode, setCategoryId, setTopic, setDifficulty, setFormat, setQuestionWording, setStatus]);
+  }, [
+    existingQuestion,
+    isEditMode,
+    setCategoryId,
+    setTopic,
+    setDifficulty,
+    setFormat,
+    setQuestionWording,
+    setStatus,
+  ]);
 
   const handleMcqChoiceChange = (index: number, val: string) => {
     const updated = [...mcqChoices];
@@ -215,9 +249,15 @@ export default function AddQuestion() {
       finalChoices = [];
     }
 
-    setIsSubmitting(true);
+    const isNeedsRevision = status === "NEEDS_REVISION";
+    const newStatus = isNeedsRevision
+      ? "PENDING_REVIEW"
+      : status && status !== ""
+        ? status
+        : "PENDING_REVIEW";
 
     const payload = {
+      ...(isEditMode && { id: questionId }),
       question: questionWording,
       type: format || "MCQ",
       categoryId,
@@ -225,24 +265,41 @@ export default function AddQuestion() {
       difficulty: difficulty || "MEDIUM",
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
-      status: (status && status !== "") ? status : "PENDING_REVIEW",
+      status: newStatus,
     };
 
     try {
       if (isEditMode) {
         await axiosPrivate.put(`/questions/update/${questionId}`, payload);
-        toast.success("Question updated successfully!");
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
+        queryClient.invalidateQueries({ queryKey: ["revisionCollection"] });
+        queryClient.invalidateQueries({
+          queryKey: ["questionDetail", questionId],
+        });
+
+        if (isNeedsRevision) {
+          toast.success("Question revised and resubmitted for review!");
+        } else {
+          toast.success("Question updated successfully!");
+        }
       } else {
         // If user applied AI wording, preserve their original base draft in MongoDB as well
-        if (originalQuestionDraft && originalQuestionDraft !== questionWording) {
-          await axiosPrivate.post("/questions/create", {
-            ...payload,
-            question: originalQuestionDraft,
-            status: "DRAFT",
-          }).catch(() => {});
+        if (
+          originalQuestionDraft &&
+          originalQuestionDraft !== questionWording
+        ) {
+          await axiosPrivate
+            .post("/questions/create", {
+              ...payload,
+              question: originalQuestionDraft,
+              status: "DRAFT",
+            })
+            .catch(() => {});
         }
 
         await axiosPrivate.post("/questions/create", payload);
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
+        queryClient.invalidateQueries({ queryKey: ["revisionCollection"] });
         toast.success("New question added to repository!");
       }
       handleBackNav();
@@ -260,7 +317,8 @@ export default function AddQuestion() {
     let finalChoices: string[] = [];
 
     if (format === "MCQ") {
-      computedCorrectAnswer = mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
+      computedCorrectAnswer =
+        mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
       finalChoices = mcqChoices;
     } else if (format === "TRUE_FALSE") {
       computedCorrectAnswer = tfCorrect;
@@ -281,7 +339,9 @@ export default function AddQuestion() {
     };
   };
 
-  const [originalQuestionDraft, setOriginalQuestionDraft] = useState<string | null>(null);
+  const [originalQuestionDraft, setOriginalQuestionDraft] = useState<
+    string | null
+  >(null);
   const [originalBackup, setOriginalBackup] = useState<{
     question: string;
     choices: string[];
@@ -296,7 +356,8 @@ export default function AddQuestion() {
       let finalChoices: string[] = [];
 
       if (format === "MCQ") {
-        computedCorrectAnswer = mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
+        computedCorrectAnswer =
+          mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
         finalChoices = [...mcqChoices];
       } else if (format === "TRUE_FALSE") {
         computedCorrectAnswer = tfCorrect;
@@ -325,7 +386,9 @@ export default function AddQuestion() {
     if (originalBackup.format === "MCQ") {
       setMcqChoices(originalBackup.choices);
       const matchIndex = originalBackup.choices.findIndex(
-        (c) => c.trim().toLowerCase() === originalBackup.correctAnswer.trim().toLowerCase()
+        (c) =>
+          c.trim().toLowerCase() ===
+          originalBackup.correctAnswer.trim().toLowerCase(),
       );
       setMcqCorrectIndex(matchIndex >= 0 ? matchIndex : 0);
     } else if (originalBackup.format === "TRUE_FALSE") {
@@ -339,7 +402,9 @@ export default function AddQuestion() {
 
   const handleOpenSynthesizer = () => {
     if (!questionWording.trim()) {
-      toast.error("Please enter the question text before synthesizing with AI.");
+      toast.error(
+        "Please enter the question text before synthesizing with AI.",
+      );
       return;
     }
     if (!categoryId) {
@@ -374,7 +439,9 @@ export default function AddQuestion() {
       // Save AI Synthesized Question Variant
       await axiosPrivate.post("/questions/create", synthesizedPayload);
 
-      toast.success("Both Original Draft and AI Synthesized question saved to database!");
+      toast.success(
+        "Both Original Draft and AI Synthesized question saved to database!",
+      );
       handleBackNav();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save questions.");
@@ -397,18 +464,24 @@ export default function AddQuestion() {
 
     try {
       // Preserve Original Base Question in DB
-      await axiosPrivate.post("/questions/create", {
-        ...originalPayload,
-        status: "DRAFT",
-      }).catch(() => {});
+      await axiosPrivate
+        .post("/questions/create", {
+          ...originalPayload,
+          status: "DRAFT",
+        })
+        .catch(() => {});
 
       // Save AI Synthesized Question
       await axiosPrivate.post("/questions/create", synthesizedPayload);
 
-      toast.success("AI Synthesized Question saved (Original Draft preserved in database)!");
+      toast.success(
+        "AI Synthesized Question saved (Original Draft preserved in database)!",
+      );
       handleBackNav();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save synthesized question.");
+      toast.error(
+        err.response?.data?.message || "Failed to save synthesized question.",
+      );
       throw err;
     }
   };
@@ -423,7 +496,9 @@ export default function AddQuestion() {
     if (format === "MCQ") {
       setMcqChoices(synthesized.choices);
       const matchIndex = synthesized.choices.findIndex(
-        (c) => c.trim().toLowerCase() === synthesized.correctAnswer.trim().toLowerCase()
+        (c) =>
+          c.trim().toLowerCase() ===
+          synthesized.correctAnswer.trim().toLowerCase(),
       );
       setMcqCorrectIndex(matchIndex >= 0 ? matchIndex : 0);
     } else if (format === "SHORT_ANSWER") {
@@ -437,11 +512,11 @@ export default function AddQuestion() {
 
   const isNotOriginalQuestion =
     originalBackup !== null &&
-    questionWording.trim().toLowerCase() !== originalBackup.question.trim().toLowerCase();
+    questionWording.trim().toLowerCase() !==
+      originalBackup.question.trim().toLowerCase();
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-5xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
-      
       {/* ── Header & Back Navigation with Segmented Pill Tabs ── */}
       <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-2.5 pt-1 -mt-1 z-10 border-b border-border/80">
         <div className="flex items-center gap-2">
@@ -450,7 +525,10 @@ export default function AddQuestion() {
             onClick={handleBackNav}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
           >
-            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft
+              size={13}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
             Back to Question Bank
           </button>
         </div>
@@ -466,7 +544,9 @@ export default function AddQuestion() {
                 )}
               </div>
               {activeTab === "individual"
-                ? (isEditMode ? "Curriculum Revision Desk" : "Add New Question")
+                ? isEditMode
+                  ? "Curriculum Revision Desk"
+                  : "Add New Question"
                 : "Bulk Import Questions"}
             </h1>
             <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -511,7 +591,10 @@ export default function AddQuestion() {
 
       {/* ── TAB CONTENT ── */}
       {activeTab === "individual" ? (
-        <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col"
+        >
           {/* Header Bar */}
           <div className="p-4 md:p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3 bg-muted/40">
             <div className="flex items-center gap-2.5">
@@ -520,24 +603,30 @@ export default function AddQuestion() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">
-                  {isEditMode ? "Curriculum Revision Desk" : "Curriculum Drafting Desk"}
+                  {isEditMode
+                    ? "Curriculum Revision Desk"
+                    : "Curriculum Drafting Desk"}
                 </h2>
-                <p className="text-[11px] text-muted-foreground font-medium">Formulate evaluation questions linked to standard benchmarks</p>
+                <p className="text-[11px] text-muted-foreground font-medium">
+                  Formulate evaluation questions linked to standard benchmarks
+                </p>
               </div>
             </div>
-            
+
             <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
-              <span className="text-[9px] text-muted-foreground/70 font-semibold uppercase tracking-wider">Authoring profile</span>
-              <span className="text-foreground font-bold text-xs">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
+              <span className="text-[9px] text-muted-foreground/70 font-semibold uppercase tracking-wider">
+                Authoring profile
+              </span>
+              <span className="text-foreground font-bold text-xs">
+                {(auth as any)?.data?.user?.name || "Faculty Reviewer"}
+              </span>
             </div>
           </div>
 
           {/* Form Body */}
           <div className="p-4 md:p-6 flex flex-col gap-4 md:gap-5">
-
             {/* Section 1: Subject, Topic, Difficulty */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
               {/* Category selection */}
               <div className="flex flex-col gap-1.5">
                 <CustomSelectWithLabel
@@ -546,7 +635,9 @@ export default function AddQuestion() {
                   onValueChange={setCategoryId}
                 >
                   {categories.length === 0 && (
-                    <SelectItem value="loading" disabled>Loading Subjects...</SelectItem>
+                    <SelectItem value="loading" disabled>
+                      Loading Subjects...
+                    </SelectItem>
                   )}
                   {categories.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.id}>
@@ -582,7 +673,6 @@ export default function AddQuestion() {
                   <SelectItem value="HARD">Hard Level</SelectItem>
                 </CustomSelectWithLabel>
               </div>
-
             </div>
 
             {/* Section 2: Question Format */}
@@ -643,7 +733,7 @@ export default function AddQuestion() {
               </div>
 
               <div className="p-4 flex flex-col gap-3">
-                {format === "MCQ" ?(
+                {format === "MCQ" ? (
                   <MultipleChoiceInput
                     mcqChoices={mcqChoices}
                     mcqCorrectIndex={mcqCorrectIndex}
@@ -653,9 +743,15 @@ export default function AddQuestion() {
                     handleRemoveChoice={handleRemoveChoice}
                   />
                 ) : format === "TRUE_FALSE" ? (
-                  <TrueOrFalseInput tfCorrect={tfCorrect} setTfCorrect={setTfCorrect} />
+                  <TrueOrFalseInput
+                    tfCorrect={tfCorrect}
+                    setTfCorrect={setTfCorrect}
+                  />
                 ) : (
-                  <ShortAnswerInput saCorrectAnswer={saCorrectAnswer} setSaCorrectAnswer={setSaCorrectAnswer} />
+                  <ShortAnswerInput
+                    saCorrectAnswer={saCorrectAnswer}
+                    setSaCorrectAnswer={setSaCorrectAnswer}
+                  />
                 )}
               </div>
             </div>
@@ -694,18 +790,19 @@ export default function AddQuestion() {
               <Sparkles size={14} className="text-primary" />
               AI Synthesizer & Preview
             </Button>
-            
+
             <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-5 h-9 rounded-xl text-xs flex items-center gap-1.5 shadow-xs"
             >
-              {isSubmitting ? (
-                <Spinner size="xs" variant="current" />
-              ) : (
-                <Sparkles size={14} />
-              )}
-              Save & Submit Draft
+              {isSubmitting
+                ? "Saving..."
+                : isEditMode
+                  ? status === "NEEDS_REVISION"
+                    ? "Update & Resubmit for Review"
+                    : "Update Question"
+                  : "Save & Submit Question"}
             </Button>
           </div>
         </form>
@@ -726,8 +823,20 @@ export default function AddQuestion() {
         onOpenChange={setIsSynthesizerOpen}
         originalData={{
           question: originalBackup?.question || questionWording,
-          choices: originalBackup?.choices || (format === "MCQ" ? mcqChoices : format === "TRUE_FALSE" ? ["True", "False"] : []),
-          correctAnswer: originalBackup?.correctAnswer || (format === "MCQ" ? (mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "") : format === "TRUE_FALSE" ? tfCorrect : saCorrectAnswer),
+          choices:
+            originalBackup?.choices ||
+            (format === "MCQ"
+              ? mcqChoices
+              : format === "TRUE_FALSE"
+                ? ["True", "False"]
+                : []),
+          correctAnswer:
+            originalBackup?.correctAnswer ||
+            (format === "MCQ"
+              ? mcqChoices[mcqCorrectIndex] || mcqChoices[0] || ""
+              : format === "TRUE_FALSE"
+                ? tfCorrect
+                : saCorrectAnswer),
           topic: topic || "General",
           difficulty: (difficulty as "EASY" | "MEDIUM" | "HARD") || "MEDIUM",
           type: (format as "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER") || "MCQ",
@@ -737,7 +846,9 @@ export default function AddQuestion() {
         onSaveBoth={handleSaveBoth}
         onSaveSynthesizedOnly={handleSaveSynthesizedOnly}
         onApplyToForm={handleApplyToForm}
-        onRestoreOriginal={isNotOriginalQuestion ? handleRestoreOriginal : undefined}
+        onRestoreOriginal={
+          isNotOriginalQuestion ? handleRestoreOriginal : undefined
+        }
       />
     </div>
   );

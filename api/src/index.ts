@@ -1,22 +1,12 @@
 import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
-import authRoutes from "./routes/auth.routes";
-import departmentRoutes from "./routes/admin/department.routes";
-import questionRoutes from "./routes/admin/question.routes";
-import studentRoutes from "./routes/admin/student.routes";
-import facultyRoutes from "./routes/admin/faculty.routes";
-import analyticsRoutes from "./routes/admin/analytics.routes";
-import reviewCenterRoutes from "./routes/admin/reviewCenter.routes";
-import calendarRoutes from "./routes/admin/calendar.routes";
-import logsRoutes from "./routes/admin/logs.routes";
-import guidanceRoutes from "./routes/admin/guidance.routes";
 import cors from "cors";
-// import gameRoutes from "./routes/admin/game_module/game.routes";
-import { seedAdminUserDb } from "./services/prisma";
+import apiRoutes from "./routes";
 import { apiLimiter } from "./middleware/rateLimit.middleware";
 import { ensureSuperAdminExists } from "./services/admin/bootstrap.service";
 import { startQueue, stopQueue } from "./services/queue.service";
+import { seedAdminUserDb } from "./services/prisma";
 
 const app = express();
 app.use(cors({
@@ -26,22 +16,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use("/api", apiLimiter);
 
+await seedAdminUserDb();
 await ensureSuperAdminExists();
 await startQueue();
 
-app.use("/api/auth", authRoutes);
-app.use("/api/departments", departmentRoutes);
-app.use("/api/questions", questionRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/faculty", facultyRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/review-center", reviewCenterRoutes);
-app.use("/api/calendar", calendarRoutes);
-app.use("/api/logs", logsRoutes);
-app.use("/api/guidance", guidanceRoutes);
-// app.use("/api/game", gameRoutes);
+app.use("/api", apiLimiter, apiRoutes);
 
 const server = app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
@@ -59,6 +39,3 @@ const gracefulShutdown = async () => {
 
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
-
-
-

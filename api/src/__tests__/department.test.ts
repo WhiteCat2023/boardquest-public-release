@@ -2,11 +2,11 @@ import './setup';
 import request from 'supertest';
 import express, { Express } from 'express';
 import departmentRouter from '../routes/admin/department.routes';
-import * as departmentService from '../services/admin/department.services';
+import * as departmentService from '../services/admin/department.service';
 import { ApiError } from '../utils/apiError';
 
 // Mock department services
-jest.mock('../services/admin/department.services');
+jest.mock('../services/admin/department.service');
 
 let app: Express;
 

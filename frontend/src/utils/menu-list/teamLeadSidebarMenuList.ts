@@ -46,8 +46,7 @@ export const teamLeadNavItem: NavItemProps[] = [
                 subItems: [
                     { title: "My Questions", path: "/question-bank/my-questions" },
                     { title: "Review Questions", path: "/question-bank/review-questions" },
-                    { title: "Shared Library", path: "/question-bank/shared-library" },
-                    { title: "Revisions", path: "/question-bank/revisions" }
+                    { title: "Shared Library", path: "/question-bank/shared-library" }
                 ]
             },
         ]

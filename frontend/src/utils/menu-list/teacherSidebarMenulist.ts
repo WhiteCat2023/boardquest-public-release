@@ -25,8 +25,7 @@ export const teacherNavItem: NavItemProps[] = [
                 icon: "ClipboardList",
                 subItems: [
                     { title: "My Questions", path: "/question-bank/my-questions" },
-                    { title: "Shared Library", path: "/question-bank/shared-library" },
-                    { title: "Revisions", path: "/question-bank/revisions" }
+                    { title: "Shared Library", path: "/question-bank/shared-library" }
                 ]
             },
         ]

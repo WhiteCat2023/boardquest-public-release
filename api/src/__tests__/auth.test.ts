@@ -2,11 +2,11 @@ import './setup';
 import request from 'supertest';
 import express, { Express } from 'express';
 import authRouter from '../routes/auth.routes';
-import * as authService from '../services/auth.services';
+import * as authService from '../services/auth.service';
 import { ApiError } from '../utils/apiError';
 
 // Mock auth services
-jest.mock('../services/auth.services');
+jest.mock('../services/auth.service');
 
 let app: Express;
 

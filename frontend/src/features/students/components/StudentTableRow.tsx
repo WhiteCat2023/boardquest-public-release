@@ -129,7 +129,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
               Assign Guidance
             </button>
           )}
-          <Link to={`/student-management/view/${student.id}`}>
+          <Link to={`/student-management/${student.id}`}>
             <button
               className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"
               title="View Student Profile"

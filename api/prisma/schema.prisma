@@ -79,7 +79,6 @@ model AdminUser {
   updatedAt DateTime @updatedAt
 
   questions Question[] @relation("QuestionAuthor")
-  createdRevisions QuestionThatNeedsRevision[] @relation("RevisionCreator")
   assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
   createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
 }
@@ -94,7 +93,7 @@ model Question {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId String @db.ObjectId
   topic String
 
@@ -109,17 +108,6 @@ model Question {
   feedback String? @default("")
   schoolYear String? @default("S.Y. 2025-2026")
 }
-
-model QuestionThatNeedsRevision {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  feedback    String   @default("")
-  questionIds String[] @db.ObjectId
-  createdById String?  @db.ObjectId
-  createdBy   AdminUser? @relation("RevisionCreator", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
 model SchoolYear {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   year      String   @unique
@@ -131,8 +119,8 @@ model SchoolYear {
 model Category {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name String
-  icon String?
-  questions Question[]
+  icon String
+  questions Question[] 
   modules   LearningModule[]
 
   handlers    AdminUser[] @relation("HandledCategories", fields: [handlerIds], references: [id])
@@ -347,5 +335,29 @@ model GuidanceAssignment {
   resolutionNotes  String?        @default("")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  QUESTION_APPROVED
+  STUDENT_ASSIGNED
+  SYSTEM_UPDATE
+}
+
+model Notification {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId   String?
+  recipientRole String?
+  title         String
+  message       String
+  type          NotificationType @default(INFO)
+  link          String?
+  isRead        Boolean          @default(false)
+  metadata      String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 }
 

@@ -1,6 +1,22 @@
+// Pages
+export { default as StudentManagement } from "./pages/StudentManagement";
+export { default as EnrollStudentPage } from "./pages/EnrollStudentPage";
+export { default as AddedStudentUsingCSV } from "./pages/AddedStudentUsingCSV";
+export { default as ViewStudent } from "./pages/ViewStudent";
 
-export { default as StudentManagement } from './components/StudentManagement';
-export { default as EnrollStudentPage } from './components/EnrollStudentPage';
-export { default as AddedStudentUsingCSV } from './components/AddedStudentUsingCSV';
-export { default as ViewStudent } from './components/ViewStudent';
-export * from './api/useStudent';
+// Components
+export { default as StudentHeader } from "./components/StudentHeader";
+export { default as StudentTable } from "./components/StudentTable";
+export { default as StudentTableRow } from "./components/StudentTableRow";
+export { default as AssignGuidanceModal } from "./components/AssignGuidanceModal";
+export { default as GuidanceAssignmentsDesk } from "./components/GuidanceAssignmentsDesk";
+export * from "./components/profile/StudentProfileHeader";
+export * from "./components/profile/StudentDetailsCard";
+export * from "./components/profile/StudentPerformanceCard";
+export * from "./components/profile/StudentBadgesSection";
+export * from "./components/profile/StudentAchievementHistory";
+export * from "./components/profile/StudentSubjectProgressCard";
+
+// API & Types
+export * from "./api/useStudent";
+export * from "./types/types";

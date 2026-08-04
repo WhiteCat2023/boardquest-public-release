@@ -133,6 +133,10 @@ export class StudentService {
         streak: true,
         location: true,
         createdAt: true,
+        achievements: {
+          orderBy: { timestamp: "desc" },
+          take: 5,
+        },
       },
       orderBy: {
         createdAt: "desc",

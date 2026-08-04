@@ -8,7 +8,7 @@ import { ensureSuperAdminExists } from "./bootstrap.service";
 export const createNewCategorySchema = z.object({
   name: z.string().min(1, "Category name is required"),
   authorId: z.string().optional().default(""),
-  icon: z.string().optional(),
+  icon: z.string().optional().default("Folder"),
 });
 
 export const updateCategorySchema = z.object({
@@ -96,7 +96,7 @@ export class CategoryService {
       data: {
         name: name.trim(),
         authorId: validAuthorId,
-        ...(icon ? { icon } : {}),
+        icon: icon,
       },
     });
 

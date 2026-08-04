@@ -14,6 +14,8 @@ import { SubjectOverviewSection } from "./SubjectOverviewSection";
 import { RecentQuestionsCard } from "./RecentQuestionsCard";
 import { StudentRosterCard } from "./StudentRosterCard";
 import { StudentPassingRateAnalytics } from "./StudentPassingRateAnalytics";
+import { FacultyRosterCard } from "./FacultyRosterCard";
+import { SystemAuditLogsCard } from "./SystemAuditLogsCard";
 import { useCategoriesTotalCount } from "@/features/question-bank";
 
 export default function Dashboard() {
@@ -26,7 +28,7 @@ export default function Dashboard() {
   const isTeamLead = userRole === "TEAMLEAD";
 
   // Data Queries
-  const { data: facultyData, isLoading: isFacultyLoading } = useFaculties({ limit: 1 });
+  const { data: facultyData, isLoading: isFacultyLoading } = useFaculties({ limit: 10 });
   const { data: studentData, isLoading: isStudentLoading } = useStudents({ skip: 0, take: 10 });
   const { data: categoriesTotalCount, isLoading: isCategoriesTotalCountLoading } = useCategoriesTotalCount();
 
@@ -89,10 +91,18 @@ export default function Dashboard() {
   const activeQuestions = rawQuestions;
   const studentsList = studentData?.students || [];
 
+  const isSuperAdmin = userRole === "SUPERADMIN";
+
+  const facultyList = Array.isArray((facultyData as any)?.faculties)
+    ? (facultyData as any).faculties
+    : Array.isArray(facultyData)
+      ? facultyData
+      : [];
+
   return (
     <phantom-ui loading={isLoading}>
       <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full max-w-7xl mx-auto font-sans bg-background text-foreground min-h-full">
-        {/* Banner Section */}
+        {/* Banner Section (System Condition & Status) */}
         <DashboardBanner
           userRole={userRole}
           userName={currentUser?.name}
@@ -100,7 +110,7 @@ export default function Dashboard() {
           pendingReviewQuestions={pendingReviewQuestions}
         />
 
-        {/* Dynamic KPI Cards */}
+        {/* System Overview KPI Cards */}
         <DashboardKpiCards
           userRole={userRole}
           teacherAuthoredCount={teacherAuthoredCount}
@@ -115,22 +125,34 @@ export default function Dashboard() {
           totalFaculties={totalFaculties}
         />
 
-        {/* Student Passing Rate Analytics: Line Graph + Pie/Donut Chart */}
-        <StudentPassingRateAnalytics />
+        {/* SuperAdmin View: Faculty Roster & System Audit Logs */}
+        {isSuperAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+            <FacultyRosterCard faculties={facultyList} />
+            <SystemAuditLogsCard />
+          </div>
+        )}
 
-        {/* 6 Major Licensure Examination Subjects Overview */}
-        <SubjectOverviewSection />
+        {/* Operational Sections: Hidden for SUPERADMIN */}
+        {!isSuperAdmin && (
+          <>
+            {/* App Analytics: Line Graph & Performance Distribution */}
+            <StudentPassingRateAnalytics />
+            {/* 6 Major Licensure Examination Subjects Overview */}
+            <SubjectOverviewSection />
 
-        {/* Operational Grid: Recent Questions & Student Roster */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
-          <RecentQuestionsCard
-            isTeacher={isTeacher}
-            isTeamLead={isTeamLead}
-            questions={activeQuestions}
-            currentUserName={currentUser?.name}
-          />
-          <StudentRosterCard students={studentsList} />
-        </div>
+            {/* Operational Grid: Recent Questions & Student Roster */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+              <RecentQuestionsCard
+                isTeacher={isTeacher}
+                isTeamLead={isTeamLead}
+                questions={activeQuestions}
+                currentUserName={currentUser?.name}
+              />
+              <StudentRosterCard students={studentsList} />
+            </div>
+          </>
+        )}
       </div>
     </phantom-ui>
   );

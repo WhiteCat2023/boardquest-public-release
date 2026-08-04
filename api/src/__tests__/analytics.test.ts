@@ -2,12 +2,12 @@ import './setup';
 import request from 'supertest';
 import express, { Express } from 'express';
 import analyticsRouter from '../routes/admin/analytics.routes';
-import * as analyticsService from '../services/admin/analytics.services';
+import * as analyticsService from '../services/admin/analytics.service';
 import { ApiError } from '../utils/apiError';
 import { authenticateToken } from '../middleware/auth.middleware';
 
 // Mock analytics services
-jest.mock('../services/admin/analytics.services');
+jest.mock('../services/admin/analytics.service');
 
 let app: Express;
 

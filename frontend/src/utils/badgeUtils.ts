@@ -23,6 +23,15 @@ export function getStudentEarnedBadges(student: {
   const xp = student?.xp || 0;
   const streak = student?.streak || 0;
   const masteryCount = Array.isArray(student?.mastery) ? student.mastery.length : 0;
+  const achievements = Array.isArray(student?.achievements) ? student.achievements : [];
+
+  const hasBadgeMatch = (bKey: string) => {
+    return achievements.some(
+      (a) =>
+        a.badge?.toLowerCase() === bKey.toLowerCase() ||
+        a.task?.toLowerCase().includes(bKey.toLowerCase())
+    );
+  };
 
   const allBadges: StudentBadge[] = [
     {
@@ -45,7 +54,12 @@ export function getStudentEarnedBadges(student: {
       color: "text-slate-600 dark:text-slate-300",
       bgColor: "bg-slate-500/10",
       borderColor: "border-slate-500/20",
-      unlocked: level >= 2 || xp >= 100,
+      unlocked:
+        hasBadgeMatch("sharp_mind") ||
+        hasBadgeMatch("silver") ||
+        achievements.some((a) => (a.accuracy ?? 0) >= 80) ||
+        level >= 2 ||
+        xp >= 100,
     },
     {
       id: "on_fire",
@@ -56,7 +70,11 @@ export function getStudentEarnedBadges(student: {
       color: "text-orange-600 dark:text-orange-400",
       bgColor: "bg-orange-500/10",
       borderColor: "border-orange-500/20",
-      unlocked: streak >= 3 || level >= 2,
+      unlocked:
+        hasBadgeMatch("on_fire") ||
+        hasBadgeMatch("fire") ||
+        streak >= 3 ||
+        level >= 2,
     },
     {
       id: "perfectionist",
@@ -67,7 +85,12 @@ export function getStudentEarnedBadges(student: {
       color: "text-primary",
       bgColor: "bg-primary/10",
       borderColor: "border-primary/20",
-      unlocked: level >= 3 || xp >= 250,
+      unlocked:
+        hasBadgeMatch("perfectionist") ||
+        hasBadgeMatch("gold") ||
+        achievements.some((a) => (a.accuracy ?? 0) >= 95) ||
+        level >= 3 ||
+        xp >= 250,
     },
     {
       id: "subject_master",
@@ -78,7 +101,12 @@ export function getStudentEarnedBadges(student: {
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-purple-500/10",
       borderColor: "border-purple-500/20",
-      unlocked: masteryCount > 0 || level >= 4 || xp >= 400,
+      unlocked:
+        hasBadgeMatch("subject_master") ||
+        hasBadgeMatch("crown") ||
+        masteryCount > 0 ||
+        level >= 4 ||
+        xp >= 400,
     },
     {
       id: "unstoppable",
@@ -89,7 +117,12 @@ export function getStudentEarnedBadges(student: {
       color: "text-indigo-600 dark:text-indigo-400",
       bgColor: "bg-indigo-500/10",
       borderColor: "border-indigo-500/20",
-      unlocked: streak >= 7 || xp >= 500 || level >= 5,
+      unlocked:
+        hasBadgeMatch("unstoppable") ||
+        hasBadgeMatch("lightning") ||
+        streak >= 7 ||
+        xp >= 500 ||
+        level >= 5,
     },
     {
       id: "decennial",
@@ -100,7 +133,11 @@ export function getStudentEarnedBadges(student: {
       color: "text-cyan-600 dark:text-cyan-400",
       bgColor: "bg-cyan-500/10",
       borderColor: "border-cyan-500/20",
-      unlocked: level >= 10 || xp >= 1000,
+      unlocked:
+        hasBadgeMatch("decennial") ||
+        hasBadgeMatch("diamond") ||
+        level >= 10 ||
+        xp >= 1000,
     },
   ];
 

@@ -10,12 +10,12 @@ interface UnifiedToolbarProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   onApprove?: () => void;
-  onFeedback: () => void;
+  onFeedback?: () => void;
   onResubmitReview?: () => void;
   onDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
-  isFeedbackPending: boolean;
+  isFeedbackPending?: boolean;
   isResubmitPending?: boolean;
   isDeletePending: boolean;
   isRevisionsView?: boolean;
@@ -103,16 +103,6 @@ export default function BulkActionsToolbar({
                       Approve
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={onFeedback}
-                    disabled={isFeedbackPending}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <MessageSquare size={13} />
-                    Request Revision
-                  </button>
                 </>
               )
             )}

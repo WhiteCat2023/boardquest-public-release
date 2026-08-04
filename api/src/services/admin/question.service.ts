@@ -5,8 +5,9 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "../../../generated/prisma/enums";
+} from "../../../generated/prisma";
 import { questionSynthesizerService, SynthesizeQuestionInput } from "./questionSynthesizer.service";
+import { createNotification } from "./notification.service";
 
 // ============ Validation Schemas ============
 
@@ -125,6 +126,24 @@ export class QuestionService {
       },
     });
 
+    if (computedStatus === QuestionStatus.APPROVED) {
+      createNotification({
+        recipientRole: "ALL",
+        title: "New Question Approved",
+        message: `A new question for topic "${topic}" was created and published to the question bank.`,
+        type: "QUESTION_APPROVED",
+        link: "/question-bank",
+      }).catch((err) => console.warn("Notification error:", err?.message));
+    } else if (computedStatus === QuestionStatus.PENDING_REVIEW) {
+      createNotification({
+        recipientRole: "ADMIN",
+        title: "Question Submitted for Review",
+        message: `A new question for topic "${topic}" was submitted for review.`,
+        type: "INFO",
+        link: "/question-bank/review",
+      }).catch((err) => console.warn("Notification error:", err?.message));
+    }
+
     return newQuestion;
   }
 
@@ -162,11 +181,6 @@ export class QuestionService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const existing = await this.getQuestionById(questionId);
-    if (existing.isPublished) {
-      throw new ApiError(400, "Published questions cannot be modified.");
-    }
-
     const {
       question,
       choices,
@@ -195,6 +209,16 @@ export class QuestionService {
         status,
       },
     });
+
+    if (status === QuestionStatus.APPROVED) {
+      createNotification({
+        recipientRole: "ALL",
+        title: "Question Approved",
+        message: `Question for topic "${topic}" was approved and published to the question bank.`,
+        type: "QUESTION_APPROVED",
+        link: "/question-bank",
+      }).catch((err) => console.warn("Notification error:", err?.message));
+    }
 
     return updatedQuestion;
   }
@@ -335,7 +359,7 @@ export class QuestionService {
       this.db.question.count(),
       this.db.question.count({
         where: {
-          OR: [{ isPublished: true }, { status: QuestionStatus.APPROVED }],
+          OR: [ { status: QuestionStatus.APPROVED }],
         },
       }),
       this.db.question.count({
@@ -350,7 +374,7 @@ export class QuestionService {
         ? this.db.question.count({
             where: {
               authorId: targetAuthorId,
-              OR: [{ isPublished: true }, { status: QuestionStatus.APPROVED }],
+              OR: [ { status: QuestionStatus.APPROVED }],
             },
           })
         : Promise.resolve(0),
@@ -358,7 +382,6 @@ export class QuestionService {
         ? this.db.question.count({
             where: {
               authorId: targetAuthorId,
-              isPublished: false,
               status: { not: QuestionStatus.APPROVED },
             },
           })
@@ -404,10 +427,6 @@ export class QuestionService {
 
       if (!existingQuestion) {
         throw new ApiError(404, "Question not found");
-      }
-
-      if (existingQuestion.isPublished) {
-        throw new ApiError(400, "Published questions cannot be deleted.");
       }
 
       const deletedQuestion = await this.db.question.delete({
@@ -538,127 +557,9 @@ export class QuestionService {
     });
   }
 
-  async bulkFeedbackQuestions(ids: string[], feedback: string, user: any) {
-    const canFeedback =
-      user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
-      user.role === "TEAMLEAD";
-    if (!canFeedback) {
-      throw new ApiError(
-        403,
-        "You do not have permission to request revision on questions.",
-      );
-    }
 
-    await this.db.question.updateMany({
-      where: { id: { in: ids } },
-      data: {
-        status: QuestionStatus.NEEDS_REVISION,
-        feedback,
-      },
-    });
 
-    try {
-      const isValidObjectId = (id?: string) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
-      const createdById = isValidObjectId(user?.id) ? user.id : undefined;
 
-      await this.db.questionThatNeedsRevision.create({
-        data: {
-          questionIds: ids,
-          feedback,
-          createdById,
-        },
-      });
-    } catch (err: any) {
-      console.warn("Failed to create QuestionThatNeedsRevision record:", err?.message);
-    }
-  }
-
-  async getQuestionsThatNeedRevision() {
-    const revisionBatches = await this.db.questionThatNeedsRevision.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-
-    const allQuestionIds = revisionBatches.flatMap((r) => r.questionIds || []);
-
-    const questions = await this.db.question.findMany({
-      where: {
-        id: { in: allQuestionIds },
-        status: QuestionStatus.NEEDS_REVISION,
-      },
-      include: {
-        category: true,
-        author: { select: { name: true } },
-      },
-    });
-
-    return {
-      revisionBatches,
-      questions,
-    };
-  }
-
-  async updateRevisionFeedback(revisionId: string, feedback: string, user: any) {
-    const revision = await this.db.questionThatNeedsRevision.findUnique({
-      where: { id: revisionId },
-    });
-    if (!revision) {
-      throw new ApiError(404, "Revision request record not found.");
-    }
-
-    const canModify =
-      user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
-      (revision.createdById && revision.createdById === user.id);
-
-    if (!canModify) {
-      throw new ApiError(403, "You can only modify revision feedback you created.");
-    }
-
-    await this.db.questionThatNeedsRevision.update({
-      where: { id: revisionId },
-      data: { feedback },
-    });
-
-    if (revision.questionIds && revision.questionIds.length > 0) {
-      await this.db.question.updateMany({
-        where: { id: { in: revision.questionIds } },
-        data: { feedback },
-      });
-    }
-  }
-
-  async deleteRevisionFeedback(revisionId: string, user: any) {
-    const revision = await this.db.questionThatNeedsRevision.findUnique({
-      where: { id: revisionId },
-    });
-    if (!revision) {
-      throw new ApiError(404, "Revision request record not found.");
-    }
-
-    const canModify =
-      user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
-      (revision.createdById && revision.createdById === user.id);
-
-    if (!canModify) {
-      throw new ApiError(403, "You can only delete revision feedback you created.");
-    }
-
-    await this.db.questionThatNeedsRevision.delete({
-      where: { id: revisionId },
-    });
-
-    if (revision.questionIds && revision.questionIds.length > 0) {
-      await this.db.question.updateMany({
-        where: { id: { in: revision.questionIds } },
-        data: {
-          status: QuestionStatus.PENDING_REVIEW,
-          feedback: "",
-        },
-      });
-    }
-  }
 
   async bulkApproveQuestions(ids: string[], user: any) {
     const canApprove =
@@ -679,6 +580,14 @@ export class QuestionService {
         feedback: "",
       },
     });
+
+    createNotification({
+      recipientRole: "ALL",
+      title: "Question Set Approved",
+      message: `${ids.length} question(s) were approved and published to the question bank by ${user?.name || "Admin"}.`,
+      type: "QUESTION_APPROVED",
+      link: "/question-bank",
+    }).catch((err) => console.warn("Notification error:", err?.message));
   }
 
   async bulkUpdateStatusQuestions(ids: string[], status: QuestionStatus, user: any) {
@@ -697,6 +606,16 @@ export class QuestionService {
       where: { id: { in: ids } },
       data: { status },
     });
+
+    if (status === QuestionStatus.APPROVED) {
+      createNotification({
+        recipientRole: "ALL",
+        title: "Question Set Approved",
+        message: `${ids.length} question(s) were approved and published to the question bank.`,
+        type: "QUESTION_APPROVED",
+        link: "/question-bank",
+      }).catch((err) => console.warn("Notification error:", err?.message));
+    }
   }
 
   async getPendingReviewAuthors() {
@@ -717,7 +636,6 @@ export class QuestionService {
         name: true,
         email: true,
         role: true,
-        department: true,
       },
     });
 
@@ -766,18 +684,10 @@ export const importQuestions =
   questionService.importQuestions.bind(questionService);
 export const bulkDeleteQuestions =
   questionService.bulkDeleteQuestions.bind(questionService);
-export const bulkFeedbackQuestions =
-  questionService.bulkFeedbackQuestions.bind(questionService);
 export const bulkApproveQuestions =
   questionService.bulkApproveQuestions.bind(questionService);
 export const bulkUpdateStatusQuestions =
   questionService.bulkUpdateStatusQuestions.bind(questionService);
-export const getQuestionsThatNeedRevision =
-  questionService.getQuestionsThatNeedRevision.bind(questionService);
-export const updateRevisionFeedback =
-  questionService.updateRevisionFeedback.bind(questionService);
-export const deleteRevisionFeedback =
-  questionService.deleteRevisionFeedback.bind(questionService);
 export const synthesizeQuestion =
   questionService.synthesizeQuestion.bind(questionService);
 export const createSynthesizedQuestion =

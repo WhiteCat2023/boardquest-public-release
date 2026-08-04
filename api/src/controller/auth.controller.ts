@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Request, Response } from "express";
-import * as authService from "../services/auth.services";
+import * as authService from "../services/auth.service";
 import { generateToken } from "../utils/generateToken";
 import { ApiResponse } from "../utils/apiResponse";
 import { ApiError } from "../utils/apiError";
