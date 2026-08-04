@@ -58,6 +58,7 @@ function SidebarItem({
   const [isOpen, setIsOpen] = useState(isAnySubActive);
 
   // Sync open state with location changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (isAnySubActive) {
       setIsOpen(true);

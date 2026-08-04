@@ -55,7 +55,7 @@ export default function NotificationsPage() {
     const groups: { [key: string]: NotificationItem[] } = {};
 
     filteredNotifications.forEach((item) => {
-      let dateKey = "Earlier";
+      let dateKey: string;
       try {
         const d = new Date(item.createdAt);
         if (isToday(d)) {

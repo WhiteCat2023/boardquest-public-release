@@ -55,6 +55,7 @@ export default function SetReviewScheduleModal({
   const createMutation = useCreateReviewSchedule();
   const updateMutation = useUpdateReviewSchedule();
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");

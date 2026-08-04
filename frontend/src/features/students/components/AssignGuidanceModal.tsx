@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCheck, ShieldAlert, Send } from "lucide-react";
+import { UserCheck, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useCategories } from "@/features/faculty";
 

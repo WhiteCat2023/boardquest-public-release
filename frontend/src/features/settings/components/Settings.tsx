@@ -1,7 +1,6 @@
 import SettingsHeader from "./SettingsHeader";
 import ThemeSettingsCard from "./ThemeSettingsCard";
 import NotificationSettingsCard from "./NotificationSettingsCard";
-import DisplaySettingsCard from "./DisplaySettingsCard";
 
 function Settings() {
   return (

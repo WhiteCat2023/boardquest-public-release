@@ -40,13 +40,6 @@ function ProfileSettings() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  useEffect(() => {
-    if (user.name) setName(user.name);
-    if (user.email) setEmail(user.email);
-    if (user.username) setUsername(user.username);
-    if (user.phoneNumber) setPhoneNumber(user.phoneNumber);
-  }, [auth]);
-
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !username.trim()) {

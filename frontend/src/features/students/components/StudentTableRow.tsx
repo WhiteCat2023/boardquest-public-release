@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, MapPin, Calendar, Zap, UserCheck, ShieldAlert } from "lucide-react";
+import { Eye, MapPin, Calendar, Zap, UserCheck } from "lucide-react";
 import type { Student } from "@/features/students";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

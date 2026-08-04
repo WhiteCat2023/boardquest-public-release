@@ -48,6 +48,7 @@ export default function AddEditReviewCenterModal({
   const createMutation = useCreateReviewCenter();
   const updateMutation = useUpdateReviewCenter();
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (initialData) {
       setCompanyName(initialData.companyName || "");
