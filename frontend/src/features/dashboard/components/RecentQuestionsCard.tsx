@@ -22,7 +22,7 @@ export function RecentQuestionsCard({
   const displayQuestions = questions.slice(0, 5);
 
   return (
-    <Card className="lg:col-span-2 bg-card border border-border rounded-2xl p-4 md:p-5 shadow-2xs flex flex-col gap-3 font-sans">
+    <Card className="lg:col-span-2 bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
       <div className="flex items-center justify-between border-b border-border pb-2.5">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <FileQuestion className="text-primary size-4" />

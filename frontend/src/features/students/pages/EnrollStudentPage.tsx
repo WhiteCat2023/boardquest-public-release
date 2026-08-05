@@ -552,8 +552,8 @@ export default function EnrollStudentPage() {
                             <tr>
                               <th className="py-2 px-3">Status</th>
                               <th className="py-2 px-3">Name</th>
-                              <th className="py-2 px-3">Email</th>
-                              <th className="py-2 px-3">Location</th>
+                              <th className="hidden sm:table-cell py-2 px-3">Email</th>
+                              <th className="hidden sm:table-cell py-2 px-3">Location</th>
                               <th className="py-2 px-3 text-right">Action</th>
                             </tr>
                           </thead>
@@ -580,8 +580,8 @@ export default function EnrollStudentPage() {
                                 <td className="py-2 px-3 font-semibold text-foreground">
                                   {row.name || <span className="text-muted-foreground italic">Missing</span>}
                                 </td>
-                                <td className="py-2 px-3 text-muted-foreground">{row.email}</td>
-                                <td className="py-2 px-3 text-muted-foreground">
+                                <td className="hidden sm:table-cell py-2 px-3 text-muted-foreground">{row.email}</td>
+                                <td className="hidden sm:table-cell py-2 px-3 text-muted-foreground">
                                   {row.location || "Philippines"}
                                 </td>
                                 <td className="py-2 px-3 text-right">

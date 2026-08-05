@@ -23,14 +23,16 @@ function DashboardLayout() {
     const currentNavItems = sidebarMenuMap[userRole as string] || [];
 
     return (
-      <SidebarProvider style={{ '--sidebar-width': '300px' } as React.CSSProperties}>
+      <SidebarProvider style={{ '--sidebar-width': '240px' } as React.CSSProperties}>
         <Sidebar navItem={currentNavItems} logout={logout} />
         <main className="flex flex-col flex-1 w-full bg-background min-h-screen">
           <div className="px-4 py-2 border-b bg-card border-border flex items-center justify-between sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="h-4 w-px bg-border" />
-              <HeaderBreadcrumb />
+              <div className="hidden md:flex items-center gap-4">
+                <div className="h-4 w-px bg-border" />
+                <HeaderBreadcrumb />
+              </div>
             </div>
             <UserProfileWidget />
           </div>

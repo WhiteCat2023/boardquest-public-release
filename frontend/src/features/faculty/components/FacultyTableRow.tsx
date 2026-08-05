@@ -77,7 +77,7 @@ export default function FacultyTableRow({
       </TableCell> */}
 
       {/* Authority Role */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <Badge
           variant="outline"
           className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide uppercase ${getRoleBadgeColor(
@@ -90,7 +90,7 @@ export default function FacultyTableRow({
       </TableCell>
 
       {/* Account Status Column */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 flex-wrap">
           {/* Online / Offline Indicator Badge */}
           <Badge
@@ -120,7 +120,7 @@ export default function FacultyTableRow({
       </TableCell>
 
       {/* Last Activity Column */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <span className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
           <Clock size={11} className="text-muted-foreground/70 shrink-0" />
           {formatLastActive(member.lastActiveAt)}

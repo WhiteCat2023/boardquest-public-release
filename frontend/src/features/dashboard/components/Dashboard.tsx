@@ -101,7 +101,7 @@ export default function Dashboard() {
 
   return (
     <phantom-ui loading={isLoading}>
-      <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full max-w-7xl mx-auto font-sans bg-background text-foreground min-h-full">
+      <div className="flex flex-col gap-3 p-3 sm:p-4 md:p-5 w-full font-sans bg-background text-foreground min-h-full">
         {/* Banner Section (System Condition & Status) */}
         <DashboardBanner
           userRole={userRole}

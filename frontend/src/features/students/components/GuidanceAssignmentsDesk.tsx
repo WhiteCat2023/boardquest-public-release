@@ -101,10 +101,10 @@ export function GuidanceAssignmentsDesk() {
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="text-xs font-bold text-muted-foreground">Student Profile</TableHead>
-              <TableHead className="text-xs font-bold text-muted-foreground">Assigned Faculty Advisor</TableHead>
-              <TableHead className="text-xs font-bold text-muted-foreground">Subject Focus & Reason</TableHead>
-              <TableHead className="text-xs font-bold text-muted-foreground">Status</TableHead>
-              <TableHead className="text-xs font-bold text-muted-foreground">Assigned Date</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Assigned Faculty Advisor</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Subject Focus & Reason</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Status</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Assigned Date</TableHead>
               <TableHead className="text-xs font-bold text-muted-foreground text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -131,14 +131,14 @@ export function GuidanceAssignmentsDesk() {
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-xs">
+                  <TableCell className="hidden sm:table-cell text-xs">
                     <div className="flex flex-col">
                       <span className="font-bold text-primary">{item.advisor?.name || "Advisor"}</span>
                       <span className="text-[10px] text-muted-foreground">{item.advisor?.role} • {item.advisor?.email}</span>
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-xs max-w-xs truncate">
+                  <TableCell className="hidden sm:table-cell text-xs max-w-xs truncate">
                     <div className="flex flex-col">
                       <Badge variant="outline" className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9.5px] font-bold">
                         {item.subjectCategory || "General Academic"}
@@ -149,7 +149,7 @@ export function GuidanceAssignmentsDesk() {
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge
                       variant="outline"
                       className={`text-[10px] font-bold uppercase ${
@@ -164,7 +164,7 @@ export function GuidanceAssignmentsDesk() {
                     </Badge>
                   </TableCell>
 
-                  <TableCell className="text-[11px] text-muted-foreground">
+                  <TableCell className="hidden sm:table-cell text-[11px] text-muted-foreground">
                     {new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </TableCell>
 

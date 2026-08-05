@@ -14,13 +14,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 type LucideIconName = keyof typeof LucideIcons;
 
 function DynamicIcon({
   name,
-  size = 18,
+  size = 16,
   className,
 }: {
   name: string;
@@ -46,7 +47,14 @@ function SidebarItem({
   content: NavContentProps;
   location: any;
 }) {
+  const { isMobile, setOpenMobile } = useSidebar();
   const hasSubItems = !!content.subItems && content.subItems.length > 0;
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Check if any sub-item is currently active (pathname + query search match)
   const isAnySubActive =
@@ -58,7 +66,6 @@ function SidebarItem({
   const [isOpen, setIsOpen] = useState(isAnySubActive);
 
   // Sync open state with location changes
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (isAnySubActive) {
       setIsOpen(true);
@@ -66,7 +73,10 @@ function SidebarItem({
   }, [location.pathname, location.search, isAnySubActive]);
 
   if (!hasSubItems) {
-    const isActive = location.pathname === content.path;
+    const isActive =
+      location.pathname === content.path ||
+      (content.path === "/question-bank/my-questions" &&
+        (location.pathname === "/question-bank" || location.pathname === "/question-bank/"));
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
@@ -74,18 +84,18 @@ function SidebarItem({
           isActive={isActive}
           tooltip={content.title}
           className={`
-            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium z-10
-            transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
+            flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-medium z-10
+            transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2
             ${
               isActive
                 ? "!bg-[#E9B0B0] !text-[#A70202] dark:!bg-primary/20 dark:!text-primary font-bold dark:border dark:border-primary/30 shadow-2xs"
-                : "!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
+                : "!text-gray-600 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
             }
           `}
         >
-          <Link to={content.path}>
-            <DynamicIcon name={content.icon} size={18} className="shrink-0" />
-            <span className="group-data-[collapsible=icon]:hidden">
+          <Link to={content.path} onClick={handleLinkClick}>
+            <DynamicIcon name={content.icon} size={16} className="shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden truncate">
               {content.title}
             </span>
           </Link>
@@ -102,29 +112,29 @@ function SidebarItem({
         onClick={() => setIsOpen(!isOpen)}
         tooltip={content.title}
         className={`
-          flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer
-          transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center
+          flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer
+          transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2
           ${
             isParentActive
               ? "bg-slate-100/80 text-gray-800 font-semibold dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
-              : "!text-gray-500 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
+              : "!text-gray-600 hover:!bg-gray-100 hover:!text-[#A70202] dark:!text-sidebar-foreground/70 dark:hover:!bg-sidebar-accent dark:hover:!text-primary"
           }
         `}
       >
-        <div className="flex items-center gap-3">
-          <DynamicIcon name={content.icon} size={18} className="shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <DynamicIcon name={content.icon} size={16} className="shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden truncate">
             {content.title}
           </span>
         </div>
-        <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 dark:text-sidebar-foreground/50 dark:hover:text-sidebar-foreground transition-colors">
+        <div className="group-data-[collapsible=icon]:hidden text-gray-400 hover:text-gray-600 dark:text-sidebar-foreground/50 dark:hover:text-sidebar-foreground transition-colors shrink-0">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </div>
       </SidebarMenuButton>
 
       {/* Sub-items block */}
       {isOpen && (
-        <div className="pl-6 mt-1 flex flex-col gap-1 border-l border-slate-100 dark:border-sidebar-border ml-5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
+        <div className="pl-3 mt-0.5 flex flex-col gap-0.5 border-l border-slate-200 dark:border-sidebar-border ml-4 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
           {content.subItems!.map((sub, idx) => {
             const isSubActive =
               location.pathname + location.search === sub.path;
@@ -132,8 +142,9 @@ function SidebarItem({
               <Link
                 key={idx}
                 to={sub.path}
+                onClick={handleLinkClick}
                 className={`
-                  text-xs py-1.5 px-3 rounded-lg font-medium transition-all duration-150
+                  text-[11px] sm:text-xs py-1.5 px-2.5 rounded-md font-medium transition-all duration-150 truncate
                   ${
                     isSubActive
                       ? "text-[#A70202] bg-[#E9B0B0]/40 font-semibold dark:text-primary dark:bg-primary/20 dark:border dark:border-primary/30"
@@ -192,27 +203,27 @@ function Sidebar({ navItem }: SidebarContentProps) {
       collapsible="icon"
       className="font-sans bg-white dark:bg-sidebar text-gray-800 dark:text-sidebar-foreground border-r border-gray-100 dark:border-sidebar-border"
     >
-      <SidebarHeader className="mb-6 p-5 pb-0 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-4 group-data-[collapsible=icon]:pt-5">
-        <h1 className="text-lg font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight truncate group-data-[collapsible=icon]:hidden">
+      <SidebarHeader className="mb-3 p-3.5 pb-0 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-2 group-data-[collapsible=icon]:pt-3">
+        <h1 className="text-sm sm:text-base font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight truncate group-data-[collapsible=icon]:hidden">
           {portalTitle}
         </h1>
-        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center font-bold text-gray-800 dark:text-sidebar-foreground tracking-tight">
+        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center font-bold text-xs bg-accent text-foreground rounded-md size-8 mx-auto">
           {portalInitials}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-5 gap-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:gap-2">
+      <SidebarContent className="px-3 gap-3.5 group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:gap-2">
         {navItem
           .filter(
             (item: NavItemProps) => item.content && item.content.length > 0,
           )
           .map((item: NavItemProps, index: number) => (
             <SidebarGroup key={index} className="p-0">
-              <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 dark:text-sidebar-foreground/50 tracking-widest uppercase px-2 bg-transparent group-data-[collapsible=icon]:z-[-1]">
+              <SidebarGroupLabel className="text-[10px] font-semibold text-gray-400 dark:text-sidebar-foreground/50 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
                 {item.sideBarCategoryName}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-2">
+                <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
                   {item.content.map(
                     (content: NavContentProps, contentIndex: number) => (
                       <SidebarItem

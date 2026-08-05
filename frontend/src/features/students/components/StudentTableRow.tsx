@@ -63,7 +63,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
       </TableCell>
 
       {/* Level & XP */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1.5">
           <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9px] font-bold gap-1 px-2 py-0.5 rounded-full">
             <Zap size={10} className="fill-amber-500 text-amber-500" />
@@ -76,7 +76,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
       </TableCell>
 
       {/* Badges Earned */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 flex-wrap max-w-[200px]">
           {unlockedBadges.slice(0, 2).map((badge) => {
             const IconComp = badge.icon;
@@ -100,7 +100,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
       </TableCell>
 
       {/* Location */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
           <MapPin size={11} className="text-muted-foreground/70 shrink-0" />
           <span className="truncate max-w-[110px]">{student.location || "Philippines"}</span>
@@ -108,7 +108,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
       </TableCell>
 
       {/* Date Joined */}
-      <TableCell className="py-2 px-3">
+      <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
           <Calendar size={11} className="text-muted-foreground/70 shrink-0" />
           <span>{formatDate(student.createdAt)}</span>
@@ -122,7 +122,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
             <button
               type="button"
               onClick={() => onAssignGuidance(student)}
-              className="h-7 px-2 text-[10.5px] font-bold rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary transition-all cursor-pointer flex items-center gap-1"
+              className="hidden sm:inline-flex h-7 px-2 text-[10.5px] font-bold rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary transition-all cursor-pointer items-center gap-1"
               title="Assign Guidance Advisor"
             >
               <UserCheck size={12} />

@@ -43,7 +43,7 @@ export function SubjectOverviewSection() {
   });
 
   return (
-    <Card className="bg-card border border-border rounded-2xl p-4 md:p-5 shadow-2xs flex flex-col gap-4 font-sans">
+    <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">

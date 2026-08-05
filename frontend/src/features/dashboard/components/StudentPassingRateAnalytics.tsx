@@ -127,9 +127,9 @@ export function StudentPassingRateAnalytics() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 font-sans w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 font-sans w-full">
       {/* LEFT CARD: Line Graph (7 Cols) */}
-      <Card className="lg:col-span-7 bg-card border border-border rounded-2xl p-4 md:p-5 shadow-2xs flex flex-col justify-between gap-4">
+      <Card className="lg:col-span-7 bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between gap-3">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
           <div>
@@ -349,7 +349,7 @@ export function StudentPassingRateAnalytics() {
       </Card>
 
       {/* RIGHT CARD: Pie / Donut Chart (5 Cols) */}
-      <Card className="lg:col-span-5 bg-card border border-border rounded-2xl p-4 md:p-5 shadow-2xs flex flex-col justify-between gap-4">
+      <Card className="lg:col-span-5 bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between gap-3">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
