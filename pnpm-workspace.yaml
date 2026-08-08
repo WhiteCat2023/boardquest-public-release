@@ -1,6 +1,6 @@
 packages:
   - "api"
-  - "frontend"
+  - "admin"
   - "review-center"
 allowBuilds:
   '@prisma/client': true

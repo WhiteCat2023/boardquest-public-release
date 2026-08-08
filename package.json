@@ -17,13 +17,13 @@
   "scripts": {
     "dev": "pnpm --parallel --filter \"./*\" dev",
     "dev:api": "pnpm --filter api dev",
-    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:admin": "pnpm --filter admin dev",
     "dev:review-center": "pnpm --filter review-center dev",
     "test": "pnpm --recursive test",
     "test:api": "pnpm --filter api test",
-    "test:frontend": "pnpm --filter frontend test",
-    "lint": "pnpm --filter frontend lint",
-    "lint:frontend": "pnpm --filter frontend lint",
+    "test:admin": "pnpm --filter admin test",
+    "lint": "pnpm --filter admin lint",
+    "lint:admin": "pnpm --filter admin lint",
     "build": "pnpm --recursive build",
     "typecheck": "pnpm --recursive run typecheck"
   }
