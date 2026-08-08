@@ -65,7 +65,6 @@ export function extractQuestionsFromCSV(csvText: string): any[] {
       topic: getColVal(parsedLine, ["topic", "subject"]),
       difficulty: getColVal(parsedLine, ["difficulty", "level"]),
       type: getColVal(parsedLine, ["type", "questiontype"]),
-      feedback: getColVal(parsedLine, ["feedback", "explanation"]),
     };
 
     // If the question is completely empty, skip it quietly

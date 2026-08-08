@@ -418,6 +418,35 @@ export const bulkUpdateStatusQuestions = asyncHandler(
   },
 );
 
+export const bulkFeedbackQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, feedback } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    await QuestionService.bulkFeedbackQuestions(ids, feedback || "", user);
+    await logInfo(
+      "BULK_FEEDBACK_QUESTION",
+      `Sent revision feedback for ${ids.length} question(s)`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully sent feedback for ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
 export const synthesizeQuestion = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user;
@@ -514,3 +543,98 @@ export const getPendingReviewAuthors = asyncHandler(
     ).send(res);
   },
 );
+
+export const getQuestionComments = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const questionId = String(req.params.questionId);
+    const comments = await QuestionService.getQuestionComments(questionId);
+    return new ApiResponse(
+      200,
+      { comments },
+      "Question comments retrieved successfully",
+    ).send(res);
+  },
+);
+
+export const createQuestionComment = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const questionId = String(req.params.questionId);
+    const { content } = req.body;
+
+    const comment = await QuestionService.createQuestionComment(
+      questionId,
+      user.id,
+      content,
+    );
+
+    await logInfo(
+      "CREATE_QUESTION_COMMENT",
+      `Added comment to question ${questionId}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(
+      201,
+      { comment },
+      "Comment added successfully",
+    ).send(res);
+  },
+);
+
+export const deleteQuestionComment = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const questionId = String(req.params.questionId);
+    const commentId = String(req.params.commentId);
+
+    const result = await QuestionService.deleteQuestionComment(
+      questionId,
+      commentId,
+      user.id,
+      user.role || "",
+    );
+
+    return new ApiResponse(
+      200,
+      result,
+      "Comment deleted successfully",
+    ).send(res);
+  },
+);
+
+export const toggleResolveComment = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const questionId = String(req.params.questionId);
+    const commentId = String(req.params.commentId);
+    const { isResolved } = req.body;
+
+    const comment = await QuestionService.toggleResolveComment(
+      questionId,
+      commentId,
+      isResolved,
+    );
+
+    return new ApiResponse(
+      200,
+      { comment },
+      `Comment marked as ${comment.isResolved ? "resolved" : "unresolved"}`,
+    ).send(res);
+  },
+);
+

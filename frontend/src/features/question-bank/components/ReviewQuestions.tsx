@@ -39,6 +39,7 @@ export default function ReviewQuestions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
   const { data: authors = [], isLoading: isAuthorsLoading } = usePendingReviewAuthors();
 
@@ -60,11 +61,23 @@ export default function ReviewQuestions() {
   const approveAuthorMutation = useMutation({
     mutationFn: async (authorId: string) => {
       const res = await axiosPrivate.get("/questions/get", {
-        params: { status: "PENDING_REVIEW", authorId, limit: 100 },
+        params: { status: "PENDING_REVIEW,PENDING_REVISION", authorId, limit: 100 },
       });
       const qList = res.data?.data?.questions || res.data?.data || [];
-      const ids = qList.map((q: any) => q.id);
-      if (ids.length === 0) return;
+      const pendingReviewOnly = qList.filter((q: any) => q.status === "PENDING_REVIEW");
+      const pendingRevisionCount = qList.length - pendingReviewOnly.length;
+
+      if (pendingRevisionCount > 0) {
+        toast.warning(
+          `Warning: ${pendingRevisionCount} question(s) for this author are in Pending Revision status and cannot be approved until resubmitted.`
+        );
+      }
+
+      const ids = pendingReviewOnly.map((q: any) => q.id);
+      if (ids.length === 0) {
+        toast.error("No questions in Pending Review status available to approve for this author.");
+        return;
+      }
       await axiosPrivate.post("/questions/bulk/approve", { ids });
     },
     onSuccess: () => {
@@ -100,7 +113,7 @@ export default function ReviewQuestions() {
 
   // Filters for QuestionList component
   const filters: any = {
-    status: "PENDING_REVIEW",
+    status: selectedStatus === "ALL" ? "PENDING_REVIEW,PENDING_REVISION" : selectedStatus,
     search: searchTerm,
     difficulty: selectedDifficulty === "ALL" ? undefined : selectedDifficulty,
     type: selectedType === "ALL" ? undefined : selectedType,
@@ -111,12 +124,14 @@ export default function ReviewQuestions() {
     setSearchTerm("");
     setSelectedDifficulty("ALL");
     setSelectedType("ALL");
+    setSelectedStatus("ALL");
   };
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
     selectedDifficulty !== "ALL" ||
-    selectedType !== "ALL";
+    selectedType !== "ALL" ||
+    selectedStatus !== "ALL";
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden font-sans bg-background text-foreground">
@@ -296,6 +311,18 @@ export default function ReviewQuestions() {
 
           {/* Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filter */}
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="h-8 w-[145px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
+                <SelectItem value="PENDING_REVISION">Pending Revision</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Difficulty */}
             <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
               <SelectTrigger className="h-8 w-[120px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">

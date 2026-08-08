@@ -8,7 +8,7 @@ export enum UserRole {
 export enum QuestionStatus {
   DRAFT = "DRAFT",
   PENDING_REVIEW = "PENDING_REVIEW",
-  NEEDS_REVISION = "NEEDS_REVISION",
+  PENDING_REVISION = "PENDING_REVISION",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
 }
@@ -86,7 +86,7 @@ export function canEditQuestion(user: UserContext, question: QuestionContext): b
   if ((isAuthor || isCollaborator) && user.role === UserRole.TEACHER) {
     return (
       question.status === QuestionStatus.DRAFT ||
-      question.status === QuestionStatus.NEEDS_REVISION ||
+      question.status === QuestionStatus.PENDING_REVISION ||
       question.status === QuestionStatus.PENDING_REVIEW
     );
   }

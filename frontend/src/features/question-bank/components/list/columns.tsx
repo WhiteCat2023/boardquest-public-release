@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { UserRole, QuestionStatus, type Question } from "@/types/question";
-import { Eye, Trash2, Edit, Tag } from "lucide-react";
+import { Eye, Trash2, Edit, Tag, MessageSquare } from "lucide-react";
 import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 
 interface GetColumnsProps {
@@ -8,6 +8,7 @@ interface GetColumnsProps {
   currentUserRole: string;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onFeedback?: (id?: string) => void;
   navigate: (path: string) => void;
 }
 
@@ -16,6 +17,7 @@ export const getQuestionColumns = ({
   currentUserRole,
   onView,
   onDelete,
+  onFeedback,
   navigate,
 }: GetColumnsProps): ColumnDef<Question>[] => [
   {
@@ -164,6 +166,11 @@ export const getQuestionColumns = ({
           isAuthor &&
           item.status === QuestionStatus.DRAFT);
 
+      const canManageBulk =
+        currentUserRole === UserRole.SUPERADMIN ||
+        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.TEAMLEAD;
+
       return (
         <div className="flex items-center justify-end gap-1.5 pr-6">
           <button
@@ -173,6 +180,8 @@ export const getQuestionColumns = ({
           >
             <Eye size={14} />
           </button>
+
+
 
           {canEdit && (
             <button

@@ -121,7 +121,7 @@ export function QuestionFilter({ showSearch = true }: { showSearch?: boolean } =
                             <SelectItem value="ALL">All Statuses</SelectItem>
                             <SelectItem value="DRAFT">Draft Mode</SelectItem>
                             <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
-                            <SelectItem value="NEEDS_REVISION">Needs Revision</SelectItem>
+                            <SelectItem value="PENDING_REVISION">Pending Revision</SelectItem>
                             <SelectItem value="APPROVED">Approved</SelectItem>
                         </SelectContent>
                     </Select>

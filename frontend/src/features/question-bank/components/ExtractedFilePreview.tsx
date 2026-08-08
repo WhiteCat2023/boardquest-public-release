@@ -129,7 +129,7 @@ function ExtractedFilePreview() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col gap-1 max-w-[320px]">
+                          <div className="flex flex-col gap-1 max-w-[420px]">
                             <span className="text-xs font-semibold text-foreground line-clamp-2 leading-relaxed" title={q.question}>
                               {q.question || "Untitled Question"}
                             </span>
@@ -157,7 +157,7 @@ function ExtractedFilePreview() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-xs font-medium text-foreground bg-primary/5 px-2 py-1 rounded-md border border-primary/10 inline-block truncate max-w-[160px]" title={q.correctAnswer}>
+                          <span className="text-xs font-medium text-foreground bg-primary/5 px-2 py-1 rounded-md border border-primary/10 inline-block truncate max-w-[240px]" title={q.correctAnswer}>
                             {q.correctAnswer || "N/A"}
                           </span>
                         </TableCell>

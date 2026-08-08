@@ -18,6 +18,7 @@ export const getStatusColor = (status?: string) => {
     case 'pending':
       return 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400';
     case 'needs revision':
+    case 'pending revision':
       return 'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400';
     default:
       return 'border-border bg-muted text-muted-foreground';

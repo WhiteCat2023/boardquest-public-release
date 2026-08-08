@@ -30,8 +30,8 @@ export default function ReviewCalendarView({
   onEditSchedule,
   onDeleteSchedule,
 }: ReviewCalendarViewProps) {
-  // Calendar month state (default to current or July 2026)
-  const [currentDate, setCurrentDate] = useState(new Date("2026-07-01"));
+  // Calendar month state (defaults dynamically to the current month)
+  const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();

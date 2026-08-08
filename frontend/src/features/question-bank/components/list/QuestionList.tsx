@@ -3,6 +3,7 @@ import { type QuestionFilters } from "@/features/question-bank";
 import QuestionTable from "./QuestionTable";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { useQuestionListActions } from "@/features/question-bank";
+import AuthorReviewFeedbackModal from "../dialog/AuthorReviewFeedbackModal";
 
 interface QuestionListProps {
   filters?: QuestionFilters;
@@ -55,7 +56,7 @@ export default function QuestionList({
   const questions = overrideQuestions ?? hookQuestions;
   const loading = isLoadingOverride ?? hookLoading;
 
-  const isRevisions = isRevisionsView || filters?.status === "NEEDS_REVISION";
+  const isRevisions = isRevisionsView || filters?.status === "PENDING_REVISION" || filters?.status === "NEEDS_REVISION";
   const isBank = isBankView || filters?.status === "APPROVED";
 
   return (
@@ -129,8 +130,18 @@ export default function QuestionList({
             onPageSelect={handlePageSelect}
             maxPageReached={cursorsStack.length}
           />
+
+          {/* Feedback Modal for Request Revision */}
+          <AuthorReviewFeedbackModal
+            open={isFeedbackOpen}
+            onOpenChange={setIsFeedbackOpen}
+            onSubmit={handleBulkFeedbackSubmit}
+            isPending={bulkFeedbackMutation.isPending}
+            selectedCount={selectedIds.length}
+          />
         </div>
       </phantom-ui>
     </>
   );
 }
+

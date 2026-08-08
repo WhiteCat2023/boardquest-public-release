@@ -249,7 +249,7 @@ export default function AddQuestion() {
       finalChoices = [];
     }
 
-    const isNeedsRevision = status === "NEEDS_REVISION";
+    const isNeedsRevision = status === "PENDING_REVISION" || status === "NEEDS_REVISION";
     const newStatus = isNeedsRevision
       ? "PENDING_REVIEW"
       : status && status !== ""
@@ -516,9 +516,9 @@ export default function AddQuestion() {
       originalBackup.question.trim().toLowerCase();
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-5xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
+    <div className={`flex flex-col gap-3.5 p-4 md:p-5 w-full ${activeTab === "bulk" ? "max-w-7xl" : "max-w-4xl"} mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300`}>
       {/* ── Header & Back Navigation with Segmented Pill Tabs ── */}
-      <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-2.5 pt-1 -mt-1 z-10 border-b border-border/80">
+      <div className="flex flex-col gap-2 sticky top-0 bg-background/95 backdrop-blur-md pb-2 pt-1 -mt-1 z-10 border-b border-border/80">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -533,14 +533,14 @@ export default function AddQuestion() {
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
-              <div className="p-1.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
+            <h1 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 text-primary rounded-lg border border-primary/20">
                 {activeTab === "individual" ? (
-                  <PlusCircle size={16} className="stroke-[2.5]" />
+                  <PlusCircle size={15} className="stroke-[2.5]" />
                 ) : (
-                  <FileSpreadsheet size={16} className="stroke-[2.5]" />
+                  <FileSpreadsheet size={15} className="stroke-[2.5]" />
                 )}
               </div>
               {activeTab === "individual"
@@ -549,7 +549,7 @@ export default function AddQuestion() {
                   : "Add New Question"
                 : "Bulk Import Questions"}
             </h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[10px] text-muted-foreground mt-0.5">
               {activeTab === "individual"
                 ? "Formulate evaluation questions linked to standard benchmarks"
                 : "Batch upload multiple exam questions via CSV file spreadsheet."}
@@ -562,7 +562,7 @@ export default function AddQuestion() {
               <button
                 type="button"
                 onClick={() => handleTabChange("individual")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === "individual"
                     ? "bg-card text-foreground shadow-2xs border border-border/80"
                     : "text-muted-foreground hover:text-foreground"
@@ -575,7 +575,7 @@ export default function AddQuestion() {
               <button
                 type="button"
                 onClick={() => handleTabChange("bulk")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === "bulk"
                     ? "bg-card text-foreground shadow-2xs border border-border/80"
                     : "text-muted-foreground hover:text-foreground"
@@ -593,28 +593,28 @@ export default function AddQuestion() {
       {activeTab === "individual" ? (
         <form
           onSubmit={handleSubmit}
-          className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col"
+          className="bg-card border border-border/80 rounded-xl shadow-2xs overflow-hidden flex flex-col"
         >
           {/* Header Bar */}
-          <div className="p-4 md:p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3 bg-muted/40">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-2xs">
-                <PlusCircle size={18} className="stroke-[2.5]" />
+          <div className="p-3 px-4.5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-2.5 bg-muted/40">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+                <PlusCircle size={16} className="stroke-[2.5]" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-foreground tracking-tight">
+                <h2 className="text-sm font-bold text-foreground tracking-tight">
                   {isEditMode
                     ? "Curriculum Revision Desk"
                     : "Curriculum Drafting Desk"}
                 </h2>
-                <p className="text-[11px] text-muted-foreground font-medium">
+                <p className="text-[10px] text-muted-foreground font-medium">
                   Formulate evaluation questions linked to standard benchmarks
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
-              <span className="text-[9px] text-muted-foreground/70 font-semibold uppercase tracking-wider">
+            <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-2.5 md:pl-0 md:pr-2.5 py-0.5">
+              <span className="text-[8px] text-muted-foreground/70 font-semibold uppercase tracking-wider">
                 Authoring profile
               </span>
               <span className="text-foreground font-bold text-xs">
@@ -624,11 +624,11 @@ export default function AddQuestion() {
           </div>
 
           {/* Form Body */}
-          <div className="p-4 md:p-6 flex flex-col gap-4 md:gap-5">
+          <div className="p-4 md:p-5 flex flex-col gap-3.5">
             {/* Section 1: Subject, Topic, Difficulty */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Category selection */}
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 <CustomSelectWithLabel
                   label="Academic Subject"
                   value={categoryId}
@@ -648,8 +648,8 @@ export default function AddQuestion() {
               </div>
 
               {/* Benchmark Topic */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col gap-1">
+                <Label className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
                   Benchmark Topic
                 </Label>
                 <Input
@@ -657,12 +657,12 @@ export default function AddQuestion() {
                   placeholder="e.g. Clinical Chemistry"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  className="bg-muted/40 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-xs h-9 placeholder:text-muted-foreground"
+                  className="bg-muted/40 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground text-xs h-8 placeholder:text-muted-foreground"
                 />
               </div>
 
               {/* Difficulty Level */}
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 <CustomSelectWithLabel
                   label="Curriculum Difficulty"
                   value={difficulty}
@@ -676,11 +676,11 @@ export default function AddQuestion() {
             </div>
 
             {/* Section 2: Question Format */}
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <div className="flex flex-col gap-1">
+              <Label className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
                 Question Format
               </Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                 {QuestionFormatOptions.map((opt) => (
                   <CardButton
                     key={opt.value}
@@ -694,20 +694,20 @@ export default function AddQuestion() {
             </div>
 
             {/* Section 3: Question Wording / Prompt */}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1">
               {isNotOriginalQuestion && (
                 <div className="flex items-center justify-between pb-1 animate-in fade-in duration-200">
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <RotateCcw size={11} /> AI Synthesized Wording Active
+                  <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <RotateCcw size={10} /> AI Synthesized Wording Active
                   </span>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleRestoreOriginal}
-                    className="text-[11px] font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-6 px-2.5 rounded-md flex items-center gap-1 shadow-2xs"
+                    className="text-[10px] font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-5 px-2 rounded-md flex items-center gap-1 shadow-2xs"
                   >
-                    <RotateCcw size={12} />
+                    <RotateCcw size={11} />
                     Use Original Question
                   </Button>
                 </div>
@@ -719,20 +719,20 @@ export default function AddQuestion() {
             </div>
 
             {/* Section 4: Option Specifications & Correct Key Designation */}
-            <div className="border border-border rounded-xl bg-muted/20 overflow-hidden">
-              <div className="p-3 px-4 border-b border-border bg-muted/40 flex flex-col sm:flex-row justify-between sm:items-center gap-1.5">
+            <div className="border border-border/80 rounded-lg bg-muted/20 overflow-hidden">
+              <div className="p-2.5 px-3.5 border-b border-border bg-muted/40 flex flex-col sm:flex-row justify-between sm:items-center gap-1">
                 <div className="flex items-center gap-1.5">
-                  <HelpCircle size={14} className="text-primary" />
-                  <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                  <HelpCircle size={13} className="text-primary" />
+                  <span className="text-[11px] font-extrabold text-foreground uppercase tracking-wider">
                     Option Specifications & Correct Key Designation
                   </span>
                 </div>
-                <span className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-wide">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide">
                   Toggle selection to set answer key
                 </span>
               </div>
 
-              <div className="p-4 flex flex-col gap-3">
+              <div className="p-3 flex flex-col gap-2.5">
                 {format === "MCQ" ? (
                   <MultipleChoiceInput
                     mcqChoices={mcqChoices}
@@ -758,12 +758,12 @@ export default function AddQuestion() {
           </div>
 
           {/* Section 5: Action Bar */}
-          <div className="p-4 border-t border-border flex flex-wrap items-center justify-end gap-2.5 bg-muted/20">
+          <div className="p-3 px-4 border-t border-border flex flex-wrap items-center justify-end gap-2 bg-muted/20">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancel}
-              className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-4 h-9 rounded-xl text-xs"
+              className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-3.5 h-8 rounded-lg text-xs"
             >
               Cancel Draft
             </Button>
@@ -773,9 +773,9 @@ export default function AddQuestion() {
                 type="button"
                 variant="outline"
                 onClick={handleRestoreOriginal}
-                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold px-4 h-9 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs animate-in fade-in duration-200"
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-bold px-3.5 h-8 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs animate-in fade-in duration-200"
               >
-                <RotateCcw size={14} />
+                <RotateCcw size={13} />
                 Use Original Question
               </Button>
             )}
@@ -785,21 +785,21 @@ export default function AddQuestion() {
               variant="outline"
               onClick={handleOpenSynthesizer}
               disabled={isSubmitting}
-              className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-4 h-9 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-3.5 h-8 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
-              <Sparkles size={14} className="text-primary" />
+              <Sparkles size={13} className="text-primary" />
               AI Synthesizer & Preview
             </Button>
 
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-5 h-9 rounded-xl text-xs flex items-center gap-1.5 shadow-xs"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-4 h-8 rounded-lg text-xs flex items-center gap-1.5 shadow-xs"
             >
               {isSubmitting
                 ? "Saving..."
                 : isEditMode
-                  ? status === "NEEDS_REVISION"
+                  ? (status === "PENDING_REVISION" || status === "NEEDS_REVISION")
                     ? "Update & Resubmit for Review"
                     : "Update Question"
                   : "Save & Submit Question"}

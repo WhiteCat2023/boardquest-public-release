@@ -20,7 +20,7 @@ export enum QuestionType {
 export enum QuestionStatus {
   APPROVED = 'APPROVED',
   PENDING_REVIEW = 'PENDING_REVIEW',
-  NEEDS_REVISION = 'NEEDS_REVISION',
+  PENDING_REVISION = 'PENDING_REVISION',
   DRAFT = 'DRAFT'
 }
 
@@ -37,7 +37,6 @@ export interface Question {
   choices?: string[];
   correctAnswer: string;
   status: QuestionStatus;
-  feedback?: string;
   createdAt: string;
 }
 

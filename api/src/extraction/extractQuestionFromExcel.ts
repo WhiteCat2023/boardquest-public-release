@@ -22,7 +22,6 @@ export function extractQuestionsFromExcel(buffer: Buffer): any[] {
         topic: (row.topic || row.Topic || row.subject || row.Subject || "").toString().trim(),
         difficulty: (row.difficulty || row.Difficulty || row.level || row.Level || "").toString().trim(),
         type: (row.type || row.Type || row.questionType || row.question_type || "").toString().trim(),
-        feedback: (row.feedback || row.Feedback || row.explanation || row.Explanation || "").toString().trim(),
       };
 
       if (!rawRow.question) continue;

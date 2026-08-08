@@ -73,8 +73,9 @@ export default function QuestionTable({
     currentUserRole,
     onView,
     onDelete,
+    onFeedback,
     navigate,
-  }), [currentUserId, currentUserRole, onView, onDelete, navigate]);
+  }), [currentUserId, currentUserRole, onView, onDelete, onFeedback, navigate]);
 
   const table = useReactTable({
     data: questions,

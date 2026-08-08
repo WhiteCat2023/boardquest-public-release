@@ -3,7 +3,7 @@ import { ArrowLeft, Mail, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Student } from "../types/types";
+import type { Student } from "../../types/types";
 
 interface StudentProfileHeaderProps {
   student: Student;

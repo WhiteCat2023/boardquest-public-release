@@ -26,6 +26,15 @@ import { useQuestionPermissions } from "@/features/question-bank";
 import QuestionLifecycleStepper from "./QuestionLifecycleStepper";
 import { useQuestionDetail } from "@/features/question-bank";
 import { Spinner } from "@/components/ui/spinner";
+import QuestionCommentsPanel from "./QuestionCommentsPanel";
+import { useQuestionComments } from "../api/useQuestionComments";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 export default function ViewQuestion() {
   const { questionId } = useParams();
@@ -48,6 +57,22 @@ export default function ViewQuestion() {
   };
 
   const { data: question, isLoading, error } = useQuestionDetail(questionId);
+  const [showComments, setShowComments] = useState(false);
+  const { data: comments = [] } = useQuestionComments(questionId);
+  const commentsCount = comments.length || (question as any)?._count?.comments || 0;
+  const unresolvedCommentsCount = comments.filter((c) => !c.isResolved).length;
+  const hasUnresolvedComments = unresolvedCommentsCount > 0;
+
+  const handleSubmitRevisions = () => {
+    if (hasUnresolvedComments) {
+      toast.error(
+        `Cannot resubmit question while there ${unresolvedCommentsCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCommentsCount} unresolved comments`}. Please resolve all comments first.`
+      );
+      setShowComments(true);
+      return;
+    }
+    submitRevisionMutation.mutate();
+  };
 
   const {
     canEdit,
@@ -88,7 +113,7 @@ export default function ViewQuestion() {
           try {
             await axiosPrivate.post("/questions/bulk/status", {
               ids: [questionId],
-              status: QuestionStatus.NEEDS_REVISION,
+              status: QuestionStatus.PENDING_REVISION,
             });
             toast.info("Reverted revision submission.");
             queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
@@ -174,7 +199,9 @@ export default function ViewQuestion() {
     : question?.author;
 
   return (
-    <div className="flex flex-col gap-5 p-4 md:p-6 w-full max-w-4xl mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300">
+    <div className={`flex flex-col lg:flex-row items-start gap-5 p-4 md:p-6 w-full ${showComments ? "max-w-6xl" : "max-w-3xl"} mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300 transition-all`}>
+      {/* ── Main Column: Question Details ── */}
+      <div className="flex-1 w-full min-w-0 flex flex-col gap-5">
       {/* Back navigation */}
       <button 
         type="button"
@@ -188,72 +215,98 @@ export default function ViewQuestion() {
       {/* Visual Question Lifecycle Stepper */}
       <QuestionLifecycleStepper status={question.status} />
 
-      <div className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col">
+      {/* Main Question Card Container */}
+      <div className="bg-card border border-border/80 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all duration-300">
         
         {/* Header Section */}
-        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/40">
-          <div className="flex items-center gap-3">
-            <span className="rounded bg-muted px-3 py-1.5 text-xs font-extrabold tracking-wide text-muted-foreground border border-border">
+        <div className="p-3.5 px-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3 bg-muted/30">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md bg-card px-2.5 py-1 text-[11px] font-mono font-extrabold tracking-wider text-foreground border border-border shadow-2xs flex items-center gap-1">
               Q-{question.id.slice(-6).toUpperCase()}
             </span>
-            <span className="rounded bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide border border-indigo-500/20">
+            <span className="rounded-md bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wide border border-indigo-500/20 flex items-center gap-1">
+              <Tag size={12} />
               {question.category?.name || "Subject Category"}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest ${getStatusColor(question.status)}`}>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full border px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-widest ${getStatusColor(question.status)}`}>
               {question.status}
             </span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowComments(!showComments)}
+              className={`rounded-full border px-3 py-1 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 h-7 ${
+                showComments
+                  ? "bg-primary text-primary-foreground border-primary shadow-xs ring-2 ring-primary/20"
+                  : "bg-background border-border text-foreground hover:bg-muted"
+              }`}
+            >
+              <MessageSquare size={12} />
+              <span>Comments</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${
+                showComments ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+              }`}>
+                {commentsCount}
+              </span>
+            </Button>
           </div>
         </div>
 
         {/* Question Details Section */}
-        <div className="p-6 md:p-8 flex flex-col gap-8">
+        <div className="p-5 md:p-6 flex flex-col gap-5">
           
-          {/* Question text */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Question Prompt</span>
-            <h2 className="text-xl font-bold text-foreground leading-relaxed">
+          {/* Question text prompt container */}
+          <div className="p-3.5 px-4.5 rounded-xl bg-muted/20 border border-border/70 flex flex-col gap-1.5 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Question Prompt
+              </span>
+              <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider border border-border px-1.5 py-0.2 rounded bg-card">
+                {question.type}
+              </span>
+            </div>
+            <h2 className="text-base md:text-lg font-bold text-foreground leading-snug tracking-tight">
               {question.question || question.text}
             </h2>
           </div>
 
-          {/* Revision Comments (if status is NEEDS_REVISION) */}
-          {question.status === QuestionStatus.NEEDS_REVISION && question.feedback && (
-            <div className="p-4 bg-destructive/10 rounded-2xl border border-destructive/20 text-sm font-medium text-destructive">
-              <span className="font-extrabold uppercase text-[10px] tracking-wider block mb-1">Revision Comments / Notes:</span>
-              {question.feedback}
-            </div>
-          )}
-
-          {/* Options Section */}
-          <div className="flex flex-col gap-3">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-              {question.type === "MCQ" ? "Options & Key" : question.type === "TRUE_FALSE" ? "True / False Key" : "Correct Answer Wording"}
+          {/* Options & Answer Key Section */}
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+              <KeyRound size={11} className="text-primary" />
+              {question.type === "MCQ" ? "Options & Answer Key" : question.type === "TRUE_FALSE" ? "True / False Key" : "Correct Answer Wording"}
             </span>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {question.type === "MCQ" && (
                 (question.choices || []).map((choice: string, idx: number) => {
                   const isCorrect = choice.toLowerCase().trim() === question.correctAnswer.toLowerCase().trim();
                   return (
                     <div 
                       key={idx}
-                      className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                      className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-lg border transition-all ${
                         isCorrect 
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold shadow-xs" 
-                          : "bg-muted/40 border-border text-foreground/90"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20" 
+                          : "bg-card hover:bg-muted/30 border-border text-foreground/90"
                       }`}
                     >
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold transition-colors ${
                         isCorrect 
-                          ? "bg-emerald-500 text-white" 
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-emerald-600 text-white shadow-2xs" 
+                          : "bg-muted text-muted-foreground border border-border"
                       }`}>
-                        {isCorrect ? <Check size={14} className="stroke-[3]" /> : String.fromCharCode(65 + idx)}
+                        {isCorrect ? <Check size={13} className="stroke-[3]" /> : String.fromCharCode(65 + idx)}
                       </div>
-                      <span className="text-sm leading-relaxed">{choice}</span>
+                      <span className="text-xs md:text-sm leading-normal flex-1">{choice}</span>
+                      {isCorrect && (
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+                          Correct Answer
+                        </span>
+                      )}
                     </div>
                   );
                 })
@@ -265,90 +318,97 @@ export default function ViewQuestion() {
                   return (
                     <div 
                       key={idx}
-                      className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                      className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-lg border transition-all ${
                         isCorrect 
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold shadow-xs" 
-                          : "bg-muted/40 border-border text-foreground/90"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20" 
+                          : "bg-card hover:bg-muted/30 border-border text-foreground/90"
                       }`}
                     >
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold transition-colors ${
                         isCorrect 
-                          ? "bg-emerald-500 text-white" 
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-emerald-600 text-white shadow-2xs" 
+                          : "bg-muted text-muted-foreground border border-border"
                       }`}>
-                        {isCorrect ? <Check size={14} className="stroke-[3]" /> : (idx === 0 ? "T" : "F")}
+                        {isCorrect ? <Check size={13} className="stroke-[3]" /> : (idx === 0 ? "T" : "F")}
                       </div>
-                      <span className="text-sm leading-relaxed">{choice}</span>
+                      <span className="text-xs md:text-sm leading-normal flex-1">{choice}</span>
+                      {isCorrect && (
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+                          Correct Answer
+                        </span>
+                      )}
                     </div>
                   );
                 })
               )}
 
               {question.type === "SHORT_ANSWER" && (
-                <div className="flex items-center gap-3 p-4 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold shadow-xs">
-                  <Check size={16} className="text-emerald-600 dark:text-emerald-400 stroke-[3]" />
+                <div className="flex items-center gap-2.5 p-3 px-3.5 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white shadow-2xs">
+                    <Check size={14} className="stroke-[3]" />
+                  </div>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wide">Correct Wording:</span>
-                    <span className="text-sm leading-relaxed">{question.correctAnswer}</span>
+                    <span className="text-xs md:text-sm leading-normal">{question.correctAnswer}</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Metadata Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border">
+          {/* Metadata Grid Tiles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {/* Topic */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted text-muted-foreground rounded-xl">
-                <Tag size={16} />
+            <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
+                <Tag size={14} />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Topic Benchmark</span>
-                <span className="text-sm font-semibold text-foreground">{question.topic || "N/A"}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">Topic Benchmark</span>
+                <span className="text-xs font-bold text-foreground truncate">{question.topic || "General"}</span>
               </div>
             </div>
 
             {/* Difficulty */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted text-muted-foreground rounded-xl">
-                <GraduationCap size={16} />
+            <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
+                <GraduationCap size={14} />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Difficulty Level</span>
-                <span className={`text-xs font-bold uppercase tracking-wider ${getDifficultyColor(question.difficulty)}`}>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">Difficulty Level</span>
+                <span className={`text-xs font-extrabold uppercase tracking-wider ${getDifficultyColor(question.difficulty)}`}>
                   {question.difficulty}
                 </span>
               </div>
             </div>
 
             {/* Type */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted text-muted-foreground rounded-xl">
-                <Calendar size={16} />
+            <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
+                <Calendar size={14} />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Question Type</span>
-                <span className="text-sm font-semibold text-foreground">{question.type}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">Question Type</span>
+                <span className="text-xs font-bold text-foreground truncate">{question.type}</span>
               </div>
             </div>
           </div>
 
-          {/* Author profile & creation timestamp */}
-          <div className="flex items-center justify-between p-4 bg-muted/40 rounded-2xl border border-border mt-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-extrabold text-primary border border-primary/20">
+          {/* Author Profile & Creation Timestamp */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 px-3.5 bg-muted/30 rounded-xl border border-border/80 gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-extrabold text-primary border border-primary/20 shrink-0">
                 {getInitials(authorName)}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground">{authorName || "Faculty Reviewer"}</span>
-                <span className="text-[10px] font-semibold text-muted-foreground">Author Profile</span>
+                <span className="text-xs font-bold text-foreground">{authorName || "Faculty Reviewer"}</span>
+                <span className="text-[9px] font-medium text-muted-foreground">Author Profile</span>
               </div>
             </div>
-            <div className="text-right text-[11px] font-medium text-muted-foreground">
-              <span>Created on: </span>
+            <div className="text-left sm:text-right text-[10px] font-medium text-muted-foreground">
+              <span>Created: </span>
               <span className="font-semibold text-foreground">
-                {new Date(question.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(question.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                {new Date(question.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} at {new Date(question.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
           </div>
@@ -356,68 +416,110 @@ export default function ViewQuestion() {
         </div>
 
         {/* Action Footer Bar */}
-        <div className="p-6 border-t border-border bg-muted/40 flex flex-wrap items-center justify-end gap-3.5">
-          {canDelete && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDelete}
-              className="cursor-pointer border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive font-semibold px-5 py-2.5 rounded-xl h-auto"
-            >
-              <Trash2 size={16} />
-              Delete Question
-            </Button>
-          )}
+        <div className="p-3 px-5 border-t border-border bg-muted/30 flex flex-wrap items-center justify-between gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowComments(!showComments)}
+            className={`cursor-pointer font-semibold px-3.5 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 transition-all ${
+              showComments
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary shadow-xs"
+                : "border-border bg-background text-foreground hover:bg-muted"
+            }`}
+          >
+            <MessageSquare size={13} />
+            <span>Comments</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${
+              showComments ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+            }`}>
+              {commentsCount}
+            </span>
+          </Button>
 
-          {canEdit && (
-            <Button
-              type="button"
-              onClick={() => navigate(`/question-bank/edit/${questionId}`)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 shadow-xs"
-            >
-              <Edit size={16} />
-              Edit Question
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {canDelete && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDelete}
+                className="cursor-pointer border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive font-semibold px-3.5 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5"
+              >
+                <Trash2 size={13} />
+                Delete
+              </Button>
+            )}
 
-          {question.status === QuestionStatus.PENDING_REVIEW && canApprove && (
-            <Button
-              type="button"
-              onClick={() => approveMutation.mutate()}
-              disabled={approveMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs border border-emerald-600/20"
-            >
-              {approveMutation.isPending ? (
-                <Spinner size="sm" variant="current" />
-              ) : (
-                <>
-                  <CheckCircle2 size={16} />
-                  Approve Question
-                </>
-              )}
-            </Button>
-          )}
+            {canEdit && (
+              <Button
+                type="button"
+                onClick={() => navigate(`/question-bank/edit/${questionId}`)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 shadow-xs"
+              >
+                <Edit size={13} />
+                Edit
+              </Button>
+            )}
 
-          {question.status === QuestionStatus.NEEDS_REVISION && (
-            <Button
-              type="button"
-              onClick={() => submitRevisionMutation.mutate()}
-              disabled={submitRevisionMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-xl h-auto flex items-center gap-2 cursor-pointer shadow-xs"
-            >
-              {submitRevisionMutation.isPending ? (
-                <Spinner size="sm" variant="current" />
-              ) : (
-                <>
-                  <Send size={16} />
-                  Submit Revisions
-                </>
-              )}
-            </Button>
-          )}
+            {question.status === QuestionStatus.PENDING_REVIEW && canApprove && (
+              <Button
+                type="button"
+                onClick={() => approveMutation.mutate()}
+                disabled={approveMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs border border-emerald-600/20"
+              >
+                {approveMutation.isPending ? (
+                  <Spinner size="sm" variant="current" />
+                ) : (
+                  <>
+                    <CheckCircle2 size={13} />
+                    Approve
+                  </>
+                )}
+              </Button>
+            )}
+
+            {(question.status === QuestionStatus.PENDING_REVISION || (question.status as string) === "NEEDS_REVISION") && (
+              <Button
+                type="button"
+                onClick={handleSubmitRevisions}
+                disabled={submitRevisionMutation.isPending}
+                className={`font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                  hasUnresolvedComments
+                    ? "bg-amber-600/80 hover:bg-amber-600 text-white opacity-90"
+                    : "bg-amber-600 hover:bg-amber-700 text-white"
+                }`}
+                title={
+                  hasUnresolvedComments
+                    ? `Cannot resubmit while there are ${unresolvedCommentsCount} unresolved comment(s)`
+                    : "Submit Revisions"
+                }
+              >
+                {submitRevisionMutation.isPending ? (
+                  <Spinner size="sm" variant="current" />
+                ) : (
+                  <>
+                    <Send size={13} />
+                    Submit Revisions
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
       </div>
     </div>
+
+      {/* ── Custom Right Sidebar: Question Discussion & Comments ── */}
+      {showComments && questionId && (
+        <aside className="w-full lg:w-[320px] shrink-0 self-start sticky top-6 transition-all duration-300 animate-in slide-in-from-right-4">
+          <QuestionCommentsPanel
+            questionId={questionId}
+            onClose={() => setShowComments(false)}
+          />
+        </aside>
+      )}
+    </div>
   );
 }
+

@@ -193,6 +193,23 @@ export class QuestionService {
       status,
     } = parsed.data;
 
+    if (status === QuestionStatus.APPROVED) {
+      const existingQuestion = await this.db.question.findUnique({
+        where: { id: questionId },
+      });
+
+      if (
+        existingQuestion &&
+        (existingQuestion.status === QuestionStatus.PENDING_REVISION ||
+          (existingQuestion.status as string) === "NEEDS_REVISION")
+      ) {
+        throw new ApiError(
+          400,
+          "Questions in Pending Revision status cannot be approved until all comments are resolved and the author resubmits them for review."
+        );
+      }
+    }
+
     const updatedQuestion = await this.db.question.update({
       where: {
         id: questionId,
@@ -209,6 +226,10 @@ export class QuestionService {
         status,
       },
     });
+
+    if (status === QuestionStatus.PENDING_REVIEW) {
+      await this.checkUnresolvedComments(questionId);
+    }
 
     if (status === QuestionStatus.APPROVED) {
       createNotification({
@@ -285,12 +306,23 @@ export class QuestionService {
     isPublished?: boolean,
     schoolYear?: string,
   ) {
+    let statusFilter: any = undefined;
+    if (status) {
+      if (typeof status === "string" && (status as string).includes(",")) {
+        statusFilter = { in: (status as string).split(",") as QuestionStatus[] };
+      } else if (Array.isArray(status)) {
+        statusFilter = { in: status };
+      } else {
+        statusFilter = status;
+      }
+    }
+
     const whereClause: any = {
       question: search ? { contains: search } : undefined,
       difficulty,
       categoryId: category,
       type,
-      status,
+      status: statusFilter,
       authorId,
       isPublished,
       ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
@@ -400,13 +432,51 @@ export class QuestionService {
 
 
 
+  async syncQuestionRevisionStatus(questionId: string) {
+    const question = await this.db.question.findUnique({
+      where: { id: questionId },
+    });
+
+    if (!question) return;
+
+    const unresolvedCount = await this.db.questionComment.count({
+      where: {
+        questionId,
+        isResolved: false,
+      },
+    });
+
+    if (unresolvedCount > 0) {
+      if (question.status === QuestionStatus.PENDING_REVIEW || question.status === QuestionStatus.DRAFT) {
+        await this.db.question.update({
+          where: { id: questionId },
+          data: { status: QuestionStatus.PENDING_REVISION },
+        });
+      }
+    } else {
+      if (question.status === QuestionStatus.PENDING_REVISION) {
+        await this.db.question.update({
+          where: { id: questionId },
+          data: { status: QuestionStatus.PENDING_REVIEW },
+        });
+      }
+    }
+  }
+
   async getQuestionById(questionId: string) {
+    await this.syncQuestionRevisionStatus(questionId);
+
     const question = await this.db.question.findUnique({
       where: {
         id: questionId,
       },
       include: {
         category: true,
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
     });
 
@@ -524,7 +594,6 @@ export class QuestionService {
           difficulty: q.difficulty,
           type: q.type,
           status,
-          feedback: q.feedback?.trim() || "",
         },
       });
     });
@@ -573,11 +642,27 @@ export class QuestionService {
       );
     }
 
+    const targetQuestions = await this.db.question.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const pendingRevisionQuestions = targetQuestions.filter(
+      (q) =>
+        q.status === QuestionStatus.PENDING_REVISION ||
+        (q.status as string) === "NEEDS_REVISION"
+    );
+
+    if (pendingRevisionQuestions.length > 0) {
+      throw new ApiError(
+        400,
+        `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`
+      );
+    }
+
     await this.db.question.updateMany({
       where: { id: { in: ids } },
       data: {
         status: QuestionStatus.APPROVED,
-        feedback: "",
       },
     });
 
@@ -602,6 +687,31 @@ export class QuestionService {
       );
     }
 
+    if (status === QuestionStatus.APPROVED) {
+      const targetQuestions = await this.db.question.findMany({
+        where: { id: { in: ids } },
+      });
+
+      const pendingRevisionQuestions = targetQuestions.filter(
+        (q) =>
+          q.status === QuestionStatus.PENDING_REVISION ||
+          (q.status as string) === "NEEDS_REVISION"
+      );
+
+      if (pendingRevisionQuestions.length > 0) {
+        throw new ApiError(
+          400,
+          `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`
+        );
+      }
+    }
+
+    if (status === QuestionStatus.PENDING_REVIEW) {
+      for (const id of ids) {
+        await this.checkUnresolvedComments(id);
+      }
+    }
+
     await this.db.question.updateMany({
       where: { id: { in: ids } },
       data: { status },
@@ -618,9 +728,41 @@ export class QuestionService {
     }
   }
 
+  async bulkFeedbackQuestions(ids: string[], feedback: string, user: any) {
+    const canFeedback =
+      user.role === "SUPERADMIN" ||
+      user.role === "ADMIN" ||
+      user.role === "TEAMLEAD";
+    if (!canFeedback) {
+      throw new ApiError(
+        403,
+        "Only administrators and team leads can provide revision feedback.",
+      );
+    }
+
+    await this.db.question.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        status: QuestionStatus.PENDING_REVISION,
+      },
+    });
+
+    createNotification({
+      recipientRole: "ALL",
+      title: "Revision Requested",
+      message: `Revision feedback was provided for ${ids.length} question(s) by ${user?.name || "Reviewer"}.`,
+      type: "WARNING",
+      link: "/question-bank?view=my-questions",
+    }).catch((err) => console.warn("Notification error:", err?.message));
+  }
+
   async getPendingReviewAuthors() {
     const pendingQuestions = await this.db.question.findMany({
-      where: { status: QuestionStatus.PENDING_REVIEW },
+      where: {
+        status: {
+          in: [QuestionStatus.PENDING_REVIEW, QuestionStatus.PENDING_REVISION],
+        },
+      },
       select: {
         id: true,
         authorId: true,
@@ -653,6 +795,161 @@ export class QuestionService {
     });
 
     return result.sort((a, b) => b.pendingCount - a.pendingCount);
+  }
+
+  async getQuestionComments(questionId: string) {
+    const question = await this.db.question.findUnique({
+      where: { id: questionId },
+    });
+
+    if (!question) {
+      throw new ApiError(404, "Question not found");
+    }
+
+    const comments = await this.db.questionComment.findMany({
+      where: { questionId },
+      orderBy: { createdAt: "asc" },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return comments;
+  }
+
+  async createQuestionComment(questionId: string, authorId: string, content: string) {
+    if (!content || !content.trim()) {
+      throw new ApiError(400, "Comment content cannot be empty");
+    }
+
+    const question = await this.db.question.findUnique({
+      where: { id: questionId },
+    });
+
+    if (!question) {
+      throw new ApiError(404, "Question not found");
+    }
+
+    const comment = await this.db.questionComment.create({
+      data: {
+        questionId,
+        authorId,
+        content: content.trim(),
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    // Notify author if comment is from a reviewer/another user
+    if (question.authorId && question.authorId !== authorId) {
+      try {
+        await createNotification({
+          recipientId: question.authorId,
+          title: "New Comment on Question",
+          message: `A new comment was added to question Q-${questionId.slice(-6).toUpperCase()}.`,
+          type: "INFO" as any,
+          link: `/question-bank/view/${questionId}`,
+        });
+      } catch (err) {
+        // notification failure shouldn't block comment creation
+      }
+    }
+
+    await this.syncQuestionRevisionStatus(questionId);
+
+    return comment;
+  }
+
+  async deleteQuestionComment(
+    questionId: string,
+    commentId: string,
+    userId: string,
+    userRole: string
+  ) {
+    const comment = await this.db.questionComment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment || comment.questionId !== questionId) {
+      throw new ApiError(404, "Comment not found");
+    }
+
+    const isAuthor = comment.authorId === userId;
+    const isAdminOrLead = ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole);
+
+    if (!isAuthor && !isAdminOrLead) {
+      throw new ApiError(430, "You do not have permission to delete this comment");
+    }
+
+    await this.db.questionComment.delete({
+      where: { id: commentId },
+    });
+
+    await this.syncQuestionRevisionStatus(questionId);
+
+    return { message: "Comment deleted successfully" };
+  }
+
+  async checkUnresolvedComments(questionId: string) {
+    const unresolvedCount = await this.db.questionComment.count({
+      where: {
+        questionId,
+        isResolved: false,
+      },
+    });
+
+    if (unresolvedCount > 0) {
+      throw new ApiError(
+        400,
+        `Cannot resubmit question while there ${unresolvedCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCount} unresolved comments`}. Please resolve all comments first.`
+      );
+    }
+  }
+
+  async toggleResolveComment(questionId: string, commentId: string, isResolved?: boolean) {
+    const comment = await this.db.questionComment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment || comment.questionId !== questionId) {
+      throw new ApiError(404, "Comment not found");
+    }
+
+    const nextState = isResolved !== undefined ? isResolved : !comment.isResolved;
+
+    const updatedComment = await this.db.questionComment.update({
+      where: { id: commentId },
+      data: { isResolved: nextState },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    await this.syncQuestionRevisionStatus(questionId);
+
+    return updatedComment;
   }
 }
 
@@ -688,6 +985,8 @@ export const bulkApproveQuestions =
   questionService.bulkApproveQuestions.bind(questionService);
 export const bulkUpdateStatusQuestions =
   questionService.bulkUpdateStatusQuestions.bind(questionService);
+export const bulkFeedbackQuestions =
+  questionService.bulkFeedbackQuestions.bind(questionService);
 export const synthesizeQuestion =
   questionService.synthesizeQuestion.bind(questionService);
 export const createSynthesizedQuestion =
@@ -696,4 +995,13 @@ export const getPendingReviewAuthors =
   questionService.getPendingReviewAuthors.bind(questionService);
 export const getQuestionStats =
   questionService.getQuestionStats.bind(questionService);
+export const getQuestionComments =
+  questionService.getQuestionComments.bind(questionService);
+export const createQuestionComment =
+  questionService.createQuestionComment.bind(questionService);
+export const deleteQuestionComment =
+  questionService.deleteQuestionComment.bind(questionService);
+export const toggleResolveComment =
+  questionService.toggleResolveComment.bind(questionService);
+
 

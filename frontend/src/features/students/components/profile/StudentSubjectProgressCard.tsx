@@ -1,7 +1,7 @@
 import { BarChart3, Target, FlaskConical, Dna, Droplet, Microscope, ShieldCheck, BookOpenCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import type { Student } from "../types/types";
+import type { Student } from "../../types/types";
 
 export const MAJOR_SUBJECTS = [
   {

@@ -53,7 +53,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
       (currentUserRole === UserRole.TEACHER &&
         isAuthor &&
         (question?.status === QuestionStatus.DRAFT ||
-          question?.status === QuestionStatus.NEEDS_REVISION ||
+          question?.status === QuestionStatus.PENDING_REVISION ||
           question?.status === QuestionStatus.PENDING_REVIEW))
   );
 

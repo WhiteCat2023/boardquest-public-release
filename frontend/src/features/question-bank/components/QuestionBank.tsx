@@ -7,6 +7,11 @@ import {
   BookOpen,
   Grid,
   ChevronRight,
+  Layers,
+  FileText,
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import AddQuestionButton from "@/components/custom/button/AddQuestionButton";
 import { Input } from "@/components/ui/input";
@@ -36,6 +41,7 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
     selectedDifficulty,
     selectedType,
     selectedStatus,
+    setSelectedStatus,
   } = useQuestionBankFilterStore();
 
   const filters: any = {
@@ -267,6 +273,41 @@ function QuestionBank({ defaultView }: QuestionBankProps = {}) {
             <AddQuestionButton />
           </div>
         </div>
+
+        {/* Status Sub-Tabs for My Questions View */}
+        {view === "my-questions" && (
+          <div className="flex flex-wrap items-center gap-2 pb-2">
+            {[
+              { id: "ALL", label: "All Questions", icon: Layers },
+              { id: "DRAFT", label: "Drafts", icon: FileText },
+              { id: "PENDING_REVISION", label: "Pending Revision", icon: AlertTriangle, isWarning: true },
+              { id: "PENDING_REVIEW", label: "Pending Review", icon: Clock },
+              { id: "APPROVED", label: "Approved", icon: CheckCircle2 },
+            ].map((tab) => {
+              const isActive = (selectedStatus || "ALL") === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setSelectedStatus(tab.id)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isActive
+                      ? tab.isWarning
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 shadow-xs ring-1 ring-amber-500/20"
+                        : "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : tab.isWarning
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/15 font-semibold"
+                        : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 font-medium"
+                  }`}
+                >
+                  <Icon size={14} className={isActive && !tab.isWarning ? "text-primary-foreground" : ""} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Question Filter & Question List */}
         <div className="space-y-4 animate-in fade-in duration-150">

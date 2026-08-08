@@ -36,7 +36,7 @@ enum QuestionType {
 enum QuestionStatus {
   APPROVED
   PENDING_REVIEW
-  NEEDS_REVISION
+  PENDING_REVISION
   DRAFT
 }
 
@@ -79,6 +79,7 @@ model AdminUser {
   updatedAt DateTime @updatedAt
 
   questions Question[] @relation("QuestionAuthor")
+  questionComments QuestionComment[] @relation("QuestionCommentAuthor")
   assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
   createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
 }
@@ -105,9 +106,22 @@ model Question {
   authorId String    @db.ObjectId
   collaboratorIds String[] @db.ObjectId
 
-  feedback String? @default("")
   schoolYear String? @default("S.Y. 2025-2026")
+  comments QuestionComment[]
 }
+
+model QuestionComment {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  questionId String    @db.ObjectId
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  authorId   String    @db.ObjectId
+  author     AdminUser @relation("QuestionCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  content    String
+  isResolved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
 model SchoolYear {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   year      String   @unique

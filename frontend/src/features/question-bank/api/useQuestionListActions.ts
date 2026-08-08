@@ -210,6 +210,32 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             return;
         }
 
+        const pendingRevisionSelected = selectedQuestions.filter(
+            (q) => q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION"
+        );
+
+        if (pendingRevisionSelected.length > 0) {
+            if (pendingRevisionSelected.length === selectedQuestions.length) {
+                toast.error(
+                    `Cannot approve questions. All ${selectedQuestions.length} selected question(s) are in Pending Revision status and must be resubmitted by the author first.`
+                );
+                return;
+            } else {
+                const validIds = selectedQuestions
+                    .filter((q) => q.status !== "PENDING_REVISION" && (q.status as string) !== "NEEDS_REVISION")
+                    .map((q) => q.id);
+
+                toast.warning(
+                    `Warning: ${pendingRevisionSelected.length} selected question(s) are in Pending Revision status and cannot be approved. Approving ${validIds.length} question(s) in Pending Review.`
+                );
+
+                if (validIds.length > 0) {
+                    bulkApproveMutation.mutate(validIds);
+                }
+                return;
+            }
+        }
+
         bulkApproveMutation.mutate(selectedIds);
     };
 
@@ -281,10 +307,14 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
     };
 
-    const handleBulkFeedbackOpen = () => {
+    const handleBulkFeedbackOpen = (id?: string) => {
         if (!canManageBulk) {
             toast.error("Only administrators can request question revisions.");
             return;
+        }
+
+        if (id) {
+            setRowSelection({ [id]: true });
         }
 
         setIsFeedbackOpen(true);

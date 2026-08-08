@@ -21,20 +21,20 @@ export default function MultipleChoiceInput({
     handleRemoveChoice
 }: MultipleChoiceInputProps) {
     return (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
             <RadioGroup
                 value={mcqCorrectIndex.toString()}
                 onValueChange={(val) => setMcqCorrectIndex(parseInt(val, 10))}
-                className="flex flex-col gap-2.5"
+                className="flex flex-col gap-2"
             >
                 {mcqChoices.map((choice, index) => {
                     const label = String.fromCharCode(65 + index); // A, B, C, D...
                     return (
-                        <div key={index} className="flex items-center gap-2.5 w-full">
+                        <div key={index} className="flex items-center gap-2 w-full">
                             <RadioGroupItem
                                 value={index.toString()}
                                 id={`mcq-option-${index}`}
-                                className="w-5 h-5 border-2 border-border hover:border-primary bg-card data-[state=checked]:border-primary data-[state=checked]:bg-card cursor-pointer shrink-0 focus-visible:ring-ring/20 flex items-center justify-center"
+                                className="w-4 h-4 border-2 border-border hover:border-primary bg-card data-[state=checked]:border-primary data-[state=checked]:bg-card cursor-pointer shrink-0 focus-visible:ring-ring/20 flex items-center justify-center"
                             />
                             
                             {/* Option Wording Input */}
@@ -43,7 +43,7 @@ export default function MultipleChoiceInput({
                               placeholder={`Wording for Option ${label}`}
                               value={choice}
                               onChange={(e) => handleChange(index, e.target.value)}
-                              className="bg-card border-border rounded-xl focus:ring-2 focus:ring-ring/20 focus:border-primary text-foreground text-xs h-9 flex-1 placeholder:text-muted-foreground"
+                              className="bg-card border-border rounded-lg focus:ring-2 focus:ring-ring/20 focus:border-primary text-foreground text-xs h-8 flex-1 placeholder:text-muted-foreground"
                             />
 
                             {/* Remove Choice Button (if more than 2 options) */}
@@ -53,10 +53,10 @@ export default function MultipleChoiceInput({
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleRemoveChoice(index)}
-                                    className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors cursor-pointer shrink-0"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer shrink-0"
                                     title="Remove option"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={13} />
                                 </Button>
                             )}
                         </div>

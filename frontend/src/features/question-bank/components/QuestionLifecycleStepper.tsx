@@ -21,9 +21,9 @@ export default function QuestionLifecycleStepper({ status, className = "" }: Que
       icon: Clock,
     },
     {
-      id: "NEEDS_REVISION",
-      label: "Revision Requested",
-      description: "Feedback provided by reviewer",
+      id: "PENDING_REVISION",
+      label: "Pending Revision",
+      description: "Comments provided by reviewer",
       icon: AlertCircle,
     },
     {
@@ -36,28 +36,28 @@ export default function QuestionLifecycleStepper({ status, className = "" }: Que
 
   const getStepState = (stepId: string) => {
     if (status === "APPROVED") {
-      return stepId === "NEEDS_REVISION" ? "skipped" : "completed";
+      return stepId === "PENDING_REVISION" ? "skipped" : "completed";
     }
-    if (status === "NEEDS_REVISION") {
+    if (status === "PENDING_REVISION" || status === "NEEDS_REVISION") {
       if (stepId === "DRAFT" || stepId === "PENDING_REVIEW") return "completed";
-      if (stepId === "NEEDS_REVISION") return "active_warning";
+      if (stepId === "PENDING_REVISION" || stepId === "NEEDS_REVISION") return "active_warning";
       return "upcoming";
     }
     if (status === "PENDING_REVIEW") {
       if (stepId === "DRAFT") return "completed";
       if (stepId === "PENDING_REVIEW") return "active";
-      if (stepId === "NEEDS_REVISION") return "skipped";
+      if (stepId === "PENDING_REVISION") return "skipped";
       return "upcoming";
     }
     // DRAFT
     if (stepId === "DRAFT") return "active";
-    if (stepId === "NEEDS_REVISION") return "skipped";
+    if (stepId === "PENDING_REVISION") return "skipped";
     return "upcoming";
   };
 
   return (
-    <div className={`w-full bg-card border border-border/80 rounded-2xl p-4 md:p-5 shadow-2xs font-sans ${className}`}>
-      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
+    <div className={`w-full bg-card border border-border/80 rounded-xl p-3 px-4 shadow-2xs font-sans ${className}`}>
+      <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
         {steps.map((step, idx) => {
           const stepState = getStepState(step.id);
           const Icon = step.icon;
@@ -75,21 +75,18 @@ export default function QuestionLifecycleStepper({ status, className = "" }: Que
           }
 
           return (
-            <div key={step.id} className="flex items-center flex-1 min-w-[140px] last:flex-initial">
-              <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-xl border transition-all ${badgeStyles}`}>
-                  <Icon size={16} className="stroke-[2.5]" />
+            <div key={step.id} className="flex items-center flex-1 min-w-[120px] last:flex-initial">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg border transition-all ${badgeStyles}`}>
+                  <Icon size={14} className="stroke-[2.5]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-foreground leading-none">{step.label}</span>
-                  <span className="text-[10px] text-muted-foreground font-medium mt-1 truncate max-w-[120px]">
-                    {step.description}
-                  </span>
+                  <span className="text-[11px] font-bold text-foreground leading-none">{step.label}</span>
                 </div>
               </div>
 
               {idx < steps.length - 1 && (
-                <div className={`hidden sm:block flex-1 h-0.5 mx-3 rounded-full ${lineStyles}`} />
+                <div className={`hidden sm:block flex-1 h-0.5 mx-2 rounded-full ${lineStyles}`} />
               )}
             </div>
           );

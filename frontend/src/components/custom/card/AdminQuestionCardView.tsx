@@ -62,13 +62,7 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
             {item?.text || (item as any)?.question}
           </h3>
 
-          {/* Revision Feedback Banner */}
-          {item?.status === QuestionStatus.NEEDS_REVISION && item?.feedback && (
-            <div className="mt-3 p-3 bg-destructive/10 rounded-xl border border-destructive/20 text-xs font-medium text-destructive animate-in fade-in duration-200">
-              <span className="font-bold uppercase text-[9px] tracking-wider block mb-0.5">Revision Comments:</span>
-              {item.feedback}
-            </div>
-          )}
+
         </div>
 
         {/* Tags Row */}

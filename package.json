@@ -1,0 +1,30 @@
+{
+  "name": "capstone",
+  "version": "1.0.0",
+  "description": "> [!IMPORTANT] > This repository contains proprietary source code and intellectual property of **BoardQuest**. Access to, modification of, or distribution of this code without explicit authorization from the company is strictly prohibited.",
+  "homepage": "https://github.com/WhiteCat2023/boardquest-admin-2#readme",
+  "bugs": {
+    "url": "https://github.com/WhiteCat2023/boardquest-admin-2/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WhiteCat2023/boardquest-admin-2.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./*\" dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:review-center": "pnpm --filter review-center dev",
+    "test": "pnpm --recursive test",
+    "test:api": "pnpm --filter api test",
+    "test:frontend": "pnpm --filter frontend test",
+    "lint": "pnpm --filter frontend lint",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "build": "pnpm --recursive build",
+    "typecheck": "pnpm --recursive run typecheck"
+  }
+}

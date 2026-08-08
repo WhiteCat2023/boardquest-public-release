@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sparkles, Award, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Achievement } from "../types/types";
+import type { Achievement } from "../../types/types";
 
 interface StudentAchievementHistoryProps {
   achievements?: Achievement[];
