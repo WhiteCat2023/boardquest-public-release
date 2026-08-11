@@ -1,10 +1,8 @@
 packages:
-  - "api"
-  - "admin"
-  - "review-center"
+  - "apps/*"
 allowBuilds:
-  '@prisma/client': true
-  '@prisma/engines': true
+  "@prisma/client": true
+  "@prisma/engines": true
   argon2: true
   esbuild: true
   prisma: true
