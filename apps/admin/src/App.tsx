@@ -100,7 +100,7 @@ const AddedQuestionUsingCSV = lazy(() =>
 );
 
 const Analytics = lazy(() =>
-  import("@/features/misc").then((m) => ({ default: m.Analytics })),
+  import("@/features/analytics").then((m) => ({ default: m.Analytics })),
 );
 const Settings = lazy(() =>
   import("@/features/settings").then((m) => ({ default: m.Settings })),

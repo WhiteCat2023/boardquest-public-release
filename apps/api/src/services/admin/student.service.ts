@@ -120,7 +120,7 @@ export class StudentService {
       where.location = { contains: location, mode: "insensitive" };
     }
 
-    const students = await this.db.user.findMany({
+    let students = await this.db.user.findMany({
       where,
       skip,
       take,

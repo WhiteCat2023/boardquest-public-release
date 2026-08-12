@@ -67,11 +67,12 @@ interface StudentSubjectProgressCardProps {
 export function StudentSubjectProgressCard({ student }: StudentSubjectProgressCardProps) {
   const getSubjectProgress = (subjectName: string) => {
     if (student?.mastery && Array.isArray(student.mastery)) {
-      const match = student.mastery.find(
-        (m: any) =>
-          m.subject?.toLowerCase().includes(subjectName.toLowerCase()) ||
-          subjectName.toLowerCase().includes(m.subject?.toLowerCase() || "")
-      );
+      const match = student.mastery.find((m: any) => {
+        if (!m?.subject) return false;
+        const s = m.subject.toLowerCase().trim();
+        const t = subjectName.toLowerCase().trim();
+        return s === t || s.includes(t) || t.includes(s) || (s.length >= 4 && t.length >= 4 && s.slice(0, 4) === t.slice(0, 4));
+      });
       if (match) {
         return {
           proficiency: match.proficiency ?? 0,
@@ -81,14 +82,10 @@ export function StudentSubjectProgressCard({ student }: StudentSubjectProgressCa
       }
     }
 
-    const level = student?.level || 1;
-    const xp = student?.xp || 0;
-    const baseProficiency = Math.min(95, Math.max(20, (level * 18) + Math.min(30, Math.floor(xp / 100))));
-
     return {
-      proficiency: baseProficiency,
+      proficiency: 0,
       minScore: 75,
-      status: baseProficiency >= 75 ? "Proficient" : baseProficiency >= 50 ? "In Training" : "Needs Focus",
+      status: "Needs Focus",
     };
   };
 
