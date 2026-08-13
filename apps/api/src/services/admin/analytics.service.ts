@@ -138,16 +138,13 @@ export class AnalyticsService {
         );
 
     // Subject mastery formatting strictly from real DB records with flexible matching
-    const defaultSubjects = [
-      "Clinical Chemistry",
-      "Microbiology & Parasitology",
-      "Hematology",
-      "Immunohematology & Serology",
-      "Clinical Microscopy",
-      "Histopathologic Techniques"
-    ];
+    const categoriesFromDb = await this.db.category.findMany({
+      select: { name: true },
+    });
 
-    const masteryData = defaultSubjects.map((sub) => {
+    const categoriesList = categoriesFromDb.map((c) => c.name)
+
+    const masteryData = categoriesList.map((sub) => {
       const existing: any = (student.mastery || []).find((m: any) => {
         if (!m?.subject) return false;
         const s = m.subject.toLowerCase().trim();

@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
 
   // Query: Get selected student's analytics report
   const { data: report, isLoading: isReportLoading, isRefetching } = useStudentAnalyticsReport(selectedStudentId);
-
+console.log(report)
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] overflow-hidden font-sans bg-background text-foreground">
       {/* Left Sidebar: Aspirant Roster */}
@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
             <StudentAnalyticsHeader report={report} isRefetching={isRefetching} />
 
             {/* Token-Saving LLM Optimization Engine Bar */}
-            <LLMOptimizationBar cacheStats={report.cacheStats} />
+            {/* <LLMOptimizationBar cacheStats={report.cacheStats} /> */}
 
             {/* Segmented Sub-Tabs Navigation */}
             <AnalyticsNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />

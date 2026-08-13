@@ -102,6 +102,12 @@ const AddedQuestionUsingCSV = lazy(() =>
 const Analytics = lazy(() =>
   import("@/features/analytics").then((m) => ({ default: m.Analytics })),
 );
+const GameManagementPage = lazy(() =>
+  import("@/features/game-management").then((m) => ({ default: m.GameManagementPage })),
+);
+const LeaderboardPage = lazy(() =>
+  import("@/features/leaderboard").then((m) => ({ default: m.LeaderboardPage })),
+);
 const Settings = lazy(() =>
   import("@/features/settings").then((m) => ({ default: m.Settings })),
 );
@@ -322,6 +328,8 @@ function App() {
                     element={<ReviewQuestions />}
                   />
                   <Route path="analytics" element={<Analytics />} />
+                  <Route path="game-management" element={<GameManagementPage />} />
+                  <Route path="leaderboards" element={<LeaderboardPage />} />
                 </Route>
 
 

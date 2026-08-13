@@ -24,26 +24,26 @@ export async function seedAdminUserDb() {
     // }
     // console.log("Users seeded successfully!");
 
-    console.log("Seeding categories...");
-    for (const category of demoCategories) {
-      await prisma.category.upsert({
-        where: { id: category.id },
-        update: {},
-        create: { ...category },
-      }).catch((e) => console.warn(`Category seed note: ${e.message}`));
-    }
-    console.log("Categories seeded successfully!");
+    // console.log("Seeding categories...");
+    // for (const category of demoCategories) {
+    //   await prisma.category.upsert({
+    //     where: { id: category.id },
+    //     update: {},
+    //     create: { ...category },
+    //   }).catch((e) => console.warn(`Category seed note: ${e.message}`));
+    // }
+    // console.log("Categories seeded successfully!");
 
-    console.log("Seeding questions...");
-    for (const question of demoQuestions) {
-      const { id, ...updateData } = question;
-      await prisma.question.upsert({
-        where: { id },
-        update: { ...updateData },
-        create: { ...question },
-      }).catch((e) => console.warn(`Question seed note: ${e.message}`));
-    }
-    console.log("Questions seeded successfully!");
+    // console.log("Seeding questions...");
+    // for (const question of demoQuestions) {
+    //   const { id, ...updateData } = question;
+    //   await prisma.question.upsert({
+    //     where: { id },
+    //     update: { ...updateData },
+    //     create: { ...question },
+    //   }).catch((e) => console.warn(`Question seed note: ${e.message}`));
+    // }
+    // console.log("Questions seeded successfully!");
 
     // console.log("Seeding review centers...");
     // for (const rc of demoReviewCenters) {

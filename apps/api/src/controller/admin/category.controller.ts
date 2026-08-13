@@ -1,6 +1,7 @@
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as categoryServices from "../../services/admin/category.service";
 import { ApiResponse } from "../../utils/apiResponse";
+import { ApiError } from "../../utils/apiError";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 
@@ -79,4 +80,16 @@ export const deleteModule = asyncHandler(async (req: AuthenticatedRequest | Requ
   const { moduleId } = (req as any).params;
   const deletedModule = await categoryServices.deleteLearningModule(moduleId as string);
   return new ApiResponse(200, { module: deletedModule }, "Learning module deleted successfully").send(res);
+});
+
+export const assignCategoryHandlers = asyncHandler(async (req: AuthenticatedRequest | Request, res: Response) => {
+  const categoryId = (req as any).params?.categoryId || (req as any).body?.categoryId;
+  const { handlerIds } = (req as any).body;
+
+  if (!Array.isArray(handlerIds)) {
+    throw new ApiError(400, "handlerIds must be an array of faculty member IDs");
+  }
+
+  const category = await categoryServices.assignCategoryHandlers(categoryId as string, handlerIds);
+  return new ApiResponse(200, { category }, "Faculty handlers assigned successfully").send(res);
 });

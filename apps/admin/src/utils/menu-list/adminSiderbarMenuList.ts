@@ -74,6 +74,16 @@ export const adminNavItem: NavItemProps[] = [
         path: "/analytics",
         icon: "BarChart2",
       },
+      {
+        title: "Game Management",
+        path: "/game-management",
+        icon: "Gamepad2",
+      },
+      {
+        title: "Leaderboards",
+        path: "/leaderboards",
+        icon: "Trophy",
+      },
     ],
   },
   {

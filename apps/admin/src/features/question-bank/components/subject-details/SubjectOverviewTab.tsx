@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   BookOpen,
@@ -10,8 +11,11 @@ import {
   Layers,
   ShieldCheck,
   User,
+  UserPlus,
   Users,
 } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
+import { AssignFacultyModal } from "./AssignFacultyModal";
 
 interface SubjectOverviewTabProps {
   category: any;
@@ -30,6 +34,17 @@ export default function SubjectOverviewTab({
   onNavigateQuestionBank,
   onNavigateModulesTab,
 }: SubjectOverviewTabProps) {
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const { auth } = useAuth();
+  const currentUser = auth?.data?.user || auth?.user;
+  const userRole = currentUser?.role?.toUpperCase();
+  const canAssignFaculty = userRole === "ADMIN" || userRole === "SUPERADMIN" || userRole === "TEAMLEAD";
+
+  const currentHandlerIds = Array.isArray(category?.handlers)
+    ? category.handlers.map((h: any) => h.id || h._id)
+    : Array.isArray(category?.handlerIds)
+    ? category.handlerIds
+    : [];
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Key Metric Cards */}
@@ -148,9 +163,21 @@ export default function SubjectOverviewTab({
             <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-primary" /> Assigned Faculty Handlers
             </h3>
-            <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
-              {category?.handlers?.length || 0} Member(s)
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
+                {category?.handlers?.length || 0} Member(s)
+              </Badge>
+              {canAssignFaculty && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="h-7 text-xs font-semibold gap-1 px-2.5 border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  <UserPlus size={13} /> Assign Faculty
+                </Button>
+              )}
+            </div>
           </div>
 
           {Array.isArray(category?.handlers) && category.handlers.length > 0 ? (
@@ -166,7 +193,7 @@ export default function SubjectOverviewTab({
                   : "FC";
                 return (
                   <div
-                    key={handler.id}
+                    key={handler.id || handler._id}
                     className="p-2.5 bg-muted/30 border border-border/60 rounded-lg flex items-center justify-between gap-2 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -196,10 +223,28 @@ export default function SubjectOverviewTab({
               <p className="text-[10px] text-muted-foreground max-w-xs">
                 No specific faculty members are explicitly assigned to this subject category yet.
               </p>
+              {canAssignFaculty && (
+                <Button
+                  size="sm"
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="mt-2 text-xs font-semibold gap-1.5 shadow-2xs"
+                >
+                  <UserPlus size={13} /> Assign Teachers to Subject
+                </Button>
+              )}
             </div>
           )}
         </Card>
       </div>
+
+      {/* Assign Faculty Modal */}
+      <AssignFacultyModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        categoryId={category?.id || category?._id || ""}
+        categoryName={category?.name || "Subject Category"}
+        currentHandlerIds={currentHandlerIds}
+      />
     </div>
   );
 }

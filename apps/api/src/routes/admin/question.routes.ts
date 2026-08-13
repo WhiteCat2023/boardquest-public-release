@@ -38,6 +38,7 @@ import {
   createModule,
   updateModule,
   deleteModule,
+  assignCategoryHandlers,
 } from "../../controller/admin/category.controller";
 
 const router = Router();
@@ -82,6 +83,12 @@ router.put(
   authenticateToken,
   requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
   updateCategory,
+);
+router.put(
+  "/category/single/:categoryId/handlers",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
+  assignCategoryHandlers,
 );
 router.delete(
   "/category/single/:categoryId",

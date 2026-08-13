@@ -337,6 +337,46 @@ export class CategoryService {
 
     return deleted;
   }
+
+  async assignCategoryHandlers(categoryId: string, handlerIds: string[]) {
+    const existing = await this.db.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!existing) {
+      throw new ApiError(404, "Category not found");
+    }
+
+    const updatedCategory = await this.db.category.update({
+      where: { id: categoryId },
+      data: {
+        handlerIds: handlerIds,
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        handlers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+    });
+
+    return updatedCategory;
+  }
 }
 
 export const categoryService = new CategoryService();
@@ -352,3 +392,4 @@ export const getModulesByCategory = categoryService.getModulesByCategory.bind(ca
 export const createLearningModule = categoryService.createLearningModule.bind(categoryService);
 export const updateLearningModule = categoryService.updateLearningModule.bind(categoryService);
 export const deleteLearningModule = categoryService.deleteLearningModule.bind(categoryService);
+export const assignCategoryHandlers = categoryService.assignCategoryHandlers.bind(categoryService);
