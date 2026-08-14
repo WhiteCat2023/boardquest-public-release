@@ -1,5 +1,5 @@
 import z from "zod";
-import { QuestionDifficulty, QuestionType } from "@prisma/client";
+import { QuestionDifficulty, QuestionType } from "../../types/prisma.types";
 // ============ Schemas ============
 export const SynthesizeQuestionInputSchema = z.object({
     question: z.string().min(3, "Question title/stem is required"),
@@ -75,13 +75,18 @@ export class QuestionSynthesizerService {
                 return this.generateLocalSynthesizedFallbacks(validatedInput);
             }
             const parsedJson = JSON.parse(rawText);
-            const rawArray = Array.isArray(parsedJson) ? parsedJson : parsedJson.questions || [parsedJson];
+            const rawArray = Array.isArray(parsedJson)
+                ? parsedJson
+                : parsedJson.questions || [parsedJson];
             const validatedList = SynthesizedQuestionListOutputSchema.parse(rawArray);
             // Clean stems and sanitize choices for each generated variant
             validatedList.forEach((item) => {
                 item.question = this.cleanStemText(item.question);
-                if (validatedInput.type === QuestionType.MCQ && item.choices && item.choices.length > 0) {
-                    const isChoiceMatch = item.choices.some((choice) => choice.trim().toLowerCase() === item.correctAnswer.trim().toLowerCase());
+                if (validatedInput.type === QuestionType.MCQ &&
+                    item.choices &&
+                    item.choices.length > 0) {
+                    const isChoiceMatch = item.choices.some((choice) => choice.trim().toLowerCase() ===
+                        item.correctAnswer.trim().toLowerCase());
                     if (!isChoiceMatch) {
                         item.choices[0] = item.correctAnswer;
                     }
@@ -189,7 +194,7 @@ All ${count} variants must be calibrated to the target difficulty level: **${inp
 - **NO BRACKETS OR TAGS**: Do NOT include bracketed tags (e.g. [Direct Recall], [Scenario], [Analysis]) in the question stem. Return ONLY clean, natural, professional question text.
 - Question Type: **${input.type}**
 ${isMcq ? "- Choices: Provide 4 engineered multiple-choice options for each variant (1 correct answer + 3 plausible distractors)." : ""}
-${isTf ? "- Choices: Return strictly [\"True\", \"False\"]. Correct answer must be \"True\" or \"False\"." : ""}
+${isTf ? '- Choices: Return strictly ["True", "False"]. Correct answer must be "True" or "False".' : ""}
 ${isSa ? "- Choices: Return an empty array []. Synthesize a concise reference correct answer string." : ""}
 
 ### Target Difficulty Calibration (${input.targetDifficulty}):
@@ -209,8 +214,8 @@ Return ONLY a JSON array containing exactly ${count} objects matching this schem
 [
   {
     "question": "Clean synthesized variant 1 stem text without brackets",
-    "choices": ${isMcq ? '["Option A", "Option B", "Option C", "Option D"]' : isTf ? '["True", "False"]' : '[]'},
-    "correctAnswer": "${isTf ? 'True or False' : 'Correct answer string'}",
+    "choices": ${isMcq ? '["Option A", "Option B", "Option C", "Option D"]' : isTf ? '["True", "False"]' : "[]"},
+    "correctAnswer": "${isTf ? "True or False" : "Correct answer string"}",
     "difficulty": "${input.targetDifficulty}",
     "feedback": "Step-by-step logic rationale for variant 1",
     "logicalSoundnessRating": 10

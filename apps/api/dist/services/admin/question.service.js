@@ -1,8 +1,8 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { QuestionDifficulty, QuestionType, QuestionStatus, } from "@prisma/client";
-import { questionSynthesizerService } from "./questionSynthesizer.service";
+import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../types/prisma.types";
+import { questionSynthesizerService, } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 // ============ Validation Schemas ============
 export const CreateQuestionSchema = z.object({
@@ -51,12 +51,15 @@ export class QuestionService {
         let computedStatus = QuestionStatus.PENDING_REVIEW;
         let authorUser = null;
         if (finalAuthorId) {
-            authorUser = await this.db.adminUser.findUnique({ where: { id: finalAuthorId } });
+            authorUser = await this.db.adminUser.findUnique({
+                where: { id: finalAuthorId },
+            });
             if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
                 computedStatus = QuestionStatus.APPROVED;
             }
             else {
-                if (authorUser?.role === "TEACHER" && authorUser?.handledCategoryIds?.length) {
+                if (authorUser?.role === "TEACHER" &&
+                    authorUser?.handledCategoryIds?.length) {
                     if (!authorUser.handledCategoryIds.includes(categoryId)) {
                         throw new ApiError(403, "Teachers can only create questions for subjects assigned to them.");
                     }
@@ -217,7 +220,9 @@ export class QuestionService {
         let statusFilter = undefined;
         if (status) {
             if (typeof status === "string" && status.includes(",")) {
-                statusFilter = { in: status.split(",") };
+                statusFilter = {
+                    in: status.split(","),
+                };
             }
             else if (Array.isArray(status)) {
                 statusFilter = { in: status };
@@ -471,7 +476,8 @@ export class QuestionService {
             });
         });
         const createdQuestions = await this.db.$transaction(queries);
-        if (status === QuestionStatus.PENDING_REVIEW && createdQuestions.length > 0) {
+        if (status === QuestionStatus.PENDING_REVIEW &&
+            createdQuestions.length > 0) {
             this.db.adminUser
                 .findUnique({ where: { id: authorId }, select: { name: true } })
                 .then((u) => {
@@ -617,7 +623,9 @@ export class QuestionService {
         const result = authors.map((author) => {
             const authorQuestions = pendingQuestions.filter((q) => q.authorId === author.id);
             const latestSubmissionAt = authorQuestions.reduce((latest, q) => {
-                return !latest || new Date(q.createdAt) > new Date(latest) ? q.createdAt : latest;
+                return !latest || new Date(q.createdAt) > new Date(latest)
+                    ? q.createdAt
+                    : latest;
             }, null);
             return {
                 ...author,

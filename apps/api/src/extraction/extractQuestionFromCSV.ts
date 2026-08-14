@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QuestionDifficulty, QuestionType } from "@prisma/client";
+import { QuestionDifficulty, QuestionType } from "../types/prisma.types";
 
 export const QuestionImportRowSchema = z.object({
   question: z.string().min(1, "Question wording cannot be empty"),

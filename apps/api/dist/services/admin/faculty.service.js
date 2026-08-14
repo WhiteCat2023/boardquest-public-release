@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
-import { Role } from "@prisma/client";
+import { Role } from "../../types/prisma.types";
 import { sendFacultyCredentialsEmail } from "../mail.service";
 // ============ Validation Schemas ============
 export const createFacultySchema = z.object({

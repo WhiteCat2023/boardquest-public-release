@@ -1,7 +1,7 @@
 import { Agenda, Job } from "agenda";
 import { MongoBackend } from "@agendajs/mongo-backend";
 import { importQuestions, ImportedQuestion } from "./admin/question.service";
-import { QuestionStatus } from "@prisma/client";
+import { QuestionStatus } from "../types/prisma.types";
 
 const databaseUrl = process.env.DATABASE_URL || "";
 
@@ -23,17 +23,22 @@ interface BulkUploadJobData {
 
 // Define the bulk-question-upload job
 agenda.define("bulk-question-upload", async (job: Job) => {
-  const { questions, categoryId, authorId, status } = job.attrs.data as BulkUploadJobData;
-  console.log(`[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions...`);
+  const { questions, categoryId, authorId, status } = job.attrs
+    .data as BulkUploadJobData;
+  console.log(
+    `[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions...`,
+  );
 
   try {
     const imported = await importQuestions(
       questions,
       categoryId,
       authorId,
-      status
+      status,
     );
-    console.log(`[Queue] Background bulk upload completed successfully. Imported ${imported.length} questions.`);
+    console.log(
+      `[Queue] Background bulk upload completed successfully. Imported ${imported.length} questions.`,
+    );
   } catch (error) {
     console.error(`[Queue] Background bulk upload failed:`, error);
     throw error; // Retransmit error for Agenda failure tracking

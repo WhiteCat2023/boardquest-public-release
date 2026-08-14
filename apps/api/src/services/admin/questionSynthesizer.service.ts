@@ -1,5 +1,5 @@
 import z from "zod";
-import { QuestionDifficulty, QuestionType } from "@prisma/client";
+import { QuestionDifficulty, QuestionType } from "../../types/prisma.types";
 import { ApiError } from "../../utils/apiError";
 
 // ============ Schemas ============
@@ -15,7 +15,9 @@ export const SynthesizeQuestionInputSchema = z.object({
   additionalContext: z.string().optional(),
 });
 
-export type SynthesizeQuestionInput = z.infer<typeof SynthesizeQuestionInputSchema>;
+export type SynthesizeQuestionInput = z.infer<
+  typeof SynthesizeQuestionInputSchema
+>;
 
 export const SynthesizedQuestionOutputSchema = z.object({
   question: z.string(),
@@ -26,14 +28,17 @@ export const SynthesizedQuestionOutputSchema = z.object({
   logicalSoundnessRating: z.number().min(1).max(10).optional().default(10),
 });
 
-export type SynthesizedQuestionOutput = z.infer<typeof SynthesizedQuestionOutputSchema>;
+export type SynthesizedQuestionOutput = z.infer<
+  typeof SynthesizedQuestionOutputSchema
+>;
 
-export const SynthesizedQuestionListOutputSchema = z.array(SynthesizedQuestionOutputSchema);
+export const SynthesizedQuestionListOutputSchema = z.array(
+  SynthesizedQuestionOutputSchema,
+);
 
 // ============ Service Class ============
 
 export class QuestionSynthesizerService {
-
   private getApiKey(): string {
     return process.env.GEMINI_API_KEY || "";
   }
@@ -57,14 +62,18 @@ export class QuestionSynthesizerService {
   /**
    * Synthesizes 5 distinct question variants based on target difficulty before saving to the database.
    */
-  async synthesizeQuestion(input: SynthesizeQuestionInput): Promise<SynthesizedQuestionOutput[]> {
+  async synthesizeQuestion(
+    input: SynthesizeQuestionInput,
+  ): Promise<SynthesizedQuestionOutput[]> {
     const validatedInput = SynthesizeQuestionInputSchema.parse(input);
     validatedInput.question = this.cleanStemText(validatedInput.question);
 
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
-      console.warn("[QuestionSynthesizerService] GEMINI_API_KEY is missing. Using smart fallback synthesizer engine.");
+      console.warn(
+        "[QuestionSynthesizerService] GEMINI_API_KEY is missing. Using smart fallback synthesizer engine.",
+      );
       return this.generateLocalSynthesizedFallbacks(validatedInput);
     }
 
@@ -83,11 +92,13 @@ export class QuestionSynthesizerService {
               temperature: 0.4,
             },
           }),
-        }
+        },
       );
 
       if (!response.ok) {
-        console.warn(`[QuestionSynthesizerService] Gemini API returned ${response.status}. Falling back to local engine.`);
+        console.warn(
+          `[QuestionSynthesizerService] Gemini API returned ${response.status}. Falling back to local engine.`,
+        );
         return this.generateLocalSynthesizedFallbacks(validatedInput);
       }
 
@@ -99,16 +110,24 @@ export class QuestionSynthesizerService {
       }
 
       const parsedJson = JSON.parse(rawText);
-      const rawArray = Array.isArray(parsedJson) ? parsedJson : parsedJson.questions || [parsedJson];
+      const rawArray = Array.isArray(parsedJson)
+        ? parsedJson
+        : parsedJson.questions || [parsedJson];
       const validatedList = SynthesizedQuestionListOutputSchema.parse(rawArray);
 
       // Clean stems and sanitize choices for each generated variant
       validatedList.forEach((item) => {
         item.question = this.cleanStemText(item.question);
 
-        if (validatedInput.type === QuestionType.MCQ && item.choices && item.choices.length > 0) {
+        if (
+          validatedInput.type === QuestionType.MCQ &&
+          item.choices &&
+          item.choices.length > 0
+        ) {
           const isChoiceMatch = item.choices.some(
-            (choice) => choice.trim().toLowerCase() === item.correctAnswer.trim().toLowerCase()
+            (choice) =>
+              choice.trim().toLowerCase() ===
+              item.correctAnswer.trim().toLowerCase(),
           );
           if (!isChoiceMatch) {
             item.choices[0] = item.correctAnswer;
@@ -122,12 +141,17 @@ export class QuestionSynthesizerService {
 
       return validatedList;
     } catch (error: any) {
-      console.warn("[QuestionSynthesizerService] AI call failed, using fallback synthesizer:", error?.message);
+      console.warn(
+        "[QuestionSynthesizerService] AI call failed, using fallback synthesizer:",
+        error?.message,
+      );
       return this.generateLocalSynthesizedFallbacks(validatedInput);
     }
   }
 
-  private generateLocalSynthesizedFallbacks(input: SynthesizeQuestionInput): SynthesizedQuestionOutput[] {
+  private generateLocalSynthesizedFallbacks(
+    input: SynthesizeQuestionInput,
+  ): SynthesizedQuestionOutput[] {
     const isMcq = input.type === QuestionType.MCQ;
     const isTf = input.type === QuestionType.TRUE_FALSE;
     const targetCount = input.count || 5;
@@ -135,24 +159,31 @@ export class QuestionSynthesizerService {
 
     const variations = [
       {
-        formatStem: (q: string, t: string) => `Regarding ${t}, ${q.toLowerCase().startsWith("what") || q.toLowerCase().startsWith("how") || q.toLowerCase().startsWith("which") ? q : `evaluate: ${q}`}`,
-        rationale: "Focuses on deep conceptual analysis and contextual evaluation.",
+        formatStem: (q: string, t: string) =>
+          `Regarding ${t}, ${q.toLowerCase().startsWith("what") || q.toLowerCase().startsWith("how") || q.toLowerCase().startsWith("which") ? q : `evaluate: ${q}`}`,
+        rationale:
+          "Focuses on deep conceptual analysis and contextual evaluation.",
       },
       {
-        formatStem: (q: string, t: string) => `In a practical ${t} scenario: ${q}`,
+        formatStem: (q: string, t: string) =>
+          `In a practical ${t} scenario: ${q}`,
         rationale: "Emphasizes real-world application and decision making.",
       },
       {
-        formatStem: (q: string, t: string) => `Under standard ${t} principles: ${q}`,
-        rationale: "Tests core concepts against standard domain specifications.",
+        formatStem: (q: string, t: string) =>
+          `Under standard ${t} principles: ${q}`,
+        rationale:
+          "Tests core concepts against standard domain specifications.",
       },
       {
         formatStem: (q: string, t: string) => `During a ${t} assessment: ${q}`,
         rationale: "Evaluates key relationships and parameters.",
       },
       {
-        formatStem: (q: string, t: string) => `Analyzing key ${t} concepts: ${q}`,
-        rationale: "Synthesizes multi-variable conditions and fundamental logic.",
+        formatStem: (q: string, t: string) =>
+          `Analyzing key ${t} concepts: ${q}`,
+        rationale:
+          "Synthesizes multi-variable conditions and fundamental logic.",
       },
     ];
 
@@ -175,7 +206,9 @@ export class QuestionSynthesizerService {
 
       let choices: string[] = [];
       if (isMcq) {
-        const validBaseChoices = (input.choices || []).filter((c) => c.trim().length > 0);
+        const validBaseChoices = (input.choices || []).filter(
+          (c) => c.trim().length > 0,
+        );
         if (validBaseChoices.length >= 4) {
           choices = [...validBaseChoices];
           if (i > 0) {
@@ -221,7 +254,7 @@ All ${count} variants must be calibrated to the target difficulty level: **${inp
 - **NO BRACKETS OR TAGS**: Do NOT include bracketed tags (e.g. [Direct Recall], [Scenario], [Analysis]) in the question stem. Return ONLY clean, natural, professional question text.
 - Question Type: **${input.type}**
 ${isMcq ? "- Choices: Provide 4 engineered multiple-choice options for each variant (1 correct answer + 3 plausible distractors)." : ""}
-${isTf ? "- Choices: Return strictly [\"True\", \"False\"]. Correct answer must be \"True\" or \"False\"." : ""}
+${isTf ? '- Choices: Return strictly ["True", "False"]. Correct answer must be "True" or "False".' : ""}
 ${isSa ? "- Choices: Return an empty array []. Synthesize a concise reference correct answer string." : ""}
 
 ### Target Difficulty Calibration (${input.targetDifficulty}):
@@ -241,8 +274,8 @@ Return ONLY a JSON array containing exactly ${count} objects matching this schem
 [
   {
     "question": "Clean synthesized variant 1 stem text without brackets",
-    "choices": ${isMcq ? '["Option A", "Option B", "Option C", "Option D"]' : isTf ? '["True", "False"]' : '[]'},
-    "correctAnswer": "${isTf ? 'True or False' : 'Correct answer string'}",
+    "choices": ${isMcq ? '["Option A", "Option B", "Option C", "Option D"]' : isTf ? '["True", "False"]' : "[]"},
+    "correctAnswer": "${isTf ? "True or False" : "Correct answer string"}",
     "difficulty": "${input.targetDifficulty}",
     "feedback": "Step-by-step logic rationale for variant 1",
     "logicalSoundnessRating": 10

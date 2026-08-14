@@ -1,6 +1,6 @@
 import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
-import { GuidanceStatus, Role } from "@prisma/client";
+import { GuidanceStatus, Role } from "../../types/prisma.types";
 import { createNotification } from "./notification.service";
 export const createGuidanceAssignment = async (assignedById, payload, creatorRole) => {
     if (creatorRole !== Role.SUPERADMIN && creatorRole !== Role.ADMIN) {
@@ -37,7 +37,13 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
                 select: { id: true, name: true, email: true, level: true, xp: true },
             },
             advisor: {
-                select: { id: true, name: true, email: true, role: true, employeeId: true },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    employeeId: true,
+                },
             },
             assignedBy: {
                 select: { id: true, name: true, email: true, role: true },
@@ -78,10 +84,23 @@ export const getGuidanceAssignments = async (filters) => {
         where,
         include: {
             student: {
-                select: { id: true, name: true, email: true, level: true, xp: true, examResults: true },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    level: true,
+                    xp: true,
+                    examResults: true,
+                },
             },
             advisor: {
-                select: { id: true, name: true, email: true, role: true, employeeId: true },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    employeeId: true,
+                },
             },
             assignedBy: {
                 select: { id: true, name: true, email: true, role: true },
@@ -108,8 +127,12 @@ export const updateGuidanceAssignment = async (assignmentId, userId, userRole, p
         where: { id: assignmentId },
         data: {
             status: payload.status || existing.status,
-            guidanceNotes: payload.guidanceNotes !== undefined ? payload.guidanceNotes : existing.guidanceNotes,
-            resolutionNotes: payload.resolutionNotes !== undefined ? payload.resolutionNotes : existing.resolutionNotes,
+            guidanceNotes: payload.guidanceNotes !== undefined
+                ? payload.guidanceNotes
+                : existing.guidanceNotes,
+            resolutionNotes: payload.resolutionNotes !== undefined
+                ? payload.resolutionNotes
+                : existing.resolutionNotes,
         },
         include: {
             student: {
@@ -145,7 +168,8 @@ export const getFailingStudents = async () => {
         const avgAccuracy = totalExams > 0
             ? st.examResults.reduce((acc, r) => acc + (r.accuracy || 0), 0) / totalExams
             : 0;
-        const activeGuidance = (st.guidanceAssignments || []).find((g) => g.status === GuidanceStatus.PENDING || g.status === GuidanceStatus.IN_PROGRESS);
+        const activeGuidance = (st.guidanceAssignments || []).find((g) => g.status === GuidanceStatus.PENDING ||
+            g.status === GuidanceStatus.IN_PROGRESS);
         return {
             ...st,
             totalExams,

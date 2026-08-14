@@ -1,7 +1,7 @@
 import * as QuestionService from "../../services/admin/question.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
-import { QuestionType, QuestionStatus, } from "@prisma/client";
+import { QuestionType, QuestionStatus, } from "../../types/prisma.types";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
@@ -39,7 +39,8 @@ export const updateQuestion = asyncHandler(async (req, res) => {
             throw new ApiError(403, "You can only update your own questions");
         }
         // Teachers submit/resubmit as PENDING_REVIEW or PENDING_REVISION
-        if (req.body.status !== "PENDING_REVIEW" && req.body.status !== "PENDING_REVISION") {
+        if (req.body.status !== "PENDING_REVIEW" &&
+            req.body.status !== "PENDING_REVISION") {
             req.body.status = "PENDING_REVIEW";
         }
         req.body.authorId = user.id; // force ownership

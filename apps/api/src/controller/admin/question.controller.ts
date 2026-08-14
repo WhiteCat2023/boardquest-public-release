@@ -6,7 +6,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "@prisma/client";
+} from "../../types/prisma.types";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
@@ -69,16 +69,16 @@ export const updateQuestion = asyncHandler(
         throw new ApiError(403, "You can only update your own questions");
       }
       // Teachers submit/resubmit as PENDING_REVIEW or PENDING_REVISION
-      if (req.body.status !== "PENDING_REVIEW" && req.body.status !== "PENDING_REVISION") {
+      if (
+        req.body.status !== "PENDING_REVIEW" &&
+        req.body.status !== "PENDING_REVISION"
+      ) {
         req.body.status = "PENDING_REVIEW";
       }
       req.body.authorId = user.id; // force ownership
     } else if (user.role === "TEAMLEAD") {
       if (req.body.status === "APPROVED") {
-        throw new ApiError(
-          403,
-          "Teacher/Team Leads cannot approve questions",
-        );
+        throw new ApiError(403, "Teacher/Team Leads cannot approve questions");
       }
     }
 
@@ -256,9 +256,7 @@ export const deleteQuestion = asyncHandler(
       throw new ApiError(403, "You can only delete your own questions");
     }
 
-    const question = await QuestionService.deleteQuestion(
-      questionId as string,
-    );
+    const question = await QuestionService.deleteQuestion(questionId as string);
     return new ApiResponse(
       200,
       { question },
@@ -581,11 +579,9 @@ export const createQuestionComment = asyncHandler(
       req.ip,
     );
 
-    return new ApiResponse(
-      201,
-      { comment },
-      "Comment added successfully",
-    ).send(res);
+    return new ApiResponse(201, { comment }, "Comment added successfully").send(
+      res,
+    );
   },
 );
 
@@ -606,11 +602,9 @@ export const deleteQuestionComment = asyncHandler(
       user.role || "",
     );
 
-    return new ApiResponse(
-      200,
-      result,
-      "Comment deleted successfully",
-    ).send(res);
+    return new ApiResponse(200, result, "Comment deleted successfully").send(
+      res,
+    );
   },
 );
 
@@ -638,4 +632,3 @@ export const toggleResolveComment = asyncHandler(
     ).send(res);
   },
 );
-

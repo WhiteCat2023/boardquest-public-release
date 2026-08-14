@@ -4,7 +4,7 @@ import * as facultyService from "../../services/admin/faculty.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
-import { Role } from "@prisma/client";
+import { Role } from "../../types/prisma.types";
 
 export const getFaculties = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -90,7 +90,10 @@ export const bulkCreateFaculty = asyncHandler(
       throw new ApiError(401, "Unauthorized");
     }
 
-    const created = await facultyService.bulkCreateFaculty(req.body.members, creatorRole);
+    const created = await facultyService.bulkCreateFaculty(
+      req.body.members,
+      creatorRole,
+    );
 
     // Strip password before returning
     const { password, ...faculty } = created as any;

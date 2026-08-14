@@ -1,6 +1,6 @@
 import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
-import { GuidanceStatus, Role } from "@prisma/client";
+import { GuidanceStatus, Role } from "../../types/prisma.types";
 import { createNotification } from "./notification.service";
 
 export interface CreateGuidancePayload {
@@ -20,13 +20,17 @@ export interface UpdateGuidancePayload {
 export const createGuidanceAssignment = async (
   assignedById: string,
   payload: CreateGuidancePayload,
-  creatorRole: Role
+  creatorRole: Role,
 ) => {
   if (creatorRole !== Role.SUPERADMIN && creatorRole !== Role.ADMIN) {
-    throw new ApiError(403, "Only Superadmin and Admin users can assign students to advisors.");
+    throw new ApiError(
+      403,
+      "Only Superadmin and Admin users can assign students to advisors.",
+    );
   }
 
-  const { studentId, advisorId, subjectCategory, reason, guidanceNotes } = payload;
+  const { studentId, advisorId, subjectCategory, reason, guidanceNotes } =
+    payload;
 
   if (!studentId || !advisorId || !reason?.trim()) {
     throw new ApiError(400, "studentId, advisorId, and reason are required.");
@@ -61,7 +65,13 @@ export const createGuidanceAssignment = async (
         select: { id: true, name: true, email: true, level: true, xp: true },
       },
       advisor: {
-        select: { id: true, name: true, email: true, role: true, employeeId: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          employeeId: true,
+        },
       },
       assignedBy: {
         select: { id: true, name: true, email: true, role: true },
@@ -113,10 +123,23 @@ export const getGuidanceAssignments = async (filters: {
     where,
     include: {
       student: {
-        select: { id: true, name: true, email: true, level: true, xp: true, examResults: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          level: true,
+          xp: true,
+          examResults: true,
+        },
       },
       advisor: {
-        select: { id: true, name: true, email: true, role: true, employeeId: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          employeeId: true,
+        },
       },
       assignedBy: {
         select: { id: true, name: true, email: true, role: true },
@@ -132,7 +155,7 @@ export const updateGuidanceAssignment = async (
   assignmentId: string,
   userId: string,
   userRole: Role,
-  payload: UpdateGuidancePayload
+  payload: UpdateGuidancePayload,
 ) => {
   const existing = await (prisma as any).guidanceAssignment.findUnique({
     where: { id: assignmentId },
@@ -147,15 +170,24 @@ export const updateGuidanceAssignment = async (
   const isAdmin = userRole === Role.SUPERADMIN || userRole === Role.ADMIN;
 
   if (!isAssigner && !isAdvisor && !isAdmin) {
-    throw new ApiError(403, "You do not have permission to modify this guidance case.");
+    throw new ApiError(
+      403,
+      "You do not have permission to modify this guidance case.",
+    );
   }
 
   const updated = await (prisma as any).guidanceAssignment.update({
     where: { id: assignmentId },
     data: {
       status: payload.status || existing.status,
-      guidanceNotes: payload.guidanceNotes !== undefined ? payload.guidanceNotes : existing.guidanceNotes,
-      resolutionNotes: payload.resolutionNotes !== undefined ? payload.resolutionNotes : existing.resolutionNotes,
+      guidanceNotes:
+        payload.guidanceNotes !== undefined
+          ? payload.guidanceNotes
+          : existing.guidanceNotes,
+      resolutionNotes:
+        payload.resolutionNotes !== undefined
+          ? payload.resolutionNotes
+          : existing.resolutionNotes,
     },
     include: {
       student: {
@@ -193,11 +225,16 @@ export const getFailingStudents = async () => {
     const totalExams = st.examResults?.length || 0;
     const avgAccuracy =
       totalExams > 0
-        ? st.examResults.reduce((acc: number, r: any) => acc + (r.accuracy || 0), 0) / totalExams
+        ? st.examResults.reduce(
+            (acc: number, r: any) => acc + (r.accuracy || 0),
+            0,
+          ) / totalExams
         : 0;
 
     const activeGuidance = (st.guidanceAssignments || []).find(
-      (g: any) => g.status === GuidanceStatus.PENDING || g.status === GuidanceStatus.IN_PROGRESS
+      (g: any) =>
+        g.status === GuidanceStatus.PENDING ||
+        g.status === GuidanceStatus.IN_PROGRESS,
     );
 
     return {

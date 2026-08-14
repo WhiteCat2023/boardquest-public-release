@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 
-import { Role } from "@prisma/client";
+import { Role } from "../../types/prisma.types";
 
 export const createGuidanceAssignment = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -18,15 +18,15 @@ export const createGuidanceAssignment = asyncHandler(
     const assignment = await guidanceService.createGuidanceAssignment(
       creatorId,
       req.body,
-      creatorRole as Role
+      creatorRole as Role,
     );
 
     return new ApiResponse(
       201,
       { assignment },
-      "Student successfully assigned to guidance advisor"
+      "Student successfully assigned to guidance advisor",
     ).send(res);
-  }
+  },
 );
 
 export const getGuidanceAssignments = asyncHandler(
@@ -43,9 +43,9 @@ export const getGuidanceAssignments = asyncHandler(
     return new ApiResponse(
       200,
       { assignments },
-      "Guidance assignments retrieved successfully"
+      "Guidance assignments retrieved successfully",
     ).send(res);
-  }
+  },
 );
 
 export const updateGuidanceAssignment = asyncHandler(
@@ -61,15 +61,15 @@ export const updateGuidanceAssignment = asyncHandler(
       id as string,
       userId,
       userRole as Role,
-      req.body
+      req.body,
     );
 
     return new ApiResponse(
       200,
       { assignment: updated },
-      "Guidance assignment updated successfully"
+      "Guidance assignment updated successfully",
     ).send(res);
-  }
+  },
 );
 
 export const getFailingStudents = asyncHandler(
@@ -79,7 +79,7 @@ export const getFailingStudents = asyncHandler(
     return new ApiResponse(
       200,
       { students },
-      "Failing student metrics retrieved successfully"
+      "Failing student metrics retrieved successfully",
     ).send(res);
-  }
+  },
 );

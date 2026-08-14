@@ -5,8 +5,11 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "@prisma/client";
-import { questionSynthesizerService, SynthesizeQuestionInput } from "./questionSynthesizer.service";
+} from "../../types/prisma.types";
+import {
+  questionSynthesizerService,
+  SynthesizeQuestionInput,
+} from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 
 // ============ Validation Schemas ============
@@ -20,15 +23,15 @@ export const CreateQuestionSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   difficulty: z.preprocess(
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
-    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)
+    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
-    z.nativeEnum(QuestionType).default(QuestionType.MCQ)
+    z.nativeEnum(QuestionType).default(QuestionType.MCQ),
   ),
   status: z.preprocess(
     (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
-    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
+    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW),
   ),
 });
 
@@ -42,15 +45,15 @@ export const UpdateQuestionSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   difficulty: z.preprocess(
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
-    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)
+    z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
-    z.nativeEnum(QuestionType).default(QuestionType.MCQ)
+    z.nativeEnum(QuestionType).default(QuestionType.MCQ),
   ),
   status: z.preprocess(
     (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
-    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)
+    z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW),
   ),
 });
 
@@ -95,7 +98,8 @@ export class QuestionService {
     } = parsed.data;
 
     let finalAuthorId: string = authorId || "";
-    const isValidObjectId = (id?: string) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
+    const isValidObjectId = (id?: string) =>
+      Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
     if (!isValidObjectId(finalAuthorId)) {
       const existingAdmin = await this.db.adminUser.findFirst();
       finalAuthorId = existingAdmin?.id || "507f1f77bcf86cd799439011";
@@ -105,13 +109,21 @@ export class QuestionService {
     let computedStatus: QuestionStatus = QuestionStatus.PENDING_REVIEW;
     let authorUser: any = null;
     if (finalAuthorId) {
-      authorUser = await this.db.adminUser.findUnique({ where: { id: finalAuthorId } });
+      authorUser = await this.db.adminUser.findUnique({
+        where: { id: finalAuthorId },
+      });
       if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
         computedStatus = QuestionStatus.APPROVED;
       } else {
-        if (authorUser?.role === "TEACHER" && authorUser?.handledCategoryIds?.length) {
+        if (
+          authorUser?.role === "TEACHER" &&
+          authorUser?.handledCategoryIds?.length
+        ) {
           if (!authorUser.handledCategoryIds.includes(categoryId)) {
-            throw new ApiError(403, "Teachers can only create questions for subjects assigned to them.");
+            throw new ApiError(
+              403,
+              "Teachers can only create questions for subjects assigned to them.",
+            );
           }
         }
         computedStatus = status || QuestionStatus.PENDING_REVIEW;
@@ -159,15 +171,17 @@ export class QuestionService {
   }
 
   async createSynthesizedQuestion(data: CreateNewQuestionInput) {
-    const synthesizedList = await questionSynthesizerService.synthesizeQuestion({
-      question: data.question,
-      choices: data.choices,
-      correctAnswer: data.correctAnswer,
-      topic: data.topic,
-      targetDifficulty: data.difficulty,
-      type: data.type,
-      count: 5,
-    });
+    const synthesizedList = await questionSynthesizerService.synthesizeQuestion(
+      {
+        question: data.question,
+        choices: data.choices,
+        correctAnswer: data.correctAnswer,
+        topic: data.topic,
+        targetDifficulty: data.difficulty,
+        type: data.type,
+        count: 5,
+      },
+    );
 
     const synthesized = synthesizedList[0];
 
@@ -212,7 +226,7 @@ export class QuestionService {
       ) {
         throw new ApiError(
           400,
-          "Questions in Pending Revision status cannot be approved until all comments are resolved and the author resubmits them for review."
+          "Questions in Pending Revision status cannot be approved until all comments are resolved and the author resubmits them for review.",
         );
       }
     }
@@ -273,10 +287,14 @@ export class QuestionService {
       const hasNextPage = questions.length > limitNum;
       if (hasNextPage) questions.pop();
 
-      const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+      const nextCursor =
+        questions.length > 0 ? questions[questions.length - 1].id : null;
       return { questions, nextCursor, hasNextPage };
     } catch (err: any) {
-      console.warn("getAllQuestions relation include failed, falling back to safe query:", err?.message);
+      console.warn(
+        "getAllQuestions relation include failed, falling back to safe query:",
+        err?.message,
+      );
       const questions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
@@ -296,7 +314,8 @@ export class QuestionService {
       const hasNextPage = formatted.length > limitNum;
       if (hasNextPage) formatted.pop();
 
-      const nextCursor = formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+      const nextCursor =
+        formatted.length > 0 ? formatted[formatted.length - 1].id : null;
       return { questions: formatted, nextCursor, hasNextPage };
     }
   }
@@ -318,7 +337,9 @@ export class QuestionService {
     let statusFilter: any = undefined;
     if (status) {
       if (typeof status === "string" && (status as string).includes(",")) {
-        statusFilter = { in: (status as string).split(",") as QuestionStatus[] };
+        statusFilter = {
+          in: (status as string).split(",") as QuestionStatus[],
+        };
       } else if (Array.isArray(status)) {
         statusFilter = { in: status };
       } else {
@@ -362,10 +383,14 @@ export class QuestionService {
       const hasNextPage = questions.length > limitNum;
       if (hasNextPage) questions.pop();
 
-      const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
+      const nextCursor =
+        questions.length > 0 ? questions[questions.length - 1].id : null;
       return { questions, nextCursor, hasNextPage };
     } catch (err: any) {
-      console.warn("getFilteredQuestions relation include failed, falling back to safe query:", err?.message);
+      console.warn(
+        "getFilteredQuestions relation include failed, falling back to safe query:",
+        err?.message,
+      );
       const questions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
@@ -385,13 +410,15 @@ export class QuestionService {
       const hasNextPage = formatted.length > limitNum;
       if (hasNextPage) formatted.pop();
 
-      const nextCursor = formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+      const nextCursor =
+        formatted.length > 0 ? formatted[formatted.length - 1].id : null;
       return { questions: formatted, nextCursor, hasNextPage };
     }
   }
 
   async getQuestionStats(authorId?: string) {
-    const isValidObjectId = (id?: string) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
+    const isValidObjectId = (id?: string) =>
+      Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
     const targetAuthorId = isValidObjectId(authorId) ? authorId : undefined;
 
     const [
@@ -405,7 +432,7 @@ export class QuestionService {
       this.db.question.count(),
       this.db.question.count({
         where: {
-          OR: [ { status: QuestionStatus.APPROVED }],
+          OR: [{ status: QuestionStatus.APPROVED }],
         },
       }),
       this.db.question.count({
@@ -420,7 +447,7 @@ export class QuestionService {
         ? this.db.question.count({
             where: {
               authorId: targetAuthorId,
-              OR: [ { status: QuestionStatus.APPROVED }],
+              OR: [{ status: QuestionStatus.APPROVED }],
             },
           })
         : Promise.resolve(0),
@@ -443,8 +470,6 @@ export class QuestionService {
       teacherDraftCount,
     };
   }
-
-
 
   async syncQuestionRevisionStatus(questionId: string) {
     const question = await this.db.question.findUnique({
@@ -614,7 +639,10 @@ export class QuestionService {
 
     const createdQuestions = await this.db.$transaction(queries);
 
-    if (status === QuestionStatus.PENDING_REVIEW && createdQuestions.length > 0) {
+    if (
+      status === QuestionStatus.PENDING_REVIEW &&
+      createdQuestions.length > 0
+    ) {
       this.db.adminUser
         .findUnique({ where: { id: authorId }, select: { name: true } })
         .then((u) => {
@@ -657,10 +685,6 @@ export class QuestionService {
     });
   }
 
-
-
-
-
   async bulkApproveQuestions(ids: string[], user: any) {
     const canApprove =
       user.role === "SUPERADMIN" ||
@@ -680,13 +704,13 @@ export class QuestionService {
     const pendingRevisionQuestions = targetQuestions.filter(
       (q) =>
         q.status === QuestionStatus.PENDING_REVISION ||
-        (q.status as string) === "NEEDS_REVISION"
+        (q.status as string) === "NEEDS_REVISION",
     );
 
     if (pendingRevisionQuestions.length > 0) {
       throw new ApiError(
         400,
-        `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`
+        `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`,
       );
     }
 
@@ -706,7 +730,11 @@ export class QuestionService {
     }).catch((err) => console.warn("Notification error:", err?.message));
   }
 
-  async bulkUpdateStatusQuestions(ids: string[], status: QuestionStatus, user: any) {
+  async bulkUpdateStatusQuestions(
+    ids: string[],
+    status: QuestionStatus,
+    user: any,
+  ) {
     const canManage =
       user.role === "SUPERADMIN" ||
       user.role === "ADMIN" ||
@@ -726,13 +754,13 @@ export class QuestionService {
       const pendingRevisionQuestions = targetQuestions.filter(
         (q) =>
           q.status === QuestionStatus.PENDING_REVISION ||
-          (q.status as string) === "NEEDS_REVISION"
+          (q.status as string) === "NEEDS_REVISION",
       );
 
       if (pendingRevisionQuestions.length > 0) {
         throw new ApiError(
           400,
-          `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`
+          `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`,
         );
       }
     }
@@ -801,7 +829,9 @@ export class QuestionService {
       },
     });
 
-    const authorIds = Array.from(new Set(pendingQuestions.map((q) => q.authorId).filter(Boolean)));
+    const authorIds = Array.from(
+      new Set(pendingQuestions.map((q) => q.authorId).filter(Boolean)),
+    );
     const authors = await this.db.adminUser.findMany({
       where: { id: { in: authorIds as string[] } },
       select: {
@@ -813,10 +843,17 @@ export class QuestionService {
     });
 
     const result = authors.map((author) => {
-      const authorQuestions = pendingQuestions.filter((q) => q.authorId === author.id);
-      const latestSubmissionAt = authorQuestions.reduce((latest, q) => {
-        return !latest || new Date(q.createdAt) > new Date(latest) ? q.createdAt : latest;
-      }, null as Date | null);
+      const authorQuestions = pendingQuestions.filter(
+        (q) => q.authorId === author.id,
+      );
+      const latestSubmissionAt = authorQuestions.reduce(
+        (latest, q) => {
+          return !latest || new Date(q.createdAt) > new Date(latest)
+            ? q.createdAt
+            : latest;
+        },
+        null as Date | null,
+      );
 
       return {
         ...author,
@@ -855,7 +892,11 @@ export class QuestionService {
     return comments;
   }
 
-  async createQuestionComment(questionId: string, authorId: string, content: string) {
+  async createQuestionComment(
+    questionId: string,
+    authorId: string,
+    content: string,
+  ) {
     if (!content || !content.trim()) {
       throw new ApiError(400, "Comment content cannot be empty");
     }
@@ -895,15 +936,16 @@ export class QuestionService {
           commenterRole === "SUPERADMIN"
             ? "Super Administrator"
             : commenterRole === "ADMIN"
-            ? "Administrator"
-            : commenterRole === "TEAMLEAD"
-            ? "Team Lead"
-            : commenterRole || "Reviewer";
+              ? "Administrator"
+              : commenterRole === "TEAMLEAD"
+                ? "Team Lead"
+                : commenterRole || "Reviewer";
 
         const commenterName = commenter?.name || "A reviewer";
-        const contentSnippet = content.trim().length > 60
-          ? content.trim().slice(0, 60) + "..."
-          : content.trim();
+        const contentSnippet =
+          content.trim().length > 60
+            ? content.trim().slice(0, 60) + "..."
+            : content.trim();
 
         await createNotification({
           recipientId: question.authorId,
@@ -926,7 +968,7 @@ export class QuestionService {
     questionId: string,
     commentId: string,
     userId: string,
-    userRole: string
+    userRole: string,
   ) {
     const comment = await this.db.questionComment.findUnique({
       where: { id: commentId },
@@ -937,10 +979,15 @@ export class QuestionService {
     }
 
     const isAuthor = comment.authorId === userId;
-    const isAdminOrLead = ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole);
+    const isAdminOrLead = ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(
+      userRole,
+    );
 
     if (!isAuthor && !isAdminOrLead) {
-      throw new ApiError(430, "You do not have permission to delete this comment");
+      throw new ApiError(
+        430,
+        "You do not have permission to delete this comment",
+      );
     }
 
     await this.db.questionComment.delete({
@@ -963,12 +1010,16 @@ export class QuestionService {
     if (unresolvedCount > 0) {
       throw new ApiError(
         400,
-        `Cannot resubmit question while there ${unresolvedCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCount} unresolved comments`}. Please resolve all comments first.`
+        `Cannot resubmit question while there ${unresolvedCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCount} unresolved comments`}. Please resolve all comments first.`,
       );
     }
   }
 
-  async toggleResolveComment(questionId: string, commentId: string, isResolved?: boolean) {
+  async toggleResolveComment(
+    questionId: string,
+    commentId: string,
+    isResolved?: boolean,
+  ) {
     const comment = await this.db.questionComment.findUnique({
       where: { id: commentId },
     });
@@ -977,7 +1028,8 @@ export class QuestionService {
       throw new ApiError(404, "Comment not found");
     }
 
-    const nextState = isResolved !== undefined ? isResolved : !comment.isResolved;
+    const nextState =
+      isResolved !== undefined ? isResolved : !comment.isResolved;
 
     const updatedComment = await this.db.questionComment.update({
       where: { id: commentId },
@@ -1050,5 +1102,3 @@ export const deleteQuestionComment =
   questionService.deleteQuestionComment.bind(questionService);
 export const toggleResolveComment =
   questionService.toggleResolveComment.bind(questionService);
-
-

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
-import { Role } from "@prisma/client";
+import { Role } from "../../types/prisma.types";
 import { sendFacultyCredentialsEmail } from "../mail.service";
 
 // ============ Validation Schemas ============
@@ -90,7 +90,7 @@ export class FacultyService {
     status?: string;
     cursor?: string;
     limit?: number;
-  }){
+  }) {
     const { search, status, cursor, limit } = filters || {};
 
     const where: any = {};
@@ -157,7 +157,8 @@ export class FacultyService {
     limit?: number;
     requesterRole?: string;
   }) {
-    const { search, role, status, cursor, limit, requesterRole } = filters || {};
+    const { search, role, status, cursor, limit, requesterRole } =
+      filters || {};
 
     const where: any = {};
 
@@ -176,7 +177,7 @@ export class FacultyService {
     // 2. ADMIN -> Returns both TEAMLEAD and TEACHER accounts
     // 3. TEAMLEAD -> Only returns TEACHER accounts
     if (requesterRole === "SUPERADMIN") {
-      where.role = { in: ["ADMIN", "TEAMLEAD", "TEACHER"] }
+      where.role = { in: ["ADMIN", "TEAMLEAD", "TEACHER"] };
     } else if (requesterRole === "ADMIN") {
       if (role && role !== "ALL" && ["TEAMLEAD", "TEACHER"].includes(role)) {
         where.role = role;
@@ -321,7 +322,6 @@ export class FacultyService {
     isActive: boolean,
     creatorRole: string,
   ) {
-
     const userToUpdate = await this.db.adminUser.findUnique({
       where: { id },
     });
@@ -379,10 +379,10 @@ export class FacultyService {
 
     const previousCategoryIds = userToUpdate.handledCategoryIds || [];
     const removedCategoryIds = previousCategoryIds.filter(
-      (cid) => !categoryIds.includes(cid)
+      (cid) => !categoryIds.includes(cid),
     );
     const addedCategoryIds = categoryIds.filter(
-      (cid) => !previousCategoryIds.includes(cid)
+      (cid) => !previousCategoryIds.includes(cid),
     );
 
     for (const cid of removedCategoryIds) {
@@ -538,10 +538,6 @@ export class FacultyService {
       errors,
     };
   }
-
-
-
-
 }
 
 export const facultyService = new FacultyService();
@@ -556,5 +552,3 @@ export const toggleFacultyStatus =
   facultyService.toggleFacultyStatus.bind(facultyService);
 export const updateFacultyCategories =
   facultyService.updateFacultyCategories.bind(facultyService);
-
-
