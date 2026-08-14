@@ -22,10 +22,14 @@ export const createCategory = asyncHandler(async (req: AuthenticatedRequest | Re
 
 export const getCategories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { isPublished, status, authorId } = req.query;
+  const user = req.user;
   const categories = await categoryServices.getAllCategories({
     isPublished: isPublished as any,
     status: status as string,
     authorId: authorId as string,
+    handledCategoryIds: user?.handledCategoryIds,
+    userRole: user?.role,
+    userId: user?.id,
   });
   return new ApiResponse(200, { categories }, "Categories retrieved successfully").send(res);
 });

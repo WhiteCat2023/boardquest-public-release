@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await loginMutation.mutateAsync(userData);
       setAuth(response);
       console.log("Login successful:", response);
-      navigate(from, { replace: true });
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Login failed:", error?.response?.data?.message || error);
     }

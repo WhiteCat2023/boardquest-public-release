@@ -14,8 +14,8 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import useAuth from "@/hooks/useAuth";
 import { AssignFacultyModal } from "./AssignFacultyModal";
+import useRoleFlags from "@/hooks/useRoleFlags";
 
 interface SubjectOverviewTabProps {
   category: any;
@@ -35,16 +35,24 @@ export default function SubjectOverviewTab({
   onNavigateModulesTab,
 }: SubjectOverviewTabProps) {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const { auth } = useAuth();
-  const currentUser = auth?.data?.user || auth?.user;
-  const userRole = currentUser?.role?.toUpperCase();
-  const canAssignFaculty = userRole === "ADMIN" || userRole === "SUPERADMIN" || userRole === "TEAMLEAD";
+  const { isStaff: canAssignFaculty } = useRoleFlags();
 
-  const currentHandlerIds = Array.isArray(category?.handlers)
-    ? category.handlers.map((h: any) => h.id || h._id)
+  const handlersList = Array.isArray(category?.handlers) && category.handlers.length > 0
+    ? category.handlers
+    : [];
+
+  const handlersCount = handlersList.length > 0
+    ? handlersList.length
+    : Array.isArray(category?.handlerIds)
+    ? category.handlerIds.length
+    : 0;
+
+  const currentHandlerIds = handlersList.length > 0
+    ? handlersList.map((h: any) => h.id || h._id)
     : Array.isArray(category?.handlerIds)
     ? category.handlerIds
     : [];
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Key Metric Cards */}
@@ -97,7 +105,7 @@ export default function SubjectOverviewTab({
               Faculty Handlers
             </span>
             <p className="text-2xl font-extrabold text-foreground tracking-tight">
-              {category?.handlers?.length || 0}
+              {handlersCount}
             </p>
             <span className="text-[11px] text-muted-foreground block pt-0.5">
               Assigned teachers
@@ -165,7 +173,7 @@ export default function SubjectOverviewTab({
             </h3>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
-                {category?.handlers?.length || 0} Member(s)
+                {handlersCount} Member(s)
               </Badge>
               {canAssignFaculty && (
                 <Button
@@ -180,9 +188,9 @@ export default function SubjectOverviewTab({
             </div>
           </div>
 
-          {Array.isArray(category?.handlers) && category.handlers.length > 0 ? (
+          {handlersList.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {category.handlers.map((handler: any) => {
+              {handlersList.map((handler: any) => {
                 const initials = handler.name
                   ? handler.name
                       .split(" ")

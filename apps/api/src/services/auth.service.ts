@@ -146,6 +146,13 @@ export class AuthService {
         lastActiveAt: true,
         createdAt: true,
         updatedAt: true,
+        handledCategoryIds: true,
+        handledCategories: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       }
     });
 

@@ -3,7 +3,7 @@ import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
 import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "../services/admin/bootstrap.service";
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
@@ -11,6 +11,8 @@ interface AuthenticatedRequest extends Request {
     name: string;
     role?: string;
     isActive?: boolean;
+    handledCategoryIds?: string[];
+    handledCategories?: Array<{ id: string; name: string }>;
   };
 }
 
@@ -82,6 +84,8 @@ export const authenticateToken = async (
           name: true,
           role: true,
           isActive: true,
+          handledCategoryIds: true,
+          handledCategories: { select: { id: true, name: true } },
         },
       });
 
@@ -209,5 +213,3 @@ export const optionalAuth = async (
     next();
   }
 };
-
-export type { AuthenticatedRequest };

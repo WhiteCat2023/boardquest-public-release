@@ -82,6 +82,24 @@ export function StudentSubjectProgressCard({ student }: StudentSubjectProgressCa
       }
     }
 
+    // Fallback calculation from exam results if mastery row doesn't exist
+    if (student?.examResults && Array.isArray(student.examResults)) {
+      const matchExams = student.examResults.filter((e: any) => {
+        if (!e?.subject) return false;
+        const s = e.subject.toLowerCase().trim();
+        const t = subjectName.toLowerCase().trim();
+        return s === t || s.includes(t) || t.includes(s);
+      });
+      if (matchExams.length > 0) {
+        const avgScore = Math.round(matchExams.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0) / matchExams.length);
+        return {
+          proficiency: avgScore,
+          minScore: 75,
+          status: avgScore >= 75 ? "Proficient" : "In Training",
+        };
+      }
+    }
+
     return {
       proficiency: 0,
       minScore: 75,

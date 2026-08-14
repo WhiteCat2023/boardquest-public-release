@@ -26,13 +26,12 @@ import QuestionList from "../components/list/QuestionList";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import useAuth from "@/hooks/useAuth";
+import useRoleFlags from "@/hooks/useRoleFlags";
 
 export default function ReviewQuestions() {
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
-  const { auth } = useAuth();
-  const currentUserRole = (auth as any)?.data?.user?.role || (auth as any)?.user?.role;
+  const { isStaff } = useRoleFlags();
 
   const [authorSearch, setAuthorSearch] = useState("");
   const [selectedAuthorId, setSelectedAuthorId] = useState<string>("");
@@ -270,7 +269,7 @@ export default function ReviewQuestions() {
                 {selectedAuthor.pendingCount} Pending Question{selectedAuthor.pendingCount !== 1 ? "s" : ""}
               </Badge>
 
-              {(currentUserRole === "SUPERADMIN" || currentUserRole === "ADMIN" || currentUserRole === "TEAMLEAD") && (
+              {isStaff && (
                 <Button
                   size="sm"
                   onClick={handleApproveAllForAuthor}

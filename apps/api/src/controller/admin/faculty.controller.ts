@@ -11,6 +11,19 @@ export const getFaculties = asyncHandler(
     const { search, role, status, cursor, limit } = req.query;
     const requesterRole = req.user?.role;
 
+    if (requesterRole === "TEACHER") {
+      return new ApiResponse(
+        200,
+        {
+          faculties: [],
+          nextCursor: null,
+          hasNextPage: false,
+          total: 0,
+        },
+        "Faculty list not accessible for teacher role",
+      ).send(res);
+    }
+
     const result = await facultyService.getAllFaculty({
       search: search as string,
       role: role as string,

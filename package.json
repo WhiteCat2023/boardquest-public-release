@@ -1,6 +1,7 @@
 {
   "name": "capstone",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.20.0",
   "description": "> [!IMPORTANT] > This repository contains proprietary source code and intellectual property of **BoardQuest**. Access to, modification of, or distribution of this code without explicit authorization from the company is strictly prohibited.",
   "homepage": "https://github.com/WhiteCat2023/boardquest-admin-2#readme",
   "bugs": {
@@ -15,16 +16,18 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
-    "dev:api": "pnpm --filter ./apps/api dev",
-    "dev:admin": "pnpm --filter ./apps/admin dev",
-    "dev:review-center": "pnpm --filter ./apps/review-center dev",
-    "test": "pnpm --recursive test",
-    "test:api": "pnpm --filter ./apps/api test",
-    "test:admin": "pnpm --filter ./apps/admin test",
-    "lint": "pnpm --filter admin lint",
-    "lint:admin": "pnpm --filter admin lint",
-    "build": "pnpm --recursive build",
-    "typecheck": "pnpm --recursive run typecheck"
+    "dev": "turbo dev",
+    "dev:api": "pnpm --filter=./apps/api dev",
+    "dev:admin": "pnpm --filter=./apps/admin dev",
+    "dev:review-center": "pnpm --filter=./apps/review-center dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "test:api": "pnpm --filter=./apps/api test",
+    "test:admin": "pnpm --filter=./apps/admin test"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.9"
   }
 }

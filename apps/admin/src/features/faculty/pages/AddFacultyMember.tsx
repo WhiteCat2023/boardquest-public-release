@@ -310,7 +310,7 @@ export default function AddFacultyMember() {
               }`}
             >
               <UserPlus size={13} />
-              Add User
+              Individual
             </button>
 
             <button
@@ -323,7 +323,7 @@ export default function AddFacultyMember() {
               }`}
             >
               <Users size={13} />
-              Add Users
+              Bulk
             </button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import sseService from "./sse.service";
 
 export interface CreateNotificationInput {
   recipientId?: string;
@@ -17,170 +18,142 @@ export interface GetNotificationsInput {
   limit?: number;
 }
 
-// Memory fallback notifications if database is empty or fallback mode
-let memoryNotifications: any[] = [
-  {
-    id: "notif_seed_1",
-    recipientId: null,
-    recipientRole: "ALL",
-    title: "System Audit & Security Sync",
-    message: "System logs & student evaluation module successfully synchronized.",
-    type: "SYSTEM_UPDATE",
-    link: "/logs-management",
-    isRead: false,
-    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_seed_2",
-    recipientId: null,
-    recipientRole: "ALL",
-    title: "Question Bank Approval",
-    message: "10 new Clinical Chemistry items were approved into the licensure bank.",
-    type: "QUESTION_APPROVED",
-    link: "/question-bank",
-    isRead: false,
-    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_seed_3",
-    recipientId: null,
-    recipientRole: "ALL",
-    title: "New Student Guidance Assigned",
-    message: "Academic guidance task assigned for high-risk performance review.",
-    type: "STUDENT_ASSIGNED",
-    link: "/student-management",
-    isRead: false,
-    createdAt: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
-  },
-];
+function getOrConditions(userId?: string, role?: string) {
+  const OR_conditions: any[] = [{ recipientRole: "ALL" }];
+
+  if (userId) {
+    OR_conditions.push({ recipientId: userId });
+  }
+  if (role) {
+    const uppercaseRole = role.toUpperCase();
+    OR_conditions.push({ recipientRole: uppercaseRole });
+    if (["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(uppercaseRole)) {
+      OR_conditions.push({ recipientRole: "REVIEWER" });
+      OR_conditions.push({ recipientRole: "STAFF" });
+    }
+  }
+
+  return OR_conditions;
+}
 
 export async function createNotification(input: CreateNotificationInput) {
   const { recipientId, recipientRole = "ALL", title, message, type = "INFO", link, metadata } = input;
   const metadataStr = metadata ? (typeof metadata === "string" ? metadata : JSON.stringify(metadata)) : null;
 
+  const notif = await (prisma as any).notification.create({
+    data: {
+      recipientId: recipientId || null,
+      recipientRole,
+      title,
+      message,
+      type,
+      link: link || null,
+      readUserIds: [],
+      deletedUserIds: [],
+      metadata: metadataStr,
+    },
+  });
+
   try {
-    if ((prisma as any)?.notification) {
-      const notif = await (prisma as any).notification.create({
-        data: {
-          recipientId: recipientId || null,
-          recipientRole,
-          title,
-          message,
-          type,
-          link: link || null,
-          metadata: metadataStr,
-        },
-      });
-      return notif;
-    }
-  } catch (error: any) {
-    console.warn("Fallback createNotification error:", error?.message);
+    sseService.broadcastNotification(notif);
+  } catch (err) {
+    console.warn("SSE broadcast error:", err);
   }
 
-  const memNotif = {
-    id: "notif_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-    recipientId: recipientId || null,
-    recipientRole,
-    title,
-    message,
-    type,
-    link: link || null,
-    isRead: false,
-    metadata: metadataStr,
-    createdAt: new Date().toISOString(),
-  };
-
-  memoryNotifications.unshift(memNotif);
-  return memNotif;
+  return notif;
 }
 
 export async function getUserNotifications(input: GetNotificationsInput) {
   const { userId, role, unreadOnly = false, limit = 50 } = input;
 
-  try {
-    if ((prisma as any)?.notification) {
-      const OR_conditions: any[] = [{ recipientRole: "ALL" }];
+  const whereClause: any = {
+    OR: getOrConditions(userId, role),
+  };
 
-      if (userId) {
-        OR_conditions.push({ recipientId: userId });
-      }
-      if (role) {
-        OR_conditions.push({ recipientRole: role.toUpperCase() });
-      }
+  if (userId) {
+    whereClause.deletedUserIds = { none: userId };
+  }
 
-      const whereClause: any = {
-        OR: OR_conditions,
+  const rawNotifications = await (prisma as any).notification.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "desc" },
+    take: limit * 2,
+  });
+
+  const processed = rawNotifications
+    .map((n: any) => {
+      const isReadForUser =
+        n.isRead ||
+        (userId ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId) : false);
+
+      return {
+        ...n,
+        isRead: isReadForUser,
       };
+    })
+    .filter((n: any) => !unreadOnly || !n.isRead);
 
-      if (unreadOnly) {
-        whereClause.isRead = false;
-      }
-
-      const dbNotifications = await (prisma as any).notification.findMany({
-        where: whereClause,
-        orderBy: { createdAt: "desc" },
-        take: limit,
-      });
-
-      if (dbNotifications && dbNotifications.length > 0) {
-        return dbNotifications;
-      }
-    }
-  } catch (error: any) {
-    console.warn("getUserNotifications DB query warning:", error?.message);
-  }
-
-  // Memory fallback handling
-  let list = [...memoryNotifications];
-
-  if (role) {
-    list = list.filter(
-      (n) => n.recipientRole === "ALL" || n.recipientRole === role.toUpperCase() || (userId && n.recipientId === userId)
-    );
-  }
-
-  if (unreadOnly) {
-    list = list.filter((n) => !n.isRead);
-  }
-
-  return list.slice(0, limit);
+  return processed.slice(0, limit);
 }
 
-export async function markNotificationAsRead(id: string, userId?: string) {
-  // Update memory state
-  memoryNotifications = memoryNotifications.map((n) =>
-    n.id === id ? { ...n, isRead: true } : n
-  );
+export async function markNotificationAsRead(id: string, userId?: string, role?: string) {
+  if (!id) return { success: false };
 
-  const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+  try {
+    const existing = await (prisma as any).notification.findUnique({ where: { id } });
+    if (!existing) return { success: false };
 
-  if (isValidObjectId) {
-    try {
-      if ((prisma as any)?.notification) {
-        const updated = await (prisma as any).notification.update({
-          where: { id },
-          data: { isRead: true },
-        });
-        return updated;
-      }
-    } catch (error: any) {
-      console.warn("markNotificationAsRead DB error:", error?.message);
+    if (userId && existing.recipientId === userId) {
+      return await (prisma as any).notification.update({
+        where: { id },
+        data: { isRead: true },
+      });
     }
-  }
 
-  return { id, isRead: true };
+    if (userId && !existing.readUserIds?.includes(userId)) {
+      return await (prisma as any).notification.update({
+        where: { id },
+        data: {
+          readUserIds: { push: userId },
+        },
+      });
+    }
+
+    return { id, isRead: true };
+  } catch (error: any) {
+    console.warn("markNotificationAsRead DB error:", error?.message);
+    return { id, isRead: true };
+  }
 }
 
 export async function markAllNotificationsAsRead(input: GetNotificationsInput) {
-  // Update memory state
-  memoryNotifications = memoryNotifications.map((n) => ({ ...n, isRead: true }));
+  const { userId, role } = input;
+
+  if (!userId) return { success: true };
 
   try {
-    if ((prisma as any)?.notification) {
-      await (prisma as any).notification.updateMany({
-        where: { isRead: false },
-        data: { isRead: true },
-      });
+    const notificationsToMark = await (prisma as any).notification.findMany({
+      where: {
+        OR: getOrConditions(userId, role),
+        deletedUserIds: { none: userId },
+      },
+      select: { id: true, recipientId: true, isRead: true, readUserIds: true },
+    });
+
+    for (const notif of notificationsToMark) {
+      if (notif.recipientId === userId) {
+        if (!notif.isRead) {
+          await (prisma as any).notification.update({
+            where: { id: notif.id },
+            data: { isRead: true },
+          });
+        }
+      } else if (!notif.readUserIds?.includes(userId)) {
+        await (prisma as any).notification.update({
+          where: { id: notif.id },
+          data: { readUserIds: { push: userId } },
+        });
+      }
     }
   } catch (error: any) {
     console.warn("markAllNotificationsAsRead DB error:", error?.message);
@@ -189,33 +162,53 @@ export async function markAllNotificationsAsRead(input: GetNotificationsInput) {
   return { success: true };
 }
 
-export async function deleteNotification(id: string, userId?: string) {
-  // Update memory state
-  memoryNotifications = memoryNotifications.filter((n) => n.id !== id);
+export async function deleteNotification(id: string, userId?: string, role?: string) {
+  if (!id) return { success: false };
 
-  const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+  try {
+    const existing = await (prisma as any).notification.findUnique({ where: { id } });
+    if (!existing) return { success: false };
 
-  if (isValidObjectId) {
-    try {
-      if ((prisma as any)?.notification) {
-        await (prisma as any).notification.delete({
-          where: { id },
-        });
-      }
-    } catch (error: any) {
-      console.warn("deleteNotification DB error:", error?.message);
+    if (userId && existing.recipientId === userId) {
+      await (prisma as any).notification.delete({ where: { id } });
+    } else if (userId && !existing.deletedUserIds?.includes(userId)) {
+      await (prisma as any).notification.update({
+        where: { id },
+        data: {
+          deletedUserIds: { push: userId },
+        },
+      });
     }
+  } catch (error: any) {
+    console.warn("deleteNotification DB error:", error?.message);
   }
 
   return { success: true };
 }
 
 export async function clearAllNotifications(input: GetNotificationsInput) {
-  memoryNotifications = [];
+  const { userId, role } = input;
+
+  if (!userId) return { success: true };
 
   try {
-    if ((prisma as any)?.notification) {
-      await (prisma as any).notification.deleteMany({});
+    const notificationsToClear = await (prisma as any).notification.findMany({
+      where: {
+        OR: getOrConditions(userId, role),
+        deletedUserIds: { none: userId },
+      },
+      select: { id: true, recipientId: true, deletedUserIds: true },
+    });
+
+    for (const notif of notificationsToClear) {
+      if (notif.recipientId === userId) {
+        await (prisma as any).notification.delete({ where: { id: notif.id } });
+      } else if (!notif.deletedUserIds?.includes(userId)) {
+        await (prisma as any).notification.update({
+          where: { id: notif.id },
+          data: { deletedUserIds: { push: userId } },
+        });
+      }
     }
   } catch (error: any) {
     console.warn("clearAllNotifications DB error:", error?.message);

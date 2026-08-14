@@ -140,7 +140,8 @@ export const getQuestions = asyncHandler(
       type ||
       status ||
       isPublishedBool !== undefined ||
-      authorIdFilter
+      authorIdFilter ||
+      user.role === "TEACHER"
     );
 
     let result;
@@ -155,6 +156,9 @@ export const getQuestions = asyncHandler(
         limitNum,
         authorIdFilter,
         isPublishedBool,
+        undefined,
+        user.handledCategoryIds,
+        user.role,
       );
     } else {
       result = await QuestionService.getAllQuestions(

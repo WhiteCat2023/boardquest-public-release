@@ -8,6 +8,7 @@ export function useStudents(params?: {
   location?: string;
   skip?: number;
   take?: number;
+  enabled?: boolean;
 }) {
   const axiosPrivate = useAxiosPrivate();
 
@@ -26,6 +27,7 @@ export function useStudents(params?: {
         total: resData?.pagination?.total || (resData?.data || []).length,
       };
     },
+    enabled: params?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });

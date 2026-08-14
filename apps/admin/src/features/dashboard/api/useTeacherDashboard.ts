@@ -13,24 +13,20 @@ export function useTeacherDashboard() {
   const { data: categoriesTotalCount, isLoading: isCategoriesTotalCountLoading } = useCategoriesTotalCount();
 
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
-    queryKey: ["teacher-dashboard-question-stats", currentUser?.id],
+    queryKey: ["teacher-dashboard-question-stats"],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
-      const response = await axiosPrivate.get(`/questions/stats?authorId=${currentUser.id}`);
+      const response = await axiosPrivate.get("/questions/stats");
       return response.data?.data?.stats;
     },
-    enabled: !!currentUser?.id,
     staleTime: 1000 * 60 * 3,
   });
 
   const { data: questionData, isLoading: isQuestionLoading } = useQuery({
-    queryKey: ["teacher-dashboard-questions", currentUser?.id],
+    queryKey: ["teacher-dashboard-questions"],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
-      const response = await axiosPrivate.get(`/questions/get?authorId=${currentUser.id}&limit=20`);
+      const response = await axiosPrivate.get("/questions/get?limit=20");
       return response.data?.data;
     },
-    enabled: !!currentUser?.id,
     staleTime: 1000 * 60 * 3,
   });
 

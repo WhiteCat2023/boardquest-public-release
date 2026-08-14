@@ -17,7 +17,6 @@ const router = Router();
 router.get(
   "/",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
   getFaculties,
 );
 router.post(

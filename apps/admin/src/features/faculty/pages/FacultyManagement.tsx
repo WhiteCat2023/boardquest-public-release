@@ -31,13 +31,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
+import useRoleFlags from "@/hooks/useRoleFlags";
+
 const ITEMS_PER_PAGE = 10;
 
 export default function FacultyManagement() {
-  const { auth } = useAuth();
-
-  const currentUserRole = auth?.data?.user?.role as RoleType;
-  const currentUserId = auth?.data?.user?.id;
+  const { currentUser, userRole } = useRoleFlags();
+  const currentUserRole = userRole as RoleType;
+  const currentUserId = currentUser?.id;
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");

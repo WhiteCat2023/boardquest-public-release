@@ -377,6 +377,44 @@ export class FacultyService {
       throw new ApiError(404, "Faculty member not found");
     }
 
+    const previousCategoryIds = userToUpdate.handledCategoryIds || [];
+    const removedCategoryIds = previousCategoryIds.filter(
+      (cid) => !categoryIds.includes(cid)
+    );
+    const addedCategoryIds = categoryIds.filter(
+      (cid) => !previousCategoryIds.includes(cid)
+    );
+
+    for (const cid of removedCategoryIds) {
+      const cat = await this.db.category.findUnique({
+        where: { id: cid },
+        select: { handlerIds: true },
+      });
+      if (cat) {
+        const nextHandlers = (cat.handlerIds || []).filter((uid) => uid !== id);
+        await this.db.category.update({
+          where: { id: cid },
+          data: { handlerIds: nextHandlers },
+        });
+      }
+    }
+
+    for (const cid of addedCategoryIds) {
+      const cat = await this.db.category.findUnique({
+        where: { id: cid },
+        select: { handlerIds: true },
+      });
+      if (cat) {
+        const currentHandlers = cat.handlerIds || [];
+        if (!currentHandlers.includes(id)) {
+          await this.db.category.update({
+            where: { id: cid },
+            data: { handlerIds: [...currentHandlers, id] },
+          });
+        }
+      }
+    }
+
     return await this.db.adminUser.update({
       where: { id },
       data: {

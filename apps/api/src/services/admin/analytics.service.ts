@@ -98,6 +98,8 @@ export interface StudentAnalyticsResult {
 }
 
 export class AnalyticsService {
+  private summaryCache: { data: any; timestamp: number } | null = null;
+
   constructor(private readonly db: typeof prisma = prisma) {}
 
   async getStudentAnalytics(studentId: string): Promise<StudentAnalyticsResult> {
@@ -130,38 +132,114 @@ export class AnalyticsService {
       : 0;
     const totalLessons = 35; // Standard total core modules
 
-    const readinessScore = (examsCount === 0 && lessonsCompleted === 0 && (student.streak || 0) === 0)
-      ? 0
-      : Math.min(
-          99,
-          Math.max(0, Math.round(avgScore * 0.45 + avgAccuracy * 0.35 + Math.min((student.level || 1) * 2.5, 20)))
-        );
-
     // Subject mastery formatting strictly from real DB records with flexible matching
     const categoriesFromDb = await this.db.category.findMany({
-      select: { name: true },
+      select: {
+        id: true,
+        name: true,
+        modules: {
+          select: { id: true, isPublished: true }
+        }
+      },
     });
 
-    const categoriesList = categoriesFromDb.map((c) => c.name)
+    const matchSubject = (s1?: string | null, s2?: string | null) => {
+      if (!s1 || !s2) return false;
+      const a = s1.toLowerCase().trim();
+      const b = s2.toLowerCase().trim();
+      return a === b || a.includes(b) || b.includes(a) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4));
+    };
 
-    const masteryData = categoriesList.map((sub) => {
-      const existing: any = (student.mastery || []).find((m: any) => {
-        if (!m?.subject) return false;
-        const s = m.subject.toLowerCase().trim();
-        const t = sub.toLowerCase().trim();
-        return s === t || s.includes(t) || t.includes(s) || (s.length >= 4 && t.length >= 4 && s.slice(0, 4) === t.slice(0, 4));
+    // Gather all unique category names (from DB Categories + any extra in student.mastery or student.examResults)
+    const categoryMap = new Map<string, { name: string; modulesCount: number }>();
+    categoriesFromDb.forEach((cat) => {
+      categoryMap.set(cat.name.toLowerCase().trim(), {
+        name: cat.name,
+        modulesCount: cat.modules ? cat.modules.filter((m: any) => m.isPublished !== false).length : 0,
       });
-      const prof = existing ? (existing.proficiency || 0) : 0;
-      const status = existing ? (existing.status || (prof >= 75 ? "Mastered" : prof >= 55 ? "Competent" : "Needs Review")) : "Needs Review";
-      const done = existing ? Math.min(5, Math.round((prof / 100) * 5)) : 0;
+    });
+
+    (student.mastery || []).forEach((m: any) => {
+      if (m?.subject) {
+        const key = m.subject.toLowerCase().trim();
+        if (!categoryMap.has(key)) {
+          categoryMap.set(key, { name: m.subject, modulesCount: 0 });
+        }
+      }
+    });
+
+    (student.examResults || []).forEach((e: any) => {
+      if (e?.subject) {
+        const key = e.subject.toLowerCase().trim();
+        if (!categoryMap.has(key)) {
+          categoryMap.set(key, { name: e.subject, modulesCount: 0 });
+        }
+      }
+    });
+
+    const masteryData = Array.from(categoryMap.values()).map((catInfo) => {
+      const sub = catInfo.name;
+
+      // 1. Find existing explicit SubjectMastery row from DB
+      const existing: any = (student.mastery || []).find((m: any) => matchSubject(m?.subject, sub));
+
+      // 2. Count actual completed lessons for this subject
+      const subjectCompletions = (student.lessonCompletions || []).filter((c: any) => 
+        matchSubject(c?.subject, sub) && (c?.status === "completed" || c?.status === "COMPLETED")
+      );
+      const actualLessonsDone = subjectCompletions.length;
+
+      // 3. Total modules count for this subject (default to min 5 for UI module target)
+      const totalLessons = Math.max(catInfo.modulesCount, 5);
+
+      // 4. Look at subject-specific exam results
+      const subjectExams = (student.examResults || []).filter((e: any) => matchSubject(e?.subject, sub));
+      const examAvgScore = subjectExams.length > 0
+        ? Math.round(subjectExams.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0) / subjectExams.length)
+        : null;
+      const examAvgAccuracy = subjectExams.length > 0
+        ? Math.round(subjectExams.reduce((acc: number, curr: any) => acc + (curr.accuracy || curr.score || 0), 0) / subjectExams.length)
+        : null;
+
+      // Calculate Proficiency
+      let prof = 0;
+      if (existing && typeof existing.proficiency === "number" && existing.proficiency > 0) {
+        prof = existing.proficiency;
+      } else if (examAvgScore !== null) {
+        const examBase = Math.round((examAvgScore * 0.6) + ((examAvgAccuracy ?? examAvgScore) * 0.4));
+        if (actualLessonsDone > 0) {
+          const lessonRatio = Math.round((actualLessonsDone / totalLessons) * 100);
+          prof = Math.min(100, Math.round((examBase * 0.7) + (lessonRatio * 0.3)));
+        } else {
+          prof = examBase;
+        }
+      } else if (actualLessonsDone > 0) {
+        prof = Math.min(100, Math.round((actualLessonsDone / totalLessons) * 100));
+      }
+
+      // Calculate Lessons Done (real completed count, or fallback from proficiency ratio if admin set proficiency manually)
+      let lessonsDone = actualLessonsDone;
+      if (lessonsDone === 0 && prof > 0) {
+        lessonsDone = Math.min(totalLessons, Math.round((prof / 100) * totalLessons));
+      }
+
+      // Calculate Status
+      const status = existing?.status || (prof >= 75 ? "Mastered" : prof >= 55 ? "Competent" : "Needs Review");
+
       return {
         subject: sub,
         proficiency: prof,
         status,
-        lessonsDone: done,
-        totalLessons: 5
+        lessonsDone,
+        totalLessons,
       };
     });
+
+    // Board Readiness Score formula: total proficiency score / total number of subjects or categories
+    const totalProficiencyScore = masteryData.reduce((acc, curr) => acc + (curr.proficiency || 0), 0);
+    const readinessScore = masteryData.length > 0 
+      ? Math.round(totalProficiencyScore / masteryData.length) 
+      : 0;
 
     // 3. Construct Performance Trend strictly from actual DB exam results
     const performanceTrend: PerformanceTrendItem[] = (student.examResults || []).map((e: any, index: number) => ({
@@ -574,14 +652,27 @@ export class AnalyticsService {
   }
 
   async getDashboardAnalyticsSummary() {
+    const CACHE_TTL = 1000 * 60 * 2; // 2 minutes in-memory cache
+    const now = Date.now();
+    if (this.summaryCache && now - this.summaryCache.timestamp < CACHE_TTL) {
+      return this.summaryCache.data;
+    }
+
     const students = await this.db.user.findMany({
-      include: {
-        examResults: true,
-        mastery: true,
+      take: 200,
+      select: {
+        id: true,
+        level: true,
+        examResults: {
+          select: { score: true },
+        },
+        mastery: {
+          select: { subject: true, proficiency: true },
+        },
       },
     });
 
-    const totalStudentsCount = students.length || 1;
+    const totalStudentsCount = (await this.db.user.count()) || students.length || 1;
 
     let passedCount = 0;
     let nearTargetCount = 0;
@@ -614,13 +705,14 @@ export class AnalyticsService {
       }
     });
 
+    const safeDenominator = totalScoreCount || 1;
     const overallAvgScore = totalScoreCount > 0 ? Number((totalScoreSum / totalScoreCount).toFixed(1)) : 78.4;
-    const overallPassRate = Number(((passedCount / totalStudentsCount) * 100).toFixed(1));
+    const overallPassRate = Number(((passedCount / safeDenominator) * 100).toFixed(1));
 
     const distribution = [
       {
         label: "Passed (≥75%)",
-        value: Number(((passedCount / totalStudentsCount) * 100).toFixed(1)),
+        value: Number(((passedCount / safeDenominator) * 100).toFixed(1)),
         count: passedCount,
         color: "#10b981",
         strokeColor: "stroke-emerald-500",
@@ -629,7 +721,7 @@ export class AnalyticsService {
       },
       {
         label: "Near Target (60-74%)",
-        value: Number(((nearTargetCount / totalStudentsCount) * 100).toFixed(1)),
+        value: Number(((nearTargetCount / safeDenominator) * 100).toFixed(1)),
         count: nearTargetCount,
         color: "#f59e0b",
         strokeColor: "stroke-amber-500",
@@ -638,7 +730,7 @@ export class AnalyticsService {
       },
       {
         label: "At Risk (<60%)",
-        value: Number(((atRiskCount / totalStudentsCount) * 100).toFixed(1)),
+        value: Number(((atRiskCount / safeDenominator) * 100).toFixed(1)),
         count: atRiskCount,
         color: "#ef4444",
         strokeColor: "stroke-rose-500",
@@ -648,6 +740,12 @@ export class AnalyticsService {
     ];
 
     const allExamResults = await this.db.examResult.findMany({
+      take: 500,
+      select: {
+        score: true,
+        timestamp: true,
+        userId: true,
+      },
       orderBy: { timestamp: "asc" },
     });
 
@@ -710,7 +808,7 @@ export class AnalyticsService {
       };
     });
 
-    return {
+    const summaryResult = {
       overallPassRate,
       overallAvgScore,
       totalStudentsCount,
@@ -721,6 +819,10 @@ export class AnalyticsService {
       monthlyTrend,
       subjects,
     };
+
+    this.summaryCache = { data: summaryResult, timestamp: Date.now() };
+
+    return summaryResult;
   }
 }
 

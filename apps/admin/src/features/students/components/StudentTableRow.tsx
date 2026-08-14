@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { getStudentEarnedBadges } from "@/utils/badgeUtils";
-import useAuth from "@/hooks/useAuth";
+import useRoleFlags from "@/hooks/useRoleFlags";
 
 interface StudentTableRowProps {
   student: Student & { avgAccuracy?: number; isFailing?: boolean; activeGuidance?: any };
@@ -13,9 +13,7 @@ interface StudentTableRowProps {
 }
 
 export default function StudentTableRow({ student, onAssignGuidance }: StudentTableRowProps) {
-  const { auth } = useAuth();
-  const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
-  const isAdminOrSuperAdmin = currentUser?.role === "SUPERADMIN" || currentUser?.role === "ADMIN";
+  const { isAdminOrSuperAdmin } = useRoleFlags();
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";

@@ -21,7 +21,7 @@ interface UploadZoneProps {
 
 export default function UploadZone({ categories }: UploadZoneProps) {
   const { auth } = useAuth();
-  const currentUserRole = (auth as any)?.data?.user?.role;
+  const { isTeacher } = useRoleFlags();
   const axiosPrivate = useAxiosPrivate();
 
   const {
@@ -83,7 +83,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Role Constraint Status</label>
               <div className="h-10 flex items-center px-3.5 rounded-xl border border-border bg-muted/30 text-xs font-semibold text-foreground/80">
-                {currentUserRole === "TEACHER" ? "Auto-Drafted (Pending Approval)" : "Bulk Pending Review"}
+                {isTeacher ? "Auto-Drafted (Pending Approval)" : "Bulk Pending Review"}
               </div>
             </div>
           </div>

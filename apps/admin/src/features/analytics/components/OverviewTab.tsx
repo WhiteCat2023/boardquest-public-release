@@ -112,7 +112,7 @@ export function OverviewTab({ report }: OverviewTabProps) {
                     variant={m.proficiency >= 75 ? "success" : m.proficiency >= 55 ? "warning" : "default"}
                     className="text-[8px] font-extrabold px-1.5 py-0 rounded"
                   >
-                    {m.proficiency >= 75 ? "Mastered" : m.proficiency >= 55 ? "Competent" : "Needs Review"}
+                    {m.status || (m.proficiency >= 75 ? "Mastered" : m.proficiency >= 55 ? "Competent" : "Needs Review")}
                   </Badge>
                 </div>
               </div>

@@ -49,10 +49,14 @@ import {
   useUpdateFacultyCategories,
 } from "@/features/faculty";
 
+import useRoleFlags from "@/hooks/useRoleFlags";
+
 export default function ViewFacultyMember() {
   const { facultyId } = useParams<{ facultyId: string }>();
   const navigate = useNavigate();
-  const { auth } = useAuth();
+  const { currentUser, userRole } = useRoleFlags();
+  const currentUserRole = userRole as RoleType;
+  const currentUserId = currentUser?.id;
 
   const { data: facultyResponse, isLoading } = useFaculties();
   const faculties = facultyResponse?.faculties ?? [];
@@ -65,9 +69,6 @@ export default function ViewFacultyMember() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isEditCategoriesOpen, setIsEditCategoriesOpen] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-
-  const currentUserRole = (auth as any)?.data?.user?.role as RoleType;
-  const currentUserId = (auth as any)?.data?.user?.id;
 
   const member = faculties.find((f) => f.id === facultyId);
 

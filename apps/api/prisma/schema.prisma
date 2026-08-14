@@ -369,6 +369,8 @@ model Notification {
   type          NotificationType @default(INFO)
   link          String?
   isRead        Boolean          @default(false)
+  readUserIds   String[]
+  deletedUserIds String[]
   metadata      String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt

@@ -7,6 +7,7 @@ import {
   clearAllNotifications,
   createNotification,
 } from "../../services/admin/notification.service";
+import sseService from "../../services/admin/sse.service";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -46,12 +47,13 @@ export async function markAsReadHandler(req: AuthenticatedRequest, res: Response
   try {
     const id = req.params.id as string;
     const userId = req.user?.id;
+    const role = req.user?.role;
 
     if (!id) {
       return res.status(400).json({ success: false, message: "Notification ID is required." });
     }
 
-    const result = await markNotificationAsRead(id, userId);
+    const result = await markNotificationAsRead(id, userId, role);
     return res.status(200).json({
       success: true,
       data: result,
@@ -86,12 +88,13 @@ export async function deleteNotificationHandler(req: AuthenticatedRequest, res: 
   try {
     const id = req.params.id as string;
     const userId = req.user?.id;
+    const role = req.user?.role;
 
     if (!id) {
       return res.status(400).json({ success: false, message: "Notification ID is required." });
     }
 
-    const result = await deleteNotification(id, userId);
+    const result = await deleteNotification(id, userId, role);
     return res.status(200).json({
       success: true,
       data: result,
@@ -150,4 +153,10 @@ export async function createNotificationHandler(req: AuthenticatedRequest, res: 
       message: error.message || "Failed to create notification.",
     });
   }
+}
+
+export function streamNotificationsHandler(req: AuthenticatedRequest, res: Response) {
+  const userId = req.user?.id;
+  const role = req.user?.role;
+  sseService.addClient(userId, role, res);
 }

@@ -28,9 +28,18 @@ export const me = asyncHandler(async (req, res) => {
     where: { id },
     select: {
       id: true,
+      employeeId: true,
       name: true,
       email: true,
       username: true,
+      role: true,
+      handledCategoryIds: true,
+      handledCategories: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 

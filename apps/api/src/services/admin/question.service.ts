@@ -103,12 +103,18 @@ export class QuestionService {
 
     // Automatically assign review status in the background based on author's role
     let computedStatus: QuestionStatus = QuestionStatus.PENDING_REVIEW;
+    let authorUser: any = null;
     if (finalAuthorId) {
-      const authorUser = await this.db.adminUser.findUnique({ where: { id: finalAuthorId } });
+      authorUser = await this.db.adminUser.findUnique({ where: { id: finalAuthorId } });
       if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
         computedStatus = QuestionStatus.APPROVED;
       } else {
-        computedStatus = QuestionStatus.PENDING_REVIEW;
+        if (authorUser?.role === "TEACHER" && authorUser?.handledCategoryIds?.length) {
+          if (!authorUser.handledCategoryIds.includes(categoryId)) {
+            throw new ApiError(403, "Teachers can only create questions for subjects assigned to them.");
+          }
+        }
+        computedStatus = status || QuestionStatus.PENDING_REVIEW;
       }
     }
 
@@ -135,10 +141,11 @@ export class QuestionService {
         link: "/question-bank",
       }).catch((err) => console.warn("Notification error:", err?.message));
     } else if (computedStatus === QuestionStatus.PENDING_REVIEW) {
+      const authorName = authorUser?.name || "A teacher";
       createNotification({
-        recipientRole: "ADMIN",
-        title: "Question Submitted for Review",
-        message: `A new question for topic "${topic}" was submitted for review.`,
+        recipientRole: "REVIEWER",
+        title: "New Question Submitted for Review",
+        message: `A new question for topic "${topic}" was submitted by ${authorName} and is awaiting review.`,
         type: "INFO",
         link: "/question-bank/review",
       }).catch((err) => console.warn("Notification error:", err?.message));
@@ -305,6 +312,8 @@ export class QuestionService {
     authorId?: string,
     isPublished?: boolean,
     schoolYear?: string,
+    handledCategoryIds?: string[],
+    userRole?: string,
   ) {
     let statusFilter: any = undefined;
     if (status) {
@@ -317,10 +326,15 @@ export class QuestionService {
       }
     }
 
+    let categoryFilter: any = category;
+    if (userRole === "TEACHER" && !category && handledCategoryIds?.length) {
+      categoryFilter = { in: handledCategoryIds };
+    }
+
     const whereClause: any = {
       question: search ? { contains: search } : undefined,
       difficulty,
-      categoryId: category,
+      categoryId: categoryFilter,
       type,
       status: statusFilter,
       authorId,
@@ -599,6 +613,23 @@ export class QuestionService {
     });
 
     const createdQuestions = await this.db.$transaction(queries);
+
+    if (status === QuestionStatus.PENDING_REVIEW && createdQuestions.length > 0) {
+      this.db.adminUser
+        .findUnique({ where: { id: authorId }, select: { name: true } })
+        .then((u) => {
+          const authorName = u?.name || "A teacher";
+          createNotification({
+            recipientRole: "REVIEWER",
+            title: "Bulk Questions Uploaded for Review",
+            message: `${createdQuestions.length} new question(s) were bulk uploaded by ${authorName} and are awaiting review.`,
+            type: "INFO",
+            link: "/question-bank/review",
+          }).catch((err) => console.warn("Notification error:", err?.message));
+        })
+        .catch(() => null);
+    }
+
     return createdQuestions;
   }
 
@@ -855,13 +886,29 @@ export class QuestionService {
       },
     });
 
-    // Notify author if comment is from a reviewer/another user
+    // Notify author if comment is from a reviewer/another user (e.g. SUPERADMIN, ADMIN, TEAMLEAD)
     if (question.authorId && question.authorId !== authorId) {
       try {
+        const commenter = comment.author;
+        const commenterRole = commenter?.role;
+        const roleLabel =
+          commenterRole === "SUPERADMIN"
+            ? "Super Administrator"
+            : commenterRole === "ADMIN"
+            ? "Administrator"
+            : commenterRole === "TEAMLEAD"
+            ? "Team Lead"
+            : commenterRole || "Reviewer";
+
+        const commenterName = commenter?.name || "A reviewer";
+        const contentSnippet = content.trim().length > 60
+          ? content.trim().slice(0, 60) + "..."
+          : content.trim();
+
         await createNotification({
           recipientId: question.authorId,
           title: "New Comment on Question",
-          message: `A new comment was added to question Q-${questionId.slice(-6).toUpperCase()}.`,
+          message: `${commenterName} (${roleLabel}) commented on your question: "${contentSnippet}"`,
           type: "INFO" as any,
           link: `/question-bank/view/${questionId}`,
         });

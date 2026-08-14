@@ -9,6 +9,7 @@ export function useFaculties(params?: {
   status?: string;
   cursor?: string;
   limit?: number;
+  enabled?: boolean;
 }) {
   const axiosPrivate = useAxiosPrivate();
 
@@ -39,6 +40,7 @@ export function useFaculties(params?: {
         total: Array.isArray(data) ? data.length : 0,
       };
     },
+    enabled: params?.enabled ?? true,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
     refetchOnWindowFocus: false,
   });
@@ -149,8 +151,51 @@ export function useUpdateFacultyCategories() {
         categoryIds,
       });
     },
-    onSuccess: () => {
+    onMutate: async ({ id, categoryIds }) => {
+      await queryClient.cancelQueries({ queryKey: ["faculties"] });
+      await queryClient.cancelQueries({ queryKey: ["faculty", id] });
+      await queryClient.cancelQueries({ queryKey: ["categories"] });
+
+      const previousFaculties = queryClient.getQueryData(["faculties"]);
+      const previousFaculty = queryClient.getQueryData(["faculty", id]);
+
+      queryClient.setQueryData(["faculties"], (old: any) => {
+        if (!old) return old;
+        const list = old.faculties || (Array.isArray(old) ? old : null);
+        if (!Array.isArray(list)) return old;
+
+        const updatedList = list.map((f: any) =>
+          f.id === id ? { ...f, handledCategoryIds: categoryIds } : f
+        );
+
+        return old.faculties ? { ...old, faculties: updatedList } : updatedList;
+      });
+
+      queryClient.setQueryData(["faculty", id], (old: any) => {
+        if (!old) return old;
+        const data = old.data || old;
+        const updated = { ...data, handledCategoryIds: categoryIds };
+        return old.data ? { ...old, data: updated } : updated;
+      });
+
+      return { previousFaculties, previousFaculty };
+    },
+    onError: (_err, { id }, context) => {
+      if (context?.previousFaculties) {
+        queryClient.setQueryData(["faculties"], context.previousFaculties);
+      }
+      if (context?.previousFaculty) {
+        queryClient.setQueryData(["faculty", id], context.previousFaculty);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
+      queryClient.invalidateQueries({ queryKey: ["faculty"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categoryDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["category"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-question-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
     },
   });
 }

@@ -51,14 +51,72 @@ export function AssignFacultyModal({
         handlerIds,
       });
     },
-    onSuccess: () => {
+    onMutate: async (newHandlerIds: string[]) => {
+      onClose();
+
+      await queryClient.cancelQueries({ queryKey: ["categoryDetail", categoryId] });
+      await queryClient.cancelQueries({ queryKey: ["category", categoryId] });
+      await queryClient.cancelQueries({ queryKey: ["categories"] });
+
+      const previousCategoryDetail = queryClient.getQueryData(["categoryDetail", categoryId]);
+      const previousCategory = queryClient.getQueryData(["category", categoryId]);
+      const previousCategories = queryClient.getQueryData(["categories"]);
+
+      const selectedHandlers = faculties
+        .filter((f) => newHandlerIds.includes(f.id))
+        .map((f) => ({
+          id: f.id,
+          name: f.name,
+          email: f.email,
+          role: f.role,
+        }));
+
+      const updateCategoryObj = (old: any) => {
+        if (!old) return old;
+        const categoryData = old.data || old;
+        const updated = {
+          ...categoryData,
+          handlerIds: newHandlerIds,
+          handlers: selectedHandlers,
+        };
+        return old.data ? { ...old, data: updated } : updated;
+      };
+
+      queryClient.setQueryData(["categoryDetail", categoryId], updateCategoryObj);
+      queryClient.setQueryData(["category", categoryId], updateCategoryObj);
+
+      queryClient.setQueryData(["categories"], (old: any) => {
+        if (!old) return old;
+        const list = Array.isArray(old) ? old : old.categories || old.data || [];
+        const updatedList = list.map((cat: any) =>
+          cat.id === categoryId
+            ? { ...cat, handlerIds: newHandlerIds, handlers: selectedHandlers }
+            : cat
+        );
+        return Array.isArray(old) ? updatedList : { ...old, categories: updatedList };
+      });
+
       toast.success(`Updated faculty handlers for ${categoryName}`);
+
+      return { previousCategoryDetail, previousCategory, previousCategories };
+    },
+    onError: (err: any, _variables, context) => {
+      if (context?.previousCategoryDetail) {
+        queryClient.setQueryData(["categoryDetail", categoryId], context.previousCategoryDetail);
+      }
+      if (context?.previousCategory) {
+        queryClient.setQueryData(["category", categoryId], context.previousCategory);
+      }
+      if (context?.previousCategories) {
+        queryClient.setQueryData(["categories"], context.previousCategories);
+      }
+      toast.error(err.response?.data?.message || "Failed to update assigned faculty handlers");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["categoryDetail", categoryId] });
       queryClient.invalidateQueries({ queryKey: ["category", categoryId] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      onClose();
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update assigned faculty handlers");
+      queryClient.invalidateQueries({ queryKey: ["faculties"] });
     },
   });
 

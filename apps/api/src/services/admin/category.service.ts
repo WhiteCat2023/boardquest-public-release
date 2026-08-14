@@ -107,8 +107,11 @@ export class CategoryService {
     isPublished?: boolean | string;
     status?: string;
     authorId?: string;
+    handledCategoryIds?: string[];
+    userRole?: string;
+    userId?: string;
   }) {
-    const { isPublished, status, authorId } = options || {};
+    const { isPublished, status, authorId, handledCategoryIds, userRole, userId } = options || {};
 
     const questionWhere: any = {};
 
@@ -132,7 +135,16 @@ export class CategoryService {
       questionWhere.authorId = targetAuthorId;
     }
 
+    const categoryWhere: any = {};
+    if (userRole === "TEACHER") {
+      categoryWhere.OR = [
+        { id: { in: handledCategoryIds || [] } },
+        ...(userId ? [{ handlerIds: { has: userId } }] : []),
+      ];
+    }
+
     const categories = await (this.db as any).category.findMany({
+      where: categoryWhere,
       include: {
         author: {
           select: {
@@ -344,6 +356,46 @@ export class CategoryService {
     });
     if (!existing) {
       throw new ApiError(404, "Category not found");
+    }
+
+    const previousHandlerIds = existing.handlerIds || [];
+    const removedHandlerIds = previousHandlerIds.filter(
+      (id) => !handlerIds.includes(id)
+    );
+    const addedHandlerIds = handlerIds.filter(
+      (id) => !previousHandlerIds.includes(id)
+    );
+
+    for (const handlerId of removedHandlerIds) {
+      const u = await this.db.adminUser.findUnique({
+        where: { id: handlerId },
+        select: { handledCategoryIds: true },
+      });
+      if (u) {
+        const nextIds = (u.handledCategoryIds || []).filter(
+          (cid) => cid !== categoryId
+        );
+        await this.db.adminUser.update({
+          where: { id: handlerId },
+          data: { handledCategoryIds: nextIds },
+        });
+      }
+    }
+
+    for (const handlerId of addedHandlerIds) {
+      const u = await this.db.adminUser.findUnique({
+        where: { id: handlerId },
+        select: { handledCategoryIds: true },
+      });
+      if (u) {
+        const currentIds = u.handledCategoryIds || [];
+        if (!currentIds.includes(categoryId)) {
+          await this.db.adminUser.update({
+            where: { id: handlerId },
+            data: { handledCategoryIds: [...currentIds, categoryId] },
+          });
+        }
+      }
     }
 
     const updatedCategory = await this.db.category.update({

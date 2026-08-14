@@ -4,3 +4,5 @@ export * from './api/useDashboardAnalytics';
 export * from './api/useSuperAdminDashboard';
 export * from './api/useTeacherDashboard';
 export * from './api/useTeamLeadDashboard';
+export * from './api/useDashboardQuestions';
+

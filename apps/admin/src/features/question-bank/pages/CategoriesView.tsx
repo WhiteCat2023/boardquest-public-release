@@ -34,9 +34,11 @@ import useAuth from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { IconPicker, getCategoryIcon } from "../components/IconPicker";
+import useRoleFlags from "@/hooks/useRoleFlags";
 
 export default function CategoriesView() {
   const navigate = useNavigate();
+  const { auth } = useAuth();
   const { data: categories = [], isLoading } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -56,16 +58,18 @@ export default function CategoriesView() {
 
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
-  const { auth } = useAuth();
-  const currentUserRole =
-    (auth as any)?.data?.user?.role || (auth as any)?.user?.role;
+  const { currentUser, isTeacher, isStaff: canManage, handledCategoryIds, isSubjectAssigned } = useRoleFlags();
 
-  const canManage =
-    currentUserRole === "SUPERADMIN" ||
-    currentUserRole === "ADMIN" ||
-    currentUserRole === "TEAMLEAD";
+  const teacherCategories = isTeacher
+    ? categories.filter(
+        (cat: any) =>
+          isSubjectAssigned(cat.id) ||
+          (Array.isArray(cat.handlerIds) && cat.handlerIds.includes(currentUser?.id)) ||
+          (Array.isArray(cat.handlers) && cat.handlers.some((h: any) => h.id === currentUser?.id))
+      )
+    : categories;
 
-  const filteredCategories = categories.filter((cat: any) =>
+  const filteredCategories = teacherCategories.filter((cat: any) =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

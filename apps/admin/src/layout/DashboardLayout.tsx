@@ -8,6 +8,7 @@ import { superAdminNavItem } from '../utils/menu-list/superAdminSidebarMenuList'
 import { SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import HeaderBreadcrumb from '../components/custom/breadcrumb/HeaderBreadcrumb';
 import UserProfileWidget from '../components/UserProfileWidget';
+import useNotificationStream from '../hooks/useNotificationStream';
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
@@ -17,6 +18,7 @@ const sidebarMenuMap: Record<string, any[]> = {
 };
 
 function DashboardLayout() {
+    useNotificationStream();
     const { auth, logout } = useAuth();
     const currentUser = auth?.data?.user || auth?.user;
     const userRole = currentUser?.role?.toLowerCase();
