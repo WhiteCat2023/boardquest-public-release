@@ -12,9 +12,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "build": "tsc",
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "build": "prisma generate && tsc",
+    "start": "prisma generate && tsx src/index.ts",
+    "dev": "prisma generate && tsx watch src/index.ts"
   },
   "dependencies": {
     "@agendajs/mongo-backend": "^4.0.2",
