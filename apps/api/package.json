@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "npx prisma generate && node dist/index.js",
-    "dev": "tsx watch src/index.ts"
+    "dev": "npx prisma generate && tsx watch src/index.ts"
   },
   "dependencies": {
     "@agendajs/mongo-backend": "^4.0.2",
