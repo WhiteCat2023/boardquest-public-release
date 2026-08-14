@@ -60,19 +60,16 @@ export const login = asyncHandler(async (req, res) => {
 
   const refreshtoken = signJWT({ id: user.id, email: user.email, role: user.role }, "1y");
 
-  res.cookie("accessToken", accesstoken, {
+  const isCrossSite = true;
+  const cookieOptions = {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    sameSite: "none" as const,
     maxAge: 24 * 60 * 60 * 1000,
-  });
+  };
 
-  res.cookie("refreshToken", refreshtoken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  res.cookie("accessToken", accesstoken, cookieOptions);
+  res.cookie("refreshToken", refreshtoken, cookieOptions);
 
   await logInfo("USER_LOGIN_SUCCESS", `${user.role || "User"} (${user.email}) logged in successfully.`, "AuthService", user.email, req.ip);
 
@@ -115,7 +112,7 @@ export const logout = async (req: Request, res: Response) => {
   const cookieOptions = {
     httpOnly: true,
     secure: true,
-    sameSite: "lax" as const,
+    sameSite: "none" as const,
   };
 
   res.clearCookie("accessToken", cookieOptions);
@@ -146,8 +143,8 @@ export const refreshToken = async (req: Request, res: Response) => {
  
   res.cookie("accessToken", newAccessToken, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 24 * 60 * 60 * 1000,
   });
 
