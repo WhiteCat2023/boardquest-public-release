@@ -60,7 +60,6 @@ export const login = asyncHandler(async (req, res) => {
 
   const refreshtoken = signJWT({ id: user.id, email: user.email, role: user.role }, "1y");
 
-  const isCrossSite = true;
   const cookieOptions = {
     httpOnly: true,
     secure: true,
