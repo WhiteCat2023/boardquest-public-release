@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAuth from "./useAuth";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const BASE_URL = rawUrl.endsWith("/api") ? rawUrl : `${rawUrl.replace(/\/$/, "")}/api`;
 
 export function useNotificationStream() {
   const queryClient = useQueryClient();
