@@ -95,7 +95,7 @@ export class LessonCompletionService {
       where: { userId: studentId },
     });
 
-    const grouped = completions.reduce((acc, completion) => {
+    const grouped = completions.reduce((acc: any, completion: any) => {
       if (!acc[completion.subject]) {
         acc[completion.subject] = { completed: 0, inProgress: 0, notStarted: 0, total: 0 };
       }

@@ -3,6 +3,8 @@
  * Centralized, self-contained type system eliminating brittle relative imports to generated output.
  */
 
+import type * as PrismaClientPkg from "@prisma/client";
+
 export enum Role {
   ADMIN = "ADMIN",
   SUPERADMIN = "SUPERADMIN",
@@ -41,15 +43,92 @@ export enum GuidanceStatus {
   CANCELLED = "CANCELLED",
 }
 
-// Re-export Prisma Client & Model Types
-export { PrismaClient } from "@prisma/client";
-export type {
-  AdminUser,
-  Category,
-  Question,
-  QuestionComment,
-  Notification,
-  GuidanceAssignment,
-  SystemLog,
-  Prisma,
-} from "@prisma/client";
+// Fallback Model Interfaces for type-safety before/after code generation
+export interface AdminUser {
+  id: string;
+  employeeId: string;
+  email: string;
+  username: string;
+  password?: string;
+  name: string;
+  role: Role;
+  phoneNumber: string;
+  handledCategoryIds?: string[];
+  isActive?: boolean;
+  lastActiveAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  authorId?: string;
+  handlerIds?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Question {
+  id: string;
+  question: string;
+  choices: string[];
+  correctAnswer: string;
+  categoryId: string;
+  authorId?: string;
+  topic: string;
+  difficulty: QuestionDifficulty;
+  type: QuestionType;
+  status: QuestionStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface QuestionComment {
+  id: string;
+  questionId: string;
+  authorId: string;
+  content: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Notification {
+  id: string;
+  recipientId?: string;
+  recipientRole?: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  readUserIds?: string[];
+  deletedUserIds?: string[];
+  metadata?: Record<string, any>;
+  createdAt?: Date;
+}
+
+export interface GuidanceAssignment {
+  id: string;
+  studentId: string;
+  advisorId: string;
+  subjectCategory?: string;
+  reason: string;
+  status: GuidanceStatus;
+  createdAt?: Date;
+}
+
+export interface SystemLog {
+  id: string;
+  level: string;
+  action: string;
+  message: string;
+  source?: string;
+  userEmail?: string;
+  ipAddress?: string;
+  metadata?: any;
+  createdAt?: Date;
+}
+
+export type PrismaClient = PrismaClientPkg.PrismaClient;

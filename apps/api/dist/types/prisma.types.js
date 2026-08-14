@@ -40,5 +40,3 @@ export var GuidanceStatus;
     GuidanceStatus["RESOLVED"] = "RESOLVED";
     GuidanceStatus["CANCELLED"] = "CANCELLED";
 })(GuidanceStatus || (GuidanceStatus = {}));
-// Re-export Prisma Client & Model Types
-export { PrismaClient } from "@prisma/client";

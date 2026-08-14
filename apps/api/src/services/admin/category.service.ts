@@ -360,10 +360,10 @@ export class CategoryService {
 
     const previousHandlerIds = existing.handlerIds || [];
     const removedHandlerIds = previousHandlerIds.filter(
-      (id) => !handlerIds.includes(id)
+      (id: string) => !handlerIds.includes(id)
     );
     const addedHandlerIds = handlerIds.filter(
-      (id) => !previousHandlerIds.includes(id)
+      (id: string) => !previousHandlerIds.includes(id)
     );
 
     for (const handlerId of removedHandlerIds) {
@@ -373,7 +373,7 @@ export class CategoryService {
       });
       if (u) {
         const nextIds = (u.handledCategoryIds || []).filter(
-          (cid) => cid !== categoryId
+          (cid: string) => cid !== categoryId
         );
         await this.db.adminUser.update({
           where: { id: handlerId },

@@ -106,7 +106,7 @@ export const authenticateToken = async (
             lastActiveAt: new Date(),
           },
         })
-        .catch((err) => console.error("Error updating user active status:", err));
+        .catch((err: any) => console.error("Error updating user active status:", err));
     }
 
     req.user = user;

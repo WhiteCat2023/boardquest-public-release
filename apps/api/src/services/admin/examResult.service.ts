@@ -105,13 +105,13 @@ export class ExamResultService {
       };
     }
 
-    const scores = results.map((r) => r.score);
-    const accuracies = results.map((r) => r.accuracy);
+    const scores = results.map((r: any) => r.score);
+    const accuracies = results.map((r: any) => r.accuracy);
 
     return {
       totalAttempts: results.length,
-      averageScore: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100,
-      averageAccuracy: Math.round((accuracies.reduce((a, b) => a + b, 0) / accuracies.length) * 100) / 100,
+      averageScore: Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 100) / 100,
+      averageAccuracy: Math.round((accuracies.reduce((a: number, b: number) => a + b, 0) / accuracies.length) * 100) / 100,
       highestScore: Math.max(...scores),
       lowestScore: Math.min(...scores),
     };

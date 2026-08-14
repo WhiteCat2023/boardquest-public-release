@@ -152,7 +152,7 @@ export class AnalyticsService {
 
     // Gather all unique category names (from DB Categories + any extra in student.mastery or student.examResults)
     const categoryMap = new Map<string, { name: string; modulesCount: number }>();
-    categoriesFromDb.forEach((cat) => {
+    categoriesFromDb.forEach((cat: any) => {
       categoryMap.set(cat.name.toLowerCase().trim(), {
         name: cat.name,
         modulesCount: cat.modules ? cat.modules.filter((m: any) => m.isPublished !== false).length : 0,
@@ -681,13 +681,13 @@ export class AnalyticsService {
     let totalScoreSum = 0;
     let totalScoreCount = 0;
 
-    students.forEach((student) => {
+    students.forEach((student: any) => {
       let studentAvg = 0;
       if (student.examResults.length > 0) {
-        const sum = student.examResults.reduce((acc, curr) => acc + curr.score, 0);
+        const sum = student.examResults.reduce((acc: any, curr: any) => acc + curr.score, 0);
         studentAvg = Math.round(sum / student.examResults.length);
       } else if (student.mastery.length > 0) {
-        const sum = student.mastery.reduce((acc, curr) => acc + curr.proficiency, 0);
+        const sum = student.mastery.reduce((acc: any, curr: any) => acc + curr.proficiency, 0);
         studentAvg = Math.round(sum / student.mastery.length);
       } else {
         studentAvg = Math.min(60 + (student.level * 3), 85);
@@ -752,7 +752,7 @@ export class AnalyticsService {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const monthlyMap: Record<string, { totalScore: number; count: number; passCount: number; userIds: Set<string> }> = {};
 
-    allExamResults.forEach((res) => {
+    allExamResults.forEach((res: any) => {
       const date = new Date(res.timestamp);
       const mName = monthNames[date.getMonth()];
       if (!monthlyMap[mName]) {
@@ -794,10 +794,10 @@ export class AnalyticsService {
       },
     });
 
-    const subjects = categories.map((cat) => {
-      const catMastery = students.flatMap((s) => s.mastery.filter((m) => m.subject.toLowerCase().includes(cat.name.toLowerCase())));
+    const subjects = categories.map((cat: any) => {
+      const catMastery = students.flatMap((s: any) => s.mastery.filter((m: any) => m.subject.toLowerCase().includes(cat.name.toLowerCase())));
       const avgProficiency = catMastery.length > 0
-        ? Math.round(catMastery.reduce((acc, curr) => acc + curr.proficiency, 0) / catMastery.length)
+        ? Math.round(catMastery.reduce((acc: any, curr: any) => acc + curr.proficiency, 0) / catMastery.length)
         : 75;
 
       return {

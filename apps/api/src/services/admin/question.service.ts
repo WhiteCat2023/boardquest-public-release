@@ -645,7 +645,7 @@ export class QuestionService {
     ) {
       this.db.adminUser
         .findUnique({ where: { id: authorId }, select: { name: true } })
-        .then((u) => {
+        .then((u: any) => {
           const authorName = u?.name || "A teacher";
           createNotification({
             recipientRole: "REVIEWER",
@@ -702,7 +702,7 @@ export class QuestionService {
     });
 
     const pendingRevisionQuestions = targetQuestions.filter(
-      (q) =>
+      (q: any) =>
         q.status === QuestionStatus.PENDING_REVISION ||
         (q.status as string) === "NEEDS_REVISION",
     );
@@ -752,7 +752,7 @@ export class QuestionService {
       });
 
       const pendingRevisionQuestions = targetQuestions.filter(
-        (q) =>
+        (q: any) =>
           q.status === QuestionStatus.PENDING_REVISION ||
           (q.status as string) === "NEEDS_REVISION",
       );
@@ -830,7 +830,7 @@ export class QuestionService {
     });
 
     const authorIds = Array.from(
-      new Set(pendingQuestions.map((q) => q.authorId).filter(Boolean)),
+      new Set(pendingQuestions.map((q: any) => q.authorId).filter(Boolean)),
     );
     const authors = await this.db.adminUser.findMany({
       where: { id: { in: authorIds as string[] } },
@@ -842,12 +842,12 @@ export class QuestionService {
       },
     });
 
-    const result = authors.map((author) => {
+    const result = authors.map((author: any) => {
       const authorQuestions = pendingQuestions.filter(
-        (q) => q.authorId === author.id,
+        (q: any) => q.authorId === author.id,
       );
       const latestSubmissionAt = authorQuestions.reduce(
-        (latest, q) => {
+        (latest: any, q: any) => {
           return !latest || new Date(q.createdAt) > new Date(latest)
             ? q.createdAt
             : latest;
@@ -862,7 +862,7 @@ export class QuestionService {
       };
     });
 
-    return result.sort((a, b) => b.pendingCount - a.pendingCount);
+    return result.sort((a: any, b: any) => b.pendingCount - a.pendingCount);
   }
 
   async getQuestionComments(questionId: string) {

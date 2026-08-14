@@ -302,7 +302,7 @@ class LeaderboardManager {
         select: { id: true, name: true, level: true, xp: true, streak: true },
       });
 
-      return users.map((user, index) => ({
+      return users.map((user: any, index: number) => ({
         userId: user.id,
         userName: user.name,
         level: user.level,

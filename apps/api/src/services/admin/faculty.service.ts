@@ -127,7 +127,7 @@ export class FacultyService {
     let startIndex = 0;
 
     if (cursor) {
-      const cursorIndex = allAdmins.findIndex((item) => item.id === cursor);
+      const cursorIndex = allAdmins.findIndex((item: any) => item.id === cursor);
       if (cursorIndex !== -1) {
         startIndex = cursorIndex + 1;
       }
@@ -212,7 +212,7 @@ export class FacultyService {
     let startIndex = 0;
 
     if (cursor) {
-      const cursorIndex = allFaculties.findIndex((item) => item.id === cursor);
+      const cursorIndex = allFaculties.findIndex((item: any) => item.id === cursor);
       if (cursorIndex !== -1) {
         startIndex = cursorIndex + 1;
       }
@@ -379,10 +379,10 @@ export class FacultyService {
 
     const previousCategoryIds = userToUpdate.handledCategoryIds || [];
     const removedCategoryIds = previousCategoryIds.filter(
-      (cid) => !categoryIds.includes(cid),
+      (cid: string) => !categoryIds.includes(cid),
     );
     const addedCategoryIds = categoryIds.filter(
-      (cid) => !previousCategoryIds.includes(cid),
+      (cid: string) => !previousCategoryIds.includes(cid),
     );
 
     for (const cid of removedCategoryIds) {
@@ -391,7 +391,7 @@ export class FacultyService {
         select: { handlerIds: true },
       });
       if (cat) {
-        const nextHandlers = (cat.handlerIds || []).filter((uid) => uid !== id);
+        const nextHandlers = (cat.handlerIds || []).filter((uid: string) => uid !== id);
         await this.db.category.update({
           where: { id: cid },
           data: { handlerIds: nextHandlers },
