@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm --filter review-center build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

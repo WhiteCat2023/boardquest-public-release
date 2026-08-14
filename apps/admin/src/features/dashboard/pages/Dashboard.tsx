@@ -63,7 +63,7 @@ export default function Dashboard() {
     <div className="flex flex-col gap-3 p-3 sm:p-4 md:p-5 w-full font-sans bg-background text-foreground min-h-full">
       {/* Banner Section (System Condition & Status) */}
       <DashboardBanner
-        userRole={userRole}
+        userRole={(userRole || "TEACHER") as any}
         userName={currentUser?.name}
         teacherDraftCount={teacherDraftCount}
         pendingReviewQuestions={pendingReviewQuestions}
@@ -71,7 +71,7 @@ export default function Dashboard() {
 
       {/* System Overview KPI Cards */}
       <DashboardKpiCards
-        userRole={userRole}
+        userRole={(userRole || "TEACHER") as any}
         teacherAuthoredCount={teacherAuthoredCount}
         teacherPublishedCount={teacherPublishedCount}
         teacherDraftCount={teacherDraftCount}
