@@ -5,7 +5,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "../../../generated/prisma";
+} from "@prisma/client";
 import { questionSynthesizerService, SynthesizeQuestionInput } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 

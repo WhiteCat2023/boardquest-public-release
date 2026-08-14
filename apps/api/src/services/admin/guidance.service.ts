@@ -1,6 +1,6 @@
 import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
-import { GuidanceStatus, Role } from "../../../generated/prisma";
+import { GuidanceStatus, Role } from "@prisma/client";
 import { createNotification } from "./notification.service";
 
 export interface CreateGuidancePayload {

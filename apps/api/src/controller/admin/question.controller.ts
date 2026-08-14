@@ -6,7 +6,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
-} from "../../../generated/prisma";
+} from "@prisma/client";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";

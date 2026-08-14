@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 
-import { Role } from "../../../generated/prisma";
+import { Role } from "@prisma/client";
 
 export const createGuidanceAssignment = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {

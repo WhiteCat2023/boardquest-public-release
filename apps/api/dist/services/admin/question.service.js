@@ -1,7 +1,7 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../../generated/prisma";
+import { QuestionDifficulty, QuestionType, QuestionStatus, } from "@prisma/client";
 import { questionSynthesizerService } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 // ============ Validation Schemas ============

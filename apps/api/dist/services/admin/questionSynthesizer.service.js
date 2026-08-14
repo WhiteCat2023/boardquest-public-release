@@ -1,5 +1,5 @@
 import z from "zod";
-import { QuestionDifficulty, QuestionType } from "../../../generated/prisma";
+import { QuestionDifficulty, QuestionType } from "@prisma/client";
 // ============ Schemas ============
 export const SynthesizeQuestionInputSchema = z.object({
     question: z.string().min(3, "Question title/stem is required"),

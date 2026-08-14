@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
-import { Role } from "../../../generated/prisma";
+import { Role } from "@prisma/client";
 import { sendFacultyCredentialsEmail } from "../mail.service";
 
 // ============ Validation Schemas ============

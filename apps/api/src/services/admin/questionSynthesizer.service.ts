@@ -1,5 +1,5 @@
 import z from "zod";
-import { QuestionDifficulty, QuestionType } from "../../../generated/prisma";
+import { QuestionDifficulty, QuestionType } from "@prisma/client";
 import { ApiError } from "../../utils/apiError";
 
 // ============ Schemas ============

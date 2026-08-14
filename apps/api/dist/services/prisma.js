@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { ensureSuperAdminExists } from "./admin/bootstrap.service";
 const prisma = new PrismaClient();
 export async function seedAdminUserDb() {

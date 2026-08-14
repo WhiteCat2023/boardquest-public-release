@@ -1,4 +1,4 @@
-import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../generated/prisma";
+import { QuestionDifficulty, QuestionType, QuestionStatus, } from "@prisma/client";
 export const demoQuestions = [
     // =========================================================================
     // 1. Clinical Chemistry (Category ID: 60d5ecb54cb8a05c3c0a4d58)

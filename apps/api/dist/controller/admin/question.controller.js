@@ -1,7 +1,7 @@
 import * as QuestionService from "../../services/admin/question.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
-import { QuestionType, QuestionStatus, } from "../../../generated/prisma";
+import { QuestionType, QuestionStatus, } from "@prisma/client";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
