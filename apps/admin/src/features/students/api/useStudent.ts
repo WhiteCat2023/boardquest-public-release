@@ -6,6 +6,7 @@ export function useStudents(params?: {
   search?: string;
   level?: string;
   location?: string;
+  advisorId?: string;
   skip?: number;
   take?: number;
   enabled?: boolean;

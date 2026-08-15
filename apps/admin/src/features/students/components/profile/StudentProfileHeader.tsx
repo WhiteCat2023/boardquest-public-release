@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Zap } from "lucide-react";
+import { ArrowLeft, Mail, Zap, BarChart2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Student } from "../../types/types";
 
@@ -42,7 +43,7 @@ export function StudentProfileHeader({ student }: StudentProfileHeaderProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-xs font-bold gap-1 px-3 py-1 rounded-full">
               <Zap size={13} className="fill-amber-500 text-amber-500" />
               Level {student.level || 1}
@@ -50,6 +51,13 @@ export function StudentProfileHeader({ student }: StudentProfileHeaderProps) {
             <Badge variant="outline" className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 text-xs font-bold px-3 py-1 rounded-full">
               {student.xp || 0} Total XP
             </Badge>
+            <Button
+              onClick={() => navigate(`/analytics?studentId=${student.id}`)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl px-4 py-2 text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <BarChart2 size={14} />
+              View Full Analytics
+            </Button>
             <a
               href={`mailto:${student.email}`}
               className="bg-muted hover:bg-accent text-foreground font-semibold rounded-xl px-4 py-2 text-xs flex items-center gap-1.5 transition-colors border border-border"

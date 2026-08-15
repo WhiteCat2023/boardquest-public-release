@@ -86,10 +86,22 @@ describe('Analytics Routes', () => {
       expect(response.body.message).toBe('Student not found');
     });
 
-    it('should block request if user role is unauthorized (e.g. TEACHER)', async () => {
-      // Mock user as TEACHER (not in ["SUPERADMIN", "ADMIN", "TEAMLEAD"])
+    it('should allow TEACHER role to retrieve student analytics successfully', async () => {
+      (analyticsService.getStudentAnalytics as jest.Mock).mockResolvedValue(mockAnalyticsResult);
       (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
         req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER' };
+        next();
+      });
+
+      const response = await request(app).get('/api/analytics/student/student-1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.studentInfo.name).toBe('John Doe');
+    });
+
+    it('should block request if user role is unauthorized (e.g. STUDENT)', async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: '4', email: 'student@example.com', role: 'STUDENT' };
         next();
       });
 

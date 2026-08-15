@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BarChart2, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,8 +16,11 @@ import { SyllabusReadinessTab } from "../components/SyllabusReadinessTab";
 import { AchievementsTab } from "../components/AchievementsTab";
 
 export default function AnalyticsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStudentId = searchParams.get("studentId");
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(urlStudentId);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
   // Query: Get all students
@@ -29,16 +33,25 @@ export default function AnalyticsPage() {
     s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Set first student as default if none selected
+  // Sync selected student from URL or fallback to first student
   useEffect(() => {
-    if (filteredStudents.length > 0 && !selectedStudentId) {
-      setSelectedStudentId(filteredStudents[0].id);
+    if (urlStudentId) {
+      setSelectedStudentId(urlStudentId);
+    } else if (filteredStudents.length > 0 && !selectedStudentId) {
+      const firstId = filteredStudents[0].id;
+      setSelectedStudentId(firstId);
+      setSearchParams({ studentId: firstId }, { replace: true });
     }
-  }, [filteredStudents, selectedStudentId]);
+  }, [urlStudentId, filteredStudents, selectedStudentId, setSearchParams]);
+
+  const handleSelectStudent = (id: string) => {
+    setSelectedStudentId(id);
+    setSearchParams({ studentId: id });
+  };
 
   // Query: Get selected student's analytics report
   const { data: report, isLoading: isReportLoading, isRefetching } = useStudentAnalyticsReport(selectedStudentId);
-console.log(report)
+
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] overflow-hidden font-sans bg-background text-foreground">
       {/* Left Sidebar: Aspirant Roster */}
@@ -47,7 +60,7 @@ console.log(report)
         setSearchQuery={setSearchQuery}
         filteredStudents={filteredStudents}
         selectedStudentId={selectedStudentId}
-        setSelectedStudentId={setSelectedStudentId}
+        setSelectedStudentId={handleSelectStudent}
       />
 
       {/* Right Pane: Performance Dashboard */}

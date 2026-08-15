@@ -5,6 +5,11 @@ import { getStudentAnalyticsReport, getDashboardAnalyticsSummary } from "../../c
 const router = Router();
 
 router.get("/dashboard-summary", authenticateToken, getDashboardAnalyticsSummary);
-router.get("/student/:studentId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getStudentAnalyticsReport);
+router.get(
+  "/student/:studentId",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]),
+  getStudentAnalyticsReport,
+);
 
 export default router;

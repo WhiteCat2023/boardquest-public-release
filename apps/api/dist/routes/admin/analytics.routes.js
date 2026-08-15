@@ -3,5 +3,5 @@ import { authenticateToken, requireRoles } from "../../middleware/auth.middlewar
 import { getStudentAnalyticsReport, getDashboardAnalyticsSummary } from "../../controller/admin/analytics.controller";
 const router = Router();
 router.get("/dashboard-summary", authenticateToken, getDashboardAnalyticsSummary);
-router.get("/student/:studentId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getStudentAnalyticsReport);
+router.get("/student/:studentId", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]), getStudentAnalyticsReport);
 export default router;

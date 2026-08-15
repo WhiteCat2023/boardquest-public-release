@@ -36,4 +36,20 @@ export const teacherNavItem: NavItemProps[] = [
       },
     ],
   },
+  {
+    sideBarCategoryName: "STUDENT MANAGEMENT",
+    content: [
+      {
+        title: "Students",
+        path: "/student-management",
+        icon: "GraduationCap",
+      },
+      {
+        title: "Analytics",
+        path: "/analytics",
+        icon: "BarChart2",
+      },
+    ],
+  },
 ];
+

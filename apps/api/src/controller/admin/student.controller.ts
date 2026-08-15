@@ -22,6 +22,7 @@ export const getAllStudents = asyncHandler(async (req: Request, res: Response) =
   const search = req.query.search as string;
   const level = req.query.level as string;
   const location = req.query.location as string;
+  const advisorId = req.query.advisorId as string;
   const skip = parseInt(req.query.skip as string) || 0;
   const take = parseInt(req.query.take as string) || 50;
 
@@ -29,6 +30,7 @@ export const getAllStudents = asyncHandler(async (req: Request, res: Response) =
     search,
     level,
     location,
+    advisorId,
     skip,
     take,
   });

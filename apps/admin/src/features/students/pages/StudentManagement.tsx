@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, RotateCcw, X, GraduationCap, UserCheck } from "lucide-react";
+import { Search, RotateCcw, X, GraduationCap, UserCheck, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useStudents } from "@/features/students";
+import useRoleFlags from "@/hooks/useRoleFlags";
 import StudentHeader from "../components/StudentHeader";
 import StudentTable from "../components/StudentTable";
 import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
@@ -19,7 +20,10 @@ import QuestionListPagination from "@/components/custom/pagination/QuestionListP
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentManagement() {
-  const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">("DIRECTORY");
+  const { isTeacher, currentUser } = useRoleFlags();
+  const [activeTab, setActiveTab] = useState<"MY_STUDENTS" | "DIRECTORY" | "GUIDANCE">(
+    isTeacher ? "MY_STUDENTS" : "DIRECTORY"
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
@@ -34,6 +38,7 @@ export default function StudentManagement() {
     search: searchTerm,
     level: selectedLevel,
     location: selectedLocation,
+    advisorId: activeTab === "MY_STUDENTS" ? currentUser?.id : undefined,
     skip,
     take: ITEMS_PER_PAGE,
   });
@@ -76,23 +81,49 @@ export default function StudentManagement() {
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <StudentHeader
-          title="Student Directory & Enrollment"
-          description="Manage enrolled students, academic programs, and evaluation eligibility."
+          canAddStudent={!isTeacher}
+          title={isTeacher ? "Student Directory & Performance" : "Student Directory & Enrollment"}
+          description={
+            isTeacher
+              ? "View your handled students, review academic performance, and monitor cohort analytics."
+              : "Manage enrolled students, academic programs, and evaluation eligibility."
+          }
         />
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-muted/40 p-1 border border-border rounded-xl w-fit">
+        <div className="flex items-center gap-2 bg-muted/40 p-1 border border-border rounded-xl w-fit flex-wrap">
+          {isTeacher && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("MY_STUDENTS");
+                resetPagination();
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === "MY_STUDENTS"
+                  ? "bg-card text-primary shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={14} />
+              My Handled Students
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={() => setActiveTab("DIRECTORY")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            onClick={() => {
+              setActiveTab("DIRECTORY");
+              resetPagination();
+            }}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "DIRECTORY"
                 ? "bg-card text-foreground shadow-xs border border-border"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <GraduationCap size={14} className="inline mr-1.5" />
-            Enrolled Students ({total})
+            <GraduationCap size={14} />
+            {isTeacher ? "All Students" : `Enrolled Students (${total})`}
           </button>
 
           <button
@@ -110,7 +141,7 @@ export default function StudentManagement() {
         </div>
       </div>
 
-      {activeTab === "DIRECTORY" ? (
+      {activeTab === "DIRECTORY" || activeTab === "MY_STUDENTS" ? (
         <>
           {/* Search & Filters Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs">

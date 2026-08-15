@@ -191,15 +191,11 @@ function App() {
                   />
                 </Route>
 
-                {/* Student Management Routes
-                
-                Managed by ADMIN and TEAMLEAD
-                
-                */}
+                {/* Student Directory & Profile - Accessible by SUPERADMIN, ADMIN, TEAMLEAD, and TEACHER */}
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["ADMIN", "TEAMLEAD"]}
+                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -208,16 +204,26 @@ function App() {
                     element={<StudentManagement />}
                   />
                   <Route
+                    path="student-management/:studentId"
+                    element={<ViewStudent />}
+                  />
+                </Route>
+
+                {/* Student Enrollment - Restricted to ADMIN and TEAMLEAD */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
+                    />
+                  }
+                >
+                  <Route
                     path="student-management/create"
                     element={<EnrollStudentPage />}
                   />
                   <Route
                     path="student-management/import"
                     element={<AddedStudentUsingCSV />}
-                  />
-                  <Route
-                    path="student-management/:studentId"
-                    element={<ViewStudent />}
                   />
                 </Route>
 
@@ -314,8 +320,18 @@ function App() {
                   />
                 </Route>
 
-                {/* Admin and Teamlead Only Routes */}
+                {/* Analytics - Accessible by SUPERADMIN, ADMIN, TEAMLEAD, and TEACHER */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
+                    />
+                  }
+                >
+                  <Route path="analytics" element={<Analytics />} />
+                </Route>
 
+                {/* Admin and Teamlead Only Routes */}
                 <Route
                   element={<RequireAuth allowedRoles={["ADMIN", "TEAMLEAD"]} />}
                 >
@@ -327,7 +343,6 @@ function App() {
                     path="question-bank/review-questions"
                     element={<ReviewQuestions />}
                   />
-                  <Route path="analytics" element={<Analytics />} />
                   <Route path="game-management" element={<GameManagementPage />} />
                   <Route path="leaderboards" element={<LeaderboardPage />} />
                 </Route>

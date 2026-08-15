@@ -3,6 +3,13 @@ export interface StudentListItem {
   name: string;
   email: string;
   level: number;
+  guidanceAssignments?: Array<{
+    id?: string;
+    advisorId?: string;
+    status?: string;
+    subjectCategory?: string;
+    reason?: string;
+  }>;
 }
 
 export interface PerformanceTrendItem {

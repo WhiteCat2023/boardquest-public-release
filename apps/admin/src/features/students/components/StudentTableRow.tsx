@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, MapPin, Calendar, Zap, UserCheck } from "lucide-react";
+import { Eye, MapPin, Calendar, Zap, UserCheck, BarChart2 } from "lucide-react";
 import type { Student } from "@/features/students";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -127,6 +127,14 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
               Assign Guidance
             </button>
           )}
+          <Link to={`/analytics?studentId=${student.id}`}>
+            <button
+              className="size-7 p-1 text-muted-foreground hover:text-primary rounded-md hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center"
+              title="View Student Analytics"
+            >
+              <BarChart2 size={14} />
+            </button>
+          </Link>
           <Link to={`/student-management/${student.id}`}>
             <button
               className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"

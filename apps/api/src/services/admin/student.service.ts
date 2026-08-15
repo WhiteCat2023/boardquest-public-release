@@ -93,10 +93,11 @@ export class StudentService {
     search?: string;
     level?: string;
     location?: string;
+    advisorId?: string;
     skip?: number;
     take?: number;
   }) {
-    const { search, level, location, skip = 0, take = 50 } = options || {};
+    const { search, level, location, advisorId, skip = 0, take = 50 } = options || {};
 
     const where: any = {};
 
@@ -120,6 +121,14 @@ export class StudentService {
       where.location = { contains: location, mode: "insensitive" };
     }
 
+    if (advisorId) {
+      where.guidanceAssignments = {
+        some: {
+          advisorId,
+        },
+      };
+    }
+
     let students = await this.db.user.findMany({
       where,
       skip,
@@ -136,6 +145,18 @@ export class StudentService {
         achievements: {
           orderBy: { timestamp: "desc" },
           take: 5,
+        },
+        guidanceAssignments: {
+          select: {
+            id: true,
+            advisorId: true,
+            status: true,
+            subjectCategory: true,
+            reason: true,
+            advisor: {
+              select: { id: true, name: true, email: true },
+            },
+          },
         },
       },
       orderBy: {

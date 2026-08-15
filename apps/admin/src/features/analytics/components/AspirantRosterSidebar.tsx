@@ -1,7 +1,9 @@
-import { Search, X } from "lucide-react";
+import { useState } from "react";
+import { Search, X, Users, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import useRoleFlags from "@/hooks/useRoleFlags";
 import type { StudentListItem } from "../types/types";
 
 interface AspirantRosterSidebarProps {
@@ -19,6 +21,20 @@ export function AspirantRosterSidebar({
   selectedStudentId,
   setSelectedStudentId
 }: AspirantRosterSidebarProps) {
+  const { isTeacher, currentUser } = useRoleFlags();
+  const [filterMode, setFilterMode] = useState<"HANDLED" | "ALL">(isTeacher ? "HANDLED" : "ALL");
+
+  const currentTeacherId = currentUser?.id;
+
+  const displayStudents = filteredStudents.filter((s) => {
+    if (!isTeacher || filterMode === "ALL") return true;
+    return s.guidanceAssignments?.some((g) => g.advisorId === currentTeacherId);
+  });
+
+  const handledCount = filteredStudents.filter((s) =>
+    s.guidanceAssignments?.some((g) => g.advisorId === currentTeacherId)
+  ).length;
+
   return (
     <div className="w-full lg:w-72 shrink-0 border-r border-border/80 bg-card/60 backdrop-blur-sm flex flex-col h-full">
       {/* Search Header */}
@@ -29,9 +45,40 @@ export function AspirantRosterSidebar({
             Aspirant Roster
           </h2>
           <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 rounded-md bg-muted/50 border-border">
-            {filteredStudents.length} Students
+            {displayStudents.length} Students
           </Badge>
         </div>
+
+        {/* Teacher Handled Toggle */}
+        {isTeacher && (
+          <div className="flex items-center gap-1 bg-muted/40 p-0.5 border border-border rounded-lg">
+            <button
+              type="button"
+              onClick={() => setFilterMode("HANDLED")}
+              className={`flex-1 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                filterMode === "HANDLED"
+                  ? "bg-card text-primary shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <UserCheck size={11} />
+              My Handled ({handledCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterMode("ALL")}
+              className={`flex-1 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                filterMode === "ALL"
+                  ? "bg-card text-foreground shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={11} />
+              All ({filteredStudents.length})
+            </button>
+          </div>
+        )}
+
         <div className="relative">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -55,13 +102,16 @@ export function AspirantRosterSidebar({
 
       {/* Student List */}
       <div className="flex-1 overflow-y-auto divide-y divide-border/30 scrollbar-thin">
-        {filteredStudents.length === 0 ? (
+        {displayStudents.length === 0 ? (
           <div className="p-6 text-center text-xs text-muted-foreground font-medium italic">
-            No matching aspirants found.
+            {filterMode === "HANDLED"
+              ? "No handled students found. Switch to 'All' to view other students."
+              : "No matching aspirants found."}
           </div>
         ) : (
-          filteredStudents.map((s: StudentListItem) => {
+          displayStudents.map((s: StudentListItem) => {
             const isSelected = selectedStudentId === s.id;
+            const isHandledByMe = s.guidanceAssignments?.some((g) => g.advisorId === currentTeacherId);
             const initials = (s.name || "ST").slice(0, 2).toUpperCase();
             return (
               <div
@@ -80,7 +130,14 @@ export function AspirantRosterSidebar({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-foreground truncate leading-tight">{s.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-foreground truncate leading-tight">{s.name}</span>
+                      {isHandledByMe && (
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 rounded font-bold bg-primary/10 text-primary border-primary/20">
+                          Handled
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-[10px] text-muted-foreground truncate leading-tight">{s.email}</span>
                   </div>
                 </div>

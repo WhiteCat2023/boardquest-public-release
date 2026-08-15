@@ -18,12 +18,14 @@ export const getAllStudents = asyncHandler(async (req, res) => {
     const search = req.query.search;
     const level = req.query.level;
     const location = req.query.location;
+    const advisorId = req.query.advisorId;
     const skip = parseInt(req.query.skip) || 0;
     const take = parseInt(req.query.take) || 50;
     const result = await studentService.getAllStudents({
         search,
         level,
         location,
+        advisorId,
         skip,
         take,
     });
