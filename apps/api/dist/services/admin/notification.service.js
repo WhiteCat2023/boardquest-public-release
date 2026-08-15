@@ -45,7 +45,9 @@ export async function getUserNotifications(input) {
         OR: getOrConditions(userId, role),
     };
     if (userId) {
-        whereClause.deletedUserIds = { none: userId };
+        whereClause.NOT = {
+            deletedUserIds: { has: userId },
+        };
     }
     const rawNotifications = await prisma.notification.findMany({
         where: whereClause,
@@ -100,7 +102,7 @@ export async function markAllNotificationsAsRead(input) {
         const notificationsToMark = await prisma.notification.findMany({
             where: {
                 OR: getOrConditions(userId, role),
-                deletedUserIds: { none: userId },
+                NOT: { deletedUserIds: { has: userId } },
             },
             select: { id: true, recipientId: true, isRead: true, readUserIds: true },
         });
@@ -158,7 +160,7 @@ export async function clearAllNotifications(input) {
         const notificationsToClear = await prisma.notification.findMany({
             where: {
                 OR: getOrConditions(userId, role),
-                deletedUserIds: { none: userId },
+                NOT: { deletedUserIds: { has: userId } },
             },
             select: { id: true, recipientId: true, deletedUserIds: true },
         });

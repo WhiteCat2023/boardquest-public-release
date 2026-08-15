@@ -9,6 +9,10 @@ import { startQueue, stopQueue } from "./services/queue.service";
 import { seedAdminUserDb } from "./services/prisma";
 
 const app = express();
+
+// Trust reverse proxy (Render, Cloudflare, Heroku, etc.)
+// 1 = trust first hop (the load balancer/proxy in front of Express)
+app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",

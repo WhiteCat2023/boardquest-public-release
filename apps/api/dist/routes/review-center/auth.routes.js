@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { reviewCenterLogin, reviewCenterLogout, getReviewCenterMe, } from "../../controller/review-center/reviewCenterAuth.controller";
+import { reviewCenterLogin, reviewCenterLogout, getReviewCenterMe, } from "../../controller/review-center/auth.controller";
 import { authLimiter } from "../../middleware/rateLimit.middleware";
 import { authenticateReviewCenterToken } from "../../middleware/reviewCenterAuth.middleware";
 const router = Router();

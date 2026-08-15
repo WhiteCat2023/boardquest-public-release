@@ -3,7 +3,7 @@ import { authenticateToken, requireRoles, } from "../../middleware/auth.middlewa
 import { getFaculties, createFaculty, toggleFacultyStatus, updateFacultyCategories, bulkCreateFaculty } from "../../controller/admin/faculty.controller";
 const router = Router();
 // Only SUPERADMIN, ADMIN, and TEAMLEAD can list and create administrative accounts
-router.get("/", authenticateToken, getFaculties);
+router.get("/", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getFaculties);
 router.post("/", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), createFaculty);
 router.post("/bulk", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN"]), bulkCreateFaculty);
 router.patch("/:id/status", authenticateToken, requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), toggleFacultyStatus);

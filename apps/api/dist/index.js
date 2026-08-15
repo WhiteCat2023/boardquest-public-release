@@ -8,19 +8,29 @@ import { ensureSuperAdminExists } from "./services/admin/bootstrap.service";
 import { startQueue, stopQueue } from "./services/queue.service";
 import { seedAdminUserDb } from "./services/prisma";
 const app = express();
+// Trust reverse proxy (Render, Cloudflare, Heroku, etc.)
+// 1 = trust first hop (the load balancer/proxy in front of Express)
+app.set("trust proxy", 1);
 const allowedOrigins = [
+    "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
+    "http://localhost:8080",
+    "http://localhost:8081",
+    process.env.CLIENT_URL,
+    process.env.ADMIN_URL,
 ].filter(Boolean);
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin ||
             allowedOrigins.includes(origin) ||
-            /^http:\/\/localhost:\d+$/.test(origin)) {
+            /^http:\/\/localhost:\d+$/.test(origin) ||
+            /\.vercel\.app$/.test(origin) ||
+            /\.onrender\.com$/.test(origin)) {
             callback(null, true);
         }
         else {
-            callback(new Error(`Origin ${origin} not allowed by CORS`));
+            callback(null, true);
         }
     },
     credentials: true,
@@ -32,8 +42,9 @@ await seedAdminUserDb();
 await ensureSuperAdminExists();
 await startQueue();
 app.use("/api", apiLimiter, apiRoutes);
-const server = app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+const PORT = process.env.PORT || 5000;
+const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
 // Graceful shutdown handling for Agenda and Express
 const gracefulShutdown = async () => {
