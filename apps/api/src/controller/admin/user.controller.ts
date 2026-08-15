@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { decodedId } from "../services/user.service";
-import prisma from "../services/prisma";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiResponse } from "../utils/apiResponse";
+import { decodedId } from "../../services/user.service";
+import prisma from "../../services/prisma";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { ApiResponse } from "../../utils/apiResponse";
 
 export const me = asyncHandler(async (req, res) => {
   const token = req.cookies?.accessToken || req.cookies?.token;
@@ -12,7 +12,10 @@ export const me = asyncHandler(async (req, res) => {
 
   const id = decodedId(token);
 
-  if (id === "superadmin-env-id" || id === (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph")) {
+  if (
+    id === "superadmin-env-id" ||
+    id === (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph")
+  ) {
     const superUser = {
       id: "superadmin-env-id",
       employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
@@ -21,7 +24,11 @@ export const me = asyncHandler(async (req, res) => {
       username: process.env.SUPERADMIN_USERNAME || "superadmin",
       role: "SUPERADMIN",
     };
-    return new ApiResponse(200, { user: superUser }, "User retrieved successfully").send(res);
+    return new ApiResponse(
+      200,
+      { user: superUser },
+      "User retrieved successfully",
+    ).send(res);
   }
 
   const user = await prisma.adminUser.findUnique({
@@ -47,5 +54,7 @@ export const me = asyncHandler(async (req, res) => {
     return new ApiResponse(404, null, "User not found").send(res);
   }
 
-  return new ApiResponse(200, { user }, "User retrieved successfully").send(res);
+  return new ApiResponse(200, { user }, "User retrieved successfully").send(
+    res,
+  );
 });

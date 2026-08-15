@@ -1,6 +1,14 @@
 import { Router } from "express";
-import { login, logout, signup, refreshToken, forgotPassword, resetPassword, updateProfile } from "../controller/auth.controller";
-import { me } from "../controller/user.controller";
+import {
+  login,
+  logout,
+  signup,
+  refreshToken,
+  forgotPassword,
+  resetPassword,
+  updateProfile,
+} from "../controller/admin/auth.controller";
+import { me } from "../controller/admin/user.controller";
 import { authLimiter } from "../middleware/rateLimit.middleware";
 import { authenticateToken } from "../middleware/auth.middleware";
 

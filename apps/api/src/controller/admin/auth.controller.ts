@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { Request, Response } from "express";
-import * as authService from "../services/auth.service";
-import { generateToken } from "../utils/generateToken";
-import { ApiResponse } from "../utils/apiResponse";
-import { ApiError } from "../utils/apiError";
-import { asyncHandler } from "../utils/asyncHandler";
-import { signJWT, verifyJWT } from "../utils/jwt.utils";
-import prisma from "../services/prisma";
-import { logInfo, logWarn } from "../services/admin/logger.service";
+import * as authService from "../../services/auth.service";
+import { generateToken } from "../../utils/generateToken";
+import { ApiResponse } from "../../utils/apiResponse";
+import { ApiError } from "../../utils/apiError";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { signJWT, verifyJWT } from "../../utils/jwt.utils";
+import prisma from "../../services/prisma";
+import { logInfo, logWarn } from "../../services/admin/logger.service";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -39,7 +39,7 @@ export const login = asyncHandler(async (req, res) => {
       "AuthService",
       attemptedEmail,
       req.ip,
-      { error: err.message }
+      { error: err.message },
     );
     throw err;
   }
@@ -51,14 +51,20 @@ export const login = asyncHandler(async (req, res) => {
       `Failed login attempt for account "${attemptedEmail}". Invalid credentials.`,
       "AuthService",
       attemptedEmail,
-      req.ip
+      req.ip,
     );
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const accesstoken = signJWT({ id: user.id, email: user.email, role: user.role }, "15m");
+  const accesstoken = signJWT(
+    { id: user.id, email: user.email, role: user.role },
+    "15m",
+  );
 
-  const refreshtoken = signJWT({ id: user.id, email: user.email, role: user.role }, "1y");
+  const refreshtoken = signJWT(
+    { id: user.id, email: user.email, role: user.role },
+    "1y",
+  );
 
   const cookieOptions = {
     httpOnly: true,
@@ -70,15 +76,31 @@ export const login = asyncHandler(async (req, res) => {
   res.cookie("accessToken", accesstoken, cookieOptions);
   res.cookie("refreshToken", refreshtoken, cookieOptions);
 
-  await logInfo("USER_LOGIN_SUCCESS", `${user.role || "User"} (${user.email}) logged in successfully.`, "AuthService", user.email, req.ip);
+  await logInfo(
+    "USER_LOGIN_SUCCESS",
+    `${user.role || "User"} (${user.email}) logged in successfully.`,
+    "AuthService",
+    user.email,
+    req.ip,
+  );
 
   return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
 
 export const signup = asyncHandler(async (req, res) => {
   const newUser = await authService.signupAdmin(req.body);
-  await logInfo("ADMIN_SIGNUP", `Created new admin user account (${newUser.email}).`, "AuthService", newUser.email, req.ip);
-  return new ApiResponse(201, { user: newUser }, "Admin user created successfully").send(res);
+  await logInfo(
+    "ADMIN_SIGNUP",
+    `Created new admin user account (${newUser.email}).`,
+    "AuthService",
+    newUser.email,
+    req.ip,
+  );
+  return new ApiResponse(
+    201,
+    { user: newUser },
+    "Admin user created successfully",
+  ).send(res);
 });
 
 export const logout = async (req: Request, res: Response) => {
@@ -95,13 +117,15 @@ export const logout = async (req: Request, res: Response) => {
       const { payload } = verifyJWT(token);
       const userId = (payload as any)?.id;
       if (userId && userId !== "superadmin-env-id") {
-        await prisma.adminUser.update({
-          where: { id: userId },
-          data: {
-            isActive: false,
-            lastActiveAt: new Date(),
-          },
-        }).catch(() => {});
+        await prisma.adminUser
+          .update({
+            where: { id: userId },
+            data: {
+              isActive: false,
+              lastActiveAt: new Date(),
+            },
+          })
+          .catch(() => {});
       }
     }
   } catch (error) {
@@ -130,16 +154,18 @@ export const refreshToken = async (req: Request, res: Response) => {
   const { payload, expired } = verifyJWT(refreshToken);
 
   if (expired || !payload) {
-    return new ApiResponse(401, null, "Invalid or expired refresh token").send(res);
+    return new ApiResponse(401, null, "Invalid or expired refresh token").send(
+      res,
+    );
   }
 
   const tokenPayload = payload as { id: string; email: string; role: string };
 
   const newAccessToken = signJWT(
     { id: tokenPayload.id, email: tokenPayload.email, role: tokenPayload.role },
-    "15m"
+    "15m",
   );
- 
+
   res.cookie("accessToken", newAccessToken, {
     httpOnly: true,
     secure: true,
@@ -147,17 +173,33 @@ export const refreshToken = async (req: Request, res: Response) => {
     maxAge: 24 * 60 * 60 * 1000,
   });
 
-  return new ApiResponse(200, { id: tokenPayload.id, role: tokenPayload.role, accessToken: newAccessToken }, "Token refreshed successfully").send(res);
+  return new ApiResponse(
+    200,
+    {
+      id: tokenPayload.id,
+      role: tokenPayload.role,
+      accessToken: newAccessToken,
+    },
+    "Token refreshed successfully",
+  ).send(res);
 };
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const result = await authService.forgotPassword(req.body);
-  return new ApiResponse(200, result, "Password reset request processed successfully").send(res);
+  return new ApiResponse(
+    200,
+    result,
+    "Password reset request processed successfully",
+  ).send(res);
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
   const result = await authService.resetPassword(req.body);
-  return new ApiResponse(200, result, "Password has been successfully reset").send(res);
+  return new ApiResponse(
+    200,
+    result,
+    "Password has been successfully reset",
+  ).send(res);
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
@@ -181,5 +223,9 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   const updatedUser = await authService.updateProfile(userId, req.body);
-  return new ApiResponse(200, { user: updatedUser }, "Profile updated successfully").send(res);
+  return new ApiResponse(
+    200,
+    { user: updatedUser },
+    "Profile updated successfully",
+  ).send(res);
 });

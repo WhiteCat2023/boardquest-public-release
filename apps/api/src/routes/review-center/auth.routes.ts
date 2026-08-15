@@ -3,7 +3,7 @@ import {
   reviewCenterLogin,
   reviewCenterLogout,
   getReviewCenterMe,
-} from "../../controller/review-center/reviewCenterAuth.controller";
+} from "../../controller/review-center/auth.controller";
 import { authLimiter } from "../../middleware/rateLimit.middleware";
 import { authenticateReviewCenterToken } from "../../middleware/reviewCenterAuth.middleware";
 
