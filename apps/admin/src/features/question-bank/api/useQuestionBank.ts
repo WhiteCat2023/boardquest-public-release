@@ -13,6 +13,16 @@ export interface QuestionFilters {
     authorId?: string;
 }
 
+export interface PendingReviewAuthor {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department?: string;
+    pendingCount: number;
+    latestSubmissionAt?: string;
+}
+
 export function useQuestionBank(filters?: QuestionFilters) {
     const axiosPrivate = useAxiosPrivate();
 
@@ -67,15 +77,7 @@ export function usePendingReviewAuthors() {
         queryKey: ["pendingReviewAuthors"],
         queryFn: async () => {
             const response = await axiosPrivate.get("/questions/review/authors");
-            return (response.data?.data?.authors || []) as Array<{
-                id: string;
-                name: string;
-                email: string;
-                role: string;
-                department?: string;
-                pendingCount: number;
-                latestSubmissionAt?: string;
-            }>;
+            return (response.data?.data?.authors || []) as PendingReviewAuthor[];
         },
     });
 }

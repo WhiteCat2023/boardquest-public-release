@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { usePendingReviewAuthors } from "@/features/question-bank";
 import QuestionList from "../components/list/QuestionList";
+import ApproveAuthorQuestionsDialog from "../components/review/ApproveAuthorQuestionsDialog";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ export default function ReviewQuestions() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
 
   const { data: authors = [], isLoading: isAuthorsLoading } = usePendingReviewAuthors();
 
@@ -81,6 +83,7 @@ export default function ReviewQuestions() {
     },
     onSuccess: () => {
       toast.success("Approved all pending questions for selected author.");
+      setIsApproveModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
@@ -91,13 +94,12 @@ export default function ReviewQuestions() {
 
   const handleApproveAllForAuthor = () => {
     if (!selectedAuthorId || !selectedAuthor) return;
-    if (
-      window.confirm(
-        `Approve all ${selectedAuthor.pendingCount} pending question(s) by ${selectedAuthor.name}?`
-      )
-    ) {
-      approveAuthorMutation.mutate(selectedAuthorId);
-    }
+    setIsApproveModalOpen(true);
+  };
+
+  const handleConfirmApproveAll = () => {
+    if (!selectedAuthorId) return;
+    approveAuthorMutation.mutate(selectedAuthorId);
   };
 
   // Filter Authors List
@@ -368,6 +370,15 @@ export default function ReviewQuestions() {
           <QuestionList filters={filters} />
         </div>
       </main>
+
+      {/* ── Approve All Author Questions Modal ── */}
+      <ApproveAuthorQuestionsDialog
+        isOpen={isApproveModalOpen}
+        onOpenChange={setIsApproveModalOpen}
+        author={selectedAuthor || null}
+        isLoading={approveAuthorMutation.isPending}
+        onConfirm={handleConfirmApproveAll}
+      />
     </div>
   );
 }
