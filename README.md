@@ -1,4 +1,4 @@
-# 🔒 BoardQuest Admin & Portal System
+# BoardQuest Admin & Portal System
 
 ### **CONFIDENTIAL & PROPRIETARY**
 > [!IMPORTANT]
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Overview
+## Project Documentation/Purpose
 
 **BoardQuest** is an advanced, gamified learning and exam preparation platform tailored for board exam review (specifically optimized for medical/clinical board exams, such as Clinical Chemistry). This monorepo contains both the **API Backend** and the **Vite-based Frontend** components.
 
@@ -14,16 +14,7 @@ The platform supports robust role-based access control (RBAC), user progression 
 
 ---
 
-## 📁 Repository Structure
-
-The project is structured as a monorepo containing two main directories:
-
-- **[`api/`](file:///d:/Code/capstone/api)**: Node.js/Express backend service using Prisma ORM and TypeScript.
-- **[`frontend/`](file:///d:/Code/capstone/frontend)**: Single Page Application (SPA) built with React 19, Vite, Tailwind CSS v4, and shadcn/ui.
-
----
-
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend (`api`)
 - **Runtime**: Node.js
@@ -46,9 +37,9 @@ The project is structured as a monorepo containing two main directories:
 
 ---
 
-## 🚀 Getting Started
+## Setup Instructions
 
-### 📋 Prerequisites
+### Prerequisites
 Ensure you have the following installed on your local machine:
 - **Node.js** (v18.x or later recommended)
 - **npm** (v9.x or later)
@@ -121,7 +112,16 @@ Ensure you have the following installed on your local machine:
 
 ---
 
-## 🔒 Security & Code Guidelines
+## File Structure Explanation
+
+The project is structured as a monorepo containing two main directories:
+
+- **[`api/`](file:///d:/Code/capstone/api)**: Node.js/Express backend service using Prisma ORM and TypeScript.
+- **[`frontend/`](file:///d:/Code/capstone/frontend)**: Single Page Application (SPA) built with React 19, Vite, Tailwind CSS v4, and shadcn/ui.
+
+---
+
+## Security & Code Guidelines
 
 As this is a private corporate codebase, please adhere strictly to these practices:
 
@@ -143,7 +143,11 @@ As this is a private corporate codebase, please adhere strictly to these practic
 
 ---
 
-## 💬 Licensing & Terms
-This software is proprietary to BoardQuest. Unauthorized reproduction, distribution, reverse-engineering, or publication is subject to legal action.
+# License
+## Proprietary License
+
+Copyright (c) 2026 BoardQuest. All rights reserved.
+
+This software and its documentation are confidential and proprietary to BoardQuest. Unauthorized copying, modification, distribution, or use of this software, in whole or in part, is strictly prohibited without explicit written permission from the copyright owners.
 
 © 2026 BoardQuest. All rights reserved.
