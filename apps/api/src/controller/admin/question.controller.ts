@@ -13,6 +13,7 @@ import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
 import { agenda } from "../../services/queue.service";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
+import { isSuperAdmin, superAdminCredentials } from "../../config/credentials";
 
 export const createQuestion = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -122,15 +123,15 @@ export const getQuestions = asyncHandler(
 
     const isValidObjectId = (id?: string) =>
       typeof id === "string" &&
-      (/^[0-9a-fA-F]{24}$/.test(id) || id === "superadmin-env-id");
+      (/^[0-9a-fA-F]{24}$/.test(id) || isSuperAdmin(id));
 
     // If teacher, they can only see their own questions.
     // Admin/Co-Admin can filter specifically by any authorId.
     const rawAuthorId =
       user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
     let authorIdFilter = isValidObjectId(rawAuthorId) ? rawAuthorId : undefined;
-    if (authorIdFilter === "superadmin-env-id") {
-      authorIdFilter = "507f1f77bcf86cd799439011";
+    if (authorIdFilter && isSuperAdmin(authorIdFilter)) {
+      authorIdFilter = superAdminCredentials.id;
     }
 
     const hasFilter = !!(

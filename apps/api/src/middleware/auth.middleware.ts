@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
-import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "../services/admin/bootstrap.service";
+import { ensureSuperAdminExists } from "../services/admin/bootstrap.service";
+import { isSuperAdmin, getSuperAdminProfile } from "../config/credentials";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -49,11 +50,8 @@ export const authenticateToken = async (
 
     const decoded = payload as { id: string };
 
-    const superAdminId = "superadmin-env-id";
-    const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
-
     let user: any;
-    if (decoded.id === superAdminId || decoded.id === envSuperAdminEmail || decoded.id === SUPERADMIN_DEFAULT_ID) {
+    if (isSuperAdmin(decoded.id)) {
       const dbSuperAdmin = await ensureSuperAdminExists();
       if (dbSuperAdmin) {
         user = {
@@ -65,14 +63,7 @@ export const authenticateToken = async (
           isActive: true,
         };
       } else {
-        user = {
-          id: SUPERADMIN_DEFAULT_ID,
-          email: envSuperAdminEmail,
-          username: process.env.SUPERADMIN_USERNAME || "superadmin",
-          name: process.env.SUPERADMIN_NAME || "System Super Administrator",
-          role: "SUPERADMIN",
-          isActive: true,
-        };
+        user = getSuperAdminProfile();
       }
     } else {
       user = await prisma.adminUser.findUnique({

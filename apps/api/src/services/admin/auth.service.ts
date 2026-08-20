@@ -5,8 +5,12 @@ import { sendPasswordResetEmail } from "../mail.service";
 import prisma from "../prisma";
 import {
   ensureSuperAdminExists,
-  SUPERADMIN_DEFAULT_ID,
 } from "./bootstrap.service";
+import {
+  superAdminCredentials,
+  getSuperAdminProfile,
+  isSuperAdmin,
+} from "../../config/credentials";
 import { z } from "zod";
 
 /*
@@ -116,31 +120,26 @@ export class AuthService {
 
     const { email, password } = parsed.data;
 
-    // Environment Super Admin check (Bypasses database storage completely)
-    const envSuperAdminEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase();
-    const envSuperAdminUsername =
-      process.env.SUPERADMIN_USERNAME?.toLowerCase();
-    const envSuperAdminPassword = process.env.SUPERADMIN_PASSWORD;
-
+    // Environment Super Admin check (Bypasses database storage completely or uses seeded Super Admin)
     const inputIdent = email.trim().toLowerCase();
     if (
-      envSuperAdminPassword &&
-      (inputIdent === envSuperAdminEmail ||
-        (envSuperAdminUsername && inputIdent === envSuperAdminUsername))
+      superAdminCredentials.password &&
+      (inputIdent === superAdminCredentials.email ||
+        inputIdent === superAdminCredentials.username)
     ) {
-      if (password !== envSuperAdminPassword) {
+      if (password !== superAdminCredentials.password) {
         throw new ApiError(401, "Invalid email or password");
       }
       const dbSuperAdmin = await ensureSuperAdminExists();
       if (dbSuperAdmin) {
         return {
           id: dbSuperAdmin.id,
-          employeeId: dbSuperAdmin.employeeId || "SA-0001",
+          employeeId: dbSuperAdmin.employeeId || superAdminCredentials.employeeId,
           email: dbSuperAdmin.email,
           username: dbSuperAdmin.username,
           name: dbSuperAdmin.name,
           role: "SUPERADMIN" as const,
-          phoneNumber: dbSuperAdmin.phoneNumber || "+63-2-9999-0000",
+          phoneNumber: dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
           location: "Main HQ",
           isActive: true,
           lastActiveAt: new Date(),
@@ -148,20 +147,7 @@ export class AuthService {
           updatedAt: dbSuperAdmin.updatedAt,
         };
       }
-      return {
-        id: SUPERADMIN_DEFAULT_ID,
-        employeeId: process.env.SUPERADMIN_EMPLOYEE_ID || "SA-0001",
-        email: envSuperAdminEmail || "superadmin@boardquest.edu.ph",
-        username: envSuperAdminUsername || "superadmin",
-        name: process.env.SUPERADMIN_NAME || "System Super Administrator",
-        role: "SUPERADMIN" as const,
-        phoneNumber: "+63-2-9999-0000",
-        location: "Main HQ",
-        isActive: true,
-        lastActiveAt: new Date(),
-        createdAt: new Date("2026-01-01"),
-        updatedAt: new Date(),
-      };
+      return getSuperAdminProfile();
     }
 
     const user = await this.db.adminUser.findUnique({
@@ -405,7 +391,7 @@ export class AuthService {
       password?: string;
     },
   ) {
-    if (userId === "superadmin-env-id") {
+    if (isSuperAdmin(userId)) {
       throw new ApiError(
         400,
         "Environment Super Admin account profile cannot be modified.",

@@ -9,19 +9,31 @@ import { ExamResultService, recordExamResultSchema } from "./examResult.service"
 import { AchievementService, awardAchievementSchema } from "./achievement.service";
 import { LessonCompletionService, recordLessonCompletionSchema } from "./lessonCompletion.service";
 // ============ Validation Schemas ============
-export const createStudentSchema = z.object({
+export const createStudentSchema = z
+    .object({
     email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password is required"),
-    name: z.string().min(1, "Name is required"),
+    password: z.string().optional().default(""),
+    confirmPassword: z.string().optional().default(""),
+    name: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     location: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
+})
+    .refine((data) => !data.password || data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+})
+    .refine((data) => Boolean((data.name && data.name.trim().length > 0) ||
+    (data.firstName && data.firstName.trim().length > 0) ||
+    (data.lastName && data.lastName.trim().length > 0)), {
+    message: "First name and last name, or full name, are required",
+    path: ["firstName"],
 });
 export const updateStudentSchema = z.object({
     studentId: z.string().min(1, "Student ID is required"),
     name: z.string().min(1, "Name is required").optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     location: z.string().optional(),
 });
 // ============ Student Management Services ============
@@ -29,6 +41,26 @@ export class StudentService {
     db;
     constructor(db = prisma) {
         this.db = db;
+    }
+    /**
+     * Helper to resolve firstName, lastName, and fullName
+     */
+    resolveNameParts(rawName, rawFirst, rawLast) {
+        let firstName = rawFirst?.trim() || "";
+        let lastName = rawLast?.trim() || "";
+        let name = rawName?.trim() || "";
+        if (!name && (firstName || lastName)) {
+            name = [firstName, lastName].filter(Boolean).join(" ").trim();
+        }
+        else if (name && !firstName && !lastName) {
+            const parts = name.split(" ");
+            firstName = parts[0] || "";
+            lastName = parts.slice(1).join(" ") || "";
+        }
+        else if (firstName && lastName && !name) {
+            name = `${firstName} ${lastName}`.trim();
+        }
+        return { name, firstName, lastName };
     }
     /**
      * Create a new student account
@@ -39,29 +71,45 @@ export class StudentService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { email, password, name, location } = parsed.data;
+        const { email, password, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
+        const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
         const existingStudent = await this.db.user.findUnique({
             where: { email },
         });
         if (existingStudent) {
             throw new ApiError(400, "Email already registered");
         }
-        const hashedPass = await hashedPassword(password);
+        const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() +
+            Math.random().toString(36).substring(2, 6).toUpperCase();
+        const tempPassword = password && password.trim().length >= 6
+            ? password.trim()
+            : `BQ-STU-${randomChars}`;
+        const hashedPass = await hashedPassword(tempPassword);
         const newStudent = await this.db.user.create({
             data: {
                 email: email.toLowerCase().trim(),
                 password: hashedPass,
-                name: name.trim(),
+                name: name || "Student",
+                firstName: firstName || undefined,
+                lastName: lastName || undefined,
                 location: location || "Philippines",
                 level: 1,
                 xp: 0,
                 streak: 0,
             },
         });
+        sendStudentCredentialsEmail({
+            toEmail: email.toLowerCase().trim(),
+            name: name || "Student",
+            password: tempPassword,
+            studentId: newStudent.id,
+        }).catch((err) => console.error("[StudentService] Email send error:", err));
         return {
             id: newStudent.id,
             email: newStudent.email,
             name: newStudent.name,
+            firstName: newStudent.firstName,
+            lastName: newStudent.lastName,
             level: newStudent.level,
             xp: newStudent.xp,
             streak: newStudent.streak,
@@ -81,6 +129,8 @@ export class StudentService {
                 { name: { contains: q, mode: "insensitive" } },
                 { email: { contains: q, mode: "insensitive" } },
                 { location: { contains: q, mode: "insensitive" } },
+                { firstName: { contains: q, mode: "insensitive" } },
+                { lastName: { contains: q, mode: "insensitive" } },
             ];
         }
         if (level && level !== "ALL") {
@@ -111,6 +161,8 @@ export class StudentService {
                 id: true,
                 email: true,
                 name: true,
+                firstName: true,
+                lastName: true,
                 level: true,
                 xp: true,
                 streak: true,
@@ -187,7 +239,7 @@ export class StudentService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { studentId, name, location } = parsed.data;
+        const { studentId, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
         const existingStudent = await this.db.user.findUnique({
             where: { id: studentId },
         });
@@ -195,8 +247,21 @@ export class StudentService {
             throw new ApiError(404, "Student not found");
         }
         const updateData = {};
-        if (name)
-            updateData.name = name.trim();
+        if (rawFirst !== undefined)
+            updateData.firstName = rawFirst.trim();
+        if (rawLast !== undefined)
+            updateData.lastName = rawLast.trim();
+        if (rawName !== undefined && rawName.trim().length > 0) {
+            updateData.name = rawName.trim();
+        }
+        else if (rawFirst !== undefined || rawLast !== undefined) {
+            const effectiveFirst = rawFirst !== undefined ? rawFirst.trim() : existingStudent.firstName || "";
+            const effectiveLast = rawLast !== undefined ? rawLast.trim() : existingStudent.lastName || "";
+            const combined = [effectiveFirst, effectiveLast].filter(Boolean).join(" ").trim();
+            if (combined) {
+                updateData.name = combined;
+            }
+        }
         if (location)
             updateData.location = location.trim();
         const updatedStudent = await this.db.user.update({
@@ -206,6 +271,8 @@ export class StudentService {
                 id: true,
                 email: true,
                 name: true,
+                firstName: true,
+                lastName: true,
                 level: true,
                 xp: true,
                 streak: true,
@@ -238,6 +305,8 @@ export class StudentService {
             select: {
                 id: true,
                 name: true,
+                firstName: true,
+                lastName: true,
                 level: true,
                 xp: true,
                 streak: true,
@@ -273,7 +342,7 @@ export class StudentService {
         const errors = [];
         for (let i = 0; i < students.length; i++) {
             const item = students[i];
-            const name = item.name?.trim();
+            const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
             const email = item.email?.trim().toLowerCase();
             if (!name || !email) {
                 errors.push({ email: email || "unknown", name: name || "unknown", error: "Name and Email are required fields." });
@@ -295,6 +364,8 @@ export class StudentService {
                         email,
                         password: hash,
                         name,
+                        firstName: firstName || undefined,
+                        lastName: lastName || undefined,
                         location: item.location?.trim() || "Philippines",
                         level: 1,
                         xp: 0,

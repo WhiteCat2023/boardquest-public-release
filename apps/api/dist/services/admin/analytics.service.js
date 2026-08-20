@@ -497,12 +497,13 @@ export class AnalyticsService {
     }
     async getDashboardAnalyticsSummary() {
         const CACHE_TTL = 1000 * 60 * 2; // 2 minutes in-memory cache
-        const now = Date.now();
-        if (this.summaryCache && now - this.summaryCache.timestamp < CACHE_TTL) {
+        const nowTimestamp = Date.now();
+        if (this.summaryCache && nowTimestamp - this.summaryCache.timestamp < CACHE_TTL) {
             return this.summaryCache.data;
         }
+        const totalStudentsCount = await this.db.user.count();
         const students = await this.db.user.findMany({
-            take: 200,
+            take: 500,
             select: {
                 id: true,
                 level: true,
@@ -514,44 +515,49 @@ export class AnalyticsService {
                 },
             },
         });
-        const totalStudentsCount = (await this.db.user.count()) || students.length || 1;
         let passedCount = 0;
         let nearTargetCount = 0;
         let atRiskCount = 0;
         let totalScoreSum = 0;
-        let totalScoreCount = 0;
+        let ratedStudentsCount = 0;
         students.forEach((student) => {
-            let studentAvg = 0;
-            if (student.examResults.length > 0) {
+            if (student.examResults && student.examResults.length > 0) {
                 const sum = student.examResults.reduce((acc, curr) => acc + curr.score, 0);
-                studentAvg = Math.round(sum / student.examResults.length);
+                const studentAvg = Math.round(sum / student.examResults.length);
+                totalScoreSum += studentAvg;
+                ratedStudentsCount++;
+                if (studentAvg >= 75) {
+                    passedCount++;
+                }
+                else if (studentAvg >= 60) {
+                    nearTargetCount++;
+                }
+                else {
+                    atRiskCount++;
+                }
             }
-            else if (student.mastery.length > 0) {
+            else if (student.mastery && student.mastery.length > 0) {
                 const sum = student.mastery.reduce((acc, curr) => acc + curr.proficiency, 0);
-                studentAvg = Math.round(sum / student.mastery.length);
-            }
-            else {
-                studentAvg = Math.min(60 + (student.level * 3), 85);
-            }
-            totalScoreSum += studentAvg;
-            totalScoreCount++;
-            if (studentAvg >= 75) {
-                passedCount++;
-            }
-            else if (studentAvg >= 60) {
-                nearTargetCount++;
-            }
-            else {
-                atRiskCount++;
+                const studentAvg = Math.round(sum / student.mastery.length);
+                totalScoreSum += studentAvg;
+                ratedStudentsCount++;
+                if (studentAvg >= 75) {
+                    passedCount++;
+                }
+                else if (studentAvg >= 60) {
+                    nearTargetCount++;
+                }
+                else {
+                    atRiskCount++;
+                }
             }
         });
-        const safeDenominator = totalScoreCount || 1;
-        const overallAvgScore = totalScoreCount > 0 ? Number((totalScoreSum / totalScoreCount).toFixed(1)) : 78.4;
-        const overallPassRate = Number(((passedCount / safeDenominator) * 100).toFixed(1));
+        const overallAvgScore = ratedStudentsCount > 0 ? Number((totalScoreSum / ratedStudentsCount).toFixed(1)) : 0;
+        const overallPassRate = ratedStudentsCount > 0 ? Number(((passedCount / ratedStudentsCount) * 100).toFixed(1)) : 0;
         const distribution = [
             {
                 label: "Passed (≥75%)",
-                value: Number(((passedCount / safeDenominator) * 100).toFixed(1)),
+                value: ratedStudentsCount > 0 ? Number(((passedCount / ratedStudentsCount) * 100).toFixed(1)) : 0,
                 count: passedCount,
                 color: "#10b981",
                 strokeColor: "stroke-emerald-500",
@@ -560,7 +566,7 @@ export class AnalyticsService {
             },
             {
                 label: "Near Target (60-74%)",
-                value: Number(((nearTargetCount / safeDenominator) * 100).toFixed(1)),
+                value: ratedStudentsCount > 0 ? Number(((nearTargetCount / ratedStudentsCount) * 100).toFixed(1)) : 0,
                 count: nearTargetCount,
                 color: "#f59e0b",
                 strokeColor: "stroke-amber-500",
@@ -569,7 +575,7 @@ export class AnalyticsService {
             },
             {
                 label: "At Risk (<60%)",
-                value: Number(((atRiskCount / safeDenominator) * 100).toFixed(1)),
+                value: ratedStudentsCount > 0 ? Number(((atRiskCount / ratedStudentsCount) * 100).toFixed(1)) : 0,
                 count: atRiskCount,
                 color: "#ef4444",
                 strokeColor: "stroke-rose-500",
@@ -578,7 +584,7 @@ export class AnalyticsService {
             },
         ];
         const allExamResults = await this.db.examResult.findMany({
-            take: 500,
+            take: 1000,
             select: {
                 score: true,
                 timestamp: true,
@@ -587,39 +593,38 @@ export class AnalyticsService {
             orderBy: { timestamp: "asc" },
         });
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const now = new Date();
+        const last6Months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            last6Months.push({
+                key: `${d.getFullYear()}-${d.getMonth()}`,
+                month: monthNames[d.getMonth()],
+            });
+        }
         const monthlyMap = {};
         allExamResults.forEach((res) => {
             const date = new Date(res.timestamp);
-            const mName = monthNames[date.getMonth()];
-            if (!monthlyMap[mName]) {
-                monthlyMap[mName] = { totalScore: 0, count: 0, passCount: 0, userIds: new Set() };
+            const key = `${date.getFullYear()}-${date.getMonth()}`;
+            if (!monthlyMap[key]) {
+                monthlyMap[key] = { totalScore: 0, count: 0, passCount: 0, userIds: new Set() };
             }
-            monthlyMap[mName].totalScore += res.score;
-            monthlyMap[mName].count++;
+            monthlyMap[key].totalScore += res.score;
+            monthlyMap[key].count++;
             if (res.score >= 75)
-                monthlyMap[mName].passCount++;
+                monthlyMap[key].passCount++;
             if (res.userId)
-                monthlyMap[mName].userIds.add(res.userId);
+                monthlyMap[key].userIds.add(res.userId);
         });
-        const baselineMonthlyTrend = [
-            { month: "Jan", rate: 62, avgScore: 65, students: Math.max(10, Math.round(totalStudentsCount * 0.7)) },
-            { month: "Feb", rate: 66, avgScore: 68, students: Math.max(12, Math.round(totalStudentsCount * 0.75)) },
-            { month: "Mar", rate: 71, avgScore: 72, students: Math.max(14, Math.round(totalStudentsCount * 0.8)) },
-            { month: "Apr", rate: 74, avgScore: 75, students: Math.max(15, Math.round(totalStudentsCount * 0.85)) },
-            { month: "May", rate: 72, avgScore: 74, students: Math.max(16, Math.round(totalStudentsCount * 0.88)) },
-            { month: "Jun", rate: 79, avgScore: 81, students: Math.max(18, Math.round(totalStudentsCount * 0.9)) },
-            { month: "Jul", rate: 82, avgScore: 83, students: Math.max(20, Math.round(totalStudentsCount * 0.95)) },
-            { month: "Aug", rate: Math.max(80, Math.round(overallPassRate)), avgScore: Math.round(overallAvgScore), students: totalStudentsCount },
-        ];
-        const monthlyTrend = baselineMonthlyTrend.map((base) => {
-            const aggregated = monthlyMap[base.month];
+        const monthlyTrend = last6Months.map((m) => {
+            const aggregated = monthlyMap[m.key];
             if (aggregated && aggregated.count > 0) {
                 const rate = Math.round((aggregated.passCount / aggregated.count) * 100);
                 const avgScore = Math.round(aggregated.totalScore / aggregated.count);
-                const students = aggregated.userIds.size || base.students;
-                return { month: base.month, rate, avgScore, students };
+                const studentsCount = aggregated.userIds.size;
+                return { month: m.month, rate, avgScore, students: studentsCount };
             }
-            return base;
+            return { month: m.month, rate: 0, avgScore: 0, students: 0 };
         });
         const categories = await this.db.category.findMany({
             include: {
@@ -629,10 +634,10 @@ export class AnalyticsService {
             },
         });
         const subjects = categories.map((cat) => {
-            const catMastery = students.flatMap((s) => s.mastery.filter((m) => m.subject.toLowerCase().includes(cat.name.toLowerCase())));
+            const catMastery = students.flatMap((s) => (s.mastery || []).filter((m) => m.subject.toLowerCase().includes(cat.name.toLowerCase())));
             const avgProficiency = catMastery.length > 0
                 ? Math.round(catMastery.reduce((acc, curr) => acc + curr.proficiency, 0) / catMastery.length)
-                : 75;
+                : 0;
             return {
                 id: cat.id,
                 name: cat.name,

@@ -8,6 +8,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { signJWT, verifyJWT } from "../../utils/jwt.utils";
 import prisma from "../../services/prisma";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
+import { isSuperAdmin } from "../../config/credentials";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -116,7 +117,7 @@ export const logout = async (req: Request, res: Response) => {
     if (token) {
       const { payload } = verifyJWT(token);
       const userId = (payload as any)?.id;
-      if (userId && userId !== "superadmin-env-id") {
+      if (userId && !isSuperAdmin(userId)) {
         await prisma.adminUser
           .update({
             where: { id: userId },

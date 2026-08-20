@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { ensureSuperAdminExists } from "./bootstrap.service";
+import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
 
 // ============ Validation Schemas ============
 
@@ -129,8 +130,8 @@ export class CategoryService {
 
     if (authorId) {
       let targetAuthorId = authorId;
-      if (targetAuthorId === "superadmin-env-id") {
-        targetAuthorId = "507f1f77bcf86cd799439011";
+      if (isSuperAdmin(targetAuthorId)) {
+        targetAuthorId = superAdminCredentials.id;
       }
       questionWhere.authorId = targetAuthorId;
     }

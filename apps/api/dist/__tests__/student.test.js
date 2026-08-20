@@ -96,6 +96,27 @@ describe('Student Routes', () => {
             expect(response.body.data.student.email).toBe('student@example.com');
             expect(response.body.message).toContain('created successfully');
         });
+        it('should create a student with separate firstName and lastName without explicit password', async () => {
+            const studentWithSplitNames = {
+                ...mockStudent,
+                name: 'Alexander Wright',
+                firstName: 'Alexander',
+                lastName: 'Wright',
+            };
+            studentService.createStudent.mockResolvedValue(studentWithSplitNames);
+            const response = await request(app)
+                .post('/api/students/create')
+                .send({
+                email: 'alexander@example.com',
+                firstName: 'Alexander',
+                lastName: 'Wright',
+                location: 'Manila',
+            });
+            expect(response.status).toBe(201);
+            expect(response.body.data.student.firstName).toBe('Alexander');
+            expect(response.body.data.student.lastName).toBe('Wright');
+            expect(response.body.data.student.name).toBe('Alexander Wright');
+        });
         it('should return 400 when service throws ApiError', async () => {
             studentService.createStudent.mockRejectedValue(new ApiError(400, 'Email already in use'));
             const response = await request(app)

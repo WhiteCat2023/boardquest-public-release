@@ -1,4 +1,4 @@
-import * as authService from "../../services/auth.service";
+import * as authService from "../../services/admin/auth.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import { asyncHandler } from "../../utils/asyncHandler";
