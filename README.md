@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Overview
+## Project Documentation/Purpose
 
 **BoardQuest** is an advanced, gamified learning and exam preparation platform tailored for board exam review (specifically optimized for medical/clinical board exams, such as Clinical Chemistry). This monorepo contains both the **API Backend** and the **Vite-based Frontend** components.
 
