@@ -129,7 +129,6 @@ describe("Auth Routes", () => {
         id: "1",
         email: "test@example.com",
         name: "Test User",
-        username: "testuser",
       };
 
       const prisma = (await import("../services/prisma")).default;

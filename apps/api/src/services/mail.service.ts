@@ -154,7 +154,6 @@ interface SendFacultyCredentialsMailOptions {
   password: string;
   role: string;
   employeeId?: string;
-  username?: string;
 }
 
 export async function sendFacultyCredentialsEmail({
@@ -163,7 +162,6 @@ export async function sendFacultyCredentialsEmail({
   password,
   role,
   employeeId,
-  username,
 }: SendFacultyCredentialsMailOptions) {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   const loginUrl = `${frontendUrl}/login`;
@@ -220,11 +218,6 @@ export async function sendFacultyCredentialsEmail({
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Email / Login:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #111827;">${toEmail}</td>
                   </tr>
-                  ${username ? `
-                  <tr>
-                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Username:</td>
-                    <td style="padding: 6px 0; font-weight: 700; color: #111827;">${username}</td>
-                  </tr>` : ""}
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Temporary Password:</td>
                     <td style="padding: 6px 0;">

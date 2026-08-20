@@ -63,7 +63,7 @@ function LoginPage() {
                       aria-invalid={isLoginInvalid || undefined}
                       type="email"
                       required
-                      placeholder="username@gmail.com"
+                      placeholder="admin@swumedtech.edu.ph"
                       value={loginInputs.email}
                       onChange={(e) =>
                         setLoginInputs({

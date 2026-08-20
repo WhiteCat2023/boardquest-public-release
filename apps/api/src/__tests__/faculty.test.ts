@@ -23,7 +23,6 @@ describe('Faculty Routes', () => {
     employeeId: 'EMP-001',
     name: 'Jane Doe',
     email: 'jane@example.com',
-    username: 'janedoe',
     role: 'TEACHER',
     phoneNumber: '09171234567',
     createdAt: new Date(),
@@ -34,7 +33,7 @@ describe('Faculty Routes', () => {
     jest.clearAllMocks();
     // Restore default auth mock implementation (ADMIN role)
     (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
-      req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', username: 'admin', name: 'Admin User' };
+      req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', name: 'Admin User' };
       next();
     });
   });
@@ -43,7 +42,7 @@ describe('Faculty Routes', () => {
     it('should retrieve all faculty members and sanitize passwords', async () => {
       const mockFacultyList = [
         { ...mockFacultyMember, password: 'hashedpassword' },
-        { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', username: 'johnsmith', role: 'TEAMLEAD', phoneNumber: '09177654321', password: 'hashedpassword2' }
+        { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', role: 'TEAMLEAD', phoneNumber: '09177654321', password: 'hashedpassword2' }
       ];
 
       (facultyService.getAllFaculty as jest.Mock).mockResolvedValue(mockFacultyList);
@@ -61,7 +60,7 @@ describe('Faculty Routes', () => {
     it('should block GET request if role is not authorized (e.g. TEACHER)', async () => {
       // Mock user as TEACHER
       (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
-        req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER', username: 'teacher', name: 'Teacher User' };
+        req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER', name: 'Teacher User' };
         next();
       });
 
@@ -76,7 +75,6 @@ describe('Faculty Routes', () => {
       employeeId: 'EMP-001',
       name: 'Jane Doe',
       email: 'jane@example.com',
-      username: 'janedoe',
       password: 'password123',
       phoneNumber: '09171234567',
       role: 'TEACHER'

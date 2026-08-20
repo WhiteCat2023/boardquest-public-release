@@ -9,7 +9,6 @@ export interface SuperAdminCredentialsConfig {
   id: string;
   employeeId: string;
   email: string;
-  username: string;
   password: string;
   firstName: string;
   lastName: string;
@@ -27,7 +26,6 @@ export interface SuperAdminProfile {
   firstName: string;
   lastName: string;
   email: string;
-  username: string;
   role: "SUPERADMIN";
   phoneNumber: string;
   location: string;
@@ -44,7 +42,6 @@ export const superAdminCredentials: SuperAdminCredentialsConfig = {
   id: "000000000000000000000001",
   employeeId: "SA-0001",
   email: "superadmin@swumedtech.edu.ph",
-  username: "superadmin",
   password: "[PASSWORD]",
   firstName: "Super",
   lastName: "Admin",
@@ -52,7 +49,7 @@ export const superAdminCredentials: SuperAdminCredentialsConfig = {
   phoneNumber: "00000000000",
   role: "SUPERADMIN",
   location: "Main HQ",
-  isActive: true, 
+  isActive: true,
 };
 
 /**
@@ -66,7 +63,6 @@ export function getSuperAdminProfile(): SuperAdminProfile {
     firstName: superAdminCredentials.firstName,
     lastName: superAdminCredentials.lastName,
     email: superAdminCredentials.email,
-    username: superAdminCredentials.username,
     role: superAdminCredentials.role,
     phoneNumber: superAdminCredentials.phoneNumber,
     location: superAdminCredentials.location,
@@ -78,7 +74,7 @@ export function getSuperAdminProfile(): SuperAdminProfile {
 }
 
 /**
- * Check whether a given identifier (ID, email, or username) matches the Super Admin.
+ * Check whether a given identifier (ID or email) matches the Super Admin.
  */
 export function isSuperAdmin(identifier?: string | null): boolean {
   if (!identifier) return false;
@@ -87,8 +83,7 @@ export function isSuperAdmin(identifier?: string | null): boolean {
   return (
     identifier === superAdminCredentials.id ||
     identifier === "superadmin-env-id" ||
-    normalized === superAdminCredentials.email ||
-    normalized === superAdminCredentials.username
+    normalized === superAdminCredentials.email
   );
 }
 

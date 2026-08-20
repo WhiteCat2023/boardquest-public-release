@@ -39,29 +39,13 @@ export default function AddFacultyMember() {
     employeeId: "",
     name: "",
     email: "",
-    username: "",
     password: "",
     phoneNumber: "",
     role: UserRole.TEACHER as RoleType,
   });
   const [errorMsg, setErrorMsg] = useState("");
 
-  // const { data: departments = [] } = useDepartments();
   const createMutation = useCreateFaculty();
-
-  // useEffect(() => {
-  //   if (departments.length > 0 && !formData.departmentId) {
-  //     setFormData((prev) => ({ ...prev, departmentId: departments[0].id }));
-  //   }
-  // }, [departments]);
-
-  // Auto-generate username from First Name & Last Name
-  const generateAutoUsername = (first: string, last: string) => {
-    const cleanFirst = first.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-    const cleanLast = last.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-    const base = cleanFirst && cleanLast ? `${cleanFirst}.${cleanLast}` : (cleanFirst || cleanLast || "faculty");
-    return `${base}.${Math.floor(100 + Math.random() * 900)}`;
-  };
 
   useEffect(() => {
     if (currentUserRole === UserRole.SUPERADMIN) {
@@ -92,14 +76,11 @@ export default function AddFacultyMember() {
       .filter(Boolean)
       .join(" ");
 
-    const autoUsername = generateAutoUsername(firstName, lastName);
-
     const payload: CreateFacultyPayload = {
       ...formData,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       name: fullName,
-      username: autoUsername,
     };
 
     createMutation.mutate(payload, {

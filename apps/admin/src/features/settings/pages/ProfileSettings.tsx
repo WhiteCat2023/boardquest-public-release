@@ -30,7 +30,6 @@ function ProfileSettings() {
 
   const [name, setName] = useState(user.name || "");
   const [email, setEmail] = useState(user.email || "");
-  const [username, setUsername] = useState(user.username || "");
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "");
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -42,7 +41,7 @@ function ProfileSettings() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !username.trim()) {
+    if (!name.trim() || !email.trim()) {
       toast.error("Please fill in all required profile fields.");
       return;
     }
@@ -52,11 +51,10 @@ function ProfileSettings() {
       const response = await axiosPrivate.put("/auth/profile", {
         name,
         email,
-        username,
         phoneNumber,
       });
 
-      const updatedUser = response.data?.data?.user || { ...user, name, email, username, phoneNumber };
+      const updatedUser = response.data?.data?.user || { ...user, name, email, phoneNumber };
 
       setAuth((prev: any) => ({
         ...prev,
@@ -146,7 +144,7 @@ function ProfileSettings() {
           </div>
 
           <p className="text-xs text-muted-foreground font-medium">
-            @{username || user.username || "username"} &bull; {email || user.email || "email@university.edu"}
+            {email || user.email || "email@university.edu"}
           </p>
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 pt-1 text-xs text-muted-foreground">
@@ -170,7 +168,7 @@ function ProfileSettings() {
             Personal Details
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Update your primary display name, email address, username, and contact phone number.
+            Update your primary display name, email address, and contact phone number.
           </p>
         </CardHeader>
 
@@ -206,22 +204,6 @@ function ProfileSettings() {
                 required
               />
               <span className="text-[11px] text-muted-foreground font-medium">Used for system login, password recovery, and email notifications.</span>
-            </div>
-
-            {/* System Username */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <IdCard size={13} className="text-primary" /> System Username <span className="text-primary">*</span>
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter unique username"
-                className="w-full h-11 px-4 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary transition-all font-medium"
-                required
-              />
-              <span className="text-[11px] text-muted-foreground">Unique handles used for quick tagging and system identification.</span>
             </div>
 
             {/* Phone Number */}

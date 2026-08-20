@@ -75,7 +75,7 @@ jest.mock('../utils/jwt.utils', () => ({
 // Mock auth middleware module
 jest.mock('../middleware/auth.middleware', () => ({
   authenticateToken: jest.fn((req: any, res: any, next: any) => {
-    req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', username: 'admin', name: 'Admin User' };
+    req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', name: 'Admin User' };
     next();
   }),
   requireAdmin: jest.fn((req: any, res: any, next: any) => next()),

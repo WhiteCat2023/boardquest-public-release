@@ -21,7 +21,6 @@ export default function FacultyTableRow({
   const isOnline = isUserOnline(member?.lastActiveAt, member?.isActive);
   const isSuperAdminAccount =
     member?.role === "SUPERADMIN" ||
-    member?.username === "superadmin" ||
     member?.employeeId === "SA-0001";
 
   const formatLastActive = (dateStr?: string) => {

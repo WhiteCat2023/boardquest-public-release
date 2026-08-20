@@ -47,7 +47,6 @@ export interface AdminUser {
   id: string;
   employeeId: string;
   email: string;
-  username: string;
   password?: string;
   name: string;
   firstName?: string;

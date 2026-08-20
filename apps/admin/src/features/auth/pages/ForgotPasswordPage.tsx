@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
                         id="reset-email"
                         type="email"
                         required
-                        placeholder="username@gmail.com"
+                        placeholder="admin@swumedtech.edu.ph"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"

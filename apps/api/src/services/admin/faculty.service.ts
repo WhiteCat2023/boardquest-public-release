@@ -16,11 +16,6 @@ export const createFacultySchema = z
     email: z.string().email("Invalid email address"),
     role: z.nativeEnum(Role),
     phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .optional()
-      .default(""),
     password: z.string().optional().default(""),
     handledCategoryIds: z.array(z.string()).optional().default([]),
   })
@@ -47,10 +42,6 @@ export const updateFacultySchema = z.object({
     .string()
     .min(10, "Phone number must be at least 10 digits")
     .optional(),
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .optional(),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
@@ -69,7 +60,6 @@ const facultySelect = {
   firstName: true,
   lastName: true,
   email: true,
-  username: true,
   role: true,
   phoneNumber: true,
   handledCategoryIds: true,
@@ -119,7 +109,6 @@ export class FacultyService {
       where.OR = [
         { name: { contains: q, mode: "insensitive" } },
         { email: { contains: q, mode: "insensitive" } },
-        { username: { contains: q, mode: "insensitive" } },
         { employeeId: { contains: q, mode: "insensitive" } },
       ];
     }
@@ -186,7 +175,6 @@ export class FacultyService {
       where.OR = [
         { name: { contains: q, mode: "insensitive" } },
         { email: { contains: q, mode: "insensitive" } },
-        { username: { contains: q, mode: "insensitive" } },
         { employeeId: { contains: q, mode: "insensitive" } },
       ];
     }
@@ -286,18 +274,11 @@ export class FacultyService {
       email,
       role,
       phoneNumber,
-      username,
       password,
       handledCategoryIds,
     } = parsed.data;
 
     const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
-
-    // Auto-generate username if omitted
-    const finalUsername =
-      username && username.trim().length >= 3
-        ? username.trim()
-        : `${(firstName || name).toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}.${Math.floor(100 + Math.random() * 900)}`;
 
     // Role hierarchy validation
     if (!this.isAllowedToManageRole(creatorRole, role)) {
@@ -310,15 +291,13 @@ export class FacultyService {
     // Check unique constraints
     const existing = await this.db.adminUser.findFirst({
       where: {
-        OR: [{ email }, { username: finalUsername }, { employeeId }],
+        OR: [{ email }, { employeeId }],
       },
     });
 
     if (existing) {
       if (existing.email === email)
         throw new ApiError(409, "Email is already in use");
-      if (existing.username === finalUsername)
-        throw new ApiError(409, "Username is already in use");
       if (existing.employeeId === employeeId)
         throw new ApiError(409, "Employee ID is already in use");
     }
@@ -340,7 +319,6 @@ export class FacultyService {
         email,
         role,
         phoneNumber,
-        username: finalUsername,
         password: hash,
         handledCategoryIds: handledCategoryIds || [],
       },
@@ -354,7 +332,6 @@ export class FacultyService {
       password: tempPassword,
       role,
       employeeId,
-      username,
     }).catch((err) => console.error("[createFaculty] Email send error:", err));
 
     return newFaculty;
@@ -375,7 +352,6 @@ export class FacultyService {
 
     if (
       (userToUpdate.role === "SUPERADMIN" ||
-        userToUpdate.username === "superadmin" ||
         userToUpdate.employeeId === "SA-0001") &&
       !isActive
     ) {
@@ -476,7 +452,6 @@ export class FacultyService {
       role?: string;
       employeeId?: string;
       phoneNumber?: string;
-      username?: string;
     }>,
     creatorRole: string,
   ) {
@@ -515,13 +490,10 @@ export class FacultyService {
       const empId =
         item.employeeId?.trim() ||
         `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
-      const uname =
-        item.username?.trim().toLowerCase() ||
-        `${email.split("@")[0].replace(/[^a-z0-9]/g, "")}.${Math.floor(100 + Math.random() * 900)}`;
 
       const existing = await this.db.adminUser.findFirst({
         where: {
-          OR: [{ email }, { username: uname }, { employeeId: empId }],
+          OR: [{ email }, { employeeId: empId }],
         },
       });
 
@@ -530,7 +502,7 @@ export class FacultyService {
           email,
           name,
           error:
-            "Account already exists (email, username, or employee ID collision).",
+            "Account already exists (email or employee ID collision).",
         });
         continue;
       }
@@ -551,7 +523,6 @@ export class FacultyService {
             email,
             role: targetRole as any,
             phoneNumber: item.phoneNumber?.trim() || "N/A",
-            username: uname,
             password: hash,
             handledCategoryIds: [],
           },
@@ -563,7 +534,6 @@ export class FacultyService {
           password: tempPassword,
           role: targetRole,
           employeeId: empId,
-          username: uname,
         }).catch((err) => console.error("[BulkImport] Email send error:", err));
 
         const { password, ...sanitized } = newUser;

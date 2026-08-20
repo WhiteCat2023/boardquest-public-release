@@ -39,7 +39,6 @@ export const createAdminUserSchema = z
       "Role required",
     ),
     phoneNumber: z.string().min(10, "Phone number must be at least 11 digits"),
-    username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z
       .string()
@@ -124,8 +123,7 @@ export class AuthService {
     const inputIdent = email.trim().toLowerCase();
     if (
       superAdminCredentials.password &&
-      (inputIdent === superAdminCredentials.email ||
-        inputIdent === superAdminCredentials.username)
+      inputIdent === superAdminCredentials.email
     ) {
       if (password !== superAdminCredentials.password) {
         throw new ApiError(401, "Invalid email or password");
@@ -136,7 +134,6 @@ export class AuthService {
           id: dbSuperAdmin.id,
           employeeId: dbSuperAdmin.employeeId || superAdminCredentials.employeeId,
           email: dbSuperAdmin.email,
-          username: dbSuperAdmin.username,
           name: dbSuperAdmin.name,
           role: "SUPERADMIN" as const,
           phoneNumber: dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
@@ -158,7 +155,6 @@ export class AuthService {
         employeeId: true,
         email: true,
         name: true,
-        username: true,
         role: true,
         phoneNumber: true,
         isActive: true,
@@ -232,7 +228,6 @@ export class AuthService {
       email,
       role,
       phoneNumber,
-      username,
       password,
     } = parsed.data;
 
@@ -251,7 +246,7 @@ export class AuthService {
     }
 
     const existingUser = await this.db.adminUser.findFirst({
-      where: { OR: [{ email }, { username }, { employeeId }] },
+      where: { OR: [{ email }, { employeeId }] },
     });
 
     if (existingUser) {
@@ -262,7 +257,6 @@ export class AuthService {
     const user = await this.db.adminUser.create({
       data: {
         employeeId,
-        username,
         email,
         name: name || "Admin User",
         firstName: firstName || undefined,
@@ -277,7 +271,6 @@ export class AuthService {
         name: true,
         firstName: true,
         lastName: true,
-        username: true,
       },
     });
 
@@ -386,7 +379,6 @@ export class AuthService {
     data: {
       name?: string;
       email?: string;
-      username?: string;
       phoneNumber?: string;
       password?: string;
     },
@@ -406,7 +398,6 @@ export class AuthService {
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
-    if (data.username) updateData.username = data.username;
     if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
     if (data.password) {
       updateData.password = await hashedPassword(data.password);

@@ -14,7 +14,6 @@ export interface FacultyMember {
   firstName?: string;
   lastName?: string;
   email: string;
-  username: string;
   role: RoleType;
   phoneNumber: string;
   handledCategories?: Category[];
@@ -30,8 +29,7 @@ export interface CreateFacultyPayload {
   firstName?: string;
   lastName?: string;
   email: string;
-  username: string;
-  password: string;
+  password?: string;
   phoneNumber: string;
   departmentId?: string;
   handledCategoryIds?: string[];

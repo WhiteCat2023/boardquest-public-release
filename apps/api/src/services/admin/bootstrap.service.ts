@@ -7,7 +7,6 @@ export async function ensureSuperAdminExists() {
     id,
     employeeId,
     email,
-    username,
     password,
     firstName,
     lastName,
@@ -22,7 +21,6 @@ export async function ensureSuperAdminExists() {
         OR: [
           { id },
           { email },
-          { username },
           { role: "SUPERADMIN" },
         ],
       },
@@ -41,7 +39,6 @@ export async function ensureSuperAdminExists() {
         firstName,
         lastName,
         email,
-        username,
         password: hash,
         role,
         phoneNumber,

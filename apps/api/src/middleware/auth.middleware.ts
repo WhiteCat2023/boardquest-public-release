@@ -8,7 +8,6 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    username?: string;
     name: string;
     role?: string;
     isActive?: boolean;
@@ -57,7 +56,6 @@ export const authenticateToken = async (
         user = {
           id: dbSuperAdmin.id,
           email: dbSuperAdmin.email,
-          username: dbSuperAdmin.username,
           name: dbSuperAdmin.name,
           role: dbSuperAdmin.role,
           isActive: true,
@@ -71,7 +69,6 @@ export const authenticateToken = async (
         select: {
           id: true,
           email: true,
-          username: true,
           name: true,
           role: true,
           isActive: true,

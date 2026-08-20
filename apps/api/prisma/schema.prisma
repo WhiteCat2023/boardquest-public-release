@@ -57,7 +57,6 @@ model AdminUser {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   employeeId String @unique
   email     String   @unique
-  username String @unique
   password  String
   name      String
   firstName String?

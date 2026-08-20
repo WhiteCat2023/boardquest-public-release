@@ -33,7 +33,7 @@ export const login = asyncHandler(async (req, res) => {
   try {
     user = await authService.login(req.body);
   } catch (err: any) {
-    const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+    const attemptedEmail = req.body?.email || "unknown";
     await logWarn(
       "AUTH_LOGIN_FAILED",
       `Failed login attempt for account "${attemptedEmail}". ${err.message || "Invalid credentials"}.`,
@@ -46,7 +46,7 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   if (!user) {
-    const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+    const attemptedEmail = req.body?.email || "unknown";
     await logWarn(
       "AUTH_LOGIN_FAILED",
       `Failed login attempt for account "${attemptedEmail}". Invalid credentials.`,

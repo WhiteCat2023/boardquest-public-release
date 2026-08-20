@@ -31,7 +31,6 @@ export const me = asyncHandler(async (req, res) => {
       employeeId: true,
       name: true,
       email: true,
-      username: true,
       role: true,
       handledCategoryIds: true,
       handledCategories: {
