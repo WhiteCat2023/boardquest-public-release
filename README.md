@@ -1,4 +1,4 @@
-# 🔒 BoardQuest Admin & Portal System
+# BoardQuest Admin & Portal System
 
 ### **CONFIDENTIAL & PROPRIETARY**
 > [!IMPORTANT]
@@ -14,7 +14,7 @@ The platform supports robust role-based access control (RBAC), user progression 
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend (`api`)
 - **Runtime**: Node.js
@@ -39,7 +39,7 @@ The platform supports robust role-based access control (RBAC), user progression 
 
 ## Setup Instructions
 
-### 📋 Prerequisites
+### Prerequisites
 Ensure you have the following installed on your local machine:
 - **Node.js** (v18.x or later recommended)
 - **npm** (v9.x or later)
@@ -112,7 +112,7 @@ Ensure you have the following installed on your local machine:
 
 ---
 
-## 📁 File Structure Explanation
+## File Structure Explanation
 
 The project is structured as a monorepo containing two main directories:
 
@@ -121,7 +121,7 @@ The project is structured as a monorepo containing two main directories:
 
 ---
 
-## 🔒 Security & Code Guidelines
+## Security & Code Guidelines
 
 As this is a private corporate codebase, please adhere strictly to these practices:
 
@@ -143,8 +143,8 @@ As this is a private corporate codebase, please adhere strictly to these practic
 
 ---
 
-## 💬 License
-# Proprietary License
+# License
+## Proprietary License
 
 Copyright (c) 2026 BoardQuest. All rights reserved.
 
