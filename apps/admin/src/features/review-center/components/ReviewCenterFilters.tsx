@@ -12,11 +12,8 @@ import {
 interface ReviewCenterFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  selectedCompany: string;
-  onCompanyChange: (value: string) => void;
   selectedLocation: string;
   onLocationChange: (value: string) => void;
-  uniqueCompanies: string[];
   uniqueLocations: string[];
   hasActiveFilters: boolean;
   onResetFilters: () => void;
@@ -25,11 +22,8 @@ interface ReviewCenterFiltersProps {
 export default function ReviewCenterFilters({
   searchTerm,
   onSearchChange,
-  selectedCompany,
-  onCompanyChange,
   selectedLocation,
   onLocationChange,
-  uniqueCompanies,
   uniqueLocations,
   hasActiveFilters,
   onResetFilters,
@@ -58,20 +52,6 @@ export default function ReviewCenterFilters({
 
       {/* Filter Dropdowns */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Company / Organization Filter */}
-        <Select value={selectedCompany} onValueChange={onCompanyChange}>
-          <SelectTrigger className="h-8 w-[145px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-            <SelectValue placeholder="Organization" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="ALL">All Organizations</SelectItem>
-            {uniqueCompanies.map((company) => (
-              <SelectItem key={company} value={company}>
-                {company}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         {/* Location Filter */}
         <Select value={selectedLocation} onValueChange={onLocationChange}>

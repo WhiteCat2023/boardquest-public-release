@@ -110,11 +110,8 @@ export default function ReviewCenterManagement() {
       <ReviewCenterFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        selectedCompany={selectedCompany}
-        onCompanyChange={setSelectedCompany}
         selectedLocation={selectedLocation}
         onLocationChange={setSelectedLocation}
-        uniqueCompanies={uniqueCompanies}
         uniqueLocations={uniqueLocations}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
