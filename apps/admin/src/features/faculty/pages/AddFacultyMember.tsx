@@ -96,7 +96,8 @@ export default function AddFacultyMember() {
 
     const payload: CreateFacultyPayload = {
       ...formData,
-      // departmentId: formData.departmentId || (departments[0]?.id || ""),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       name: fullName,
       username: autoUsername,
     };
@@ -126,9 +127,9 @@ export default function AddFacultyMember() {
   const downloadSampleCSV = () => {
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      "Name,Email,Role,EmployeeID,PhoneNumber\n" +
-      "Dr. Jane Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567\n" +
-      "Prof. Mark Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321\n";
+      "FirstName,LastName,Email,Role,EmployeeID,PhoneNumber\n" +
+      "Jane,Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567\n" +
+      "Mark,Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -147,7 +148,9 @@ export default function AddFacultyMember() {
     }
 
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ""));
-    const nameIdx = headers.findIndex((h) => h.includes("name"));
+    const firstNameIdx = headers.findIndex((h) => h.includes("first") || h === "fname");
+    const lastNameIdx = headers.findIndex((h) => h.includes("last") || h === "lname");
+    const nameIdx = headers.findIndex((h) => h.includes("name") && !h.includes("first") && !h.includes("last"));
     const emailIdx = headers.findIndex((h) => h.includes("email"));
     const roleIdx = headers.findIndex((h) => h.includes("role"));
     const empIdIdx = headers.findIndex((h) => h.includes("employee") || h.includes("empid") || h.includes("id"));
@@ -160,7 +163,29 @@ export default function AddFacultyMember() {
       if (!currentLine) continue;
 
       const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
-      const name = nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : (values[0] || "");
+      
+      let firstName = "";
+      let lastName = "";
+      let name = "";
+
+      if (firstNameIdx !== -1 && values[firstNameIdx]) {
+        firstName = values[firstNameIdx];
+      }
+      if (lastNameIdx !== -1 && values[lastNameIdx]) {
+        lastName = values[lastNameIdx];
+      }
+
+      if (firstName || lastName) {
+        name = [firstName, lastName].filter(Boolean).join(" ").trim();
+      } else if (nameIdx !== -1 && values[nameIdx]) {
+        name = values[nameIdx];
+        const parts = name.split(" ");
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      } else {
+        name = values[0] || "";
+      }
+
       const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
       const role = roleIdx !== -1 && values[roleIdx] ? values[roleIdx].toUpperCase() : (values[2] ? values[2].toUpperCase() : "TEACHER");
       const employeeId = empIdIdx !== -1 && values[empIdIdx] ? values[empIdIdx] : (values[3] || "");
@@ -170,7 +195,7 @@ export default function AddFacultyMember() {
       let isValid = true;
       let validationError = "";
 
-      if (!name) {
+      if (!name && !firstName) {
         isValid = false;
         validationError = "Missing Name";
       } else if (!email || !isValidEmail) {
@@ -180,6 +205,8 @@ export default function AddFacultyMember() {
 
       rows.push({
         name,
+        firstName,
+        lastName,
         email,
         role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
         employeeId: employeeId || undefined,
@@ -246,6 +273,8 @@ export default function AddFacultyMember() {
     bulkCreateMutation.mutate(
       validMembers.map((m) => ({
         name: m.name,
+        firstName: m.firstName,
+        lastName: m.lastName,
         email: m.email,
         role: m.role,
         employeeId: m.employeeId,

@@ -16,6 +16,8 @@ export interface Student {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   level: number;
   xp: number;
   streak: number;

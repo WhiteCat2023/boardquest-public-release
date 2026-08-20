@@ -33,14 +33,19 @@ export default function AnalyticsPage() {
     s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Sync selected student from URL or fallback to first student
+  // Sync selected student from URL or fallback to first valid student
   useEffect(() => {
-    if (urlStudentId) {
-      setSelectedStudentId(urlStudentId);
-    } else if (filteredStudents.length > 0 && !selectedStudentId) {
-      const firstId = filteredStudents[0].id;
-      setSelectedStudentId(firstId);
-      setSearchParams({ studentId: firstId }, { replace: true });
+    if (filteredStudents.length > 0) {
+      const exists = filteredStudents.some((s) => s.id === urlStudentId);
+      if (urlStudentId && exists) {
+        if (selectedStudentId !== urlStudentId) {
+          setSelectedStudentId(urlStudentId);
+        }
+      } else if (!selectedStudentId || !filteredStudents.some((s) => s.id === selectedStudentId)) {
+        const firstId = filteredStudents[0].id;
+        setSelectedStudentId(firstId);
+        setSearchParams({ studentId: firstId }, { replace: true });
+      }
     }
   }, [urlStudentId, filteredStudents, selectedStudentId, setSearchParams]);
 

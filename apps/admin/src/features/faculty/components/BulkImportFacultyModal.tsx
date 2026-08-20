@@ -22,19 +22,33 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-const facultyRowSchema = z.object({
-  name: z.string().min(1, "Missing Name"),
-  email: z.string().min(1, "Missing Email").email("Invalid Email"),
-  role: z
-    .enum(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"])
-    .default("TEACHER"),
-  employeeId: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  departmentName: z.string().optional(),
-});
+const facultyRowSchema = z
+  .object({
+    name: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: z.string().min(1, "Missing Email").email("Invalid Email"),
+    role: z
+      .enum(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"])
+      .default("TEACHER"),
+    employeeId: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    departmentName: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      Boolean(
+        (data.name && data.name.trim().length > 0) ||
+          (data.firstName && data.firstName.trim().length > 0) ||
+          (data.lastName && data.lastName.trim().length > 0)
+      ),
+    { message: "Missing Name" }
+  );
 
 interface ParsedFacultyRow {
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: string;
   employeeId?: string;
@@ -61,9 +75,9 @@ export default function BulkImportFacultyModal({
   const downloadSampleCSV = () => {
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      "Name,Email,Role,EmployeeID,PhoneNumber,DepartmentName\n" +
-      "Dr. Jane Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567,Medical Technology\n" +
-      "Prof. Mark Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321,Pharmacy\n";
+      "FirstName,LastName,Email,Role,EmployeeID,PhoneNumber,DepartmentName\n" +
+      "Jane,Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567,Medical Technology\n" +
+      "Mark,Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321,Pharmacy\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -89,7 +103,9 @@ export default function BulkImportFacultyModal({
         .toLowerCase()
         .replace(/[^a-z]/g, ""),
     );
-    const nameIdx = headers.findIndex((h) => h.includes("name"));
+    const firstNameIdx = headers.findIndex((h) => h.includes("first") || h === "fname");
+    const lastNameIdx = headers.findIndex((h) => h.includes("last") || h === "lname");
+    const nameIdx = headers.findIndex((h) => h.includes("name") && !h.includes("first") && !h.includes("last"));
     const emailIdx = headers.findIndex((h) => h.includes("email"));
     const roleIdx = headers.findIndex((h) => h.includes("role"));
     const empIdIdx = headers.findIndex(
@@ -111,8 +127,29 @@ export default function BulkImportFacultyModal({
       const values = currentLine
         .split(",")
         .map((v) => v.trim().replace(/^["']|["']$/g, ""));
-      const rawName =
-        nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : values[0] || "";
+
+      let firstName = "";
+      let lastName = "";
+      let name = "";
+
+      if (firstNameIdx !== -1 && values[firstNameIdx]) {
+        firstName = values[firstNameIdx];
+      }
+      if (lastNameIdx !== -1 && values[lastNameIdx]) {
+        lastName = values[lastNameIdx];
+      }
+
+      if (firstName || lastName) {
+        name = [firstName, lastName].filter(Boolean).join(" ").trim();
+      } else if (nameIdx !== -1 && values[nameIdx]) {
+        name = values[nameIdx];
+        const parts = name.split(" ");
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      } else {
+        name = values[0] || "";
+      }
+
       const rawEmail =
         emailIdx !== -1 && values[emailIdx]
           ? values[emailIdx]
@@ -135,7 +172,9 @@ export default function BulkImportFacultyModal({
         deptIdx !== -1 && values[deptIdx] ? values[deptIdx] : values[5] || "";
 
       const candidate = {
-        name: rawName,
+        name,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         email: rawEmail,
         role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(rawRole)
           ? rawRole
@@ -150,6 +189,7 @@ export default function BulkImportFacultyModal({
       if (result.success) {
         rows.push({
           ...result.data,
+          name: result.data.name || name,
           isValid: true,
           validationError: "",
         });
@@ -207,6 +247,8 @@ export default function BulkImportFacultyModal({
     bulkCreateMutation.mutate(
       validMembers.map((m) => ({
         name: m.name,
+        firstName: m.firstName,
+        lastName: m.lastName,
         email: m.email,
         role: m.role,
         employeeId: m.employeeId,

@@ -11,6 +11,8 @@ export interface FacultyMember {
   id: string;
   employeeId: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   username: string;
   role: RoleType;
@@ -25,6 +27,8 @@ export interface FacultyMember {
 export interface CreateFacultyPayload {
   employeeId: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   username: string;
   password: string;
@@ -42,6 +46,8 @@ export interface RoleOption {
 
 export interface ParsedFacultyRow {
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: string;
   employeeId?: string;

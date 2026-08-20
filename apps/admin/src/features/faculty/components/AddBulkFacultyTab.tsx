@@ -251,7 +251,7 @@ export default function AddBulkFacultyTab({
             <p className="text-[11px]">Header row must include:</p>
             <ul className="space-y-1.5 list-disc list-inside text-foreground/90 bg-muted/30 p-2.5 rounded-xl border border-border/60 text-[11px]">
               <li>
-                <strong className="text-foreground font-bold">Name</strong> (Required)
+                <strong className="text-foreground font-bold">FirstName & LastName</strong> (or <strong className="text-foreground font-bold">Name</strong>) (Required)
               </li>
               <li>
                 <strong className="text-foreground font-bold">Email</strong> (Required)

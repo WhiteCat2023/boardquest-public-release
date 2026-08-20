@@ -5,12 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import appContent from "@/constants/appContent";
 import { useCategories } from "@/features/faculty";
+import { useDashboardAnalyticsSummary } from "../api/useDashboardAnalytics";
 import { SUBJECT_PRESETS } from "../constants/subjects";
 
 export function SubjectOverviewSection() {
   const navigate = useNavigate();
   const sectionContent = appContent.dashboard.subjectOverview;
   const { data: dbCategories = [], isLoading } = useCategories();
+  const { data: analytics } = useDashboardAnalyticsSummary();
+
+  const analyticsSubjects = analytics?.subjects || [];
 
   // Take up to 6 categories from DB and format with UI presets
   const topSixCategories = (dbCategories as any[]).slice(0, 6);
@@ -30,14 +34,23 @@ export function SubjectOverviewSection() {
           ? cat.questions.length
           : 0;
 
+    const matchedAnalytics = analyticsSubjects.find(
+      (s: any) => s.id === cat.id || (s.name || "").toLowerCase() === catName
+    );
+
+    const proficiency =
+      typeof cat.proficiency === "number"
+        ? cat.proficiency
+        : (matchedAnalytics?.proficiency ?? 0);
+
     return {
       id: cat.id,
       name: cat.name,
-      code: presetMatch.code,
-      icon: presetMatch.icon,
-      color: presetMatch.color,
-      barColor: presetMatch.barColor,
-      proficiency: presetMatch.proficiency,
+      code: presetMatch?.code || `SBJ-${index + 1}`,
+      icon: presetMatch?.icon || BarChart3,
+      color: presetMatch?.color || "bg-primary/10 text-primary border-primary/20",
+      barColor: presetMatch?.barColor || "bg-primary",
+      proficiency,
       questionCount,
     };
   });

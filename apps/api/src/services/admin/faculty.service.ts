@@ -7,23 +7,40 @@ import { sendFacultyCredentialsEmail } from "../mail.service";
 
 // ============ Validation Schemas ============
 
-export const createFacultySchema = z.object({
-  employeeId: z.string().min(1, "Employee ID is required"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  role: z.nativeEnum(Role),
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .optional()
-    .default(""),
-  password: z.string().optional().default(""),
-  handledCategoryIds: z.array(z.string()).optional().default([]),
-});
+export const createFacultySchema = z
+  .object({
+    employeeId: z.string().min(1, "Employee ID is required"),
+    name: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: z.string().email("Invalid email address"),
+    role: z.nativeEnum(Role),
+    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .optional()
+      .default(""),
+    password: z.string().optional().default(""),
+    handledCategoryIds: z.array(z.string()).optional().default([]),
+  })
+  .refine(
+    (data) =>
+      Boolean(
+        (data.name && data.name.trim().length > 0) ||
+          (data.firstName && data.firstName.trim().length > 0) ||
+          (data.lastName && data.lastName.trim().length > 0)
+      ),
+    {
+      message: "First name and last name, or full name, are required",
+      path: ["firstName"],
+    }
+  );
 
 export const updateFacultySchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email: z.string().email("Invalid email address").optional(),
   role: z.nativeEnum(Role).optional(),
   phoneNumber: z
@@ -49,6 +66,8 @@ const facultySelect = {
   id: true,
   employeeId: true,
   name: true,
+  firstName: true,
+  lastName: true,
   email: true,
   username: true,
   role: true,
@@ -234,6 +253,24 @@ export class FacultyService {
     };
   }
 
+  private resolveNameParts(rawName?: string, rawFirst?: string, rawLast?: string) {
+    let firstName = rawFirst?.trim() || "";
+    let lastName = rawLast?.trim() || "";
+    let name = rawName?.trim() || "";
+
+    if (!name && (firstName || lastName)) {
+      name = [firstName, lastName].filter(Boolean).join(" ").trim();
+    } else if (name && !firstName && !lastName) {
+      const parts = name.split(" ");
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ") || "";
+    } else if (firstName && lastName && !name) {
+      name = `${firstName} ${lastName}`.trim();
+    }
+
+    return { name, firstName, lastName };
+  }
+
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
     const parsed = createFacultySchema.safeParse(data);
     if (!parsed.success) {
@@ -243,7 +280,9 @@ export class FacultyService {
 
     const {
       employeeId,
-      name,
+      name: rawName,
+      firstName: rawFirst,
+      lastName: rawLast,
       email,
       role,
       phoneNumber,
@@ -252,11 +291,13 @@ export class FacultyService {
       handledCategoryIds,
     } = parsed.data;
 
+    const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
+
     // Auto-generate username if omitted
     const finalUsername =
       username && username.trim().length >= 3
         ? username.trim()
-        : `${name.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}.${Math.floor(100 + Math.random() * 900)}`;
+        : `${(firstName || name).toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}.${Math.floor(100 + Math.random() * 900)}`;
 
     // Role hierarchy validation
     if (!this.isAllowedToManageRole(creatorRole, role)) {
@@ -293,7 +334,9 @@ export class FacultyService {
     const newFaculty = await this.db.adminUser.create({
       data: {
         employeeId,
-        name,
+        name: name || "Faculty Member",
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         email,
         role,
         phoneNumber,
@@ -426,7 +469,9 @@ export class FacultyService {
 
   async bulkCreateFaculty(
     members: Array<{
-      name: string;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
       email: string;
       role?: string;
       employeeId?: string;
@@ -444,7 +489,7 @@ export class FacultyService {
 
     for (let i = 0; i < members.length; i++) {
       const item = members[i];
-      const name = item.name?.trim();
+      const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
       const email = item.email?.trim().toLowerCase();
       const targetRole = (item.role?.trim().toUpperCase() ||
         "TEACHER") as string;
@@ -501,6 +546,8 @@ export class FacultyService {
           data: {
             employeeId: empId,
             name,
+            firstName: firstName || undefined,
+            lastName: lastName || undefined,
             email,
             role: targetRole as any,
             phoneNumber: item.phoneNumber?.trim() || "N/A",

@@ -43,7 +43,6 @@ export enum GuidanceStatus {
   CANCELLED = "CANCELLED",
 }
 
-// Fallback Model Interfaces for type-safety before/after code generation
 export interface AdminUser {
   id: string;
   employeeId: string;
@@ -51,11 +50,45 @@ export interface AdminUser {
   username: string;
   password?: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   role: Role;
   phoneNumber: string;
   handledCategoryIds?: string[];
   isActive?: boolean;
   lastActiveAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  password?: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  verified?: boolean;
+  level?: number;
+  xp?: number;
+  streak?: number;
+  inventory?: string;
+  equippedItem?: string;
+  location?: string;
+  createdAt?: Date;
+}
+
+export interface ReviewCenterRepresentativeUser {
+  id: string;
+  employeeId: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  companyName: string;
+  phonenumber: string;
+  location?: string;
+  isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

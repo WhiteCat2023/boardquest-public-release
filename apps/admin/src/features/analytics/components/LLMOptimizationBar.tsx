@@ -8,7 +8,7 @@ interface LLMOptimizationBarProps {
 
 export function LLMOptimizationBar({ cacheStats }: LLMOptimizationBarProps) {
   const isCached = !!cacheStats?.cached;
-  const hashString = (cacheStats?.hash || "a8f9c2e1b40d7e63").slice(0, 8);
+  const hashString = cacheStats?.hash ? cacheStats.hash.slice(0, 8) : "DIRECT";
 
   return (
     <div className="p-2.5 px-3.5 rounded-xl bg-slate-900 dark:bg-slate-950 text-white border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">

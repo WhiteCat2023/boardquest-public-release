@@ -61,13 +61,13 @@ export default function FacultyTable({
                     Department
                   </TableHead> */}
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Authority Role
+                    Role
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Account Status
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Last Activity
+                    Last Login Activity
                   </TableHead>
                   <TableHead className="py-2.5 px-4 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto">
                     Actions

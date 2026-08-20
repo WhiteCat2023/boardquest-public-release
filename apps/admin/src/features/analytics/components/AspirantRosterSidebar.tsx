@@ -103,10 +103,21 @@ export function AspirantRosterSidebar({
       {/* Student List */}
       <div className="flex-1 overflow-y-auto divide-y divide-border/30 scrollbar-thin">
         {displayStudents.length === 0 ? (
-          <div className="p-6 text-center text-xs text-muted-foreground font-medium italic">
-            {filterMode === "HANDLED"
-              ? "No handled students found. Switch to 'All' to view other students."
-              : "No matching aspirants found."}
+          <div className="p-6 text-center flex flex-col items-center gap-2">
+            <p className="text-xs text-muted-foreground font-medium italic">
+              {filterMode === "HANDLED"
+                ? "You currently have 0 assigned guidance students."
+                : "No matching aspirants found."}
+            </p>
+            {filterMode === "HANDLED" && (
+              <button
+                type="button"
+                onClick={() => setFilterMode("ALL")}
+                className="text-[11px] font-bold text-primary hover:underline bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              >
+                View All Enrolled Students ({filteredStudents.length})
+              </button>
+            )}
           </div>
         ) : (
           displayStudents.map((s: StudentListItem) => {

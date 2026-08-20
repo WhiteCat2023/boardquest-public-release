@@ -160,7 +160,7 @@ export default function CategoriesView() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
           <Input
             type="text"
-            placeholder="Search subject category or keywords..."
+            placeholder="Search subject or keywords..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 pr-8 h-8 bg-muted/30 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
@@ -186,7 +186,7 @@ export default function CategoriesView() {
               onClick={() => setIsAddModalOpen(true)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus size={14} /> Add Subject Category
+              <Plus size={14} /> Add Subject
             </Button>
           )}
         </div>
@@ -259,9 +259,6 @@ export default function CategoriesView() {
                         >
                           {cat.name}
                         </h3>
-                        <span className="inline-block mt-0.5 text-[9.5px] font-mono font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border truncate max-w-[130px]">
-                          ID: {targetId?.slice(-6) || "CAT"}
-                        </span>
                       </div>
                     </div>
 

@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Eye, MapPin, Calendar, Zap, UserCheck, BarChart2 } from "lucide-react";
 import type { Student } from "@/features/students";

@@ -8,22 +8,18 @@ interface StudentTableProps {
   students: Student[];
   isLoading: boolean;
   onAssignGuidance?: (student: any) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }
 
-export default function StudentTable({ students, isLoading, onAssignGuidance }: StudentTableProps) {
-  const displayStudents =
-    isLoading && students.length === 0
-      ? (Array(5).fill({
-          id: "placeholder",
-          name: "Loading Student Name",
-          email: "loading.student@university.edu",
-          level: 1,
-          xp: 150,
-          streak: 3,
-          location: "Philippines",
-          createdAt: new Date().toISOString(),
-        }) as Student[])
-      : students;
+export default function StudentTable({
+  students,
+  isLoading,
+  onAssignGuidance,
+  emptyTitle = "No Enrolled Students Registered",
+  emptyDescription = "No students match the selected filter criteria.",
+}: StudentTableProps) {
+  const displayStudents = students;
 
   return (
     <Card className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden w-full p-0">
@@ -32,10 +28,10 @@ export default function StudentTable({ students, isLoading, onAssignGuidance }: 
           <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
             <GraduationCap size={38} className="text-muted-foreground/40 stroke-[1.5]" />
             <p className="font-bold text-foreground text-sm">
-              No Enrolled Students Registered
+              {emptyTitle}
             </p>
             <p className="text-xs max-w-xs text-muted-foreground">
-              No students match the selected filter criteria.
+              {emptyDescription}
             </p>
           </div>
         ) : (
@@ -69,9 +65,7 @@ export default function StudentTable({ students, isLoading, onAssignGuidance }: 
               <TableBody className="divide-y divide-border">
                 {displayStudents.map((student, idx) => (
                   <StudentTableRow
-                    key={
-                      student.id === "placeholder" ? `ph-${idx}` : student.id
-                    }
+                    key={student.id || idx}
                     student={student}
                     onAssignGuidance={onAssignGuidance}
                   />

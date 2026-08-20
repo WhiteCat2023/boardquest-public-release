@@ -3,7 +3,9 @@ import { hashedPassword } from "../../utils/hash";
 
 export interface CreateReviewCenterInput {
   employeeId: string;
-  name: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   companyName: string;
   phonenumber: string;
@@ -14,6 +16,8 @@ export interface CreateReviewCenterInput {
 export interface UpdateReviewCenterInput {
   employeeId?: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   companyName?: string;
   phonenumber?: string;
@@ -24,6 +28,8 @@ const reviewCenterSelect = {
   id: true,
   employeeId: true,
   name: true,
+  firstName: true,
+  lastName: true,
   email: true,
   companyName: true,
   phonenumber: true,
@@ -76,10 +82,26 @@ export async function createReviewCenter(data: CreateReviewCenterInput) {
   const defaultPass = data.password || "ReviewCenter123!";
   const hashedPass = await hashedPassword(defaultPass);
 
+  let firstName = data.firstName?.trim() || "";
+  let lastName = data.lastName?.trim() || "";
+  let name = data.name?.trim() || "";
+
+  if (!name && (firstName || lastName)) {
+    name = [firstName, lastName].filter(Boolean).join(" ").trim();
+  } else if (name && !firstName && !lastName) {
+    const parts = name.split(" ");
+    firstName = parts[0] || "";
+    lastName = parts.slice(1).join(" ") || "";
+  } else if (firstName && lastName && !name) {
+    name = `${firstName} ${lastName}`.trim();
+  }
+
   return await prisma.reviewCenterRepresentativeUser.create({
     data: {
       employeeId: data.employeeId,
-      name: data.name,
+      name: name || "Representative",
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
       email: data.email,
       companyName: data.companyName,
       phonenumber: data.phonenumber,
@@ -95,6 +117,8 @@ export async function updateReviewCenter(id: string, data: UpdateReviewCenterInp
     data: {
       ...(data.employeeId && { employeeId: data.employeeId }),
       ...(data.name && { name: data.name }),
+      ...(data.firstName && { firstName: data.firstName }),
+      ...(data.lastName && { lastName: data.lastName }),
       ...(data.email && { email: data.email }),
       ...(data.companyName && { companyName: data.companyName }),
       ...(data.phonenumber && { phonenumber: data.phonenumber }),

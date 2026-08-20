@@ -19,39 +19,29 @@ interface DataPoint {
   students: number;
 }
 
-const DEFAULT_MONTHLY_TREND: DataPoint[] = [
-  { month: "Jan", rate: 62, avgScore: 65, students: 180 },
-  { month: "Feb", rate: 66, avgScore: 68, students: 184 },
-  { month: "Mar", rate: 71, avgScore: 72, students: 190 },
-  { month: "Apr", rate: 74, avgScore: 75, students: 192 },
-  { month: "May", rate: 72, avgScore: 74, students: 195 },
-  { month: "Jun", rate: 79, avgScore: 81, students: 198 },
-  { month: "Jul", rate: 82, avgScore: 83, students: 200 },
-  { month: "Aug", rate: 86, avgScore: 87, students: 200 },
-];
-
-const DEFAULT_DISTRIBUTION = [
-  { label: "Passed (≥75%)", value: 78.4, count: 157, color: "#10b981", strokeColor: "stroke-emerald-500", bgLight: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400" },
-  { label: "Near Target (60-74%)", value: 14.1, count: 28, color: "#f59e0b", strokeColor: "stroke-amber-500", bgLight: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400" },
-  { label: "At Risk (<60%)", value: 7.5, count: 15, color: "#ef4444", strokeColor: "stroke-rose-500", bgLight: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400" },
-];
-
 export function StudentPassingRateAnalytics() {
   const { data: analytics, isLoading } = useDashboardAnalyticsSummary();
   const [activeHoverPoint, setActiveHoverPoint] = useState<DataPoint | null>(null);
   const [timeframe, setTimeframe] = useState<"6M" | "1Y">("6M");
 
-  const fullMonthlyTrend: DataPoint[] = analytics?.monthlyTrend || DEFAULT_MONTHLY_TREND;
-  const trendData = timeframe === "6M" ? fullMonthlyTrend.slice(Math.max(0, fullMonthlyTrend.length - 6)) : fullMonthlyTrend;
+  const fullMonthlyTrend: DataPoint[] = analytics?.monthlyTrend || [];
+  const trendData = timeframe === "6M" 
+    ? (fullMonthlyTrend.length > 6 ? fullMonthlyTrend.slice(-6) : fullMonthlyTrend)
+    : fullMonthlyTrend;
 
-  const distributionData = analytics?.distribution || DEFAULT_DISTRIBUTION;
-  const overallPassRate = analytics?.overallPassRate ?? 78.4;
-  const overallAvgScore = analytics?.overallAvgScore ?? 78.4;
-  const totalStudentsCount = analytics?.totalStudentsCount ?? 200;
+  const distributionData = analytics?.distribution || [
+    { label: "Passed (≥75%)", value: 0, count: 0, color: "#10b981", strokeColor: "stroke-emerald-500", bgLight: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Near Target (60-74%)", value: 0, count: 0, color: "#f59e0b", strokeColor: "stroke-amber-500", bgLight: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400" },
+    { label: "At Risk (<60%)", value: 0, count: 0, color: "#ef4444", strokeColor: "stroke-rose-500", bgLight: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400" },
+  ];
+
+  const overallPassRate = analytics?.overallPassRate ?? 0;
+  const overallAvgScore = analytics?.overallAvgScore ?? 0;
+  const totalStudentsCount = analytics?.totalStudentsCount ?? 0;
 
   // Calculate monthly growth comparing last two months
-  const lastMonthRate = trendData[trendData.length - 1]?.rate ?? 86;
-  const prevMonthRate = trendData[trendData.length - 2]?.rate ?? 82;
+  const lastMonthRate = trendData.length > 0 ? trendData[trendData.length - 1]?.rate ?? 0 : 0;
+  const prevMonthRate = trendData.length > 1 ? trendData[trendData.length - 2]?.rate ?? 0 : 0;
   const growthRate = (lastMonthRate - prevMonthRate).toFixed(1);
 
   // SVG Line Chart Dimensions & Scaling
@@ -60,7 +50,7 @@ export function StudentPassingRateAnalytics() {
   const paddingX = 45;
   const paddingY = 30;
 
-  const minRate = 50;
+  const minRate = 0;
   const maxRate = 100;
 
   const getX = (index: number) => {
@@ -213,7 +203,7 @@ export function StudentPassingRateAnalytics() {
             </defs>
 
             {/* Horizontal Gridlines & Y-Axis Labels */}
-            {[50, 60, 70, 80, 90, 100].map((val) => {
+            {[0, 25, 50, 75, 100].map((val) => {
               const y = getY(val);
               return (
                 <g key={val}>

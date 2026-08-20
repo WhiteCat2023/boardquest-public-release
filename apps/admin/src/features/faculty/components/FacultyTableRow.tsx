@@ -93,7 +93,7 @@ export default function FacultyTableRow({
       <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 flex-wrap">
           {/* Online / Offline Indicator Badge */}
-          <Badge
+          {/* <Badge
             variant="outline"
             className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ${
               isOnline
@@ -103,7 +103,7 @@ export default function FacultyTableRow({
           >
             <span className={`h-1 w-1 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
             {isOnline ? "Online" : "Offline"}
-          </Badge>
+          </Badge> */}
 
           {/* Account active status */}
           <Badge

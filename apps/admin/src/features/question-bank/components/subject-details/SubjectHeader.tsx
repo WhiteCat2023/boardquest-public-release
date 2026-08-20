@@ -82,9 +82,6 @@ export default function SubjectHeader({
                 <CheckCircle2 size={11} className="mr-1 inline" /> Active
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground font-mono">
-              ID: {categoryId || "—"}
-            </p>
           </div>
         </div>
 

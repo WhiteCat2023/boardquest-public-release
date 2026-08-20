@@ -14,9 +14,8 @@ import {
   Trash2,
   Mail,
   HelpCircle,
-  RefreshCw,
   MapPin,
-  Lock,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,8 @@ import { toast } from "sonner";
 import { useCreateStudent, useBulkCreateStudents } from "@/features/students";
 
 interface ParsedStudentRow {
+  firstName?: string;
+  lastName?: string;
   name: string;
   email: string;
   location?: string;
@@ -54,49 +55,36 @@ export default function EnrollStudentPage() {
   // ----------------------------------------------------
   const createStudentMutation = useCreateStudent();
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     location: "Philippines",
-    password: "",
-    confirmPassword: "",
   });
-
-  const handleGeneratePassword = () => {
-    const randomPass = `BQ-STU-${Math.random().toString(36).substring(2, 6).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    setFormData((prev) => ({
-      ...prev,
-      password: randomPass,
-      confirmPassword: randomPass,
-    }));
-    toast.info(`Generated temporary password: ${randomPass}`);
-  };
 
   const handleIndividualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim()) {
-      toast.error("Name and Email are required.");
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast.error("First Name and Last Name are required.");
       return;
     }
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match.");
+    if (!formData.email.trim()) {
+      toast.error("Email is required.");
       return;
     }
 
+    const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+
     createStudentMutation.mutate(
       {
-        name: formData.name.trim(),
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        name: fullName,
         email: formData.email.trim(),
         location: formData.location.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
       },
       {
         onSuccess: () => {
-          toast.success("Student account enrolled successfully!");
+          toast.success("Student account enrolled successfully! Login credentials sent to their email.");
           navigate("/student-management");
         },
         onError: (err: any) => {
@@ -118,9 +106,9 @@ export default function EnrollStudentPage() {
   const downloadSampleCSV = () => {
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      "Name,Email,Location\n" +
-      "Alexander Wright,awright@student.university.edu,Manila\n" +
-      "Beatriz Santos,bsantos@student.university.edu,Cebu\n";
+      "FirstName,LastName,Email,Location\n" +
+      "Alexander,Wright,awright@student.university.edu,Manila\n" +
+      "Beatriz,Santos,bsantos@student.university.edu,Cebu\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -139,7 +127,9 @@ export default function EnrollStudentPage() {
     }
 
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ""));
-    const nameIdx = headers.findIndex((h) => h.includes("name"));
+    const firstNameIdx = headers.findIndex((h) => h.includes("first") || h === "fname");
+    const lastNameIdx = headers.findIndex((h) => h.includes("last") || h === "lname");
+    const nameIdx = headers.findIndex((h) => h.includes("name") && !h.includes("first") && !h.includes("last"));
     const emailIdx = headers.findIndex((h) => h.includes("email"));
     const locationIdx = headers.findIndex((h) => h.includes("location") || h.includes("city"));
 
@@ -150,7 +140,29 @@ export default function EnrollStudentPage() {
       if (!currentLine) continue;
 
       const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
-      const name = nameIdx !== -1 && values[nameIdx] ? values[nameIdx] : (values[0] || "");
+      
+      let firstName = "";
+      let lastName = "";
+      let name = "";
+
+      if (firstNameIdx !== -1 && values[firstNameIdx]) {
+        firstName = values[firstNameIdx];
+      }
+      if (lastNameIdx !== -1 && values[lastNameIdx]) {
+        lastName = values[lastNameIdx];
+      }
+
+      if (firstName || lastName) {
+        name = [firstName, lastName].filter(Boolean).join(" ").trim();
+      } else if (nameIdx !== -1 && values[nameIdx]) {
+        name = values[nameIdx];
+        const parts = name.split(" ");
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      } else {
+        name = values[0] || "";
+      }
+
       const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
       const location = locationIdx !== -1 && values[locationIdx] ? values[locationIdx] : (values[2] || "");
 
@@ -158,7 +170,7 @@ export default function EnrollStudentPage() {
       let isValid = true;
       let validationError = "";
 
-      if (!name) {
+      if (!name && !firstName) {
         isValid = false;
         validationError = "Missing Name";
       } else if (!email || !isValidEmail) {
@@ -167,6 +179,8 @@ export default function EnrollStudentPage() {
       }
 
       rows.push({
+        firstName,
+        lastName,
         name,
         email,
         location: location || "Philippines",
@@ -229,6 +243,8 @@ export default function EnrollStudentPage() {
 
     bulkCreateMutation.mutate(
       validStudents.map((s) => ({
+        firstName: s.firstName,
+        lastName: s.lastName,
         name: s.name,
         email: s.email,
         location: s.location,
@@ -326,29 +342,59 @@ export default function EnrollStudentPage() {
                 <UserPlus size={16} />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-foreground">Student Identity & Account Security</h2>
-                <p className="text-xs text-muted-foreground">Enter the student's primary details and set initial login credentials.</p>
+                <h2 className="text-sm font-bold text-foreground">Student Identity & Account Details</h2>
+                <p className="text-xs text-muted-foreground">Enter the student's name, email, and location. Login credentials will be generated automatically.</p>
+              </div>
+            </div>
+
+            {/* Credential Dispatch Notice */}
+            <div className="flex items-start gap-3 p-3.5 bg-primary/5 border border-primary/20 rounded-xl">
+              <div className="p-1.5 bg-primary/10 text-primary rounded-lg shrink-0 mt-0.5">
+                <Mail size={16} />
+              </div>
+              <div className="text-xs">
+                <p className="font-bold text-foreground">Automatic Credential Generation & Dispatch</p>
+                <p className="text-muted-foreground mt-0.5 leading-relaxed">
+                  A secure temporary password will be automatically generated upon enrollment and emailed directly to the student's email address.
+                </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Full Name */}
+              {/* First Name */}
               <div className="flex flex-col gap-1.5">
                 <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  Full Name <span className="text-primary">*</span>
+                  <User size={12} className="text-muted-foreground" />
+                  First Name <span className="text-primary">*</span>
                 </Label>
                 <Input
                   type="text"
-                  placeholder="e.g. Alexander Wright"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. Alexander"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))}
+                  className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
+                  required
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <User size={12} className="text-muted-foreground" />
+                  Last Name <span className="text-primary">*</span>
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Wright"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))}
                   className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
                   required
                 />
               </div>
 
               {/* Email Address */}
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 md:col-span-2">
                 <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Mail size={12} className="text-muted-foreground" />
                   Email Address <span className="text-primary">*</span>
@@ -375,47 +421,6 @@ export default function EnrollStudentPage() {
                   value={formData.location}
                   onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                   className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
-                />
-              </div>
-
-              {/* Password */}
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Lock size={12} className="text-muted-foreground" />
-                    Password <span className="text-primary">*</span>
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={handleGeneratePassword}
-                    className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <RefreshCw size={11} /> Auto-Generate
-                  </button>
-                </div>
-                <Input
-                  type="password"
-                  placeholder="Enter account password"
-                  value={formData.password}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                  className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
-                  required
-                />
-              </div>
-
-              {/* Confirm Password */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Lock size={12} className="text-muted-foreground" />
-                  Confirm Password <span className="text-primary">*</span>
-                </Label>
-                <Input
-                  type="password"
-                  placeholder="Re-enter password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
-                  required
                 />
               </div>
             </div>
@@ -652,7 +657,7 @@ export default function EnrollStudentPage() {
                 <p className="text-[11px]">Header row must include:</p>
                 <ul className="space-y-1.5 list-disc list-inside text-foreground/90 bg-muted/30 p-2.5 rounded-xl border border-border/60 text-[11px]">
                   <li>
-                    <strong className="text-foreground font-bold">Name</strong> (Required)
+                    <strong className="text-foreground font-bold">FirstName & LastName</strong> (or <strong className="text-foreground font-bold">Name</strong>) (Required)
                   </li>
                   <li>
                     <strong className="text-foreground font-bold">Email</strong> (Required)

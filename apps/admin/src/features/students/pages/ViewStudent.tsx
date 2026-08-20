@@ -57,17 +57,7 @@ export default function ViewStudent() {
     );
   }
 
-  const activeStudent =
-    student ||
-    ({
-      id: "placeholder",
-      name: "Loading Student Name",
-      email: "loading.student@university.edu",
-      level: 1,
-      xp: 100,
-      location: "Philippines",
-      createdAt: new Date().toISOString(),
-    } as any);
+  const activeStudent = student!;
 
   const studentBadges = getStudentEarnedBadges(activeStudent);
   const unlockedBadgesCount = studentBadges.filter((b) => b.unlocked).length;

@@ -9,7 +9,7 @@ export default function SubjectManagement() {
         <div>
           <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <BookOpen className="text-primary size-5" />
-            Subject Category Directory & Curriculum Management
+            Subject Directory & Module Management
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Manage subject categories, assigned faculty handlers, and learning curriculum modules.

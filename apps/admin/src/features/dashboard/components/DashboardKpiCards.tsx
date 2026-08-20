@@ -112,7 +112,7 @@ export function DashboardKpiCards({
         </div>
         <div className="min-w-0">
           <span className="text-xl sm:text-2xl font-black text-foreground block truncate">
-            {isTeacher ? handledCategoriesCount : totalCategories || 6}
+            {isTeacher ? handledCategoriesCount : totalCategories}
           </span>
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mt-0.5 truncate">
             {isTeacher

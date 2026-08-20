@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type {Student} from "@/features/students/types/types";
+import type { Student } from "@/features/students/types/types";
 
 export function useStudents(params?: {
   search?: string;
@@ -57,9 +57,11 @@ export function useCreateStudent() {
   return useMutation({
     mutationFn: async (data: {
       email: string;
-      password: string;
-      confirmPassword: string;
-      name: string;
+      password?: string;
+      confirmPassword?: string;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
       location?: string;
     }) => {
       return await axiosPrivate.post("/students/create", data);
@@ -75,13 +77,17 @@ export function useBulkCreateStudents() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (students: Array<{
-      name: string;
-      email: string;
-      location?: string;
-      program?: string;
-      yearLevel?: string;
-    }>) => {
+    mutationFn: async (
+      students: Array<{
+        name?: string;
+        firstName?: string;
+        lastName?: string;
+        email: string;
+        location?: string;
+        program?: string;
+        yearLevel?: string;
+      }>,
+    ) => {
       return await axiosPrivate.post("/students/bulk", { students });
     },
     onSuccess: () => {

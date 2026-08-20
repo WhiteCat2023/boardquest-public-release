@@ -21,6 +21,18 @@ export function StudentDetailsCard({ student, formatDate }: StudentDetailsCardPr
           <span className="text-muted-foreground font-medium">Student ID</span>
           <span className="font-bold text-foreground font-mono">{student.id}</span>
         </div>
+        {student.firstName && (
+          <div className="flex justify-between py-1.5 border-b border-border">
+            <span className="text-muted-foreground font-medium">First Name</span>
+            <span className="font-semibold text-foreground">{student.firstName}</span>
+          </div>
+        )}
+        {student.lastName && (
+          <div className="flex justify-between py-1.5 border-b border-border">
+            <span className="text-muted-foreground font-medium">Last Name</span>
+            <span className="font-semibold text-foreground">{student.lastName}</span>
+          </div>
+        )}
         <div className="flex justify-between py-1.5 border-b border-border">
           <span className="text-muted-foreground font-medium">Full Name</span>
           <span className="font-semibold text-foreground">{student.name}</span>

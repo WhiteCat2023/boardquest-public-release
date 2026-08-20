@@ -31,6 +31,8 @@ export async function ensureSuperAdminExists() {
         id: SUPERADMIN_DEFAULT_ID,
         employeeId: "SA-0001",
         name,
+        firstName: "System Super",
+        lastName: "Administrator",
         email,
         username,
         password: hash,

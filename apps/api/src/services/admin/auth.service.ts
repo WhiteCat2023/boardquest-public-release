@@ -1,9 +1,12 @@
-import { ApiError } from "../utils/apiError";
-import { hashedPassword, verifyPassword } from "../utils/hash";
-import { signJWT, verifyJWT } from "../utils/jwt.utils";
-import { sendPasswordResetEmail } from "./mail.service";
-import prisma from "./prisma";
-import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "./admin/bootstrap.service";
+import { ApiError } from "../../utils/apiError";
+import { hashedPassword, verifyPassword } from "../../utils/hash";
+import { signJWT, verifyJWT } from "../../utils/jwt.utils";
+import { sendPasswordResetEmail } from "../mail.service";
+import prisma from "../prisma";
+import {
+  ensureSuperAdminExists,
+  SUPERADMIN_DEFAULT_ID,
+} from "./bootstrap.service";
 import { z } from "zod";
 
 /*
@@ -20,18 +23,38 @@ export const addNewAdminUserSchema = z.object({
 // Alias for backward compatibility
 export const addNewAdminUser = addNewAdminUserSchema;
 
-export const createAdminUserSchema = z.object({
-  employeeId: z.string().min(1, "Employee ID is required"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  role: z.enum(["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"], "Role required"),
-  phoneNumber: z.string().min(10, "Phone number must be at least 11 digits"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Confirm Password must be at least 6 characters"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-});
+export const createAdminUserSchema = z
+  .object({
+    employeeId: z.string().min(1, "Employee ID is required"),
+    name: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: z.string().email("Invalid email"),
+    role: z.enum(
+      ["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"],
+      "Role required",
+    ),
+    phoneNumber: z.string().min(10, "Phone number must be at least 11 digits"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+      .string()
+      .min(6, "Confirm Password must be at least 6 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+  })
+  .refine(
+    (data) =>
+      Boolean(
+        (data.name && data.name.trim().length > 0) ||
+          (data.firstName && data.firstName.trim().length > 0) ||
+          (data.lastName && data.lastName.trim().length > 0)
+      ),
+    {
+      message: "First name and last name, or full name, are required",
+    }
+  );
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -42,13 +65,15 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Reset token is required"),
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Confirm Password is required"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-});
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Reset token is required"),
+    newPassword: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Confirm Password is required"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+  });
 
 export const createReviewCenterRepUserSchema = z
   .object({
@@ -61,7 +86,8 @@ export const createReviewCenterRepUserSchema = z
     confirmPassword: z
       .string()
       .min(12, "Confirm Password must be at least 12 characters"),
-  }).refine((data) => data.password === data.confirmPassword, {
+  })
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
   });
 
@@ -70,7 +96,9 @@ type createAdminUserInput = z.infer<typeof createAdminUserSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
 type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
-type createReviewCenterRepUserInput = z.infer<typeof createReviewCenterRepUserSchema>;
+type createReviewCenterRepUserInput = z.infer<
+  typeof createReviewCenterRepUserSchema
+>;
 
 export class AuthService {
   constructor(private readonly db: typeof prisma = prisma) {}
@@ -90,11 +118,16 @@ export class AuthService {
 
     // Environment Super Admin check (Bypasses database storage completely)
     const envSuperAdminEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase();
-    const envSuperAdminUsername = process.env.SUPERADMIN_USERNAME?.toLowerCase();
+    const envSuperAdminUsername =
+      process.env.SUPERADMIN_USERNAME?.toLowerCase();
     const envSuperAdminPassword = process.env.SUPERADMIN_PASSWORD;
 
     const inputIdent = email.trim().toLowerCase();
-    if (envSuperAdminPassword && (inputIdent === envSuperAdminEmail || (envSuperAdminUsername && inputIdent === envSuperAdminUsername))) {
+    if (
+      envSuperAdminPassword &&
+      (inputIdent === envSuperAdminEmail ||
+        (envSuperAdminUsername && inputIdent === envSuperAdminUsername))
+    ) {
       if (password !== envSuperAdminPassword) {
         throw new ApiError(401, "Invalid email or password");
       }
@@ -153,7 +186,7 @@ export class AuthService {
             name: true,
           },
         },
-      }
+      },
     });
 
     if (!user) {
@@ -205,7 +238,31 @@ export class AuthService {
       ]);
     }
 
-    const { employeeId, name, email, role, phoneNumber, username, password } = parsed.data;
+    const {
+      employeeId,
+      name: rawName,
+      firstName: rawFirst,
+      lastName: rawLast,
+      email,
+      role,
+      phoneNumber,
+      username,
+      password,
+    } = parsed.data;
+
+    let firstName = rawFirst?.trim() || "";
+    let lastName = rawLast?.trim() || "";
+    let name = rawName?.trim() || "";
+
+    if (!name && (firstName || lastName)) {
+      name = [firstName, lastName].filter(Boolean).join(" ").trim();
+    } else if (name && !firstName && !lastName) {
+      const parts = name.split(" ");
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ") || "";
+    } else if (firstName && lastName && !name) {
+      name = `${firstName} ${lastName}`.trim();
+    }
 
     const existingUser = await this.db.adminUser.findFirst({
       where: { OR: [{ email }, { username }, { employeeId }] },
@@ -221,7 +278,9 @@ export class AuthService {
         employeeId,
         username,
         email,
-        name,
+        name: name || "Admin User",
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         role,
         phoneNumber,
         password: hash,
@@ -230,6 +289,8 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        firstName: true,
+        lastName: true,
         username: true,
       },
     });
@@ -265,12 +326,16 @@ export class AuthService {
 
     if (!user) {
       console.log(`\n[AuthService] Password reset requested for: ${email}`);
-      console.log(`⚠️  User with email "${email}" was NOT found in the database. No email sent.`);
+      console.log(
+        `⚠️  User with email "${email}" was NOT found in the database. No email sent.`,
+      );
     } else {
-      console.log(`\n[AuthService] Password reset requested for: ${email} (User: ${user.name})`);
+      console.log(
+        `\n[AuthService] Password reset requested for: ${email} (User: ${user.name})`,
+      );
       const resetToken = signJWT(
         { id: user.id, email: user.email, type: "password_reset" },
-        "1h"
+        "1h",
       );
 
       await sendPasswordResetEmail({
@@ -281,7 +346,8 @@ export class AuthService {
     }
 
     return {
-      message: "If an account with that email exists, password reset instructions have been sent.",
+      message:
+        "If an account with that email exists, password reset instructions have been sent.",
     };
   }
 
@@ -290,9 +356,7 @@ export class AuthService {
 
     if (!parsed.success) {
       const errors = parsed.error.flatten();
-      throw new ApiError(400, "Validation failed", [
-        JSON.stringify(errors),
-      ]);
+      throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
     const { token, newPassword } = parsed.data;
@@ -303,7 +367,11 @@ export class AuthService {
       throw new ApiError(400, "Invalid or expired password reset token");
     }
 
-    const tokenPayload = payload as { id: string; email: string; type?: string };
+    const tokenPayload = payload as {
+      id: string;
+      email: string;
+      type?: string;
+    };
 
     if (tokenPayload.type !== "password_reset") {
       throw new ApiError(400, "Invalid password reset token type");
@@ -327,9 +395,21 @@ export class AuthService {
     return { message: "Password has been reset successfully." };
   }
 
-  async updateProfile(userId: string, data: { name?: string; email?: string; username?: string; phoneNumber?: string; password?: string }) {
+  async updateProfile(
+    userId: string,
+    data: {
+      name?: string;
+      email?: string;
+      username?: string;
+      phoneNumber?: string;
+      password?: string;
+    },
+  ) {
     if (userId === "superadmin-env-id") {
-      throw new ApiError(400, "Environment Super Admin account profile cannot be modified.");
+      throw new ApiError(
+        400,
+        "Environment Super Admin account profile cannot be modified.",
+      );
     }
 
     const user = await this.db.adminUser.findUnique({ where: { id: userId } });
@@ -359,13 +439,13 @@ export class AuthService {
 export const authService = new AuthService();
 
 export const login = authService.login.bind(authService);
-export const createNewAdminUser = authService.createNewAdminUser.bind(authService);
+export const createNewAdminUser =
+  authService.createNewAdminUser.bind(authService);
 export const createNewStudent = authService.createNewStudent.bind(authService);
 export const createNewPartner = authService.createNewPartner.bind(authService);
 export const signupAdmin = authService.signupAdmin.bind(authService);
-export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(authService);
+export const signupReviewCenterRep =
+  authService.signupReviewCenterRep.bind(authService);
 export const forgotPassword = authService.forgotPassword.bind(authService);
 export const resetPassword = authService.resetPassword.bind(authService);
 export const updateProfile = authService.updateProfile.bind(authService);
-
-

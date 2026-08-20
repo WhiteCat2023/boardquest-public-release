@@ -211,21 +211,13 @@ export default function ViewFacultyMember() {
     );
   }
 
-  const activeMember = member || ({
-    id: "placeholder",
-    name: "Loading Faculty Member",
-    email: "loading.faculty@university.edu",
-    role: "TEACHER",
-    isActive: true,
-    department: { name: "Department Name" },
-    handledCategories: [{ id: "1", name: "Category Name" }],
-  } as any);
+  const activeMember = member!;
 
   const isAccountActive = activeMember.isActive !== false;
   const isOnline = isUserOnline(activeMember.lastActiveAt, activeMember.isActive);
   const canManage =
     activeMember.id !== currentUserId &&
-    isAllowedToManageRole(currentUserRole, activeMember.role || "TEACHER");
+    isAllowedToManageRole(currentUserRole, activeMember.role);
   const canManageCategories =
     currentUserRole === "ADMIN" || currentUserRole === "SUPERADMIN";
 
@@ -289,7 +281,7 @@ export default function ViewFacultyMember() {
               {activeMember.name}
             </h2>
             <p className="text-xs text-muted-foreground font-medium">
-              @{activeMember.username}
+              {activeMember.email}
             </p>
           </div>
 
@@ -383,15 +375,6 @@ export default function ViewFacultyMember() {
 
               <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <User size={12} /> System Username
-                </span>
-                <span className="text-sm font-bold text-foreground">
-                  @{activeMember.username}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock size={12} /> Last Active
                 </span>
                 <span className="text-sm font-bold text-foreground">
@@ -423,15 +406,6 @@ export default function ViewFacultyMember() {
                 </span>
                 <span className="text-sm font-bold text-foreground">
                   {activeMember.phoneNumber || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border sm:col-span-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Briefcase size={12} /> Department
-                </span>
-                <span className="text-sm font-bold text-foreground capitalize">
-                  {activeMember.department?.name || "General Academic"}
                 </span>
               </div>
             </div>
@@ -490,7 +464,7 @@ export default function ViewFacultyMember() {
           </Card>
 
           {/* Card 3: Permissions & Role Scope */}
-          <Card className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+          {/* <Card className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-border pb-3">
               <div className="p-2 bg-muted text-muted-foreground rounded-xl">
                 <Lock size={18} />
@@ -526,7 +500,7 @@ export default function ViewFacultyMember() {
                 {getRoleDescription(activeMember.role)}
               </p>
             </div>
-          </Card>
+          </Card> */}
         </div>
       </div>
 

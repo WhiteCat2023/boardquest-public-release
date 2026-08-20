@@ -21,9 +21,7 @@ const ITEMS_PER_PAGE = 10;
 
 export default function StudentManagement() {
   const { isTeacher, currentUser } = useRoleFlags();
-  const [activeTab, setActiveTab] = useState<"MY_STUDENTS" | "DIRECTORY" | "GUIDANCE">(
-    isTeacher ? "MY_STUDENTS" : "DIRECTORY"
-  );
+  const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">("DIRECTORY");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
@@ -38,7 +36,7 @@ export default function StudentManagement() {
     search: searchTerm,
     level: selectedLevel,
     location: selectedLocation,
-    advisorId: activeTab === "MY_STUDENTS" ? currentUser?.id : undefined,
+    advisorId: isTeacher ? currentUser?.id : undefined,
     skip,
     take: ITEMS_PER_PAGE,
   });
@@ -82,34 +80,16 @@ export default function StudentManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <StudentHeader
           canAddStudent={!isTeacher}
-          title={isTeacher ? "Student Directory & Performance" : "Student Directory & Enrollment"}
+          title={isTeacher ? "My Handled Students" : "Student Directory & Enrollment"}
           description={
             isTeacher
-              ? "View your handled students, review academic performance, and monitor cohort analytics."
+              ? "View and monitor the students assigned to you for academic guidance and mentoring."
               : "Manage enrolled students, academic programs, and evaluation eligibility."
           }
         />
 
         {/* Tab Switcher */}
         <div className="flex items-center gap-2 bg-muted/40 p-1 border border-border rounded-xl w-fit flex-wrap">
-          {isTeacher && (
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("MY_STUDENTS");
-                resetPagination();
-              }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "MY_STUDENTS"
-                  ? "bg-card text-primary shadow-xs border border-border"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users size={14} />
-              My Handled Students
-            </button>
-          )}
-
           <button
             type="button"
             onClick={() => {
@@ -122,8 +102,8 @@ export default function StudentManagement() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <GraduationCap size={14} />
-            {isTeacher ? "All Students" : `Enrolled Students (${total})`}
+            {isTeacher ? <Users size={14} /> : <GraduationCap size={14} />}
+            {isTeacher ? `My Assigned Students (${total})` : `Enrolled Students (${total})`}
           </button>
 
           <button
@@ -141,7 +121,7 @@ export default function StudentManagement() {
         </div>
       </div>
 
-      {activeTab === "DIRECTORY" || activeTab === "MY_STUDENTS" ? (
+      {activeTab === "DIRECTORY" ? (
         <>
           {/* Search & Filters Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs">
@@ -215,6 +195,12 @@ export default function StudentManagement() {
             students={studentsList}
             isLoading={isLoading}
             onAssignGuidance={handleOpenAssignGuidance}
+            emptyTitle={isTeacher ? "No Assigned Students" : "No Enrolled Students Registered"}
+            emptyDescription={
+              isTeacher
+                ? "You currently do not have any students assigned to you for academic guidance."
+                : "No students match the selected filter criteria."
+            }
           />
 
           {/* Pagination Bar */}

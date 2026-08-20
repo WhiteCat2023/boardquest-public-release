@@ -152,7 +152,7 @@ export default function FacultyProfileForm({
         <div className="flex flex-col gap-1.5 md:col-span-3">
           <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Shield size={12} className="text-muted-foreground" />
-            Authority Role <span className="text-primary">*</span>
+            Role <span className="text-primary">*</span>
           </Label>
           <Select
             value={formData.role}

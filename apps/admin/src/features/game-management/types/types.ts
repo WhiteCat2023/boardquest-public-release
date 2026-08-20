@@ -1,4 +1,14 @@
-export type BadgeType = "bronze" | "silver" | "gold" | "fire" | "lightning" | "crown" | "diamond";
+export type BadgeType =
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "fire"
+  | "lightning"
+  | "crown"
+  | "diamond"
+  | "emerald"
+  | "ruby"
+  | "cosmic";
 
 export type BadgeCategory = 
   | "Progression" 
@@ -7,7 +17,9 @@ export type BadgeCategory =
   | "Precision" 
   | "Subject Mastery" 
   | "Dedication" 
-  | "Elite Status";
+  | "Elite Status"
+  | "Speed & Agility"
+  | "Special Quest";
 
 export interface GameBadge {
   id: string;
@@ -17,13 +29,15 @@ export interface GameBadge {
   description: string;
   xp: number;
   iconName: string;
+  imageUrl?: string; // Cloudinary uploaded photo URL
   color: string;
   bgColor: string;
   borderColor: string;
+  glowColor?: string;
   isActive: boolean;
   unlockedCount?: number;
   triggerRule: {
-    type: "accuracy" | "streak" | "level" | "score" | "mastery" | "xp";
+    type: "accuracy" | "streak" | "level" | "score" | "mastery" | "xp" | "questions";
     threshold: number;
   };
 }
