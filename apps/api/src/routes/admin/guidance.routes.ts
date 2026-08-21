@@ -16,25 +16,25 @@ router.use(authenticateToken);
 
 router.post(
   "/",
-  requireRoles(["SUPERADMIN", "ADMIN"]),
+  requireRoles(["SUPERADMIN", "DEAN"]),
   createGuidanceAssignment
 );
 
 router.get(
   "/",
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]),
   getGuidanceAssignments
 );
 
 router.put(
   "/:id",
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]),
   updateGuidanceAssignment
 );
 
 router.get(
   "/failing-students",
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   getFailingStudents
 );
 

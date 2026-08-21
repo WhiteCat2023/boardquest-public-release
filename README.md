@@ -331,7 +331,8 @@ For inquiries, technical support, or project contributions, please reach out to 
 - **Project Coordinator**: `Desiree Cendana-Perreras`
 - **Technical Consultant**: `Wilchin Dipolog`
 
-- **Repository**: [https://github.com/WhiteCat2023/boardquest-admin-2](https://github.com/WhiteCat2023/boardquest-admin-2)
+- **Admin & Core Backend Repository**: [https://github.com/WhiteCat2023/boardquest-admin-2](https://github.com/WhiteCat2023/boardquest-admin-2)
+- **Game & Learner Client Repository**: [https://github.com/Itsan12345/BoardQuesters](https://github.com/Itsan12345/BoardQuesters.git)
 - **Issue Tracker**: [https://github.com/WhiteCat2023/boardquest-admin-2/issues](https://github.com/WhiteCat2023/boardquest-admin-2/issues)
 - **Capstone Team Lead / Primary Maintainer**:
   - **Lead Developer/Maintainer**: `WhiteCat2023`

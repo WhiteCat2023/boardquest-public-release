@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Shield, Briefcase, Power, Clock, Lock } from "lucide-react";
+import { Eye, Shield, Power, Clock, Lock } from "lucide-react";
 import type { FacultyMember } from "@/features/faculty";
 import { getRoleBadgeColor, isUserOnline } from "@/features/faculty/utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,14 +66,6 @@ export default function FacultyTableRow({
           </div>
         </div>
       </TableCell>
-
-      {/* Scope / Department */}
-      {/* <TableCell className="py-2 px-3">
-        <div className="flex items-center gap-1 text-foreground text-[11px] font-medium">
-          <Briefcase size={12} className="text-muted-foreground shrink-0" />
-          <span className="capitalize truncate max-w-[130px]">{member.department?.name || "General"}</span>
-        </div>
-      </TableCell> */}
 
       {/* Authority Role */}
       <TableCell className="hidden sm:table-cell py-2 px-3">

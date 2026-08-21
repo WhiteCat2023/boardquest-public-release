@@ -21,7 +21,7 @@ The **BoardQuest API** is a high-performance RESTful backend engineered using **
 
 ## Core Capabilities
 
-- **🔐 Authentication & RBAC**: Stateless JWT authorization with secure cookies, Argon2 password hashing, and role checks (`SUPERADMIN`, `ADMIN`, `TEACHER`, `TEAMLEAD`, `STUDENT`).
+- **🔐 Authentication & RBAC**: Stateless JWT authorization with secure cookies, Argon2 password hashing, and role checks (`SUPERADMIN`, `DEAN`, `TEAMLEAD`, `TEACHER`, `STUDENT`).
 - **📝 Question Bank Curation**: Multi-stage question approval workflow (Draft $\rightarrow$ Review $\rightarrow$ Approved $\rightarrow$ Published), taxonomy mapping, and bulk Excel parsing via `xlsx`.
 - **⚙️ Background Workers**: Asynchronous task scheduling and job queueing powered by **Agenda.js** connected directly to MongoDB.
 - **🤖 AI Synthesis & Webhooks**: Google Gemini integration for question generation/synthesis and automated n8n webhook pipelines for paraphrasing and performance insights.

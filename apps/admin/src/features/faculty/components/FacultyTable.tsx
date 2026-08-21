@@ -28,7 +28,6 @@ export default function FacultyTable({
           email: "loading.faculty@university.edu",
           role: "TEACHER",
           isActive: true,
-          department: { name: "Department Name" },
           handledCategories: [{ id: "1", name: "Category" }],
         }) as FacultyMember[])
       : faculties;
@@ -57,9 +56,6 @@ export default function FacultyTable({
                   <TableHead className="py-2.5 px-4 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Employee Profile
                   </TableHead>
-                  {/* <TableHead className="py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Department
-                  </TableHead> */}
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Role
                   </TableHead>

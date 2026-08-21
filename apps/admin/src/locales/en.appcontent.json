@@ -6,7 +6,7 @@
   },
   "roles": {
     "superadmin": "Super Administrator",
-    "admin": "Administrator",
+    "dean": "Dean",
     "teamlead": "Team Lead / Co-Admin",
     "teacher": "Faculty Instructor"
   },
@@ -20,7 +20,7 @@
       "systemStatus": "System Live & Synced",
       "portals": {
         "SUPERADMIN": "Super Administrator Portal",
-        "ADMIN": "Administrator Portal",
+        "DEAN": "Dean Portal",
         "TEAMLEAD": "Team Lead Portal",
         "TEACHER": "Faculty Portal",
         "DEFAULT": "Executive Portal"
@@ -28,7 +28,7 @@
       "descriptions": {
         "TEACHER": "Personal teaching workspace, question authoring repository, and student evaluation progress.",
         "TEAMLEAD": "Curriculum evaluation oversight, question review queue, and academic performance monitoring.",
-        "ADMIN": "Overview of curriculum evaluation metrics, student progress, faculty status, and question bank statistics.",
+        "DEAN": "Overview of curriculum evaluation metrics, student progress, faculty status, and question bank statistics.",
         "SUPERADMIN": "Overview of curriculum evaluation metrics, student progress, faculty status, and question bank statistics."
       },
       "greetings": {
@@ -50,12 +50,12 @@
         "badges": {
           "teacher": "My Questions",
           "teamlead": "Needs Review",
-          "admin": "Item Bank"
+          "dean": "Item Bank"
         },
         "labels": {
           "teacher": "Authored Questions",
           "teamlead": "Pending Evaluation Queue",
-          "admin": "Board Questions Bank"
+          "dean": "Board Questions Bank"
         },
         "approved": "Approved",
         "published": "Published",

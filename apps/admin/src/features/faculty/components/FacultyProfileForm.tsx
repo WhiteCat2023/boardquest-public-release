@@ -46,8 +46,12 @@ export default function FacultyProfileForm({
           <IdCard size={16} />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-foreground">Faculty Identity & Details</h2>
-          <p className="text-xs text-muted-foreground">Specify employee credentials, system role, and assigned subjects.</p>
+          <h2 className="text-sm font-bold text-foreground">
+            Faculty Identity & Details
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Specify employee credentials, system role, and assigned subjects.
+          </p>
         </div>
       </div>
 
@@ -73,7 +77,10 @@ export default function FacultyProfileForm({
         <div className="flex flex-col gap-1.5">
           <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <User size={12} className="text-muted-foreground" />
-            Middle Name <span className="text-muted-foreground font-normal text-[10px] lowercase">(optional)</span>
+            Middle Name{" "}
+            <span className="text-muted-foreground font-normal text-[10px] lowercase">
+              (optional)
+            </span>
           </Label>
           <Input
             type="text"
@@ -109,7 +116,7 @@ export default function FacultyProfileForm({
           <Input
             type="text"
             required
-            placeholder="e.g. EMP-2026-0102"
+            placeholder="e.g. A-516-111"
             value={formData.employeeId}
             onChange={(e) => onChange("employeeId", e.target.value)}
             className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"

@@ -171,8 +171,8 @@ function Sidebar({ navItem }: SidebarContentProps) {
     switch (role?.toUpperCase()) {
       case "SUPERADMIN":
         return "Super Admin Portal";
-      case "ADMIN":
-        return "Admin Portal";
+      case "DEAN":
+        return "Dean Portal";
       case "TEAMLEAD":
         return "Team Lead Portal";
       case "TEACHER":
@@ -185,8 +185,8 @@ function Sidebar({ navItem }: SidebarContentProps) {
     switch (role?.toUpperCase()) {
       case "SUPERADMIN":
         return "SAP";
-      case "ADMIN":
-        return "AP";
+      case "DEAN":
+        return "DP";
       case "TEAMLEAD":
         return "TLP";
       case "TEACHER":

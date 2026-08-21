@@ -110,10 +110,10 @@ export const requireGameAdmin = (
 ) => {
   const userRole = req.body.role;
 
-  if (!userRole || !["ADMIN", "SUPERADMIN"].includes(userRole)) {
+  if (!userRole || !["DEAN", "SUPERADMIN"].includes(userRole)) {
     throw new ApiError(
       403,
-      "Insufficient privileges: Only admins can modify game configuration"
+      "Insufficient privileges: Only deans and superadmins can modify game configuration"
     );
   }
 

@@ -139,7 +139,7 @@ function ProfileSettings() {
               className="bg-primary/10 text-primary border-primary/20 text-xs font-bold uppercase tracking-wider px-3 py-0.5 rounded-full"
             >
               <Shield size={12} className="mr-1.5" />
-              {user.role || "ADMINISTRATOR"}
+              {user.role || "DEAN"}
             </Badge>
           </div>
 
@@ -148,10 +148,6 @@ function ProfileSettings() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 pt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-xl border border-border font-medium">
-              <Building2 size={13} className="text-primary" />
-              {user.department?.name || "Academic Department"}
-            </span>
             <span className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-xl border border-border font-medium">
               <IdCard size={13} className="text-primary" />
               Employee ID: {user.employeeId || "SA-0001"}
@@ -323,7 +319,7 @@ function ProfileSettings() {
               <Shield size={12} className="text-primary" /> Assigned Role
             </span>
             <span className="text-sm font-bold text-foreground">
-              {user.role || "ADMINISTRATOR"}
+              {user.role || "DEAN"}
             </span>
           </div>
 
@@ -336,14 +332,6 @@ function ProfileSettings() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-1 p-4 bg-muted/40 rounded-2xl border border-border">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Building2 size={12} className="text-primary" /> Department Scope
-            </span>
-            <span className="text-sm font-bold text-foreground capitalize">
-              {user.department?.name || "Executive Academic Division"}
-            </span>
-          </div>
 
           <div className="flex flex-col gap-1 p-4 bg-muted/40 rounded-2xl border border-border">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">

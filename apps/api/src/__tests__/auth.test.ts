@@ -27,7 +27,7 @@ describe("Auth Routes", () => {
         id: "1",
         email: "newadmin@example.com",
         password: "hashed_password",
-        role: "ADMIN",
+        role: "DEAN",
       };
 
       (authService.signupAdmin as jest.Mock).mockResolvedValue(newUser);
@@ -63,7 +63,7 @@ describe("Auth Routes", () => {
         id: "1",
         email: "test@example.com",
         password: "hashed_password",
-        role: "ADMIN",
+        role: "DEAN",
       };
 
       (authService.login as jest.Mock).mockResolvedValue(user);
@@ -94,7 +94,7 @@ describe("Auth Routes", () => {
       const user = {
         id: "1",
         email: "test@example.com",
-        role: "ADMIN",
+        role: "DEAN",
       };
 
       (authService.login as jest.Mock).mockResolvedValue(user);

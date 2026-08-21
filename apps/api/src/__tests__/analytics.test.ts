@@ -55,9 +55,9 @@ describe('Analytics Routes', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    // Restore default auth mock implementation (ADMIN role)
+    // Restore default auth mock implementation (DEAN role)
     (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
-      req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', name: 'Admin User' };
+      req.user = { id: '1', email: 'admin@example.com', role: 'DEAN', name: 'Dean User' };
       next();
     });
   });

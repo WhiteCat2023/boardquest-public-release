@@ -21,7 +21,7 @@ addNewAdminUser = Functionality for super admin to send sign up link to new admi
 export const addNewAdminUserSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"], "Role required"),
+  role: z.enum(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"], "Role required"),
 });
 
 // Alias for backward compatibility
@@ -35,7 +35,7 @@ export const createAdminUserSchema = z
     lastName: z.string().optional(),
     email: z.string().email("Invalid email"),
     role: z.enum(
-      ["ADMIN", "TEACHER", "TEAMLEAD", "SUPERADMIN"],
+      ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"],
       "Role required",
     ),
     phoneNumber: z.string().min(10, "Phone number must be at least 11 digits"),

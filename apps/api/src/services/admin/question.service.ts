@@ -112,7 +112,7 @@ export class QuestionService {
       authorUser = await this.db.adminUser.findUnique({
         where: { id: finalAuthorId },
       });
-      if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
+      if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "DEAN") {
         computedStatus = QuestionStatus.APPROVED;
       } else {
         if (
@@ -670,7 +670,7 @@ export class QuestionService {
       const isAuthor = question.authorId === user.id;
       const canDelete =
         user.role === "SUPERADMIN" ||
-        user.role === "ADMIN" ||
+        user.role === "DEAN" ||
         (user.role === "TEACHER" && isAuthor);
       if (!canDelete) {
         throw new ApiError(
@@ -688,7 +688,7 @@ export class QuestionService {
   async bulkApproveQuestions(ids: string[], user: any) {
     const canApprove =
       user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
+      user.role === "DEAN" ||
       user.role === "TEAMLEAD";
     if (!canApprove) {
       throw new ApiError(
@@ -737,7 +737,7 @@ export class QuestionService {
   ) {
     const canManage =
       user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
+      user.role === "DEAN" ||
       user.role === "TEAMLEAD";
     if (!canManage) {
       throw new ApiError(
@@ -790,7 +790,7 @@ export class QuestionService {
   async bulkFeedbackQuestions(ids: string[], feedback: string, user: any) {
     const canFeedback =
       user.role === "SUPERADMIN" ||
-      user.role === "ADMIN" ||
+      user.role === "DEAN" ||
       user.role === "TEAMLEAD";
     if (!canFeedback) {
       throw new ApiError(
@@ -935,8 +935,8 @@ export class QuestionService {
         const roleLabel =
           commenterRole === "SUPERADMIN"
             ? "Super Administrator"
-            : commenterRole === "ADMIN"
-              ? "Administrator"
+            : commenterRole === "DEAN"
+              ? "Dean"
               : commenterRole === "TEAMLEAD"
                 ? "Team Lead"
                 : commenterRole || "Reviewer";
@@ -979,7 +979,7 @@ export class QuestionService {
     }
 
     const isAuthor = comment.authorId === userId;
-    const isAdminOrLead = ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(
+    const isAdminOrLead = ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
       userRole,
     );
 

@@ -14,10 +14,10 @@ datasource db {
 }
 
 enum Role{
-  ADMIN
   SUPERADMIN
-  TEACHER
+  DEAN
   TEAMLEAD
+  TEACHER
 }
 
 enum QuestionDifficulty {

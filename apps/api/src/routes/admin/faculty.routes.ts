@@ -13,36 +13,36 @@ import {
 
 const router = Router();
 
-// Only SUPERADMIN, ADMIN, and TEAMLEAD can list and create administrative accounts
+// Only SUPERADMIN, DEAN, and TEAMLEAD can list and create administrative accounts
 router.get(
   "/",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   getFaculties,
 );
 router.post(
   "/",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   createFaculty,
 );
 
 router.post(
   "/bulk",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN"]),
+  requireRoles(["SUPERADMIN", "DEAN"]),
   bulkCreateFaculty);
 
 router.patch(
   "/:id/status",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   toggleFacultyStatus,
 );
 router.patch(
   "/:id/categories",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN"]),
+  requireRoles(["SUPERADMIN", "DEAN"]),
   updateFacultyCategories,
 );
 

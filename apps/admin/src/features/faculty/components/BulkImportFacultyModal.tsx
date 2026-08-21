@@ -29,11 +29,10 @@ const facultyRowSchema = z
     lastName: z.string().optional(),
     email: z.string().min(1, "Missing Email").email("Invalid Email"),
     role: z
-      .enum(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"])
+      .enum(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"])
       .default("TEACHER"),
     employeeId: z.string().optional(),
     phoneNumber: z.string().optional(),
-    departmentName: z.string().optional(),
   })
   .refine(
     (data) =>
@@ -53,7 +52,6 @@ interface ParsedFacultyRow {
   role: string;
   employeeId?: string;
   phoneNumber?: string;
-  departmentName?: string;
   isValid: boolean;
   validationError?: string;
 }
@@ -75,9 +73,9 @@ export default function BulkImportFacultyModal({
   const downloadSampleCSV = () => {
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      "FirstName,LastName,Email,Role,EmployeeID,PhoneNumber,DepartmentName\n" +
-      "Jane,Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567,Medical Technology\n" +
-      "Mark,Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321,Pharmacy\n";
+      "FirstName,LastName,Email,Role,EmployeeID,PhoneNumber\n" +
+      "Jane,Doe,jane.doe@university.edu,TEACHER,EMP-2026-001,09171234567\n" +
+      "Mark,Smith,mark.smith@university.edu,TEAMLEAD,EMP-2026-002,09187654321\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -113,9 +111,6 @@ export default function BulkImportFacultyModal({
     );
     const phoneIdx = headers.findIndex(
       (h) => h.includes("phone") || h.includes("number"),
-    );
-    const deptIdx = headers.findIndex(
-      (h) => h.includes("department") || h.includes("dept"),
     );
 
     const rows: ParsedFacultyRow[] = [];
@@ -168,20 +163,16 @@ export default function BulkImportFacultyModal({
         phoneIdx !== -1 && values[phoneIdx]
           ? values[phoneIdx]
           : values[4] || "";
-      const rawDept =
-        deptIdx !== -1 && values[deptIdx] ? values[deptIdx] : values[5] || "";
-
       const candidate = {
         name,
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         email: rawEmail,
-        role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(rawRole)
+        role: ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"].includes(rawRole)
           ? rawRole
           : "TEACHER",
         employeeId: rawEmpId || undefined,
         phoneNumber: rawPhone || undefined,
-        departmentName: rawDept || undefined,
       };
 
       const result = facultyRowSchema.safeParse(candidate);
@@ -253,7 +244,6 @@ export default function BulkImportFacultyModal({
         role: m.role,
         employeeId: m.employeeId,
         phoneNumber: m.phoneNumber,
-        departmentName: m.departmentName,
       })),
       {
         onSuccess: (res: any) => {

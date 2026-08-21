@@ -72,23 +72,23 @@ class SseService {
       else if (recipientRole === "ALL") {
         isTargeted = true;
       }
-      // 3. Broadcast to specific role (e.g. TEACHER, ADMIN, SUPERADMIN)
+      // 3. Broadcast to specific role (e.g. TEACHER, DEAN, SUPERADMIN)
       else if (clientRole && recipientRole === clientRole) {
         isTargeted = true;
       }
-      // 4. Broadcast to REVIEWER role (SUPERADMIN, ADMIN, TEAMLEAD)
+      // 4. Broadcast to REVIEWER role (SUPERADMIN, DEAN, TEAMLEAD)
       else if (
         recipientRole === "REVIEWER" &&
         clientRole &&
-        ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(clientRole)
+        ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(clientRole)
       ) {
         isTargeted = true;
       }
-      // 5. Broadcast to STAFF role (SUPERADMIN, ADMIN, TEAMLEAD)
+      // 5. Broadcast to STAFF role (SUPERADMIN, DEAN, TEAMLEAD)
       else if (
         recipientRole === "STAFF" &&
         clientRole &&
-        ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(clientRole)
+        ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(clientRole)
       ) {
         isTargeted = true;
       }

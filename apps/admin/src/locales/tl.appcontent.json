@@ -6,7 +6,7 @@
   },
   "roles": {
     "superadmin": "Punong Tagapamahala (Super Admin)",
-    "admin": "Tagapamahala (Admin)",
+    "dean": "Dekano (Dean)",
     "teamlead": "Pinuno ng Koponan / Kasamang Admin",
     "teacher": "Guro sa Pang-akademya"
   },
@@ -43,7 +43,7 @@
       "systemStatus": "Gumagana ang Sistema at Naka-sync",
       "portals": {
         "SUPERADMIN": "Portal ng Punong Tagapamahala",
-        "ADMIN": "Portal ng Tagapamahala",
+        "DEAN": "Portal ng Dekano",
         "TEAMLEAD": "Portal ng Pinuno ng Koponan",
         "TEACHER": "Portal ng Guro",
         "DEFAULT": "Portal ng Ehekutibo"
@@ -51,7 +51,7 @@
       "descriptions": {
         "TEACHER": "Personal na espasyo sa pagtuturo, imbakan ng mga tanong, at progreso ng pagtataya sa estudyante.",
         "TEAMLEAD": "Pangangasiwa sa ebalwasyon ng kurikulum, pila ng pagsusuri ng tanong, at pagsubaybay sa akademikong pagganap.",
-        "ADMIN": "Pangkalahatang tanaw ng mga sukatan sa ebalwasyon ng kurikulum, progreso ng estudyante, katayuan ng guro, at estadistika ng bangko ng tanong.",
+        "DEAN": "Pangkalahatang tanaw ng mga sukatan sa ebalwasyon ng kurikulum, progreso ng estudyante, katayuan ng guro, at estadistika ng bangko ng tanong.",
         "SUPERADMIN": "Pangkalahatang tanaw ng mga sukatan sa ebalwasyon ng kurikulum, progreso ng estudyante, katayuan ng guro, at estadistika ng bangko ng tanong."
       },
       "greetings": {
@@ -73,12 +73,12 @@
         "badges": {
           "teacher": "Aking mga Tanong",
           "teamlead": "Kailangang Suriin",
-          "admin": "Bangko ng Tanong"
+          "dean": "Bangko ng Tanong"
         },
         "labels": {
           "teacher": "Mga Tanong na Naisulat",
           "teamlead": "Nakapila para sa Ebalwasyon",
-          "admin": "Bangko ng Tanong sa Board Exam"
+          "dean": "Bangko ng Tanong sa Board Exam"
         },
         "approved": "Inaprubahan",
         "published": "Naka-publish",
@@ -87,11 +87,11 @@
       "curriculum": {
         "badges": {
           "teacher": "Hawak na Somak",
-          "admin": "Kurikulum"
+          "dean": "Kurikulum"
         },
         "labels": {
           "teacher": "Mga Nakatalagang Kategorya ng Somak",
-          "admin": "Saklaw ng Somak sa Kurikulum"
+          "dean": "Saklaw ng Somak sa Kurikulum"
         },
         "subtitle": "Akademikong Kurikulum",
         "actionSubjects": "Mga Somak"

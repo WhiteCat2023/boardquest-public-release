@@ -20,6 +20,6 @@ router.patch("/:id/read", markAsReadHandler);
 router.patch("/read-all", markAllAsReadHandler);
 router.delete("/:id", deleteNotificationHandler);
 router.delete("/clear-all", clearAllNotificationsHandler);
-router.post("/create", requireRoles(["ADMIN", "SUPERADMIN", "TEAMLEAD"]), createNotificationHandler);
+router.post("/create", requireRoles(["DEAN", "SUPERADMIN", "TEAMLEAD"]), createNotificationHandler);
 
 export default router;

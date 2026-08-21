@@ -31,9 +31,9 @@ describe('Faculty Routes', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    // Restore default auth mock implementation (ADMIN role)
+    // Restore default auth mock implementation (DEAN role)
     (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
-      req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', name: 'Admin User' };
+      req.user = { id: '1', email: 'admin@example.com', role: 'DEAN', name: 'Dean User' };
       next();
     });
   });
@@ -94,7 +94,7 @@ describe('Faculty Routes', () => {
       expect(response.body.data.faculty).toBeDefined();
       expect(response.body.data.faculty.password).toBeUndefined();
       expect(response.body.data.faculty.employeeId).toBe('EMP-001');
-      expect(facultyService.createFaculty).toHaveBeenCalledWith(createPayload, 'ADMIN');
+      expect(facultyService.createFaculty).toHaveBeenCalledWith(createPayload, 'DEAN');
     });
 
     it('should handle validation or logic error from service', async () => {

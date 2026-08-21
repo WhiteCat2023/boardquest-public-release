@@ -5,7 +5,6 @@ import type { FacultyMember, CreateFacultyPayload } from "@/features/faculty";
 export function useFaculties(params?: {
   search?: string;
   role?: string;
-  departmentId?: string;
   status?: string;
   cursor?: string;
   limit?: number;
@@ -45,25 +44,6 @@ export function useFaculties(params?: {
     refetchOnWindowFocus: false,
   });
 }
-
-// export function useDepartments() {
-//   const axiosPrivate = useAxiosPrivate();
-
-//   return useQuery<Department[]>({
-//     queryKey: ["departments"],
-//     queryFn: async () => {
-//       const response = await axiosPrivate.get("/departments/get");
-//       const resData = response.data?.data;
-//       if (Array.isArray(resData)) return resData;
-//       if (Array.isArray(resData?.departments)) return resData.departments;
-//       if (Array.isArray(response.data?.departments))
-//         return response.data.departments;
-//       return [];
-//     },
-//     staleTime: 1000 * 60 * 5,
-//     refetchOnWindowFocus: false,
-//   });
-// }
 
 export function useCreateFaculty() {
   const axiosPrivate = useAxiosPrivate();

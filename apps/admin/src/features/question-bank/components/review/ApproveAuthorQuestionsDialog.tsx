@@ -68,7 +68,7 @@ export default function ApproveAuthorQuestionsDialog({
                   {author.name}
                 </span>
                 <span className="text-[11px] text-muted-foreground block truncate mt-0.5">
-                  {author.email} {author.department ? `• ${author.department}` : ""}
+                  {author.email}
                 </span>
               </div>
             </div>

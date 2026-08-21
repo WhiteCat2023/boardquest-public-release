@@ -31,7 +31,6 @@ export interface CreateFacultyPayload {
   email: string;
   password?: string;
   phoneNumber: string;
-  departmentId?: string;
   handledCategoryIds?: string[];
   role: RoleType;
 }

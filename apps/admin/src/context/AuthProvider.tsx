@@ -13,7 +13,6 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;
-  departmentId?: string | null;
   [key: string]: unknown;
 }
 

@@ -112,8 +112,8 @@ export default function ViewFacultyMember() {
     switch (role) {
       case "SUPERADMIN":
         return "Super Administrator";
-      case "ADMIN":
-        return "Administrator";
+      case "DEAN":
+        return "Dean";
       case "TEAMLEAD":
         return "Co-Admin (Team Lead)";
       case "TEACHER":
@@ -126,11 +126,11 @@ export default function ViewFacultyMember() {
   const getRoleDescription = (role?: RoleType) => {
     switch (role) {
       case "SUPERADMIN":
-        return "Full system control, department creation, and administrative access.";
-      case "ADMIN":
-        return "Department management, faculty member administration, and curriculum oversight.";
+        return "Full system control, institutional oversight, and administrative access.";
+      case "DEAN":
+        return "Academic leadership, curriculum authority, faculty management, and program oversight.";
       case "TEAMLEAD":
-        return "Department co-administration, curriculum reviewing, and teacher coordination.";
+        return "Curriculum reviewing, question quality assurance, and teacher coordination.";
       case "TEACHER":
         return "Question bank creation, test item authoring, and personal question library management.";
       default:
@@ -219,7 +219,7 @@ export default function ViewFacultyMember() {
     activeMember.id !== currentUserId &&
     isAllowedToManageRole(currentUserRole, activeMember.role);
   const canManageCategories =
-    currentUserRole === "ADMIN" || currentUserRole === "SUPERADMIN";
+    currentUserRole === "DEAN" || currentUserRole === "SUPERADMIN";
 
   const handledCategories = activeMember.handledCategories || [];
 

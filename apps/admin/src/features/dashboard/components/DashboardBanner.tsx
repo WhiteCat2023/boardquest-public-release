@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import appContent from "@/constants/appContent";
 
-export type UserRole = "SUPERADMIN" | "ADMIN" | "TEAMLEAD" | "TEACHER";
+export type UserRole = "SUPERADMIN" | "DEAN" | "TEAMLEAD" | "TEACHER";
 
 interface DashboardBannerProps {
   userRole: UserRole;
@@ -21,7 +21,7 @@ export function DashboardBanner({
 }: DashboardBannerProps) {
   const isTeacher = userRole === "TEACHER";
   const isTeamLead = userRole === "TEAMLEAD";
-  const isAdminOrSuper = userRole === "ADMIN" || userRole === "SUPERADMIN";
+  const isDeanOrSuper = userRole === "DEAN" || userRole === "SUPERADMIN";
 
   
 
@@ -42,7 +42,7 @@ export function DashboardBanner({
   const getPortalDescription = () => {
     return (
       appContent.dashboard.banner.descriptions[userRole] ||
-      appContent.dashboard.banner.descriptions.ADMIN
+      appContent.dashboard.banner.descriptions.DEAN
     );
   };
 
@@ -109,7 +109,7 @@ export function DashboardBanner({
           </>
         )}
 
-        {isAdminOrSuper && (
+        {isDeanOrSuper && (
           <>
             <Link to="/question-bank">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">

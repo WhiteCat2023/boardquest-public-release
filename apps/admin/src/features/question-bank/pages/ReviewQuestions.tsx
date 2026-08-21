@@ -106,8 +106,7 @@ export default function ReviewQuestions() {
   const filteredAuthors = authors.filter(
     (a) =>
       a.name.toLowerCase().includes(authorSearch.toLowerCase()) ||
-      a.email.toLowerCase().includes(authorSearch.toLowerCase()) ||
-      (a.department || "").toLowerCase().includes(authorSearch.toLowerCase())
+      a.email.toLowerCase().includes(authorSearch.toLowerCase())
   );
 
   const totalPendingAcrossAuthors = authors.reduce((sum, a) => sum + a.pendingCount, 0);
@@ -208,7 +207,7 @@ export default function ReviewQuestions() {
                         {author.name}
                       </span>
                       <span className="text-[10px] font-medium text-muted-foreground block truncate mt-0.5">
-                        {author.department || author.role}
+                        {author.role}
                       </span>
                       {author.latestSubmissionAt && (
                         <span className="text-[9.5px] font-medium text-muted-foreground/80 flex items-center gap-1 mt-1">
@@ -261,7 +260,7 @@ export default function ReviewQuestions() {
                   </Badge>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {selectedAuthor.email} • {selectedAuthor.department || "Faculty"}
+                  {selectedAuthor.email}
                 </p>
               </div>
             </div>

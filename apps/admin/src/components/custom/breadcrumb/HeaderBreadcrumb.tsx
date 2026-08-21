@@ -32,8 +32,8 @@ export default function HeaderBreadcrumb() {
     switch (role?.toUpperCase()) {
       case "SUPERADMIN":
         return "Super Admin Portal";
-      case "ADMIN":
-        return "Admin Portal";
+      case "DEAN":
+        return "Dean Portal";
       case "TEAMLEAD":
         return "Team Lead Portal";
       case "TEACHER":

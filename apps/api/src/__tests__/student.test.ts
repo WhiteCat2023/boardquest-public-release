@@ -15,7 +15,7 @@ beforeAll(() => {
   app.use(express.json());
   // Inject mock auth user (middleware is mocked globally in setup.ts)
   app.use((req, res, next) => {
-    (req as any).user = { id: '1', role: 'ADMIN', email: 'admin@example.com' };
+    (req as any).user = { id: '1', role: 'DEAN', email: 'admin@example.com' };
     next();
   });
   app.use('/api/students', studentRouter);

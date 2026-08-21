@@ -8,7 +8,7 @@ router.get("/dashboard-summary", authenticateToken, getDashboardAnalyticsSummary
 router.get(
   "/student/:studentId",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]),
   getStudentAnalyticsReport,
 );
 

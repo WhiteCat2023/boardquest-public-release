@@ -43,7 +43,6 @@ export default function FacultyManagement() {
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("ALL");
-  const [selectedDept, setSelectedDept] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
   // Backend Cursor Pagination State (matching Question Bank)
@@ -55,7 +54,6 @@ export default function FacultyManagement() {
     {
       search: searchTerm,
       role: selectedRole,
-      departmentId: selectedDept,
       status: selectedStatus,
       cursor: currentCursor || undefined,
       limit: ITEMS_PER_PAGE,
@@ -151,7 +149,6 @@ export default function FacultyManagement() {
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedRole("ALL");
-    setSelectedDept("ALL");
     setSelectedStatus("ALL");
     resetPaginationOnFilterChange();
   };
@@ -159,7 +156,6 @@ export default function FacultyManagement() {
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
     selectedRole !== "ALL" ||
-    selectedDept !== "ALL" ||
     selectedStatus !== "ALL";
 
   const canAddFaculty = getAllowedRolesToCreate(currentUserRole).length > 0;
@@ -213,7 +209,7 @@ export default function FacultyManagement() {
             <SelectContent position="popper">
               <SelectItem value="ALL">All Roles</SelectItem>
               <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
-              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="DEAN">Dean</SelectItem>
               <SelectItem value="TEAMLEAD">Team Lead</SelectItem>
               <SelectItem value="TEACHER">Teacher</SelectItem>
             </SelectContent>

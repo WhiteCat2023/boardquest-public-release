@@ -35,7 +35,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     const currentUserRole = (auth as any)?.data?.user?.role;
     const canManageBulk =
         currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.DEAN ||
         currentUserRole === UserRole.TEAMLEAD;
 
     // Clean up pending delete timeouts on unmount
@@ -244,7 +244,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             const authorId = typeof q.author === "object" ? (q.author as any).id : q.authorId;
             return (
                 currentUserRole === UserRole.SUPERADMIN ||
-                currentUserRole === UserRole.ADMIN ||
+                currentUserRole === UserRole.DEAN ||
                 authorId === currentUserId
             );
         });

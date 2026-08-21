@@ -41,7 +41,7 @@ export default function UserProfileWidget() {
     switch (role.toUpperCase()) {
       case "SUPERADMIN":
         return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
-      case "ADMIN":
+      case "DEAN":
         return "bg-primary/10 text-primary border-primary/20";
       case "TEAMLEAD":
         return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
@@ -121,7 +121,7 @@ export default function UserProfileWidget() {
               <span>Profile Settings</span>
             </DropdownMenuItem>
 
-            {["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole.toUpperCase()) && (
+            {["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(userRole.toUpperCase()) && (
               <DropdownMenuItem
                 onClick={() => navigate("/settings")}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"

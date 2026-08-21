@@ -40,7 +40,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
   // View Permissions
   const canView = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD ||
       (currentUserRole === UserRole.TEACHER && isAuthor)
   );
@@ -48,7 +48,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
   // Edit Permissions
   const canEdit = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD ||
       (currentUserRole === UserRole.TEACHER &&
         isAuthor &&
@@ -59,7 +59,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
   // Delete Permissions
   const canDelete = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       (currentUserRole === UserRole.TEACHER &&
         isAuthor &&
         (question?.status === QuestionStatus.PENDING_REVIEW ||
@@ -69,21 +69,21 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
   // Feedback & Revision Request Permissions
   const canFeedback = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD
   );
 
   // Approval Permissions
   const canApprove = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD
   );
 
   // Comment / Feedback reply permissions
   const canComment = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD ||
       (currentUserRole === UserRole.TEACHER && isAuthor)
   );

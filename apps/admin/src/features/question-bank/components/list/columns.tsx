@@ -154,21 +154,21 @@ export const getQuestionColumns = ({
       const isAuthor = authorId === currentUserId;
       const canEdit =
         currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.DEAN ||
         currentUserRole === UserRole.TEAMLEAD ||
         (currentUserRole === UserRole.TEACHER &&
           isAuthor &&
           item.status !== QuestionStatus.APPROVED);
       const canDelete =
         currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.DEAN ||
         (currentUserRole === UserRole.TEACHER &&
           isAuthor &&
           item.status !== QuestionStatus.APPROVED);
 
       const canManageBulk =
         currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.ADMIN ||
+        currentUserRole === UserRole.DEAN ||
         currentUserRole === UserRole.TEAMLEAD;
 
       return (

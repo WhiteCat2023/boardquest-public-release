@@ -8,14 +8,14 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
   if (currentUserRole === UserRole.SUPERADMIN) {
     return [
       {
-        value: UserRole.ADMIN,
-        label: "Admin",
-        description: "Full management access across departments and faculty accounts."
+        value: UserRole.DEAN,
+        label: "Dean",
+        description: "Full management access across academic programs and faculty accounts."
       },
       {
         value: UserRole.TEAMLEAD,
         label: "Co-Admin (Team Lead)",
-        description: "Departmental lead capable of reviewing questions and managing teachers."
+        description: "Academic lead capable of reviewing questions and managing teachers."
       },
       {
         value: UserRole.TEACHER,
@@ -24,12 +24,12 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
       },
     ];
   }
-  if (currentUserRole === UserRole.ADMIN) {
+  if (currentUserRole === UserRole.DEAN) {
     return [
       {
         value: UserRole.TEAMLEAD,
         label: "Co-Admin (Team Lead)",
-        description: "Departmental lead capable of reviewing questions and managing teachers."
+        description: "Academic lead capable of reviewing questions and managing teachers."
       },
       {
         value: UserRole.TEACHER,
@@ -55,7 +55,7 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
  */
 export const isAllowedToManageRole = (creatorRole: RoleType, targetRole: RoleType): boolean => {
   if (creatorRole === UserRole.SUPERADMIN) return true;
-  if (creatorRole === UserRole.ADMIN) {
+  if (creatorRole === UserRole.DEAN) {
     return targetRole === UserRole.TEAMLEAD || targetRole === UserRole.TEACHER;
   }
   if (creatorRole === UserRole.TEAMLEAD) {
@@ -71,7 +71,7 @@ export const getRoleBadgeColor = (role: RoleType): string => {
   switch (role) {
     case UserRole.SUPERADMIN:
       return "bg-primary/10 text-primary border-primary/20";
-    case UserRole.ADMIN:
+    case UserRole.DEAN:
       return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
     case UserRole.TEAMLEAD:
       return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";

@@ -27,7 +27,7 @@ function getOrConditions(userId?: string, role?: string) {
   if (role) {
     const uppercaseRole = role.toUpperCase();
     OR_conditions.push({ recipientRole: uppercaseRole });
-    if (["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(uppercaseRole)) {
+    if (["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(uppercaseRole)) {
       OR_conditions.push({ recipientRole: "REVIEWER" });
       OR_conditions.push({ recipientRole: "STAFF" });
     }

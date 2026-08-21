@@ -150,7 +150,7 @@ function App() {
                     <RequireAuth
                       allowedRoles={[
                         "SUPERADMIN",
-                        "ADMIN",
+                        "DEAN",
                         "TEAMLEAD",
                         "TEACHER",
                       ]}
@@ -169,7 +169,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
+                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD"]}
                     />
                   }
                 >
@@ -195,7 +195,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -213,7 +213,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD"]}
+                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD"]}
                     />
                   }
                 >
@@ -234,7 +234,7 @@ function App() {
                 */}
 
                 <Route
-                  element={<RequireAuth allowedRoles={["ADMIN", "TEAMLEAD"]} />}
+                  element={<RequireAuth allowedRoles={["DEAN", "TEAMLEAD"]} />}
                 >
                   <Route
                     path="review-center"
@@ -254,7 +254,7 @@ function App() {
 
                 <Route
                   element={
-                    <RequireAuth allowedRoles={["SUPERADMIN", "ADMIN"]} />
+                    <RequireAuth allowedRoles={["SUPERADMIN", "DEAN"]} />
                   }
                 >
                   <Route path="logs-management" element={<LogsManagement />} />
@@ -269,7 +269,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["ADMIN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={["DEAN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -324,7 +324,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >
@@ -333,7 +333,7 @@ function App() {
 
                 {/* Admin and Teamlead Only Routes */}
                 <Route
-                  element={<RequireAuth allowedRoles={["ADMIN", "TEAMLEAD"]} />}
+                  element={<RequireAuth allowedRoles={["DEAN", "TEAMLEAD"]} />}
                 >
                   <Route
                     path="question-bank/review"
@@ -352,7 +352,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
                     />
                   }
                 >

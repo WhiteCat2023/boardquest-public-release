@@ -33,7 +33,7 @@ export default function SubjectDetailsPage() {
   const canManage =
     !currentUserRole ||
     currentUserRole === "SUPERADMIN" ||
-    currentUserRole === "ADMIN" ||
+    currentUserRole === "DEAN" ||
     currentUserRole === "TEAMLEAD";
 
   const [activeTab, setActiveTab] = useState<"overview" | "modules">("overview");

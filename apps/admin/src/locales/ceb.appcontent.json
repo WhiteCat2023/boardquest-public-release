@@ -6,7 +6,7 @@
   },
   "roles": {
     "superadmin": "Gipanalipdan nga Super Admin",
-    "admin": "Tagdumala (Admin)",
+    "dean": "Dekano (Dean)",
     "teamlead": "Ulo sa Korte / Kaubang Admin",
     "teacher": "Tudloay nga Magtutudlo"
   },
@@ -43,7 +43,7 @@
       "systemStatus": "Naka-on ang Sistema ug Naka-sync",
       "portals": {
         "SUPERADMIN": "Portal sa Gipanalipdan nga Admin",
-        "ADMIN": "Portal sa Tagdumala",
+        "DEAN": "Portal sa Dekano",
         "TEAMLEAD": "Portal sa Ulo sa Korte",
         "TEACHER": "Portal sa Magtutudlo",
         "DEFAULT": "Portal sa Ehekutibo"
@@ -51,7 +51,7 @@
       "descriptions": {
         "TEACHER": "Kaugalingong lugar sa pagtudlo, sudlanan sa mga pangutana, ug estado sa pagsuway sa estudyante.",
         "TEAMLEAD": "Pagdumala sa ebalwasyon sa kurikulum, linya sa pagsubay sa pangutana, ug paglantaw sa agi sa klase.",
-        "ADMIN": "Sumaryo sa sukod sa kurikulum, agi sa estudyante, status sa magtutudlo, ug numero sa bangko sa pangutana.",
+        "DEAN": "Sumaryo sa sukod sa kurikulum, agi sa estudyante, status sa magtutudlo, ug numero sa bangko sa pangutana.",
         "SUPERADMIN": "Sumaryo sa sukod sa kurikulum, agi sa estudyante, status sa magtutudlo, ug numero sa bangko sa pangutana."
       },
       "greetings": {
@@ -73,12 +73,12 @@
         "badges": {
           "teacher": "Akong mga Pangutana",
           "teamlead": "Kinahanglan Subayon",
-          "admin": "Bangko sa Pangutana"
+          "dean": "Bangko sa Pangutana"
         },
         "labels": {
           "teacher": "Gisuwat nga Pangutana",
           "teamlead": "Naghulat sa Ebalwasyon",
-          "admin": "Pangutana sa Board Exam"
+          "dean": "Pangutana sa Board Exam"
         },
         "approved": "Gi-uyonan",
         "published": "Gipagawas",
@@ -87,11 +87,11 @@
       "curriculum": {
         "badges": {
           "teacher": "Gikuptan nga Asignatura",
-          "admin": "Kurikulum"
+          "dean": "Kurikulum"
         },
         "labels": {
           "teacher": "Gihatag nga Kategorya sa Asignatura",
-          "admin": "Nasakpan nga Asignatura sa Kurikulum"
+          "dean": "Nasakpan nga Asignatura sa Kurikulum"
         },
         "subtitle": "Kurikulum sa Ekswelahan",
         "actionSubjects": "Mga Asignatura"

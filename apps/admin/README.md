@@ -27,7 +27,7 @@ The **BoardQuest Admin Portal** is an enterprise-grade Single Page Application (
   - Categorization via Bloom's Taxonomy, difficulty ratings, and subject domain tags.
   - Bulk question import and template parsing via Excel (`.xlsx`).
 - **👥 Faculty & Reviewer Administration**:
-  - Account onboarding, credential management, and role-based permissions (`SUPERADMIN`, `ADMIN`, `TEACHER`, `TEAMLEAD`).
+  - Account onboarding, credential management, and role-based permissions (`SUPERADMIN`, `DEAN`, `TEAMLEAD`, `TEACHER`).
   - Automated invitation dispatch and status toggles.
 - **🏫 Review Center & Institutional Portal**:
   - Partner institution onboarding and cohort oversight.

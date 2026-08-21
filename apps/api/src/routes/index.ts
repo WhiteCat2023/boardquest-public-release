@@ -1,6 +1,5 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
-import departmentRoutes from "./admin/department.routes.js";
 import questionRoutes from "./admin/question.routes.js";
 import studentRoutes from "./admin/student.routes.js";
 import facultyRoutes from "./admin/faculty.routes.js";
@@ -16,7 +15,6 @@ import uploadRoutes from "./admin/upload.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
-router.use("/departments", departmentRoutes);
 router.use("/questions", questionRoutes);
 router.use("/students", studentRoutes);
 router.use("/faculty", facultyRoutes);

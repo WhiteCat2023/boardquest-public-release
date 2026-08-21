@@ -1,6 +1,6 @@
 export enum UserRole {
   SUPERADMIN = "SUPERADMIN",
-  ADMIN = "ADMIN",
+  DEAN = "DEAN",
   TEAMLEAD = "TEAMLEAD",
   TEACHER = "TEACHER",
 }
@@ -15,7 +15,6 @@ export enum QuestionStatus {
 export interface UserContext {
   id: string;
   role: string;
-  departmentId?: string;
 }
 
 export interface QuestionContext {
@@ -33,10 +32,10 @@ export interface QuestionContext {
 export function canViewQuestion(user: UserContext, question: QuestionContext): boolean {
   if (!user || !user.role) return false;
   
-  // Superadmin, Admin, and Team Lead can view all questions
+  // Superadmin, Dean, and Team Lead can view all questions
   if (
     user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.ADMIN ||
+    user.role === UserRole.DEAN ||
     user.role === UserRole.TEAMLEAD
   ) {
     return true;
@@ -71,8 +70,8 @@ export function canEditQuestion(user: UserContext, question: QuestionContext): b
     question.collaboratorIds && Array.isArray(question.collaboratorIds) && question.collaboratorIds.includes(user.id)
   );
 
-  // Superadmin and Admin can edit any unpublished question
-  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.ADMIN) {
+  // Superadmin and Dean can edit any unpublished question
+  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.DEAN) {
     return true;
   }
 
@@ -103,7 +102,7 @@ export function canDeleteQuestion(user: UserContext, question: QuestionContext):
 
   const isAuthor = question.authorId === user.id;
 
-  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.ADMIN) {
+  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.DEAN) {
     return true;
   }
 
@@ -127,7 +126,7 @@ export function canFeedbackQuestion(user: UserContext, question: QuestionContext
 
   return (
     user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.ADMIN ||
+    user.role === UserRole.DEAN ||
     user.role === UserRole.TEAMLEAD
   );
 }
@@ -140,7 +139,7 @@ export function canApproveQuestion(user: UserContext, question: QuestionContext)
 
   return (
     user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.ADMIN ||
+    user.role === UserRole.DEAN ||
     user.role === UserRole.TEAMLEAD
   );
 }
@@ -153,7 +152,7 @@ export function canPublishQuestion(user: UserContext, question?: QuestionContext
 
   return (
     user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.ADMIN ||
+    user.role === UserRole.DEAN ||
     user.role === UserRole.TEAMLEAD
   );
 }

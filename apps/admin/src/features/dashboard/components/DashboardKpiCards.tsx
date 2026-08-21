@@ -59,7 +59,7 @@ export function DashboardKpiCards({
               ? kpi.questionBank.badges.teacher
               : isTeamLead
               ? kpi.questionBank.badges.teamlead
-              : kpi.questionBank.badges.admin}
+              : (kpi.questionBank.badges as any).dean || (kpi.questionBank.badges as any).admin}
           </Badge>
         </div>
         <div className="min-w-0">
@@ -75,7 +75,7 @@ export function DashboardKpiCards({
               ? kpi.questionBank.labels.teacher
               : isTeamLead
               ? kpi.questionBank.labels.teamlead
-              : kpi.questionBank.labels.admin}
+              : (kpi.questionBank.labels as any).dean || (kpi.questionBank.labels as any).admin}
           </p>
         </div>
         <div className="pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[10.5px] text-muted-foreground font-medium gap-1 min-w-0">
@@ -107,7 +107,7 @@ export function DashboardKpiCards({
           >
             {isTeacher
               ? kpi.curriculum.badges.teacher
-              : kpi.curriculum.badges.admin}
+              : (kpi.curriculum.badges as any).dean || (kpi.curriculum.badges as any).admin}
           </Badge>
         </div>
         <div className="min-w-0">
@@ -117,7 +117,7 @@ export function DashboardKpiCards({
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mt-0.5 truncate">
             {isTeacher
               ? kpi.curriculum.labels.teacher
-              : kpi.curriculum.labels.admin}
+              : (kpi.curriculum.labels as any).dean || (kpi.curriculum.labels as any).admin}
           </p>
         </div>
         <div className="pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[10.5px] text-muted-foreground font-medium gap-1 min-w-0">
@@ -177,7 +177,7 @@ export function DashboardKpiCards({
           >
             {isTeacher
               ? kpi.instructorsAndDrafts.badges.teacher
-              : kpi.instructorsAndDrafts.badges.admin}
+              : (kpi.instructorsAndDrafts.badges as any).dean || (kpi.instructorsAndDrafts.badges as any).admin}
           </Badge>
         </div>
         <div className="min-w-0">
@@ -187,14 +187,14 @@ export function DashboardKpiCards({
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mt-0.5 truncate">
             {isTeacher
               ? kpi.instructorsAndDrafts.labels.teacher
-              : kpi.instructorsAndDrafts.labels.admin}
+              : (kpi.instructorsAndDrafts.labels as any).dean || (kpi.instructorsAndDrafts.labels as any).admin}
           </p>
         </div>
         <div className="pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[10.5px] text-muted-foreground font-medium gap-1 min-w-0">
           <span className="truncate">
             {isTeacher
               ? kpi.instructorsAndDrafts.subtitles.teacher
-              : kpi.instructorsAndDrafts.subtitles.admin}
+              : (kpi.instructorsAndDrafts.subtitles as any).dean || (kpi.instructorsAndDrafts.subtitles as any).admin}
           </span>
           <Link
             to={isTeacher ? "/question-bank" : "/faculty-management"}
@@ -202,7 +202,7 @@ export function DashboardKpiCards({
           >
             {isTeacher
               ? kpi.instructorsAndDrafts.actions.teacher
-              : kpi.instructorsAndDrafts.actions.admin}{" "}
+              : (kpi.instructorsAndDrafts.actions as any).dean || (kpi.instructorsAndDrafts.actions as any).admin}{" "}
             <ArrowRight size={10} />
           </Link>
         </div>

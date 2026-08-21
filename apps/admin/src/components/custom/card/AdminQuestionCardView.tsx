@@ -27,8 +27,8 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
     : (item as any)?.authorId;
 
   const isAuthor = authorId === currentUserId;
-  const canEdit = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor);
-  const canDelete = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.ADMIN || (currentUserRole === UserRole.TEACHER && isAuthor);
+  const canEdit = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.DEAN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor);
+  const canDelete = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.DEAN || (currentUserRole === UserRole.TEACHER && isAuthor);
 
   return (
     <Card className="w-full border-border shadow-xs font-sans bg-card text-foreground overflow-hidden flex flex-col">

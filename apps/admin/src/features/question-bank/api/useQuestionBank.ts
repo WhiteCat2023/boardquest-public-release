@@ -18,7 +18,6 @@ export interface PendingReviewAuthor {
     name: string;
     email: string;
     role: string;
-    department?: string;
     pendingCount: number;
     latestSubmissionAt?: string;
 }

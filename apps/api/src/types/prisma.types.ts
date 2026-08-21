@@ -6,10 +6,10 @@
 import type * as PrismaClientPkg from "@prisma/client";
 
 export enum Role {
-  ADMIN = "ADMIN",
   SUPERADMIN = "SUPERADMIN",
-  TEACHER = "TEACHER",
+  DEAN = "DEAN",
   TEAMLEAD = "TEAMLEAD",
+  TEACHER = "TEACHER",
 }
 
 export enum QuestionDifficulty {

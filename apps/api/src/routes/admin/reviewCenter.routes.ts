@@ -15,7 +15,7 @@ import {
 } from "../../controller/admin/calendar.controller";
 
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "ADMIN", "TEAMLEAD"];
+const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
 
 // Review Center Representative Directory Routes
 router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewCenters);

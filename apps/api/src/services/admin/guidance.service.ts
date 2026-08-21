@@ -22,10 +22,10 @@ export const createGuidanceAssignment = async (
   payload: CreateGuidancePayload,
   creatorRole: Role,
 ) => {
-  if (creatorRole !== Role.SUPERADMIN && creatorRole !== Role.ADMIN) {
+  if (creatorRole !== Role.SUPERADMIN && creatorRole !== Role.DEAN) {
     throw new ApiError(
       403,
-      "Only Superadmin and Admin users can assign students to advisors.",
+      "Only Superadmin and Dean users can assign students to advisors.",
     );
   }
 
@@ -167,7 +167,7 @@ export const updateGuidanceAssignment = async (
 
   const isAssigner = existing.assignedById === userId;
   const isAdvisor = existing.advisorId === userId;
-  const isAdmin = userRole === Role.SUPERADMIN || userRole === Role.ADMIN;
+  const isAdmin = userRole === Role.SUPERADMIN || userRole === Role.DEAN;
 
   if (!isAssigner && !isAdvisor && !isAdmin) {
     throw new ApiError(

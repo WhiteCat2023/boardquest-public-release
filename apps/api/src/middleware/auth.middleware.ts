@@ -122,9 +122,9 @@ export const requireAdmin = (
     return;
   }
 
-  if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+  if (req.user.role !== "DEAN" && req.user.role !== "SUPERADMIN") {
     res.status(403).json({
-      message: "Admin privileges required",
+      message: "Dean or Superadmin privileges required",
       error: "INSUFFICIENT_PRIVILEGES",
     });
     return;

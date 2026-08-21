@@ -11,13 +11,6 @@ jest.mock('../services/prisma', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
-    department: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
     question: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -68,14 +61,14 @@ jest.mock('../utils/jwt.utils', () => ({
     if (token === 'invalid_token') {
       return { payload: null, expired: false };
     }
-    return { payload: { id: '1', email: 'test@example.com', role: 'ADMIN' }, expired: false };
+    return { payload: { id: '1', email: 'test@example.com', role: 'DEAN' }, expired: false };
   }),
 }));
 
 // Mock auth middleware module
 jest.mock('../middleware/auth.middleware', () => ({
   authenticateToken: jest.fn((req: any, res: any, next: any) => {
-    req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', name: 'Admin User' };
+    req.user = { id: '1', email: 'admin@example.com', role: 'DEAN', name: 'Dean User' };
     next();
   }),
   requireAdmin: jest.fn((req: any, res: any, next: any) => next()),
@@ -93,7 +86,7 @@ jest.mock('../middleware/auth.middleware', () => ({
 
 // Mock auth middleware helper
 export const mockAuthMiddleware = (req: any, res: any, next: any) => {
-  req.user = { email: 'test@example.com', id: '123', role: 'ADMIN' };
+  req.user = { email: 'test@example.com', id: '123', role: 'DEAN' };
   next();
 };
 
@@ -111,18 +104,11 @@ export const mockAdminUser = {
   id: '2',
   email: 'admin@example.com',
   password: 'hashed_password',
-  role: 'ADMIN',
+  role: 'DEAN',
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
-export const mockDepartment = {
-  id: '1',
-  name: 'Computer Science',
-  description: 'CS Department',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
 
 export const mockQuestion = {
   id: '1',

@@ -52,7 +52,7 @@ export function FacultyRosterCard({ faculties }: FacultyRosterCardProps) {
                       {f.name || f.email?.split("@")[0] || "Faculty Member"}
                     </p>
                     <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">
-                      {f.email || f.department?.name || "Faculty Department"}
+                      {f.email || "Faculty Member"}
                     </p>
                   </div>
                 </div>

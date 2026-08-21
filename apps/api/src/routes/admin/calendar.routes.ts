@@ -8,7 +8,7 @@ import {
 } from "../../controller/admin/calendar.controller";
 
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "ADMIN", "TEAMLEAD"];
+const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
 
 // Calendar & Schedule Routes
 router.get("/schedules/get", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);

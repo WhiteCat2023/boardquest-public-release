@@ -4,7 +4,7 @@ import * as studentController from "../../controller/admin/student.controller";
 
 const router = Router();
 
-const studentRoles = requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]);
+const studentRoles = requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]);
 
 // ============ Student Management Routes ============
 

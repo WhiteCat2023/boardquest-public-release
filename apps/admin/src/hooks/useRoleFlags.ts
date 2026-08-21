@@ -2,26 +2,32 @@ import useAuth from "./useAuth";
 
 export interface RoleFlags {
   isSuperAdmin: boolean;
+  isDean: boolean;
   isAdmin: boolean;
   isTeacher: boolean;
   isTeamLead: boolean;
+  isDeanOrSuperAdmin: boolean;
   isAdminOrSuperAdmin: boolean;
   isStaff: boolean;
 }
 
 export function getRoleFlags(role?: string): RoleFlags {
   const isSuperAdmin = role === "SUPERADMIN";
-  const isAdmin = role === "ADMIN";
+  const isDean = role === "DEAN";
+  const isAdmin = isDean; // backward compatibility
   const isTeacher = role === "TEACHER";
   const isTeamLead = role === "TEAMLEAD";
+  const isDeanOrSuperAdmin = isSuperAdmin || isDean;
 
   return {
     isSuperAdmin,
+    isDean,
     isAdmin,
     isTeacher,
     isTeamLead,
-    isAdminOrSuperAdmin: isSuperAdmin || isAdmin,
-    isStaff: isSuperAdmin || isAdmin || isTeamLead,
+    isDeanOrSuperAdmin,
+    isAdminOrSuperAdmin: isDeanOrSuperAdmin,
+    isStaff: isSuperAdmin || isDean || isTeamLead,
   };
 }
 

@@ -49,8 +49,8 @@ export default function AddFacultyMember() {
 
   useEffect(() => {
     if (currentUserRole === UserRole.SUPERADMIN) {
-      setFormData((prev) => ({ ...prev, role: UserRole.ADMIN }));
-    } else if (currentUserRole === UserRole.ADMIN) {
+      setFormData((prev) => ({ ...prev, role: UserRole.DEAN }));
+    } else if (currentUserRole === UserRole.DEAN) {
       setFormData((prev) => ({ ...prev, role: UserRole.TEAMLEAD }));
     } else {
       setFormData((prev) => ({ ...prev, role: UserRole.TEACHER }));
@@ -189,7 +189,7 @@ export default function AddFacultyMember() {
         firstName,
         lastName,
         email,
-        role: ["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
+        role: ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
         employeeId: employeeId || undefined,
         phoneNumber: phoneNumber || undefined,
         isValid,

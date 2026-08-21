@@ -71,7 +71,7 @@ export default function AddBulkFacultyTab({
           </div>
 
           <Badge variant="outline" className="text-[10px] font-bold uppercase px-2 py-0.5">
-            {currentUserRole || "ADMIN"}
+            {currentUserRole || "DEAN"}
           </Badge>
         </div>
 

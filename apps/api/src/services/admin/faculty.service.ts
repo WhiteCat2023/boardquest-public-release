@@ -83,8 +83,8 @@ export class FacultyService {
 
   isAllowedToManageRole(creatorRole: string, targetRole: string): boolean {
     if (creatorRole === "SUPERADMIN") return true;
-    if (creatorRole === "ADMIN") {
-      // ADMIN can add new CO-ADMIN(TEAMLEAD) and TEACHER
+    if (creatorRole === "DEAN") {
+      // DEAN can add new CO-ADMIN(TEAMLEAD) and TEACHER
       return targetRole === "TEAMLEAD" || targetRole === "TEACHER";
     }
     if (creatorRole === "TEAMLEAD") {
@@ -180,12 +180,12 @@ export class FacultyService {
     }
 
     // Role-based account visibility scoping rules:
-    // 1. SUPERADMIN -> Only returns ADMIN accounts
-    // 2. ADMIN -> Returns both TEAMLEAD and TEACHER accounts
+    // 1. SUPERADMIN -> Returns DEAN, TEAMLEAD, and TEACHER accounts
+    // 2. DEAN -> Returns both TEAMLEAD and TEACHER accounts
     // 3. TEAMLEAD -> Only returns TEACHER accounts
     if (requesterRole === "SUPERADMIN") {
-      where.role = { in: ["ADMIN", "TEAMLEAD", "TEACHER"] };
-    } else if (requesterRole === "ADMIN") {
+      where.role = { in: ["DEAN", "TEAMLEAD", "TEACHER"] };
+    } else if (requesterRole === "DEAN") {
       if (role && role !== "ALL" && ["TEAMLEAD", "TEACHER"].includes(role)) {
         where.role = role;
       } else {
@@ -380,11 +380,11 @@ export class FacultyService {
     categoryIds: string[],
     creatorRole: string,
   ) {
-    // Strictly restrict updating handled categories to ADMIN and SUPERADMIN
-    if (creatorRole !== "ADMIN" && creatorRole !== "SUPERADMIN") {
+    // Strictly restrict updating handled categories to DEAN and SUPERADMIN
+    if (creatorRole !== "DEAN" && creatorRole !== "SUPERADMIN") {
       throw new ApiError(
         403,
-        "Only Administrators and Super Administrators can manage handled categories.",
+        "Only Deans and Super Administrators can manage handled categories.",
       );
     }
 
