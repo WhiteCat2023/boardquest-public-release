@@ -11,6 +11,7 @@ import logsRoutes from "./admin/logs.routes.js";
 import guidanceRoutes from "./admin/guidance.routes.js";
 import notificationRoutes from "./admin/notification.routes.js";
 import uploadRoutes from "./admin/upload.routes.js";
+import gameRoutes from "./admin/game_module/game.routes.js";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/logs", logsRoutes);
 router.use("/guidance", guidanceRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/upload", uploadRoutes);
+router.use("/game", gameRoutes);
 
 export default router;

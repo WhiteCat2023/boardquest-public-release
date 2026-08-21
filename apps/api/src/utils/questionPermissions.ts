@@ -20,7 +20,6 @@ export interface UserContext {
 export interface QuestionContext {
   id: string;
   authorId?: string;
-  collaboratorIds?: string[];
   status: string;
   isPublished?: boolean;
   categoryId?: string;
@@ -41,15 +40,10 @@ export function canViewQuestion(user: UserContext, question: QuestionContext): b
     return true;
   }
 
-  const isCollaborator = Boolean(
-    question.collaboratorIds && Array.isArray(question.collaboratorIds) && question.collaboratorIds.includes(user.id)
-  );
-
-  // Teachers can view published questions, questions they authored, or questions shared as collaborator
+  // Teachers can view published questions or questions they authored
   if (user.role === UserRole.TEACHER) {
     if (question.isPublished) return true;
     if (question.authorId && question.authorId === user.id) return true;
-    if (isCollaborator) return true;
   }
 
   return false;
@@ -66,9 +60,6 @@ export function canEditQuestion(user: UserContext, question: QuestionContext): b
   if (question.isPublished) return false;
 
   const isAuthor = question.authorId === user.id;
-  const isCollaborator = Boolean(
-    question.collaboratorIds && Array.isArray(question.collaboratorIds) && question.collaboratorIds.includes(user.id)
-  );
 
   // Superadmin and Dean can edit any unpublished question
   if (user.role === UserRole.SUPERADMIN || user.role === UserRole.DEAN) {
@@ -80,8 +71,8 @@ export function canEditQuestion(user: UserContext, question: QuestionContext): b
     return true;
   }
 
-  // Author or explicitly granted Collaborator can edit
-  if ((isAuthor || isCollaborator) && user.role === UserRole.TEACHER) {
+  // Author can edit
+  if (isAuthor && user.role === UserRole.TEACHER) {
     return (
       question.status === QuestionStatus.PENDING_REVISION ||
       question.status === QuestionStatus.PENDING_REVIEW

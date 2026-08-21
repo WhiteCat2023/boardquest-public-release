@@ -12,7 +12,7 @@ import useNotificationStream from '../hooks/useNotificationStream';
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
-  admin: adminNavItem,
+  dean: adminNavItem,
   teacher: teacherNavItem,
   teamlead: teamLeadNavItem,
 };

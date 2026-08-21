@@ -21,17 +21,27 @@
     "dev:admin": "pnpm --filter=./apps/admin dev",
     "dev:review-center": "pnpm --filter=./apps/review-center dev",
     "dev:game": "pnpm --filter=./apps/game dev",
+    
     "build": "turbo build",
     "build:api": "pnpm --filter=./apps/api build",
     "build:admin": "pnpm --filter=./apps/admin build",
     "build:review-center": "pnpm --filter=./apps/review-center build",
     "build:game": "pnpm --filter=./apps/game build",
+
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
+
     "test": "turbo test",
     "test:api": "pnpm --filter=./apps/api test",
     "test:admin": "pnpm --filter=./apps/admin test",
-    "test:game": "pnpm --filter=./apps/game test"
+    "test:game": "pnpm --filter=./apps/game test",
+
+    "prisma:generate": "pnpm --filter=./apps/api exec prisma generate",
+    "prisma:migrate:dev": "pnpm --filter=./apps/api prisma migrate dev",
+    "prisma:migrate:deploy": "pnpm --filter=./apps/api prisma migrate deploy",
+    "prisma:db:seed": "pnpm --filter=./apps/api prisma db seed",
+    "prisma:reset": "pnpm --filter=./apps/api prisma migrate reset",
+    "prisma:studio": "pnpm --filter=./apps/api prisma studio"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.0",

@@ -49,6 +49,7 @@ import { BADGE_TYPES } from "./BadgeEditorModal";
 
 interface BadgesManagementTabProps {
   badges: GameBadge[];
+  isLoading?: boolean;
   onAddBadge: () => void;
   onEditBadge: (badge: GameBadge) => void;
   onDeleteBadge: (id: string) => void;
@@ -79,6 +80,7 @@ const ICON_MAP: Record<string, any> = {
 
 export function BadgesManagementTab({
   badges,
+  isLoading = false,
   onAddBadge,
   onEditBadge,
   onDeleteBadge,
@@ -89,16 +91,24 @@ export function BadgesManagementTab({
   const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [imageErrorIds, setImageErrorIds] = useState<Record<string, boolean>>({});
+  const [imageErrorIds, setImageErrorIds] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const filteredBadges = badges.filter((badge) => {
+    const titleText = (badge.name || badge.title || "").toLowerCase();
+    const descText = (badge.description || "").toLowerCase();
+    const catText = (badge.category || "").toLowerCase();
+    const query = searchTerm.toLowerCase();
+
     const matchesSearch =
-      badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      badge.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      badge.category.toLowerCase().includes(searchTerm.toLowerCase());
+      titleText.includes(query) ||
+      descText.includes(query) ||
+      catText.includes(query);
 
     const matchesCategory =
-      selectedCategory === "ALL" || badge.category === selectedCategory;
+      selectedCategory === "ALL" ||
+      (badge.category || "").toLowerCase() === selectedCategory.toLowerCase();
 
     const matchesTier =
       selectedTier === "ALL" || badge.badgeType === selectedTier;
@@ -113,17 +123,17 @@ export function BadgesManagementTab({
 
   const totalBadges = badges.length;
   const activeBadges = badges.filter((b) => b.isActive).length;
-  const totalXPPool = badges.reduce((acc, b) => acc + b.xp, 0);
+  const totalXPPool = badges.reduce((acc, b) => acc + (b.xpReward || b.xp || 0), 0);
   const totalUnlockedAcrossAll = badges.reduce(
     (acc, b) => acc + (b.unlockedCount || 0),
-    0
+    0,
   );
 
   const handleImageError = (badgeId: string) => {
     setImageErrorIds((prev) => ({ ...prev, [badgeId]: true }));
   };
 
-  const getTierMeta = (type: BadgeType) => {
+  const getTierMeta = (type?: string) => {
     return BADGE_TYPES.find((b) => b.type === type) || BADGE_TYPES[0];
   };
 
@@ -143,7 +153,8 @@ export function BadgesManagementTab({
                 {totalBadges}
               </h3>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> {activeBadges} Active in Production
+                <CheckCircle2 className="w-3.5 h-3.5" /> {activeBadges} Active
+                in Production
               </p>
             </div>
             <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/25 shadow-xs">
@@ -161,7 +172,8 @@ export function BadgesManagementTab({
                 XP Reward Pool
               </p>
               <h3 className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
-                {totalXPPool.toLocaleString()} <span className="text-sm font-bold text-amber-500">XP</span>
+                {totalXPPool.toLocaleString()}{" "}
+                <span className="text-sm font-bold text-amber-500">XP</span>
               </h3>
               <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
                 Milestone gamification rewards
@@ -246,15 +258,11 @@ export function BadgesManagementTab({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Categories</SelectItem>
-              <SelectItem value="Progression">Progression</SelectItem>
-              <SelectItem value="Excellence">Excellence</SelectItem>
-              <SelectItem value="Consistency">Consistency</SelectItem>
-              <SelectItem value="Precision">Precision</SelectItem>
-              <SelectItem value="Subject Mastery">Subject Mastery</SelectItem>
-              <SelectItem value="Dedication">Dedication</SelectItem>
-              <SelectItem value="Elite Status">Elite Status</SelectItem>
-              <SelectItem value="Speed & Agility">Speed & Agility</SelectItem>
-              <SelectItem value="Special Quest">Special Quest</SelectItem>
+              <SelectItem value="QUEST">⚔️ Quest</SelectItem>
+              <SelectItem value="STREAK">🔥 Streak</SelectItem>
+              <SelectItem value="BOSS">👑 Boss</SelectItem>
+              <SelectItem value="SUBJECT">📚 Subject</SelectItem>
+              <SelectItem value="EXAM">⚡ Exam</SelectItem>
             </SelectContent>
           </Select>
 
@@ -285,7 +293,10 @@ export function BadgesManagementTab({
             </SelectContent>
           </Select>
 
-          {(searchTerm || selectedCategory !== "ALL" || selectedTier !== "ALL" || selectedStatus !== "ALL") && (
+          {(searchTerm ||
+            selectedCategory !== "ALL" ||
+            selectedTier !== "ALL" ||
+            selectedStatus !== "ALL") && (
             <Button
               variant="ghost"
               size="sm"
@@ -348,10 +359,13 @@ export function BadgesManagementTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
             {filteredBadges.map((badge) => {
               const tierMeta = getTierMeta(badge.badgeType);
-              const IconComp = ICON_MAP[badge.iconName] || Trophy;
+              const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
+              const photoUrl = badge.spriteUrl || badge.imageUrl;
               const hasCustomPhoto = Boolean(
-                badge.imageUrl && !imageErrorIds[badge.id]
+                photoUrl && !imageErrorIds[badge.id],
               );
+              const displayName = badge.name || badge.title;
+              const displayXp = badge.xpReward ?? badge.xp ?? 50;
 
               return (
                 <Card
@@ -370,7 +384,7 @@ export function BadgesManagementTab({
                         {tierMeta.badgeTag}
                       </span>
                       <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 shadow-2xs">
-                        +{badge.xp} XP
+                        +{displayXp} XP
                       </span>
                     </div>
 
@@ -381,8 +395,8 @@ export function BadgesManagementTab({
                           className={`w-16 h-16 rounded-2xl overflow-hidden border-2 shadow-md bg-background flex items-center justify-center p-0.5 transition-transform group-hover:scale-105 ${tierMeta.borderColor}`}
                         >
                           <img
-                            src={badge.imageUrl}
-                            alt={badge.title}
+                            src={photoUrl!}
+                            alt={displayName}
                             className="w-full h-full object-cover rounded-xl"
                             onError={() => handleImageError(badge.id)}
                           />
@@ -403,9 +417,9 @@ export function BadgesManagementTab({
                       </span>
                       <h4
                         className={`text-xs font-black tracking-tight ${tierMeta.color} truncate`}
-                        title={badge.title}
+                        title={displayName}
                       >
-                        {badge.title}
+                        {displayName}
                       </h4>
                       <p
                         className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed min-h-[28px] px-1"
@@ -415,15 +429,15 @@ export function BadgesManagementTab({
                       </p>
                     </div>
 
-                    {/* Trigger Rule Condition */}
-                    <div className="w-full pt-2 border-t border-border/40 flex items-center justify-between text-[10px] font-semibold">
-                      <span className="text-muted-foreground">Rule:</span>
-                      <Badge
-                        variant="outline"
-                        className="text-[9px] px-1.5 py-0 uppercase font-mono font-bold bg-background/70 border-border/70 text-foreground"
+                    {/* Trigger Rule / Unlock Condition */}
+                    <div className="w-full pt-2 border-t border-border/40 flex items-center justify-between text-[10px] font-semibold gap-1">
+                      <span className="text-muted-foreground shrink-0">Unlock:</span>
+                      <span
+                        className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-background/70 border border-border/70 text-foreground truncate max-w-[130px]"
+                        title={badge.unlockCondition || `${badge.triggerRule?.type || "Rule"} >= ${badge.triggerRule?.threshold || 0}`}
                       >
-                        {badge.triggerRule.type} &ge; {badge.triggerRule.threshold}
-                      </Badge>
+                        {badge.unlockCondition || `${badge.triggerRule?.type || "Rule"} >= ${badge.triggerRule?.threshold || 0}`}
+                      </span>
                     </div>
 
                     {/* Unlock Count & Active Switch */}
@@ -481,9 +495,12 @@ export function BadgesManagementTab({
             <div className="p-3 rounded-2xl bg-accent text-muted-foreground">
               <Trophy className="w-6 h-6" />
             </div>
-            <h4 className="text-sm font-bold text-foreground">No Badges Match Your Filters</h4>
+            <h4 className="text-sm font-bold text-foreground">
+              No Badges Match Your Filters
+            </h4>
             <p className="text-xs text-muted-foreground max-w-sm">
-              Try adjusting your search query or filter options to locate gamification badges.
+              Try adjusting your search query or filter options to locate
+              gamification badges.
             </p>
             <Button
               variant="outline"
@@ -520,10 +537,13 @@ export function BadgesManagementTab({
               <tbody className="divide-y divide-border/60">
                 {filteredBadges.map((badge) => {
                   const tierMeta = getTierMeta(badge.badgeType);
-                  const IconComp = ICON_MAP[badge.iconName] || Trophy;
+                  const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
+                  const photoUrl = badge.spriteUrl || badge.imageUrl;
                   const hasCustomPhoto = Boolean(
-                    badge.imageUrl && !imageErrorIds[badge.id]
+                    photoUrl && !imageErrorIds[badge.id],
                   );
+                  const displayName = badge.name || badge.title;
+                  const displayXp = badge.xpReward ?? badge.xp ?? 50;
 
                   return (
                     <tr
@@ -538,8 +558,8 @@ export function BadgesManagementTab({
                               className={`w-9 h-9 rounded-xl overflow-hidden border bg-background shadow-2xs flex items-center justify-center ${tierMeta.borderColor}`}
                             >
                               <img
-                                src={badge.imageUrl}
-                                alt={badge.title}
+                                src={photoUrl!}
+                                alt={displayName}
                                 className="w-full h-full object-cover"
                                 onError={() => handleImageError(badge.id)}
                               />
@@ -553,8 +573,10 @@ export function BadgesManagementTab({
                           )}
                         </div>
                         <div>
-                          <div className={`font-bold text-xs ${tierMeta.color}`}>
-                            {badge.title}
+                          <div
+                            className={`font-bold text-xs ${tierMeta.color}`}
+                          >
+                            {displayName}
                           </div>
                           <div className="text-[10px] text-muted-foreground line-clamp-1 max-w-[200px]">
                             {badge.description}
@@ -578,17 +600,17 @@ export function BadgesManagementTab({
 
                       {/* XP Reward */}
                       <td className="py-2.5 px-3 font-extrabold text-primary">
-                        +{badge.xp} XP
+                        +{displayXp} XP
                       </td>
 
                       {/* Unlock Rule */}
                       <td className="py-2.5 px-3">
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] font-mono px-1.5 py-0 uppercase bg-background"
+                        <span
+                          className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-background border border-border/80 text-foreground truncate max-w-[140px] inline-block"
+                          title={badge.unlockCondition || `${badge.triggerRule?.type || "Rule"} >= ${badge.triggerRule?.threshold || 0}`}
                         >
-                          {badge.triggerRule.type} &ge; {badge.triggerRule.threshold}
-                        </Badge>
+                          {badge.unlockCondition || `${badge.triggerRule?.type || "Rule"} >= ${badge.triggerRule?.threshold || 0}`}
+                        </span>
                       </td>
 
                       {/* Unlocked */}

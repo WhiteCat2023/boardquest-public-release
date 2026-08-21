@@ -1,193 +1,30 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { BadgesManagementTab } from "../components/BadgesManagementTab";
 import { GameConfigTab } from "../components/GameConfigTab";
 import { LeaderboardOverviewTab } from "../components/LeaderboardOverviewTab";
 import { BadgeEditorModal } from "../components/BadgeEditorModal";
 import { Gamepad2, Award, Sliders, Trophy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useStudents } from "@/features/students";
+import {
+  useGameBadges,
+  useCreateBadge,
+  useUpdateBadge,
+  useToggleBadgeActive,
+  useDeleteBadge,
+} from "../api/useGameManagement";
 import type { GameBadge } from "../types/types";
-
-const LOCAL_STORAGE_KEY = "boardquest_game_badges_v1";
-
-const INITIAL_BADGES: GameBadge[] = [
-  {
-    id: "first_step",
-    title: "First Step",
-    badgeType: "bronze",
-    category: "Progression",
-    description: "Enrolled & completed initial evaluation quest",
-    xp: 100,
-    iconName: "Medal",
-    color: "text-amber-600 dark:text-amber-400",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30",
-    glowColor: "shadow-amber-500/10",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "level", threshold: 1 },
-  },
-  {
-    id: "sharp_mind",
-    title: "Sharp Mind",
-    badgeType: "silver",
-    category: "Excellence",
-    description: "Achieved high accuracy (>=80%) on diagnostic evaluations",
-    xp: 200,
-    iconName: "Sparkles",
-    color: "text-slate-500 dark:text-slate-300",
-    bgColor: "bg-slate-500/10",
-    borderColor: "border-slate-400/30",
-    glowColor: "shadow-slate-400/10",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "accuracy", threshold: 80 },
-  },
-  {
-    id: "on_fire",
-    title: "On Fire",
-    badgeType: "fire",
-    category: "Consistency",
-    description: "Maintained an active evaluation streak (>=3 days)",
-    xp: 200,
-    iconName: "Flame",
-    color: "text-orange-500 dark:text-orange-400",
-    bgColor: "bg-orange-500/15",
-    borderColor: "border-orange-500/40",
-    glowColor: "shadow-orange-500/20",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "streak", threshold: 3 },
-  },
-  {
-    id: "perfectionist",
-    title: "Perfectionist",
-    badgeType: "gold",
-    category: "Precision",
-    description: "Scored top marks (>=90%) in board subject evaluations",
-    xp: 300,
-    iconName: "Award",
-    color: "text-amber-500 dark:text-amber-300",
-    bgColor: "bg-amber-500/15",
-    borderColor: "border-amber-400/40",
-    glowColor: "shadow-amber-400/20",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "score", threshold: 90 },
-  },
-  {
-    id: "subject_master",
-    title: "Subject Master",
-    badgeType: "crown",
-    category: "Subject Mastery",
-    description: "Achieved mastery proficiency (>=75%) in major board subject",
-    xp: 400,
-    iconName: "Crown",
-    color: "text-purple-500 dark:text-purple-300",
-    bgColor: "bg-purple-500/15",
-    borderColor: "border-purple-500/40",
-    glowColor: "shadow-purple-500/20",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "mastery", threshold: 75 },
-  },
-  {
-    id: "unstoppable",
-    title: "Unstoppable",
-    badgeType: "lightning",
-    category: "Dedication",
-    description: "Maintained an extended study streak (>=7 days) & accumulated XP",
-    xp: 500,
-    iconName: "Zap",
-    color: "text-indigo-500 dark:text-indigo-400",
-    bgColor: "bg-indigo-500/15",
-    borderColor: "border-indigo-500/40",
-    glowColor: "shadow-indigo-500/20",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "streak", threshold: 7 },
-  },
-  {
-    id: "decennial",
-    title: "Decennial Scholar",
-    badgeType: "diamond",
-    category: "Elite Status",
-    description: "Reached elite academic level status (Level 10+ or XP >= 1000)",
-    xp: 1000,
-    iconName: "Gem",
-    color: "text-cyan-500 dark:text-cyan-300",
-    bgColor: "bg-cyan-500/15",
-    borderColor: "border-cyan-500/40",
-    glowColor: "shadow-cyan-500/20",
-    isActive: true,
-    unlockedCount: 0,
-    triggerRule: { type: "level", threshold: 10 },
-  },
-];
 
 export function GameManagementPage() {
   const [activeTab, setActiveTab] = useState<"badges" | "config" | "leaderboard">("badges");
-  const { data: studentsData } = useStudents();
-  const rawStudents = studentsData?.students || [];
 
-  const [badges, setBadges] = useState<GameBadge[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error("Error reading saved badges:", e);
-    }
-    return INITIAL_BADGES;
-  });
+  const { data: badges = [], isLoading: isBadgesLoading } = useGameBadges();
+  const createBadgeMutation = useCreateBadge();
+  const updateBadgeMutation = useUpdateBadge();
+  const toggleBadgeMutation = useToggleBadgeActive();
+  const deleteBadgeMutation = useDeleteBadge();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBadge, setEditingBadge] = useState<GameBadge | null>(null);
-
-  // Sync to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(badges));
-    } catch (e) {
-      console.error("Error saving badges to localStorage:", e);
-    }
-  }, [badges]);
-
-  // Compute live unlock counts from real database students
-  const badgesWithRealCounts = useMemo(() => {
-    return badges.map((badge) => {
-      let realCount = 0;
-      rawStudents.forEach((student: any) => {
-        const hasAchievementBadge =
-          Array.isArray(student.achievements) &&
-          student.achievements.some(
-            (a: any) =>
-              (a.badge && a.badge.toLowerCase() === badge.id.toLowerCase()) ||
-              (a.task && a.task.toLowerCase().includes(badge.title.toLowerCase()))
-          );
-
-        const matchesTrigger = (() => {
-          if (!badge.triggerRule) return false;
-          const { type, threshold } = badge.triggerRule;
-          if (type === "level" && (student.level || 1) >= threshold) return true;
-          if (type === "xp" && (student.xp || 0) >= threshold) return true;
-          if (type === "streak" && (student.streak || 0) >= threshold) return true;
-          return false;
-        })();
-
-        if (hasAchievementBadge || matchesTrigger) {
-          realCount++;
-        }
-      });
-
-      return {
-        ...badge,
-        unlockedCount: realCount,
-      };
-    });
-  }, [badges, rawStudents]);
 
   const handleAddBadge = () => {
     setEditingBadge(null);
@@ -199,29 +36,40 @@ export function GameManagementPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteBadge = (id: string) => {
-    setBadges((prev) => prev.filter((b) => b.id !== id));
-    toast.success("Gamification badge deleted.");
+  const handleDeleteBadge = async (id: string) => {
+    try {
+      await deleteBadgeMutation.mutateAsync(id);
+      toast.success("Gamification badge deleted successfully.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to delete badge.");
+    }
   };
 
-  const handleToggleActive = (id: string) => {
-    setBadges((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b))
-    );
-    toast.info("Badge status toggled.");
+  const handleToggleActive = async (id: string) => {
+    try {
+      await toggleBadgeMutation.mutateAsync(id);
+      toast.info("Badge status updated.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to toggle badge status.");
+    }
   };
 
-  const handleSaveBadge = (badgeData: GameBadge) => {
-    setBadges((prev) => {
-      const exists = prev.some((b) => b.id === badgeData.id);
-      if (exists) {
-        return prev.map((b) => (b.id === badgeData.id ? badgeData : b));
+  const handleSaveBadge = async (badgeData: GameBadge) => {
+    try {
+      if (editingBadge && editingBadge.id) {
+        await updateBadgeMutation.mutateAsync({
+          id: editingBadge.id,
+          data: badgeData,
+        });
+        toast.success("Badge updated successfully!");
+      } else {
+        await createBadgeMutation.mutateAsync(badgeData);
+        toast.success("New gamification badge created!");
       }
-      return [badgeData, ...prev];
-    });
-    toast.success(
-      editingBadge ? "Badge updated successfully!" : "New gamification badge created!"
-    );
+      setIsModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to save badge.");
+    }
   };
 
   return (
@@ -261,7 +109,7 @@ export function GameManagementPage() {
               : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
-          <Award className="w-4 h-4" /> Badges Catalog ({badgesWithRealCounts.length})
+          <Award className="w-4 h-4" /> Badges Catalog ({badges.length})
         </button>
 
         <button
@@ -293,7 +141,8 @@ export function GameManagementPage() {
       <div>
         {activeTab === "badges" && (
           <BadgesManagementTab
-            badges={badgesWithRealCounts}
+            badges={badges}
+            isLoading={isBadgesLoading}
             onAddBadge={handleAddBadge}
             onEditBadge={handleEditBadge}
             onDeleteBadge={handleDeleteBadge}
@@ -312,6 +161,7 @@ export function GameManagementPage() {
         onClose={() => setIsModalOpen(false)}
         badge={editingBadge}
         onSave={handleSaveBadge}
+        isSaving={createBadgeMutation.isPending || updateBadgeMutation.isPending}
       />
     </div>
   );

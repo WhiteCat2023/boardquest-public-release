@@ -51,6 +51,14 @@ enum GuidanceStatus {
   CANCELLED
 }
 
+enum BadgeCategory {
+  QUEST
+  STREAK
+  BOSS
+  SUBJECT
+  EXAM
+}
+
 // [ Admin Schema ]
 
 model AdminUser {
@@ -103,7 +111,6 @@ model Question {
 
   author   AdminUser @relation("QuestionAuthor", fields: [authorId], references: [id])
   authorId String    @db.ObjectId
-  collaboratorIds String[] @db.ObjectId
 
   schoolYear String? @default("S.Y. 2025-2026")
   comments QuestionComment[]
@@ -246,6 +253,7 @@ model User {
   guidanceAssignments GuidanceAssignment[] @relation("StudentGuidance")
   questNodeCompletions QuestNodeCompletion[]
   questionAttempts   UserQuestionAttempt[]
+  userBadges         UserBadge[]
 }
 
 model SubjectMastery {
@@ -423,4 +431,55 @@ model EmailVerification {
   createdAt DateTime @default(now())
 }
 
+
+model Badge {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  badgeId         String   @unique // 'gold', 'silver', 'bronze', 'speed', 'streak-7', 'boss-slayer'
+  title           String   // 'Master', 'Adept', 'Aspirant', 'Swift Solver', 'Boss Slayer'
+  name            String   // 'Gold Quest Badge', 'Silver Quest Badge', 'Speed Master'
+  description     String   // Full description of unlock conditions
+  category        BadgeCategory  @default(QUEST) 
+  icon            String   // 'trophy', 'flame', 'zap', 'shield', 'crown'
+  spriteUrl       String?  // '/ui/gold-badge.png', '/ui/master-badge.png', etc.
+  color           String   // Hex color code ('#FFD700', '#C0C0C0', '#CD7F32')
+  unlockCondition String   // '100% accuracy in Quest Arena'
+  xpReward        Int      @default(50)
+  confidenceFactor Float   @default(1.0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userBadges      UserBadge[]
+}
+
+model UserBadge {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  badgeId         String   @db.ObjectId
+  badgeSlug       String   // Matches Badge.badgeId (e.g. 'gold', 'speed')
+  subject         String?  // Subject area context (e.g. 'Clinical Chemistry')
+  questMode       String?  // 'learning' | 'test' | 'boss'
+  accuracy        Float?   // Accuracy percentage achieved
+  confidenceLevel String?  // 'Shaky' | 'Steady' | 'Unyielding'
+  xpEarned        Int      @default(0)
+  unlockedAt      DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeSlug, subject])
+}
+
+model GameConfig {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  key                   String   @unique @default("default")
+  baseXP                Int      @default(10)
+  xpMultiplier          Float    @default(1.5)
+  streakBonusPercentage Int      @default(10)
+  accuracyThreshold     Int      @default(70)
+  levelUpXpBase         Int      @default(100)
+  maxLevelCap           Int      @default(50)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
 

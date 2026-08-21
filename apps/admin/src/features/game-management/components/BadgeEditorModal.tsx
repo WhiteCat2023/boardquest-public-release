@@ -59,6 +59,7 @@ interface BadgeEditorModalProps {
   onClose: () => void;
   badge?: GameBadge | null;
   onSave: (badgeData: GameBadge) => void;
+  isSaving?: boolean;
 }
 
 export const BADGE_TYPES: {
@@ -173,16 +174,42 @@ export const BADGE_TYPES: {
   },
 ];
 
-const CATEGORIES: BadgeCategory[] = [
-  "Progression",
-  "Excellence",
-  "Consistency",
-  "Precision",
-  "Subject Mastery",
-  "Dedication",
-  "Elite Status",
-  "Speed & Agility",
-  "Special Quest",
+export const BADGE_CATEGORIES: {
+  value: BadgeCategory;
+  label: string;
+  badgeTag: string;
+  description: string;
+}[] = [
+  {
+    value: "QUEST",
+    label: "Quest",
+    badgeTag: "⚔️ QUEST",
+    description: "Evaluations & Quest Arena milestones",
+  },
+  {
+    value: "STREAK",
+    label: "Streak",
+    badgeTag: "🔥 STREAK",
+    description: "Daily continuous study streak milestones",
+  },
+  {
+    value: "BOSS",
+    label: "Boss",
+    badgeTag: "👑 BOSS",
+    description: "Comprehensive subject board mock exams",
+  },
+  {
+    value: "SUBJECT",
+    label: "Subject",
+    badgeTag: "📚 SUBJECT",
+    description: "Subject mastery & proficiency goals",
+  },
+  {
+    value: "EXAM",
+    label: "Exam",
+    badgeTag: "⚡ EXAM",
+    description: "Speed & high precision exam solver",
+  },
 ];
 
 export const ICONS = [
@@ -212,11 +239,12 @@ export function BadgeEditorModal({
   onClose,
   badge,
   onSave,
+  isSaving = false,
 }: BadgeEditorModalProps) {
   const [formData, setFormData] = useState<Partial<GameBadge>>({
     title: "",
     badgeType: "bronze",
-    category: "Progression",
+    category: "QUEST",
     description: "",
     xp: 100,
     iconName: "Medal",
@@ -244,7 +272,7 @@ export function BadgeEditorModal({
         id: `badge_${Date.now()}`,
         title: "",
         badgeType: defaultTier.type,
-        category: "Progression",
+        category: "QUEST",
         description: "",
         xp: 100,
         iconName: "Medal",
@@ -338,23 +366,30 @@ export function BadgeEditorModal({
       BADGE_TYPES.find((t) => t.type === formData.badgeType) || BADGE_TYPES[0];
 
     onSave({
-      id: formData.id || `badge_${Date.now()}`,
+      id: formData.id || "",
+      badgeId:
+        formData.badgeId ||
+        formData.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       title: formData.title.trim(),
-      badgeType: formData.badgeType || "bronze",
-      category: formData.category || "Progression",
+      name: formData.name || formData.title.trim(),
+      category: formData.category || "QUEST",
       description: formData.description.trim(),
-      xp: Number(formData.xp) || 100,
-      iconName: formData.iconName || "Medal",
-      imageUrl: formData.imageUrl?.trim() || undefined,
-      color: currentTier.color,
+      icon: formData.icon || formData.iconName || "trophy",
+      spriteUrl: formData.spriteUrl || formData.imageUrl?.trim() || null,
+      color: formData.color || currentTier.color,
+      unlockCondition:
+        formData.unlockCondition || `Complete ${formData.title.trim()}`,
+      xpReward: Number(formData.xpReward) || Number(formData.xp) || 50,
+      confidenceFactor: Number(formData.confidenceFactor) || 1.0,
+      isActive: formData.isActive ?? true,
+      badgeType: formData.badgeType || "bronze",
+      xp: Number(formData.xpReward) || Number(formData.xp) || 50,
+      iconName: formData.iconName || formData.icon || "Medal",
+      imageUrl: formData.spriteUrl || formData.imageUrl?.trim() || undefined,
       bgColor: currentTier.bgColor,
       borderColor: currentTier.borderColor,
       glowColor: currentTier.glowColor,
-      isActive: formData.isActive ?? true,
-      unlockedCount: formData.unlockedCount || 0,
-      triggerRule: formData.triggerRule || { type: "accuracy", threshold: 80 },
     });
-    onClose();
   };
 
   const activeTierMeta =
@@ -577,7 +612,7 @@ export function BadgeEditorModal({
                       Category
                     </Label>
                     <Select
-                      value={formData.category || "Progression"}
+                      value={formData.category || "QUEST"}
                       onValueChange={(val: BadgeCategory) =>
                         setFormData({ ...formData, category: val })
                       }
@@ -586,9 +621,10 @@ export function BadgeEditorModal({
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
+                        {BADGE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            <span className="font-bold mr-1.5">{cat.badgeTag}</span>
+                            <span className="text-xs text-muted-foreground">({cat.label})</span>
                           </SelectItem>
                         ))}
                       </SelectContent>

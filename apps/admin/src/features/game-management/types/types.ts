@@ -10,34 +10,41 @@ export type BadgeType =
   | "ruby"
   | "cosmic";
 
-export type BadgeCategory = 
-  | "Progression" 
-  | "Excellence" 
-  | "Consistency" 
-  | "Precision" 
-  | "Subject Mastery" 
-  | "Dedication" 
-  | "Elite Status"
-  | "Speed & Agility"
-  | "Special Quest";
+export type BadgeCategory =
+  | "QUEST"
+  | "STREAK"
+  | "BOSS"
+  | "SUBJECT"
+  | "EXAM";
 
 export interface GameBadge {
   id: string;
-  title: string;
-  badgeType: BadgeType;
-  category: BadgeCategory;
+  badgeId: string; // Slug identifier (e.g., 'gold', 'silver', 'speed')
+  title: string; // e.g. 'Master', 'Adept', 'Swift Solver'
+  name: string; // e.g. 'Gold Quest Badge', 'Silver Quest Badge'
   description: string;
-  xp: number;
-  iconName: string;
-  imageUrl?: string; // Cloudinary uploaded photo URL
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  glowColor?: string;
+  category: BadgeCategory; // 'QUEST' | 'STREAK' | 'BOSS' | 'SUBJECT' | 'EXAM'
+  icon: string; // 'trophy', 'flame', 'zap', 'shield', 'crown', etc.
+  spriteUrl?: string | null; // Cloudinary or sprite image URL
+  color: string; // Hex color code ('#FFD700', etc.)
+  unlockCondition: string; // Unlock condition description
+  xpReward: number; // XP rewarded on unlock
+  confidenceFactor?: number; // Multiplier factor (default: 1.0)
   isActive: boolean;
   unlockedCount?: number;
-  triggerRule: {
-    type: "accuracy" | "streak" | "level" | "score" | "mastery" | "xp" | "questions";
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+
+  // UI display helpers & backwards-compatibility aliases
+  xp?: number;
+  iconName?: string;
+  imageUrl?: string | null;
+  badgeType?: string;
+  bgColor?: string;
+  borderColor?: string;
+  glowColor?: string;
+  triggerRule?: {
+    type: string;
     threshold: number;
   };
 }

@@ -32,7 +32,7 @@ export const demoSystemLogs = [
     id: "660000000000000000000022",
     level: "ERROR",
     action: "UNAUTHORIZED_API_ACCESS",
-    message: "Forbidden access attempt to /api/review-center/schedules without ADMIN permission.",
+    message: "Forbidden access attempt to /api/review-center/schedules without DEAN or SUPERADMIN permission.",
     source: "AuthMiddleware",
     userEmail: "student.user@boardquest.edu",
     ipAddress: "192.168.1.102",
