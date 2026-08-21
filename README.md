@@ -1,153 +1,340 @@
-# BoardQuest Admin & Portal System
+# BoardQuest: Gamified Board Exam Preparation & Analytics Platform
 
-### **CONFIDENTIAL & PROPRIETARY**
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![pnpm Version](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](https://pnpm.io/)
+[![Turborepo](https://img.shields.io/badge/monorepo-Turborepo-blueviolet.svg)](https://turbo.build/)
+[![Database](https://img.shields.io/badge/database-MongoDB%20v7.0-green.svg)](https://www.mongodb.com/)
+[![ORM](https://img.shields.io/badge/ORM-Prisma-2D3748.svg)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](#license)
+
 > [!IMPORTANT]
-> This repository contains proprietary source code and intellectual property of **BoardQuest**. Access to, modification of, or distribution of this code without explicit authorization from the company is strictly prohibited.
+> **Confidential & Proprietary Source Code**
+> This repository contains proprietary source code and intellectual property of the **BoardQuest Capstone Development Team**. Unauthorized copying, distribution, or modification of this project via any medium is strictly prohibited.
 
 ---
 
-## Project Documentation/Purpose
-
-**BoardQuest** is an advanced, gamified learning and exam preparation platform tailored for board exam review (specifically optimized for medical/clinical board exams, such as Clinical Chemistry). This monorepo contains both the **API Backend** and the **Vite-based Frontend** components.
-
-The platform supports robust role-based access control (RBAC), user progression tracking (XP, levels, streaks), study plans, question bank management with full review workflows, and AI integration via n8n workflows for question paraphrasing and performance analytics.
+## Table of Contents
+- [Project Title](#boardquest-gamified-board-exam-preparation--analytics-platform)
+- [Project Description & Purpose](#project-description--purpose)
+  - [Target Audience & Stakeholders](#target-audience--stakeholders)
+  - [Key Features](#key-features)
+  - [Technology Stack](#technology-stack)
+- [Setup Instructions](#setup-instructions)
+  - [Prerequisites](#prerequisites)
+  - [1. Clone Repository & Install Dependencies](#1-clone-repository--install-dependencies)
+  - [2. Environment Configuration](#2-environment-configuration)
+  - [3. Database Setup & Seeding](#3-database-setup--seeding)
+  - [4. Running the Development Servers](#4-running-the-development-servers)
+  - [5. Alternative: Running via Docker Compose](#5-alternative-running-via-docker-compose)
+  - [6. Quality Assurance & Testing](#6-quality-assurance--testing)
+- [File Structure Explanation](#file-structure-explanation)
+  - [Monorepo Overview](#monorepo-overview)
+  - [Application Architecture Breakdown](#application-architecture-breakdown)
+- [Contact Information](#contact-information)
+- [License](#license)
 
 ---
 
-## Technology Stack
+## Project Description & Purpose
 
-### Backend (`api`)
-- **Runtime**: Node.js
-- **Framework**: Express.js (v5)
-- **Language**: TypeScript
-- **Database ORM**: Prisma ORM (MongoDB adapter)
-- **Authentication**: JWT & Argon2 Hashing
-- **Validation**: Zod
-- **Testing**: Jest & Supertest
-- **AI Automation**: n8n Webhook integrations
+**BoardQuest** is a comprehensive, gamified learning management and board exam preparation ecosystem designed to transform high-stakes licensure exam review (e.g., Medical Technology, Clinical Chemistry, and allied health sciences) into an engaging, data-driven, and adaptive journey.
 
-### Frontend (`frontend`)
-- **Framework**: React 19 + Vite 8
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4 + Vanilla CSS + shadcn/ui
-- **State Management**: Zustand
-- **Data Fetching**: TanStack React Query & SWR
-- **Routing**: React Router v7
-- **Icons**: Lucide React
+Traditional board exam preparation often suffers from low student engagement, passive memorization, and lack of real-time analytical feedback. **BoardQuest** addresses these challenges by uniting gamified quest mechanics with rigorous academic assessment, institutional progress tracking, and AI-driven content refinement.
+
+### Target Audience & Stakeholders
+
+| Stakeholder Group | Role & Purpose in BoardQuest |
+| :--- | :--- |
+| **Students & Examinees** | Gamified practice environment featuring XP progression, streaks, achievements, customizable mock exams, timed challenges, and granular performance analytics by topic. |
+| **Faculty & Subject Experts** | Authoring, categorizing, and validating question banks with Bloom's taxonomy mapping, difficulty weighting, and AI-powered question paraphrasing. |
+| **Review Centers & Partner Schools** | Cohort management, student roster onboarding, institutional analytics, pass-rate forecasting, and comparative diagnostic reporting. |
+| **System Administrators** | Multi-tenant governance, Role-Based Access Control (RBAC), user lifecycle management, audit trails, and global system health monitoring. |
+
+### Key Features
+
+- **🎮 Gamified Assessment Engine**: Quests, dynamic XP calculation, leveling milestones, daily streaks, and interactive quizzes.
+- **📚 Question Bank & Workflow Management**: Multi-tiered review process (Draft -> Review -> Approved -> Published) with rich text support and Excel bulk import/export.
+- **🤖 AI-Powered Automation**: Integrated with n8n workflow automations for question paraphrasing, explanation generation, and automated analytics summaries.
+- **📊 Real-Time Analytics & Reporting**: Topic mastery heatmaps, time-spent diagnostics, strength/weakness indicators, and institutional scoreboards.
+- **⚡ Bulletproof Modular Architecture**: Monorepo structure powered by Turborepo, React 19, Vite 8, Tailwind CSS v4, Express 5, and Prisma ORM with MongoDB.
+
+### Technology Stack
+
+```mermaid
+graph TD
+    Client1[apps/admin<br/>React 19 + Vite] -->|REST API / JWT| API[apps/api<br/>Express 5 + TypeScript]
+    Client2[apps/review-center<br/>React 19 + Vite] -->|REST API / JWT| API
+    Client3[apps/game<br/>React 19 + Vite] -->|REST API / JWT| API
+    API -->|Prisma ORM| DB[(MongoDB 7.0)]
+    API -->|Async Tasks / Scheduling| Agenda[Agenda Job Queue]
+    API -->|AI Workflows| n8n[n8n Webhook Automations]
+```
+
+#### Monorepo & Backend (`apps/api`)
+- **Runtime & Language**: Node.js (v18+) with TypeScript
+- **Web Framework**: Express.js (v5)
+- **Database & ORM**: MongoDB with Prisma ORM
+- **Authentication**: Stateless JWT with secure HTTP-only cookies & Argon2 password hashing
+- **Job Queue & Scheduling**: Agenda.js (MongoDB-backed background workers)
+- **Validation**: Zod schema validation
+- **Testing**: Jest, ts-jest, and Supertest
+
+#### Frontend Applications (`apps/admin`, `apps/review-center`, `apps/game`)
+- **Framework & Tooling**: React 19, Vite 8, TypeScript
+- **Styling & UI**: Tailwind CSS v4, `@aejkatappaja/phantom-ui`, Radix UI primitives, Lucide Icons, Sonner toasts
+- **State Management & Data Fetching**: TanStack React Query v5 & Zustand
+- **Routing**: React Router v7 with dynamic code-splitting (`React.lazy`)
+- **Monorepo Build System**: Turborepo & pnpm Workspaces
 
 ---
 
 ## Setup Instructions
 
+Follow these exact steps to set up and run the BoardQuest platform on your local development machine.
+
 ### Prerequisites
-Ensure you have the following installed on your local machine:
-- **Node.js** (v18.x or later recommended)
-- **npm** (v9.x or later)
-- **MongoDB** (Local instance or Atlas connection string)
+
+Ensure you have the following software installed:
+- **Node.js**: `v18.0.0` or higher ([Download Node.js](https://nodejs.org/))
+- **pnpm**: `v9.0.0` or higher (`npm install -g pnpm`)
+- **MongoDB**: `v7.0` running locally on port `27017` or a MongoDB Atlas URI ([Download MongoDB](https://www.mongodb.com/try/download/community))
+- **Git**: For version control ([Download Git](https://git-scm.com/))
+- *(Optional)* **Docker & Docker Compose**: For containerized deployment
 
 ---
 
-### 1. Backend Setup (`/api`)
+### 1. Clone Repository & Install Dependencies
 
-1. **Navigate to the API directory:**
-   ```bash
-   cd api
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Configure Environment Variables:**
-   Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-   Provide values for:
-   - `DATABASE_URL`: Your MongoDB connection string.
-   - `JWT_SECRET`: A secure signing key for authorization.
-   - `PORT`: Port number to run the backend (e.g., `3000`).
-   - `N8N_BASE_URL` & webhooks: For the AI workflow integrations.
+```bash
+# Clone the repository
+git clone https://github.com/WhiteCat2023/boardquest-admin-2.git
+cd boardquest-admin-2
 
-4. **Initialize Prisma Client:**
-   Generate the client code based on the schema:
-   ```bash
-   npx prisma generate
-   ```
-5. **Run Database Seeds/Scripts (Optional):**
-   To seed administrative users or setup initial question banks, use `tsx` to execute the scripts located in `src/seeds/` or `src/scripts.ts/setup_admin.ts`:
-   ```bash
-   npx tsx src/scripts.ts/setup_admin.ts
-   ```
-6. **Start the Development Server:**
-   ```bash
-   npm run dev
-   ```
-   The backend will run under hot-reload using `tsx watch`.
+# Install all monorepo dependencies using pnpm
+pnpm install
+```
 
 ---
 
-### 2. Frontend Setup (`/frontend`)
+### 2. Environment Configuration
 
-1. **Navigate to the Frontend directory:**
-   ```bash
-   cd ../frontend
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Configure Environment Variables:**
-   Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-   Set the API entrypoint:
-   - `VITE_API_URL`: Path to your backend API server (e.g., `http://localhost:3000/api`).
+Create the necessary `.env` files for each service from their provided examples:
 
-4. **Start the Development Server:**
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:5173` (or the port specified in terminal) in your browser.
+#### Backend API (`apps/api/.env`)
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+Ensure `apps/api/.env` contains valid values:
+```env
+PORT=5000
+NODE_ENV=development
+DATABASE_URL=mongodb://localhost:27017/boardquest
+JWT_SECRET=your_super_secure_jwt_secret_key_2026
+
+# Optional Services
+N8N_BASE_URL=
+N8N_WEBHOOK_PARAPHRASE=
+N8N_WEBHOOK_ANALYTICS=
+```
+
+#### Admin Portal (`apps/admin/.env`)
+```bash
+cp apps/admin/.env.example apps/admin/.env
+```
+Ensure `apps/admin/.env` contains:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+#### Review Center Portal (`apps/review-center/.env`)
+```bash
+cp apps/review-center/.env.example apps/review-center/.env
+```
+Ensure `apps/review-center/.env` contains:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+---
+
+### 3. Database Setup & Seeding
+
+Generate the Prisma Client and seed the initial administrative user and question banks:
+
+```bash
+# Generate Prisma Client types and MongoDB engine bindings
+pnpm --filter=./apps/api prisma generate
+
+# Seed initial admin user and baseline data (Optional)
+npx tsx apps/api/src/scripts.ts/setup_admin.ts
+```
+
+---
+
+### 4. Running the Development Servers
+
+You can start all services concurrently using Turborepo or run individual apps separately:
+
+#### Option A: Start All Applications Concurrently (Recommended)
+```bash
+pnpm dev
+```
+This boots up the backend API along with all frontend applications:
+- **Backend API**: [http://localhost:5000](http://localhost:5000)
+- **Admin Portal**: [http://localhost:5173](http://localhost:5173) (or next available port)
+- **Review Center Portal**: [http://localhost:5174](http://localhost:5174)
+- **Game Application**: [http://localhost:5175](http://localhost:5175)
+
+#### Option B: Run Specific Services Individually
+```bash
+# Run only the Backend API
+pnpm dev:api
+
+# Run only the Admin Frontend
+pnpm dev:admin
+
+# Run only the Review Center Frontend
+pnpm dev:review-center
+
+# Run only the Game Frontend
+pnpm dev:game
+```
+
+---
+
+### 5. Alternative: Running via Docker Compose
+
+To spin up the full multi-container stack (MongoDB + API + Admin + Review Center) in isolated Docker containers:
+
+```bash
+# Build and start all services
+docker compose up --build
+
+# Stop all running containers
+docker compose down
+```
+
+Services exposed via Docker:
+- **MongoDB**: `localhost:27017`
+- **Backend API**: `http://localhost:5000`
+- **Admin Portal**: `http://localhost:8080`
+- **Review Center Portal**: `http://localhost:8081`
+
+---
+
+### 6. Quality Assurance & Testing
+
+```bash
+# Run automated test suites across all workspaces
+pnpm test
+
+# Run backend integration & unit tests
+pnpm test:api
+
+# Run typecheck across all TypeScript projects
+pnpm typecheck
+
+# Run linting across the monorepo
+pnpm lint
+
+# Build production bundles
+pnpm build
+```
 
 ---
 
 ## File Structure Explanation
 
-The project is structured as a monorepo containing two main directories:
+The repository is organized as a high-performance **Turborepo Monorepo** leveraging `pnpm workspaces`. Below is an explanation of the core files and folders:
 
-- **[`api/`](file:///d:/Code/capstone/api)**: Node.js/Express backend service using Prisma ORM and TypeScript.
-- **[`frontend/`](file:///d:/Code/capstone/frontend)**: Single Page Application (SPA) built with React 19, Vite, Tailwind CSS v4, and shadcn/ui.
+### Monorepo Overview
 
----
-
-## Security & Code Guidelines
-
-As this is a private corporate codebase, please adhere strictly to these practices:
-
-1. **Secrets Management**: Never commit `.env` files or hardcoded credentials (passwords, JWT secrets, database connection strings, n8n API keys) to version control. The `.gitignore` files are pre-configured to ignore environment files.
-2. **Access Control**: Roles are strictly checked. Testing must cover the following roles:
-   - `SUPERADMIN`
-   - `ADMIN`
-   - `TEACHER`
-   - `TEAMLEAD`
-   - `USER` (Students)
-3. **Code Quality**:
-   - Run linter before pushing changes: `npm run lint`.
-   - Ensure all TypeScript types are fully declared; avoid using `any` type mappings.
-   - Write tests for new services inside `api/src/__tests__`. Run tests via `npm run test`.
-4. **Git Flow**:
-   - Create feature branches from `main` or `develop`.
-   - Follow standard semantic commit messages (e.g., `feat: ...`, `fix: ...`, `docs: ...`, `refactor: ...`).
-   - Pull Requests (PRs) must be reviewed and approved by at least one maintainer.
+| File / Folder Path | Description |
+| :--- | :--- |
+| [`apps/`](file:///d:/Code/capstone/apps) | Contains all standalone applications (API backend and client frontends). |
+| [`docker-compose.yml`](file:///d:/Code/capstone/docker-compose.yml) | Multi-container orchestration config for MongoDB, API, and frontend web servers. |
+| [`pnpm-workspace.yaml`](file:///d:/Code/capstone/pnpm-workspace.yaml) | Defines the workspace package boundaries and build script execution policies. |
+| [`turbo.json`](file:///d:/Code/capstone/turbo.json) | Turborepo pipeline configuration for caching builds, tests, and linting. |
+| [`package.json`](file:///d:/Code/capstone/package.json) | Root package manifest containing monorepo lifecycle scripts and Turbo dependencies. |
+| [`lazy_loading_documentation.md`](file:///d:/Code/capstone/lazy_loading_documentation.md) | Architectural specification for dynamic code-splitting and page loading optimization. |
 
 ---
 
-# License
-## Proprietary License
+### Application Architecture Breakdown
 
+```
+capstone/
+├── apps/
+│   ├── admin/               # Administrative Management Portal (React 19 + Vite)
+│   │   ├── src/
+│   │   │   ├── app/         # Application router, providers, and layout wrappers
+│   │   │   ├── components/  # Shared global UI components (Radix/Tailwind)
+│   │   │   ├── config/      # Global client configurations & credentials
+│   │   │   ├── features/    # Feature-based modular architecture (Bulletproof React)
+│   │   │   │   ├── analytics/       # Student & institutional analytics dashboard
+│   │   │   │   ├── auth/            # Authentication & session management
+│   │   │   │   ├── faculty/         # Faculty roster & account administration
+│   │   │   │   ├── question-bank/   # Question authoring, review, & bulk import
+│   │   │   │   ├── review-center/   # Partner center management & onboarding
+│   │   │   │   └── settings/        # System and profile preference settings
+│   │   │   ├── hooks/       # Reusable React custom hooks
+│   │   │   ├── lib/         # Axios client, React Query config, utility wrappers
+│   │   │   └── stores/      # Zustand global state stores
+│   │   ├── package.json
+│   │   └── vite.config.ts
+│   │
+│   ├── api/                 # Core Backend REST API & Microservices (Express 5)
+│   │   ├── prisma/          # Prisma schema definition for MongoDB database
+│   │   ├── src/
+│   │   │   ├── config/      # Environment, database, and JWT credentials
+│   │   │   ├── controller/  # Express request handlers
+│   │   │   ├── middleware/  # Auth guards, role checks (RBAC), error handling, rate limiting
+│   │   │   ├── routes/      # REST API route definitions
+│   │   │   ├── services/    # Business logic layer (Faculty, Questions, Review Center, etc.)
+│   │   │   ├── seeds/       # Database population & initial seeding scripts
+│   │   │   └── __tests__/   # Unit and integration test suites (Jest/Supertest)
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   │
+│   ├── game/                # Gamified Student Learner Client (React 19 + Vite)
+│   │   ├── src/             # Gamified quiz engine, leveling UI, interactive study quests
+│   │   ├── package.json
+│   │   └── vite.config.ts
+│   │
+│   └── review-center/       # Partner Review Center & Institutional Portal
+│       ├── src/             # Cohort analytics, batch student enrollment, reports
+│       ├── package.json
+│       └── Dockerfile
+```
+
+---
+
+## Contact Information
+
+For inquiries, technical support, or project contributions, please reach out to the **BoardQuest Capstone Development Team**:
+
+- **Repository**: [https://github.com/WhiteCat2023/boardquest-admin-2](https://github.com/WhiteCat2023/boardquest-admin-2)
+- **Issue Tracker**: [https://github.com/WhiteCat2023/boardquest-admin-2/issues](https://github.com/WhiteCat2023/boardquest-admin-2/issues)
+- **Capstone Team Lead / Primary Maintainer**:
+  - **Maintainer**: WhiteCat Team (`WhiteCat2023`)
+  - **Email**: `147495118+WhiteCat2023@users.noreply.github.com`
+  - **Project Coordinator**: Contact via institutional Capstone Google Classroom (GCR) / GitHub Discussions
+
+---
+
+## License
+
+### Proprietary License
+
+```
 Copyright (c) 2026 BoardQuest. All rights reserved.
 
-This software and its documentation are confidential and proprietary to BoardQuest. Unauthorized copying, modification, distribution, or use of this software, in whole or in part, is strictly prohibited without explicit written permission from the copyright owners.
+This software and its documentation are confidential and proprietary to BoardQuest.
+Unauthorized copying, modification, distribution, sublicensing, or commercial use
+of this software, in whole or in part, via any medium, is strictly prohibited without
+explicit prior written authorization from the copyright holders.
+```
 
-© 2026 BoardQuest. All rights reserved.
+---
+
+*Developed with ❤️ by the BoardQuest Capstone Team (2026).*

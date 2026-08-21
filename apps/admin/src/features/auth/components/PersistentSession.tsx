@@ -5,7 +5,7 @@ import useAuth from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
 
 function PersistentSession() {
-    const { auth } = useAuth();
+    const { auth } = useAuth()
     const refresh = useRefreshToken();
     const hasUserId = Boolean(auth?.data?.user?.id || (auth as any)?.user?.id || (auth as any)?.id);
     const [isLoading, setIsLoading] = useState(!hasUserId);
