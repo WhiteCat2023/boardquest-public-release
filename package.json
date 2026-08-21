@@ -41,7 +41,8 @@
     "prisma:migrate:deploy": "pnpm --filter=./apps/api prisma migrate deploy",
     "prisma:db:seed": "pnpm --filter=./apps/api prisma db seed",
     "prisma:reset": "pnpm --filter=./apps/api prisma migrate reset",
-    "prisma:studio": "pnpm --filter=./apps/api prisma studio"
+    "prisma:studio": "pnpm --filter=./apps/api prisma studio",
+    "seed:students": "pnpm --filter=./apps/api seed:students"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.0",

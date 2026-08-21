@@ -9,6 +9,7 @@ import {
 } from "../seeds/reviewCenter";
 import { demoSystemLogs } from "../seeds/logs";
 import { initialBadges, defaultGameConfig } from "../seeds/game";
+import { seedStudents } from "../seeds/student";
 import { hashedPassword } from "../utils/hash";
 import { ensureSuperAdminExists } from "./admin/bootstrap.service";
 
@@ -127,6 +128,8 @@ export async function seedAdminUserDb() {
       create: { ...defaultGameConfig },
     }).catch((e: any) => console.warn(`Game config seed note: ${e.message}`));
     console.log("Badges and game config seeded successfully!");
+
+    await seedStudents(prisma);
   } catch (error: any) {
     console.error("Error during database seeding:", error?.message || error);
   }

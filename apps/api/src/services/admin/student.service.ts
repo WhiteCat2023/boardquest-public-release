@@ -212,6 +212,12 @@ export class StudentService {
           orderBy: { timestamp: "desc" },
           take: 5,
         },
+        userBadges: {
+          include: {
+            badge: true,
+          },
+          orderBy: { unlockedAt: "desc" },
+        },
         guidanceAssignments: {
           select: {
             id: true,
@@ -256,10 +262,22 @@ export class StudentService {
         where: { id: studentId },
         include: {
           mastery: true,
-          achievements: true,
-          examResults: true,
+          achievements: {
+            orderBy: { timestamp: "desc" },
+          },
+          examResults: {
+            orderBy: { timestamp: "desc" },
+          },
           studyPlans: true,
           lessonCompletions: true,
+          userBadges: true,
+          guidanceAssignments: {
+            include: {
+              advisor: {
+                select: { id: true, name: true, email: true },
+              },
+            },
+          },
         },
       });
 
