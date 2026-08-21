@@ -335,7 +335,7 @@ For inquiries, technical support, or project contributions, please reach out to 
 - **Game & Learner Client Repository**: [https://github.com/Itsan12345/BoardQuesters](https://github.com/Itsan12345/BoardQuesters.git)
 - **Issue Tracker**: [https://github.com/WhiteCat2023/boardquest-admin-2/issues](https://github.com/WhiteCat2023/boardquest-admin-2/issues)
 - **Capstone Team Lead / Primary Maintainer**:
-  - **Lead Developer/Maintainer**: `WhiteCat2023`
+  - **Lead Developer/Maintainer**: `Berndt Dennis F. Canaya (WhiteCat2023)`
   - **Designer**: `Lance Keith Fajardo`
   - **UI/UX Designer**: `Arl Jacob Necesario`
   - **Full Stack Developer**: `Ethan Gabriel Rolloque`
