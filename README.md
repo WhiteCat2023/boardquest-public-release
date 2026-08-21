@@ -327,14 +327,18 @@ capstone/
 
 For inquiries, technical support, or project contributions, please reach out to the **BoardQuest Capstone Development Team**:
 
+- **Project Client**: `Louie Dela Cerna Remotigue`
+- **Project Coordinator**: `Desiree Cendana-Perreras`
+- **Technical Consultant**: `Wilchin Dipolog`
+
 - **Repository**: [https://github.com/WhiteCat2023/boardquest-admin-2](https://github.com/WhiteCat2023/boardquest-admin-2)
 - **Issue Tracker**: [https://github.com/WhiteCat2023/boardquest-admin-2/issues](https://github.com/WhiteCat2023/boardquest-admin-2/issues)
 - **Capstone Team Lead / Primary Maintainer**:
   - **Maintainer**: `WhiteCat2023`
   - **Email**: `berndtdenniscanaya@gmail.com`
-  - **Project Client**: `Louie Dela Cerna Remotigue`
-  - **Project Coordinator**: `Desiree Cendana-Perreras`
-  - **Technical Consultant**: `Wilchin Dipolog`
+  - **Designer**: `Lance Keith Fajardo`
+  - **UI/UX Designer**: `Arl Jacob Necesario`
+  - **Full Stack Developer**: `Ethan Gabriel Rolloque`
 
 ---
 
