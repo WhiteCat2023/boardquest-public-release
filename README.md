@@ -330,8 +330,8 @@ For inquiries, technical support, or project contributions, please reach out to 
 - **Repository**: [https://github.com/WhiteCat2023/boardquest-admin-2](https://github.com/WhiteCat2023/boardquest-admin-2)
 - **Issue Tracker**: [https://github.com/WhiteCat2023/boardquest-admin-2/issues](https://github.com/WhiteCat2023/boardquest-admin-2/issues)
 - **Capstone Team Lead / Primary Maintainer**:
-  - **Maintainer**: WhiteCat Team (`WhiteCat2023`)
-  - **Email**: `147495118+WhiteCat2023@users.noreply.github.com`
+  - **Maintainer**: `WhiteCat2023`
+  - **Email**: `berndtdenniscanaya@gmail.com`
   - **Project Coordinator**: Contact via institutional Capstone Google Classroom (GCR) / GitHub Discussions
 
 ---
