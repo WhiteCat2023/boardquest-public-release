@@ -129,9 +129,23 @@ Ensure `apps/api/.env` contains valid values:
 PORT=5000
 NODE_ENV=development
 DATABASE_URL=mongodb://localhost:27017/boardquest
-JWT_SECRET=your_super_secure_jwt_secret_key_2026
+PRIVATE_KEY=your_super_secure_jwt_private_key_here
+PUBLIC_KEY=your_super_secure_jwt_public_key_here
+JWT_SECRET=your_super_secret_jwt_key_here
+CLIENT_URL=http://localhost:5175
+ADMIN_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
 
 # Optional Services
+REDIS_URL=redis://localhost:6379
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_gmail_app_password
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+GEMINI_API_KEY=
 N8N_BASE_URL=
 N8N_WEBHOOK_PARAPHRASE=
 N8N_WEBHOOK_ANALYTICS=
