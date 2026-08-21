@@ -332,7 +332,9 @@ For inquiries, technical support, or project contributions, please reach out to 
 - **Capstone Team Lead / Primary Maintainer**:
   - **Maintainer**: `WhiteCat2023`
   - **Email**: `berndtdenniscanaya@gmail.com`
-  - **Project Coordinator**: Contact via institutional Capstone Google Classroom (GCR) / GitHub Discussions
+  - **Project Client**: Louie Dela Cerna Remotigue
+  - **Project Coordinator**: Desiree Cendana-Perreras
+  - **Technical Consultant**: Wilchin Dipolog
 
 ---
 
