@@ -47,7 +47,7 @@ Traditional board exam preparation often suffers from low student engagement, pa
 | :--- | :--- |
 | **Students & Examinees** | Gamified practice environment featuring XP progression, streaks, achievements, customizable mock exams, timed challenges, and granular performance analytics by topic. |
 | **Faculty & Subject Experts** | Authoring, categorizing, and validating question banks with Bloom's taxonomy mapping, difficulty weighting, and AI-powered question paraphrasing. |
-| **Review Centers & Partner Schools** | Cohort management, student roster onboarding, institutional analytics, pass-rate forecasting, and comparative diagnostic reporting. |
+| **Review Centers** | Cohort management, student roster onboarding, institutional analytics, pass-rate forecasting, and comparative diagnostic reporting. |
 | **System Administrators** | Multi-tenant governance, Role-Based Access Control (RBAC), user lifecycle management, audit trails, and global system health monitoring. |
 
 ### Key Features
