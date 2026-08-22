@@ -113,17 +113,23 @@ export default function QuestionTable({
           isBankView={isBankView}
         />
 
-        <Table>
+        <Table className="w-full table-fixed lg:table-auto">
           <TableHeader className="bg-muted/40 border-b border-border" data-shimmer-ignore>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="border-b border-border hover:bg-transparent">
-                {headerGroup.headers.map(header => (
-                  <TableHead key={header.id} className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-wider py-2.5 px-3">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map(header => {
+                  const meta = header.column.columnDef.meta as { className?: string } | undefined;
+                  return (
+                    <TableHead 
+                      key={header.id} 
+                      className={`text-[9.5px] font-bold text-muted-foreground uppercase tracking-wider py-2.5 px-3 ${meta?.className ?? ""}`}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -136,11 +142,17 @@ export default function QuestionTable({
                     row.getIsSelected() ? 'bg-accent/70' : ''
                   }`}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="py-2 px-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map(cell => {
+                    const meta = cell.column.columnDef.meta as { className?: string } | undefined;
+                    return (
+                      <TableCell 
+                        key={cell.id} 
+                        className={`py-2 px-3 ${meta?.className ?? ""}`}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

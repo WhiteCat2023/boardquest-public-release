@@ -99,7 +99,11 @@ export default function AddQuestion() {
 
   // MCQ States
   const [mcqChoices, setMcqChoices] = useState<string[]>(["", ""]);
+  const [mcqChoiceImages, setMcqChoiceImages] = useState<string[]>(["", ""]);
   const [mcqCorrectIndex, setMcqCorrectIndex] = useState<number>(0);
+
+  // Question Prompt Image State
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   // True/False States
   const [tfCorrect, setTfCorrect] = useState<"True" | "False">("True");
@@ -162,6 +166,7 @@ export default function AddQuestion() {
       setDifficulty(existingQuestion.difficulty || "MEDIUM");
       setFormat(existingQuestion.type || "MCQ");
       setQuestionWording(existingQuestion.question || "");
+      setImageUrl(existingQuestion.imageUrl || "");
       setStatus(existingQuestion.status || "PENDING_REVIEW");
 
       if (existingQuestion.type === "MCQ") {
@@ -169,6 +174,11 @@ export default function AddQuestion() {
           existingQuestion.choices && existingQuestion.choices.length >= 2
             ? existingQuestion.choices
             : ["", ""],
+        );
+        setMcqChoiceImages(
+          existingQuestion.choiceImages && existingQuestion.choiceImages.length > 0
+            ? existingQuestion.choiceImages
+            : (existingQuestion.choices || ["", ""]).map(() => ""),
         );
         const correctIdx = existingQuestion.choices
           ? existingQuestion.choices.indexOf(existingQuestion.correctAnswer)
@@ -203,14 +213,26 @@ export default function AddQuestion() {
     setMcqChoices(updated);
   };
 
+  const handleChoiceImageChange = (index: number, imgUrl: string) => {
+    const updated = [...mcqChoiceImages];
+    while (updated.length <= index) {
+      updated.push("");
+    }
+    updated[index] = imgUrl;
+    setMcqChoiceImages(updated);
+  };
+
   const handleAddChoice = () => {
     setMcqChoices([...mcqChoices, ""]);
+    setMcqChoiceImages([...mcqChoiceImages, ""]);
   };
 
   const handleRemoveChoice = (index: number) => {
     if (mcqChoices.length <= 2) return;
     const updated = mcqChoices.filter((_, i) => i !== index);
+    const updatedImages = mcqChoiceImages.filter((_, i) => i !== index);
     setMcqChoices(updated);
+    setMcqChoiceImages(updatedImages);
     if (mcqCorrectIndex >= updated.length) {
       setMcqCorrectIndex(updated.length - 1);
     } else if (mcqCorrectIndex === index) {
@@ -249,7 +271,8 @@ export default function AddQuestion() {
       finalChoices = [];
     }
 
-    const isNeedsRevision = status === "PENDING_REVISION" || status === "NEEDS_REVISION";
+    const isNeedsRevision =
+      status === "PENDING_REVISION" || status === "NEEDS_REVISION";
     const newStatus = isNeedsRevision
       ? "PENDING_REVIEW"
       : status && status !== ""
@@ -259,12 +282,14 @@ export default function AddQuestion() {
     const payload = {
       ...(isEditMode && { id: questionId }),
       question: questionWording,
+      imageUrl: imageUrl.trim() || undefined,
       type: format || "MCQ",
       categoryId,
       topic: topic || "General",
       difficulty: difficulty || "MEDIUM",
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
+      choiceImages: format === "MCQ" ? mcqChoiceImages : [],
       status: newStatus,
     };
 
@@ -330,12 +355,14 @@ export default function AddQuestion() {
 
     return {
       question: questionWording,
+      imageUrl: imageUrl.trim() || undefined,
       type: format,
       categoryId,
       topic: topic || "General",
       difficulty,
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
+      choiceImages: format === "MCQ" ? mcqChoiceImages : [],
     };
   };
 
@@ -516,7 +543,9 @@ export default function AddQuestion() {
       originalBackup.question.trim().toLowerCase();
 
   return (
-    <div className={`flex flex-col gap-3.5 p-4 md:p-5 w-full ${activeTab === "bulk" ? "max-w-7xl" : "max-w-4xl"} mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300`}>
+    <div
+      className={`flex flex-col gap-3.5 p-4 md:p-5 w-full ${activeTab === "bulk" ? "max-w-7xl" : "max-w-4xl"} mx-auto font-sans bg-background text-foreground animate-in fade-in duration-300`}
+    >
       {/* ── Header & Back Navigation with Segmented Pill Tabs ── */}
       <div className="flex flex-col gap-2 sticky top-0 bg-background/95 backdrop-blur-md pb-2 pt-1 -mt-1 z-10 border-b border-border/80">
         <div className="flex items-center gap-2">
@@ -715,6 +744,8 @@ export default function AddQuestion() {
               <QuestionInput
                 questionWording={questionWording}
                 setQuestionWording={setQuestionWording}
+                imageUrl={imageUrl}
+                setImageUrl={setImageUrl}
               />
             </div>
 
@@ -736,8 +767,10 @@ export default function AddQuestion() {
                 {format === "MCQ" ? (
                   <MultipleChoiceInput
                     mcqChoices={mcqChoices}
+                    mcqChoiceImages={mcqChoiceImages}
                     mcqCorrectIndex={mcqCorrectIndex}
                     handleChange={handleMcqChoiceChange}
+                    handleImageChange={handleChoiceImageChange}
                     setMcqCorrectIndex={setMcqCorrectIndex}
                     handleAddChoice={handleAddChoice}
                     handleRemoveChoice={handleRemoveChoice}
@@ -799,7 +832,7 @@ export default function AddQuestion() {
               {isSubmitting
                 ? "Saving..."
                 : isEditMode
-                  ? (status === "PENDING_REVISION" || status === "NEEDS_REVISION")
+                  ? status === "PENDING_REVISION" || status === "NEEDS_REVISION"
                     ? "Update & Resubmit for Review"
                     : "Update Question"
                   : "Save & Submit Question"}

@@ -57,6 +57,7 @@ enum BadgeCategory {
   BOSS
   SUBJECT
   EXAM
+  
 }
 
 // [ Admin Schema ]
@@ -94,7 +95,9 @@ model AdminUser {
 model Question {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   question      String
+  imageUrl      String?
   choices       String[]
+  choiceImages  String[] @default([])
   correctAnswer String
   status        QuestionStatus
 

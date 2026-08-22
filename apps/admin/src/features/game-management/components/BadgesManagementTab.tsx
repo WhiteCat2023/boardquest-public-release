@@ -92,7 +92,7 @@ export function BadgesManagementTab({
   const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [imageErrorIds, setImageErrorIds] = useState<Record<string, boolean>>(
+  const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>(
     {},
   );
 
@@ -113,8 +113,9 @@ export function BadgesManagementTab({
     0,
   );
 
-  const handleImageError = (badgeId: string) => {
-    setImageErrorIds((prev) => ({ ...prev, [badgeId]: true }));
+  const handleImageError = (url?: string | null) => {
+    if (!url) return;
+    setImageErrorUrls((prev) => ({ ...prev, [url]: true }));
   };
 
   const getTierMeta = (type?: string) => {
@@ -346,7 +347,7 @@ export function BadgesManagementTab({
               const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
               const photoUrl = badge.spriteUrl || badge.imageUrl;
               const hasCustomPhoto = Boolean(
-                photoUrl && !imageErrorIds[badge.id],
+                photoUrl && !imageErrorUrls[photoUrl],
               );
               const displayName = badge.name || badge.title;
               const displayXp = badge.xpReward ?? badge.xp ?? 50;
@@ -382,7 +383,7 @@ export function BadgesManagementTab({
                             src={photoUrl!}
                             alt={displayName}
                             className="w-full h-full object-cover rounded-xl"
-                            onError={() => handleImageError(badge.id)}
+                            onError={() => handleImageError(photoUrl)}
                           />
                         </div>
                       ) : (
@@ -524,7 +525,7 @@ export function BadgesManagementTab({
                   const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
                   const photoUrl = badge.spriteUrl || badge.imageUrl;
                   const hasCustomPhoto = Boolean(
-                    photoUrl && !imageErrorIds[badge.id],
+                    photoUrl && !imageErrorUrls[photoUrl],
                   );
                   const displayName = badge.name || badge.title;
                   const displayXp = badge.xpReward ?? badge.xp ?? 50;
@@ -545,7 +546,7 @@ export function BadgesManagementTab({
                                 src={photoUrl!}
                                 alt={displayName}
                                 className="w-full h-full object-cover"
-                                onError={() => handleImageError(badge.id)}
+                                onError={() => handleImageError(photoUrl)}
                               />
                             </div>
                           ) : (

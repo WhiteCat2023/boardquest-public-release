@@ -8,10 +8,11 @@ interface StudentBadgesSectionProps {
 }
 
 export function StudentBadgesSection({ badges = [] }: StudentBadgesSectionProps) {
-  const [imageErrorIds, setImageErrorIds] = useState<Record<string, boolean>>({});
+  const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>({});
 
-  const handleImageError = (badgeId: string) => {
-    setImageErrorIds((prev) => ({ ...prev, [badgeId]: true }));
+  const handleImageError = (url?: string | null) => {
+    if (!url) return;
+    setImageErrorUrls((prev) => ({ ...prev, [url]: true }));
   };
 
   if (!badges || badges.length === 0) {
@@ -47,7 +48,7 @@ export function StudentBadgesSection({ badges = [] }: StudentBadgesSectionProps)
         {badges.map((badge) => {
           const IconComp = badge.icon;
           const hasCustomPhoto = Boolean(
-            badge.spriteUrl && !imageErrorIds[badge.id]
+            badge.spriteUrl && !imageErrorUrls[badge.spriteUrl]
           );
 
           return (
@@ -66,7 +67,7 @@ export function StudentBadgesSection({ badges = [] }: StudentBadgesSectionProps)
                         src={badge.spriteUrl!}
                         alt={badge.title}
                         className="w-full h-full object-cover rounded-lg"
-                        onError={() => handleImageError(badge.id)}
+                        onError={() => handleImageError(badge.spriteUrl)}
                       />
                     </div>
                   ) : (

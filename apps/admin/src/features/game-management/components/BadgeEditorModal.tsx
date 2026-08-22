@@ -52,7 +52,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GameBadge, BadgeType, BadgeCategory } from "../types/types";
-import { uploadBadgeImageToCloudinary } from "../services/badgeUploadService";
+import { uploadBadgeImage } from "../services/badgeUploadService";
 
 interface BadgeEditorModalProps {
   isOpen: boolean;
@@ -259,13 +259,33 @@ export function BadgeEditorModal({
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isCloudUploaded, setIsCloudUploaded] = useState<boolean>(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
     if (badge) {
       setFormData(badge);
-      setImagePreviewUrl(badge.imageUrl || "");
+      const existingImg = badge.imageUrl || badge.spriteUrl || "";
+      setImagePreviewUrl(existingImg);
+      setSelectedFile(null);
+      setIsCloudUploaded(Boolean(existingImg));
     } else {
       const defaultTier = BADGE_TYPES[0];
       setFormData({
@@ -285,6 +305,8 @@ export function BadgeEditorModal({
         triggerRule: { type: "accuracy", threshold: 80 },
       });
       setImagePreviewUrl("");
+      setSelectedFile(null);
+      setIsCloudUploaded(false);
     }
   }, [badge, isOpen]);
 
@@ -300,7 +322,7 @@ export function BadgeEditorModal({
     }));
   };
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = (file: File) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -313,36 +335,31 @@ export function BadgeEditorModal({
       return;
     }
 
-    // Local instant preview
-    const localUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(localUrl);
-
-    // Upload to Cloudinary badge_icon_image folder
-    setUploadingImage(true);
-    try {
-      const sanitizedName = formData.title
-        ? formData.title.trim().replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase()
-        : `badge_${Date.now()}`;
-
-      const uploadedUrl = await uploadBadgeImageToCloudinary(file, sanitizedName);
-      setImagePreviewUrl(uploadedUrl);
-      setFormData((prev) => ({ ...prev, imageUrl: uploadedUrl }));
-      toast.success("Badge image uploaded to Cloudinary (badge_icon_image)!");
-    } catch (err: any) {
-      console.error("Cloudinary upload failed:", err);
-      toast.error(
-        err?.response?.data?.message ||
-          "Failed to upload image to Cloudinary. Keeping local preview."
-      );
-      setFormData((prev) => ({ ...prev, imageUrl: localUrl }));
-    } finally {
-      setUploadingImage(false);
+    // Revoke previous blob URL if any
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
     }
+
+    // Local instant preview (do not upload yet)
+    const localUrl = URL.createObjectURL(file);
+    objectUrlRef.current = localUrl;
+
+    setSelectedFile(file);
+    setImagePreviewUrl(localUrl);
+    setIsCloudUploaded(false);
+    setFormData((prev) => ({ ...prev, imageUrl: localUrl }));
+    toast.info("Image loaded for preview. It will be uploaded to cloud when you save.");
   };
 
   const handleRemoveImage = () => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setImagePreviewUrl("");
-    setFormData((prev) => ({ ...prev, imageUrl: "" }));
+    setSelectedFile(null);
+    setIsCloudUploaded(false);
+    setFormData((prev) => ({ ...prev, imageUrl: "", spriteUrl: undefined }));
     if (fileInputRef.current) fileInputRef.current.value = "";
     toast.info("Image removed. Fallback icon will be used.");
   };
@@ -355,11 +372,46 @@ export function BadgeEditorModal({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim() || !formData.description?.trim()) {
       toast.error("Please fill in badge title and description.");
       return;
+    }
+
+    let finalImageUrl = formData.imageUrl?.trim() || "";
+
+    // If there is a local file pending upload, upload it to cloud before saving
+    if (selectedFile && !isCloudUploaded) {
+      setUploadingImage(true);
+      try {
+        const sanitizedName = formData.title
+          ? formData.title.trim().replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase()
+          : `badge_${Date.now()}`;
+
+        finalImageUrl = await uploadBadgeImage(selectedFile, sanitizedName);
+
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current);
+          objectUrlRef.current = null;
+        }
+
+        setImagePreviewUrl(finalImageUrl);
+        setSelectedFile(null);
+        setIsCloudUploaded(true);
+        setFormData((prev) => ({ ...prev, imageUrl: finalImageUrl }));
+        toast.success("Badge image uploaded to Supabase Cloud Storage!");
+      } catch (err: any) {
+        console.error("Storage upload before save failed:", err);
+        toast.error(
+          err?.response?.data?.message ||
+            "Failed to upload image to Cloud Storage before saving. Please try again."
+        );
+        setUploadingImage(false);
+        return;
+      } finally {
+        setUploadingImage(false);
+      }
     }
 
     const currentTier =
@@ -375,7 +427,7 @@ export function BadgeEditorModal({
       category: formData.category || "QUEST",
       description: formData.description.trim(),
       icon: formData.icon || formData.iconName || "trophy",
-      spriteUrl: formData.spriteUrl || formData.imageUrl?.trim() || null,
+      spriteUrl: finalImageUrl || null,
       color: formData.color || currentTier.color,
       unlockCondition:
         formData.unlockCondition || `Complete ${formData.title.trim()}`,
@@ -385,7 +437,7 @@ export function BadgeEditorModal({
       badgeType: formData.badgeType || "bronze",
       xp: Number(formData.xpReward) || Number(formData.xp) || 50,
       iconName: formData.iconName || formData.icon || "Medal",
-      imageUrl: formData.spriteUrl || formData.imageUrl?.trim() || undefined,
+      imageUrl: finalImageUrl || undefined,
       bgColor: currentTier.bgColor,
       borderColor: currentTier.borderColor,
       glowColor: currentTier.glowColor,
@@ -412,7 +464,7 @@ export function BadgeEditorModal({
                 {badge ? "Edit Gamification Badge" : "Create Gamification Badge"}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Configure badge metadata, upload Cloudinary artwork, fallback icon, tier styling, XP reward, and unlock criteria.
+                Configure badge metadata, upload Supabase Cloud Storage artwork, fallback icon, tier styling, XP reward, and unlock criteria.
               </DialogDescription>
             </div>
           </div>
@@ -437,11 +489,11 @@ export function BadgeEditorModal({
                     </h3>
                   </div>
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
-                    Cloudinary Folder: <code className="bg-background px-1.5 py-0.5 rounded border border-border text-primary font-bold">badge_icon_image</code>
+                    Storage Folder: <code className="bg-background px-1.5 py-0.5 rounded border border-border text-primary font-bold">badge_icon_image</code>
                   </span>
                 </div>
 
-                {/* Cloudinary Photo Upload */}
+                {/* Badge Artwork Upload & Preview */}
                 <div>
                   <Label className="text-xs font-bold text-foreground mb-1.5 flex items-center justify-between">
                     <span>Custom Artwork Upload</span>
@@ -461,53 +513,75 @@ export function BadgeEditorModal({
                   />
 
                   {imagePreviewUrl ? (
-                    /* Attached Image Box */
-                    <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl border border-primary/30 bg-primary/5">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border-2 border-primary/40 bg-background shadow-sm flex items-center justify-center shrink-0">
-                          {uploadingImage ? (
-                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                          ) : (
-                            <img
-                              src={imagePreviewUrl}
-                              alt="Badge Artwork"
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <span>Custom Photo Uploaded</span>
+                    /* Attached Image Preview Box */
+                    <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+                      <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="relative w-14 h-14 rounded-xl overflow-hidden border-2 border-primary/40 bg-background shadow-xs flex items-center justify-center shrink-0">
+                            {uploadingImage ? (
+                              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                            ) : (
+                              <img
+                                src={imagePreviewUrl}
+                                alt="Badge Artwork Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground truncate max-w-sm mt-0.5">
-                            {formData.imageUrl || "Ready for badge display"}
-                          </p>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                              {isCloudUploaded ? (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                  <span className="text-emerald-700 dark:text-emerald-400">Cloud Storage Artwork</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="w-4 h-4 text-amber-500 shrink-0" />
+                                  <span className="text-amber-700 dark:text-amber-400">Local Preview (Pending Cloud Upload)</span>
+                                </>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate max-w-sm mt-0.5 font-mono">
+                              {selectedFile
+                                ? `${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`
+                                : formData.imageUrl || "Ready for badge display"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploadingImage}
+                            onClick={() => fileInputRef.current?.click()}
+                            className="h-8 text-xs font-semibold cursor-pointer"
+                          >
+                            Change
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={uploadingImage}
+                            onClick={handleRemoveImage}
+                            className="h-8 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 font-semibold cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5 mr-1" /> Remove
+                          </Button>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={uploadingImage}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="h-8 text-xs font-semibold"
-                        >
-                          Change
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={uploadingImage}
-                          onClick={handleRemoveImage}
-                          className="h-8 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 font-semibold"
-                        >
-                          <X className="w-3.5 h-3.5 mr-1" /> Remove
-                        </Button>
-                      </div>
+                      {selectedFile && !isCloudUploaded && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px]">
+                          <HelpCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                          <span>
+                            Previewing local file. It will be automatically uploaded to Supabase Storage when you save this badge.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* Upload Dropzone */
@@ -535,11 +609,11 @@ export function BadgeEditorModal({
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-foreground">
                           {uploadingImage
-                            ? "Uploading artwork to Cloudinary..."
+                            ? "Uploading artwork to Cloud Storage..."
                             : "Click or drag & drop badge artwork image"}
                         </p>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          PNG, JPG, WEBP, SVG • Saved to Cloudinary folder <span className="font-semibold text-primary">badge_icon_image</span>
+                          PNG, JPG, WEBP, SVG • Previews instantly before uploading to Supabase Storage folder <span className="font-semibold text-primary">badge_icon_image</span>
                         </p>
                       </div>
                     </div>
@@ -781,8 +855,20 @@ export function BadgeEditorModal({
                     Live Preview
                   </h3>
                 </div>
-                <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                  {formData.imageUrl ? "Custom Artwork" : "Fallback Icon"}
+                <span
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                    imagePreviewUrl
+                      ? isCloudUploaded
+                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                        : "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20"
+                      : "text-primary bg-primary/10 border-primary/20"
+                  }`}
+                >
+                  {imagePreviewUrl
+                    ? isCloudUploaded
+                      ? "Cloud Artwork"
+                      : "Local Preview"
+                    : "Fallback Icon"}
                 </span>
               </div>
 
@@ -805,15 +891,15 @@ export function BadgeEditorModal({
                   </span>
                 </div>
 
-                {/* Badge Artwork: Custom Cloudinary Image OR Fallback Icon */}
+                {/* Badge Artwork: Custom Cloud/Preview Image OR Fallback Icon */}
                 <div className="my-2 relative z-10">
-                  {formData.imageUrl ? (
+                  {imagePreviewUrl ? (
                     <div
                       className={`w-20 h-20 rounded-2xl overflow-hidden border-2 shadow-lg bg-background flex items-center justify-center p-1 relative ${activeTierMeta.borderColor}`}
                     >
                       <img
-                        src={formData.imageUrl}
-                        alt="Badge Icon"
+                        src={imagePreviewUrl}
+                        alt="Badge Icon Preview"
                         className="w-full h-full object-cover rounded-xl"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";
@@ -873,7 +959,7 @@ export function BadgeEditorModal({
                   <Sparkle className="w-3.5 h-3.5 text-primary" /> Live Dynamic Rendering
                 </p>
                 <p>
-                  Artwork is stored in Cloudinary folder <span className="font-bold text-foreground">badge_icon_image</span>. If no custom image is uploaded, students will see the fallback icon with your selected tier glow.
+                  Artwork is stored in Supabase Storage folder <span className="font-bold text-foreground">badge_icon_image</span>. If no custom image is uploaded, students will see the fallback icon with your selected tier glow.
                 </p>
               </div>
             </div>
@@ -887,7 +973,7 @@ export function BadgeEditorModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={uploadingImage}
+            disabled={uploadingImage || isSaving}
             className="h-9 text-xs font-semibold px-4 cursor-pointer"
           >
             Cancel
@@ -896,12 +982,16 @@ export function BadgeEditorModal({
             type="submit"
             form="badge-editor-form"
             size="sm"
-            disabled={uploadingImage}
+            disabled={uploadingImage || isSaving}
             className="h-9 text-xs font-bold gap-2 px-5 shadow-md bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
           >
             {uploadingImage ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" /> Uploading Artwork...
+              </>
+            ) : isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Saving Badge...
               </>
             ) : (
               <>

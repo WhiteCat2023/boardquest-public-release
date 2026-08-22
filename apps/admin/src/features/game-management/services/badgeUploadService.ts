@@ -10,10 +10,10 @@ export interface UploadBadgeImageResponse {
 }
 
 /**
- * Upload a badge image to Cloudinary in the "badge_icon_image" folder
+ * Upload a badge image to Supabase Cloud Storage in the "badge_icon_image" bucket/folder
  * Accepts base64 data URL string or file object
  */
-export async function uploadBadgeImageToCloudinary(
+export async function uploadBadgeImage(
   imageSource: string | File,
   fileName?: string
 ): Promise<string> {
@@ -39,11 +39,14 @@ export async function uploadBadgeImageToCloudinary(
 
   const data = response.data?.data;
   if (!data?.imageUrl) {
-    throw new Error("Failed to retrieve image URL from Cloudinary response");
+    throw new Error("Failed to retrieve image URL from storage response");
   }
 
   return data.imageUrl;
 }
+
+// Backward-compatible alias
+export const uploadBadgeImageToCloudinary = uploadBadgeImage;
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

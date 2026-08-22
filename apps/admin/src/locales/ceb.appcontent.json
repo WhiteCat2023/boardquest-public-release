@@ -28,13 +28,13 @@
       "subjectManagement": "Pagdumala sa Asignatura",
       "reviewCenter": "Sentro sa Review",
       "questionBank": "Pundok sa Pangutana",
-      "analytics": "Analitika",
+      "analytics": "Pagbuhat",
       "systemSettings": "Pang-sayod sa Sistema"
     },
     "subItems": {
       "myQuestions": "Akong mga Pangutana",
       "liveQuestions": "Gipagawas nga Pangutana",
-      "sharedLibrary": "Pampublikong Librarya",
+      "sharedLibrary": "Tanan nga Pangutana",
       "revisions": "Mga Rebisyon"
     }
   },

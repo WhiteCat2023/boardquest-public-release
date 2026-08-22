@@ -93,7 +93,7 @@ export default function AnalyticsPage() {
         ) : !report ? (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground py-24 text-center gap-2.5">
             <BarChart2 size={42} className="text-muted-foreground/30 stroke-[1.5]" />
-            <p className="font-bold text-foreground text-sm">No Analytics Data</p>
+            <p className="font-bold text-foreground text-sm">No Performance Data</p>
             <p className="text-xs max-w-xs">Selected student has no recorded performance statistics yet.</p>
           </div>
         ) : (

@@ -99,13 +99,13 @@ function ExtractedFilePreview() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-[60px] pl-4 text-center">#</TableHead>
-                  <TableHead className="min-w-[280px]">Question Wording</TableHead>
-                  <TableHead className="w-[120px]">Topic</TableHead>
-                  <TableHead className="w-[100px]">Type</TableHead>
-                  <TableHead className="w-[110px]">Difficulty</TableHead>
-                  <TableHead className="min-w-[150px]">Answer Key</TableHead>
-                  <TableHead className="w-[150px] text-right pr-4">Actions</TableHead>
+                  <TableHead className="hidden lg:table-cell w-[60px] pl-4 text-center">#</TableHead>
+                  <TableHead className="min-w-[200px]">Question Wording</TableHead>
+                  <TableHead className="hidden lg:table-cell w-[120px]">Topic</TableHead>
+                  <TableHead className="hidden lg:table-cell w-[100px]">Type</TableHead>
+                  <TableHead className="hidden lg:table-cell w-[110px]">Difficulty</TableHead>
+                  <TableHead className="hidden lg:table-cell min-w-[150px]">Answer Key</TableHead>
+                  <TableHead className="w-[120px] lg:w-[150px] text-right pr-4">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,7 +123,7 @@ function ExtractedFilePreview() {
 
                     return (
                       <TableRow key={idx} className="hover:bg-muted/40 transition-colors">
-                        <TableCell className="pl-4 text-center font-bold text-xs text-muted-foreground">
+                        <TableCell className="hidden lg:table-cell pl-4 text-center font-bold text-xs text-muted-foreground">
                           <span className="rounded bg-muted px-2 py-0.5 text-[10px] border border-border">
                             #{idx + 1}
                           </span>
@@ -133,30 +133,35 @@ function ExtractedFilePreview() {
                             <span className="text-xs font-semibold text-foreground line-clamp-2 leading-relaxed" title={q.question}>
                               {q.question || "Untitled Question"}
                             </span>
-                            {choicesDisplay && (
-                              <span className="text-[11px] text-muted-foreground truncate" title={choicesDisplay}>
-                                Choices: {choicesDisplay}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {choicesDisplay && (
+                                <span className="text-[11px] text-muted-foreground truncate max-w-[250px]" title={choicesDisplay}>
+                                  Choices: {choicesDisplay}
+                                </span>
+                              )}
+                              <span className="lg:hidden rounded bg-muted border border-border px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
+                                {q.difficulty || "MEDIUM"}
                               </span>
-                            )}
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <span className="text-xs font-medium text-muted-foreground inline-flex items-center gap-1">
                             <Tag size={10} className="text-muted-foreground/60" />
                             {q.topic || "General"}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
                             {q.type || "MCQ"}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <span className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(q.difficulty)}`}>
                             {q.difficulty || "MEDIUM"}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <span className="text-xs font-medium text-foreground bg-primary/5 px-2 py-1 rounded-md border border-primary/10 inline-block truncate max-w-[240px]" title={q.correctAnswer}>
                             {q.correctAnswer || "N/A"}
                           </span>

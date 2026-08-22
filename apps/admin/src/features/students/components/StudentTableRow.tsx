@@ -130,7 +130,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
           <Link to={`/analytics?studentId=${student.id}`}>
             <button
               className="size-7 p-1 text-muted-foreground hover:text-primary rounded-md hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center"
-              title="View Student Analytics"
+              title="View Student Performance"
             >
               <BarChart2 size={14} />
             </button>

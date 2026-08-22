@@ -46,7 +46,7 @@ export const superAdminNavItem: NavItemProps[] = [
     //             subItems: [
     //                 { title: "My Questions", path: "/question-bank/my-questions" },
     //                 { title: "Review Questions", path: "/question-bank/review-questions" },
-    //                 { title: "Shared Library", path: "/question-bank/shared-library" },
+    //                 { title: "All Questions", path: "/question-bank/shared-library" },
     //                 { title: "Revisions", path: "/question-bank/revisions" }
     //             ]
     //         },
@@ -61,7 +61,7 @@ export const superAdminNavItem: NavItemProps[] = [
     //             icon: "GraduationCap"
     //         },
     //         {
-    //             title: "Analytics",
+    //             title: "Performance",
     //             path: "/analytics",
     //             icon: "BarChart2"
     //         },

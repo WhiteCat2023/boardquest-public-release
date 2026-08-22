@@ -21,6 +21,7 @@
   "dependencies": {
     "@agendajs/mongo-backend": "^4.0.2",
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.112.3",
     "agenda": "^6.2.5",
     "argon2": "^0.44.0",
     "axios": "^1.17.0",

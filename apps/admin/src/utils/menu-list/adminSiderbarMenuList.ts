@@ -55,7 +55,7 @@ export const adminNavItem: NavItemProps[] = [
         icon: "CheckSquare",
       },
       {
-        title: "Shared Library",
+        title: "All Questions",
         path: "/question-bank/shared-library",
         icon: "Library",
       },
@@ -70,7 +70,7 @@ export const adminNavItem: NavItemProps[] = [
         icon: "GraduationCap",
       },
       {
-        title: "Analytics",
+        title: "Performance",
         path: "/analytics",
         icon: "BarChart2",
       },

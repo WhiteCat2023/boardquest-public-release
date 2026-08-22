@@ -50,6 +50,9 @@ export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
         accessorKey: "questionType",
         header: "Type",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => (
             <span className="text-sm text-gray-600">{getValue<string>()}</span>
         ),
@@ -57,11 +60,17 @@ export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
         accessorKey: "difficultyLevel",
         header: "Difficulty",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => <DifficultyBadge level={getValue<string>()} />,
     },
     {
         accessorKey: "questionTags",
         header: "Tags",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => {
             const tags = getValue<string[]>();
             if (!tags?.length) return <span className="text-xs text-gray-400">—</span>;
@@ -87,11 +96,17 @@ export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
         accessorKey: "questionStatus",
         header: "Status",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
     },
     {
         accessorKey: "questionCreatedBy",
         header: "Created By",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => (
             <span className="text-sm text-gray-600">{getValue<string>()}</span>
         ),
@@ -99,6 +114,9 @@ export const QuestionBankColumn: ColumnDef<Question>[] = [
     {
         accessorKey: "questionCreatedDate",
         header: "Created At",
+        meta: {
+            className: "hidden lg:table-cell",
+        },
         cell: ({ getValue }) => {
             const date = getValue<string>();
             if (!date) return <span className="text-xs text-gray-400">—</span>;

@@ -21,14 +21,14 @@ describe("Upload Routes", () => {
   });
 
   describe("POST /api/upload/badge-image", () => {
-    it("should upload a badge image to Cloudinary successfully", async () => {
+    it("should upload a badge image to Supabase Storage successfully", async () => {
       const mockResult = {
-        secure_url: "https://res.cloudinary.com/demo/image/upload/badge_icon_image/sample.png",
-        url: "http://res.cloudinary.com/demo/image/upload/badge_icon_image/sample.png",
-        public_id: "badge_icon_image/badge_12345",
+        secure_url: "https://xyz.supabase.co/storage/v1/object/public/boardquest-storage/badge_icon_image/sample.png",
+        url: "https://xyz.supabase.co/storage/v1/object/public/boardquest-storage/badge_icon_image/sample.png",
+        public_id: "badge_icon_image/badge_12345.png",
+        path: "badge_icon_image/badge_12345.png",
+        bucket: "boardquest-storage",
         format: "png",
-        width: 512,
-        height: 512,
         bytes: 20480,
         created_at: new Date().toISOString(),
       };
@@ -63,12 +63,12 @@ describe("Upload Routes", () => {
   describe("POST /api/upload", () => {
     it("should handle general uploads via alias endpoint", async () => {
       const mockResult = {
-        secure_url: "https://res.cloudinary.com/demo/image/upload/badge_icon_image/sample.png",
-        url: "http://res.cloudinary.com/demo/image/upload/badge_icon_image/sample.png",
-        public_id: "badge_icon_image/badge_test",
+        secure_url: "https://xyz.supabase.co/storage/v1/object/public/boardquest-storage/badge_icon_image/sample.png",
+        url: "https://xyz.supabase.co/storage/v1/object/public/boardquest-storage/badge_icon_image/sample.png",
+        public_id: "badge_icon_image/badge_test.png",
+        path: "badge_icon_image/badge_test.png",
+        bucket: "boardquest-storage",
         format: "png",
-        width: 256,
-        height: 256,
         bytes: 10240,
         created_at: new Date().toISOString(),
       };

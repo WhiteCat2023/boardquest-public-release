@@ -16,6 +16,12 @@ import useAuth from "@/hooks/useAuth";
 import { Home } from "lucide-react";
 
 const formatSegment = (segment: string) => {
+  if (segment.toLowerCase() === "analytics") {
+    return "Performance";
+  }
+  if (segment.toLowerCase() === "shared-library") {
+    return "All Questions";
+  }
   return segment
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

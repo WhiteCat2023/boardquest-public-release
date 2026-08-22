@@ -15,6 +15,13 @@ import useAuth from "@/hooks/useAuth";
 import { useCategories } from "@/features/faculty";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function MyQuestions() {
   const { auth } = useAuth();
@@ -81,8 +88,8 @@ export default function MyQuestions() {
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden font-sans bg-background text-foreground">
-      {/* Left Sidebar: Compact Subject Navigation Menu */}
-      <aside className="w-full lg:w-72 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex flex-col h-auto lg:h-full">
+      {/* Left Sidebar: Compact Subject Navigation Menu (Desktop Only) */}
+      <aside className="hidden lg:flex w-72 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex-col h-full">
         {/* Sidebar Header */}
         <div className="p-3.5 px-4 border-b border-border bg-card">
           <div className="flex items-center justify-between gap-2">
@@ -219,7 +226,52 @@ export default function MyQuestions() {
       </aside>
 
       {/* Main Panel: My Questions Content */}
-      <main className="flex-1 overflow-y-auto flex flex-col p-6 md:p-8 space-y-6">
+      <main className="flex-1 overflow-y-auto flex flex-col p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+        {/* Mobile & Tablet Subject Selector Dropdown */}
+        <div className="lg:hidden flex flex-col gap-1.5 p-3 rounded-2xl border border-border bg-card shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <BookOpen size={13} className="text-primary" /> Subject Filter ({categories.length})
+            </span>
+            {selectedCategory && selectedCategory !== "ALL" && (
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("ALL")}
+                className="text-[10.5px] font-bold text-primary hover:underline cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+          <Select
+            value={selectedCategory || "ALL"}
+            onValueChange={(val) => setSelectedCategory(val)}
+          >
+            <SelectTrigger className="w-full h-9 text-xs font-semibold bg-background border-border rounded-xl">
+              <SelectValue placeholder="All Subjects" />
+            </SelectTrigger>
+            <SelectContent className="max-h-64">
+              <SelectItem value="ALL">
+                <span className="font-bold flex items-center gap-2">
+                  <span>All Subjects</span>
+                  <span className="text-[10px] font-mono font-normal text-muted-foreground">({totalAllQuestionsCount})</span>
+                </span>
+              </SelectItem>
+              {categories.map((cat: any) => {
+                const count = getCategoryQuestionCount(cat);
+                return (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{cat.name}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">({count})</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>

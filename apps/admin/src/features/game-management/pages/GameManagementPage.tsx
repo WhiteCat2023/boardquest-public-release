@@ -92,7 +92,7 @@ export function GameManagementPage() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Configure gamification badges, Cloudinary artwork, XP engine rules, and scoring thresholds.
+              Configure gamification badges, artwork, XP engine rules, and scoring thresholds.
             </p>
           </div>
         </div>

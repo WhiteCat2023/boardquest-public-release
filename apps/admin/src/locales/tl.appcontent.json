@@ -28,13 +28,13 @@
       "subjectManagement": "Pamamahala ng Somak",
       "reviewCenter": "Sentro ng Rebyu",
       "questionBank": "Bangko ng Tanong",
-      "analytics": "Analitika",
+      "analytics": "Pagganap",
       "systemSettings": "Pang-ayos ng Sistema"
     },
     "subItems": {
       "myQuestions": "Aking mga Tanong",
       "liveQuestions": "Mga Naka-publish na Tanong",
-      "sharedLibrary": "Pampublikong Aklatan",
+      "sharedLibrary": "Lahat ng Tanong",
       "revisions": "Mga Rebisyon"
     }
   },

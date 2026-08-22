@@ -56,7 +56,7 @@ export function StudentProfileHeader({ student }: StudentProfileHeaderProps) {
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl px-4 py-2 text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <BarChart2 size={14} />
-              View Full Analytics
+              View Full Performance
             </Button>
             <a
               href={`mailto:${student.email}`}

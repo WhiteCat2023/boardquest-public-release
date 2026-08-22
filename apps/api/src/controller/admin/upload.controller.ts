@@ -18,7 +18,7 @@ export const uploadBadgeImage = asyncHandler(async (req: Request, res: Response)
 
   const result = await uploadImage(image, sanitizedFileName, folder);
 
-  return new ApiResponse(
+    return new ApiResponse(
     200,
     {
       imageUrl: result.secure_url || result.url,
@@ -28,6 +28,6 @@ export const uploadBadgeImage = asyncHandler(async (req: Request, res: Response)
       height: result.height,
       bytes: result.bytes,
     },
-    "Badge image uploaded to Cloudinary successfully"
+    "Badge image uploaded to Supabase Cloud Storage successfully"
   ).send(res);
 });

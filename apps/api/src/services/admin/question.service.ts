@@ -16,7 +16,9 @@ import { createNotification } from "./notification.service";
 
 export const CreateQuestionSchema = z.object({
   question: z.string().min(1, "Question title is required"),
+  imageUrl: z.string().optional().nullable(),
   choices: z.array(z.string()).optional().default([]),
+  choiceImages: z.array(z.string()).optional().default([]),
   correctAnswer: z.string().min(1, "Correct answer is required"),
   categoryId: z.string().min(1, "Question category is required"),
   authorId: z.string().optional(),
@@ -38,7 +40,9 @@ export const CreateQuestionSchema = z.object({
 export const UpdateQuestionSchema = z.object({
   id: z.string().min(1, "Question ID is required"),
   question: z.string().min(1, "Question title is required"),
+  imageUrl: z.string().optional().nullable(),
   choices: z.array(z.string()).optional().default([]),
+  choiceImages: z.array(z.string()).optional().default([]),
   correctAnswer: z.string().min(1, "Correct answer is required"),
   categoryId: z.string().min(1, "Question category is required"),
   authorId: z.string().optional(),
@@ -87,7 +91,9 @@ export class QuestionService {
 
     const {
       question,
+      imageUrl,
       choices,
+      choiceImages,
       correctAnswer,
       categoryId,
       authorId,
@@ -133,7 +139,9 @@ export class QuestionService {
     const newQuestion = await this.db.question.create({
       data: {
         question: question.toLowerCase().trim(),
+        imageUrl: imageUrl || null,
         choices,
+        choiceImages: choiceImages || [],
         correctAnswer: correctAnswer.toLowerCase().trim(),
         categoryId: categoryId.trim(),
         authorId: finalAuthorId,
@@ -204,7 +212,9 @@ export class QuestionService {
 
     const {
       question,
+      imageUrl,
       choices,
+      choiceImages,
       correctAnswer,
       categoryId,
       authorId,
@@ -237,7 +247,9 @@ export class QuestionService {
       },
       data: {
         question: question.toLowerCase().trim(),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         choices,
+        ...(choiceImages !== undefined && { choiceImages }),
         correctAnswer: correctAnswer.toLowerCase().trim(),
         categoryId: categoryId.trim(),
         authorId,
@@ -989,9 +1001,7 @@ export class QuestionService {
     }
 
     const isAuthor = comment.authorId === userId;
-    const isAdminOrLead = ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
-      userRole,
-    );
+    const isAdminOrLead = ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(userRole);
 
     if (!isAuthor && !isAdminOrLead) {
       throw new ApiError(

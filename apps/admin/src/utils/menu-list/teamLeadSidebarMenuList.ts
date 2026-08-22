@@ -55,7 +55,7 @@ export const teamLeadNavItem: NavItemProps[] = [
         icon: "CheckSquare",
       },
       {
-        title: "Shared Library",
+        title: "All Questions",
         path: "/question-bank/shared-library",
         icon: "Library",
       },
@@ -65,7 +65,7 @@ export const teamLeadNavItem: NavItemProps[] = [
     sideBarCategoryName: "STUDENT MANAGEMENT",
     content: [
       {
-        title: "Analytics",
+        title: "Performance",
         path: "/analytics",
         icon: "BarChart2",
       },
