@@ -118,6 +118,8 @@ export default function ViewFacultyMember() {
         return "Co-Admin (Team Lead)";
       case "TEACHER":
         return "Teacher / Instructor";
+      case "EXTERNAL":
+        return "External Partner (Review Center)";
       default:
         return role || "Faculty Member";
     }
@@ -128,13 +130,15 @@ export default function ViewFacultyMember() {
       case "SUPERADMIN":
         return "Full system control, institutional oversight, and administrative access.";
       case "DEAN":
-        return "Academic leadership, curriculum authority, faculty management, and program oversight.";
+        return "Academic administration, subject management, and department oversight.";
       case "TEAMLEAD":
-        return "Curriculum reviewing, question quality assurance, and teacher coordination.";
+        return "Question bank moderation, subject leadership, and teacher coordination.";
       case "TEACHER":
-        return "Question bank creation, test item authoring, and personal question library management.";
+        return "Question authorship, curriculum contribution, and student mentorship.";
+      case "EXTERNAL":
+        return "External review center partner representative with dedicated access to Review Center cohort and schedule tools.";
       default:
-        return "Standard system user privileges.";
+        return "Academic faculty member with role-based access.";
     }
   };
 

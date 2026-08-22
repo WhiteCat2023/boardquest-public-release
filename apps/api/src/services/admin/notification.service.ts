@@ -16,6 +16,8 @@ export interface GetNotificationsInput {
   role?: string;
   unreadOnly?: boolean;
   limit?: number;
+  search?: string;
+  type?: string;
 }
 
 function getOrConditions(userId?: string, role?: string) {
@@ -64,17 +66,40 @@ export async function createNotification(input: CreateNotificationInput) {
 }
 
 export async function getUserNotifications(input: GetNotificationsInput) {
-  const { userId, role, unreadOnly = false, limit = 50 } = input;
+  const { userId, role, unreadOnly = false, limit = 50, search, type } = input;
 
-  const whereClause: any = {
-    OR: getOrConditions(userId, role),
-  };
+  const andConditions: any[] = [];
 
   if (userId) {
-    whereClause.NOT = {
-      deletedUserIds: { has: userId },
-    };
+    andConditions.push({
+      NOT: {
+        deletedUserIds: { has: userId },
+      },
+    });
   }
+
+  if (type && type !== "ALL") {
+    andConditions.push({
+      type: type.toUpperCase(),
+    });
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim();
+    andConditions.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { message: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  const whereClause: any = {
+    AND: [
+      { OR: getOrConditions(userId, role) },
+      ...andConditions,
+    ],
+  };
 
   const rawNotifications = await (prisma as any).notification.findMany({
     where: whereClause,

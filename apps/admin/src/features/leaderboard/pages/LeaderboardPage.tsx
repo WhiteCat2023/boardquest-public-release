@@ -12,7 +12,7 @@ export function LeaderboardPage() {
   const [category, setCategory] = useState<LeaderboardCategory>("overall");
   const [timeHorizon, setTimeHorizon] = useState<string>("all-time");
 
-  const { data: studentsData, isLoading } = useStudents();
+  const { data: studentsData, isLoading } = useStudents({ search: searchTerm });
   const rawStudents = studentsData?.students || [];
 
   // Transform database students into leaderboard metrics
@@ -46,13 +46,8 @@ export function LeaderboardPage() {
     };
   });
 
-  // Sort and filter students based on active category and search query
+  // Sort students based on active category (search filtering performed on backend)
   const filteredStudents = processedStudents
-    .filter(
-      (student) =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
     .sort((a, b) => {
       if (category === "accuracy") return b.accuracy - a.accuracy;
       if (category === "streak") return b.streak - a.streak;

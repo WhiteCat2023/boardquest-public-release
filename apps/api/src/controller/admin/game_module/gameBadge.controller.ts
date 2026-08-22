@@ -4,8 +4,21 @@ import { asyncHandler } from "../../../utils/asyncHandler";
 import { ApiResponse } from "../../../utils/apiResponse";
 
 export const getAllBadges = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const badges = await gameBadgeService.getAllBadges();
+  async (req: Request, res: Response) => {
+    const activeOnly =
+      req.query.activeOnly === "true" || req.query.isActive === "true";
+    const search = req.query.search ? String(req.query.search) : undefined;
+    const category = req.query.category ? String(req.query.category) : undefined;
+    const badgeType = req.query.badgeType ? String(req.query.badgeType) : undefined;
+    const status = req.query.status ? String(req.query.status) : undefined;
+
+    const badges = await gameBadgeService.getAllBadges({
+      activeOnly,
+      search,
+      category,
+      badgeType,
+      status,
+    });
     res
       .status(200)
       .json(new ApiResponse(200, badges, "Badges retrieved successfully"));

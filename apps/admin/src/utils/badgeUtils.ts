@@ -82,6 +82,7 @@ export interface StudentBadge {
   confidenceLevel?: string | null;
   xpReward: number;
   unlockCondition?: string;
+  isActive?: boolean;
 }
 
 export function resolveBadgeIcon(iconName?: string) {
@@ -142,88 +143,94 @@ export function getTierColors(colorStr?: string) {
 }
 
 /**
- * Fetch and map student badge status strictly from DB badges & student unlocked records
+ * Maps student active earned badges (filtered on the backend) into UI StudentBadge objects.
  */
 export function getStudentEarnedBadges(
   student: {
     userBadges?: any[];
     achievements?: any[];
   },
-  dbBadges: GameBadge[] = []
+  dbBadges?: GameBadge[]
 ): StudentBadge[] {
   const userBadges = Array.isArray(student?.userBadges) ? student.userBadges : [];
   const achievements = Array.isArray(student?.achievements) ? student.achievements : [];
 
-  // If DB badges list is provided, map each configured badge in the DB
-  if (dbBadges && dbBadges.length > 0) {
-    return dbBadges.map((badge) => {
-      // Check if unlocked in userBadges or achievements
-      const matchedUserBadge = userBadges.find(
-        (ub: any) =>
-          ub.badgeId === badge.id ||
-          ub.badgeSlug?.toLowerCase() === badge.badgeId?.toLowerCase() ||
-          ub.badgeSlug?.toLowerCase() === badge.id?.toLowerCase()
-      );
-
-      const matchedAchievement = achievements.find(
-        (a: any) =>
-          a.badge?.toLowerCase() === badge.badgeId?.toLowerCase() ||
-          a.badge?.toLowerCase() === badge.id?.toLowerCase() ||
-          (badge.name && a.task?.toLowerCase().includes(badge.name.toLowerCase()))
-      );
-
-      const isUnlocked = Boolean(matchedUserBadge || matchedAchievement);
-      const tierStyling = getTierColors(badge.color);
+  // If userBadges are present (populated from backend with active badges), map each achieved badge
+  if (userBadges.length > 0) {
+    return userBadges.map((ub: any) => {
+      const rawBadge = ub.badge || {};
+      const badgeId = ub.badgeSlug || rawBadge.badgeId || ub.badgeId || "badge";
+      const title = rawBadge.title || rawBadge.name || ub.badgeSlug || "Badge";
+      const tierStyling = getTierColors(rawBadge.color);
 
       return {
-        id: badge.id,
-        badgeId: badge.badgeId,
-        title: badge.title || badge.name,
-        name: badge.name || badge.title,
+        id: ub.id || ub.badgeId,
+        badgeId,
+        title,
+        name: rawBadge.name || title,
         description:
-          badge.description || badge.unlockCondition || "Earned through academic excellence.",
-        category: badge.category || "QUEST",
-        icon: resolveBadgeIcon(badge.icon || badge.iconName),
-        spriteUrl: badge.spriteUrl || badge.imageUrl,
+          rawBadge.description || rawBadge.unlockCondition || "Earned evaluation badge",
+        category: rawBadge.category || "QUEST",
+        icon: resolveBadgeIcon(rawBadge.icon || rawBadge.iconName || "trophy"),
+        spriteUrl: rawBadge.spriteUrl || rawBadge.imageUrl || null,
         color: tierStyling.color,
         bgColor: tierStyling.bgColor,
         borderColor: tierStyling.borderColor,
-        unlocked: isUnlocked,
-        unlockedAt: matchedUserBadge?.unlockedAt || matchedAchievement?.timestamp,
-        accuracy: matchedUserBadge?.accuracy ?? matchedAchievement?.accuracy ?? null,
-        confidenceLevel:
-          matchedUserBadge?.confidenceLevel ?? matchedAchievement?.confidenceLevel ?? null,
-        xpReward: badge.xpReward || badge.xp || 50,
-        unlockCondition: badge.unlockCondition,
+        unlocked: true,
+        unlockedAt: ub.unlockedAt,
+        accuracy: ub.accuracy,
+        confidenceLevel: ub.confidenceLevel,
+        xpReward: ub.xpEarned || rawBadge.xpReward || 50,
+        unlockCondition: rawBadge.unlockCondition,
+        isActive: true,
       };
     });
   }
 
-  // Fallback: If dbBadges is not provided (e.g. in quick table row), extract only what the student has unlocked in DB
-  return userBadges.map((ub: any) => {
-    const rawBadge = ub.badge || {};
-    const badgeId = ub.badgeSlug || rawBadge.badgeId || ub.badgeId || "badge";
-    const title = rawBadge.title || rawBadge.name || ub.badgeSlug || "Badge";
-    const tierStyling = getTierColors(rawBadge.color);
+  // Fallback: If legacy achievements exist and match active dbBadges, map earned ones
+  if (dbBadges && dbBadges.length > 0 && achievements.length > 0) {
+    const activeDbBadges = dbBadges.filter((b) => b.isActive !== false);
+    return activeDbBadges
+      .filter((badge) => {
+        return achievements.some(
+          (a: any) =>
+            a.badge?.toLowerCase() === badge.badgeId?.toLowerCase() ||
+            a.badge?.toLowerCase() === badge.id?.toLowerCase() ||
+            (badge.name && a.task?.toLowerCase().includes(badge.name.toLowerCase()))
+        );
+      })
+      .map((badge) => {
+        const matchedAchievement = achievements.find(
+          (a: any) =>
+            a.badge?.toLowerCase() === badge.badgeId?.toLowerCase() ||
+            a.badge?.toLowerCase() === badge.id?.toLowerCase() ||
+            (badge.name && a.task?.toLowerCase().includes(badge.name.toLowerCase()))
+        );
+        const tierStyling = getTierColors(badge.color);
 
-    return {
-      id: ub.id || ub.badgeId,
-      badgeId,
-      title,
-      name: rawBadge.name || title,
-      description: rawBadge.description || "Earned evaluation badge",
-      category: rawBadge.category || "QUEST",
-      icon: resolveBadgeIcon(rawBadge.icon || "trophy"),
-      spriteUrl: rawBadge.spriteUrl || null,
-      color: tierStyling.color,
-      bgColor: tierStyling.bgColor,
-      borderColor: tierStyling.borderColor,
-      unlocked: true,
-      unlockedAt: ub.unlockedAt,
-      accuracy: ub.accuracy,
-      confidenceLevel: ub.confidenceLevel,
-      xpReward: ub.xpEarned || rawBadge.xpReward || 50,
-      unlockCondition: rawBadge.unlockCondition,
-    };
-  });
+        return {
+          id: badge.id,
+          badgeId: badge.badgeId,
+          title: badge.title || badge.name,
+          name: badge.name || badge.title,
+          description:
+            badge.description || badge.unlockCondition || "Earned through academic excellence.",
+          category: badge.category || "QUEST",
+          icon: resolveBadgeIcon(badge.icon || badge.iconName),
+          spriteUrl: badge.spriteUrl || badge.imageUrl,
+          color: tierStyling.color,
+          bgColor: tierStyling.bgColor,
+          borderColor: tierStyling.borderColor,
+          unlocked: true,
+          unlockedAt: matchedAchievement?.timestamp,
+          accuracy: matchedAchievement?.accuracy ?? null,
+          confidenceLevel: matchedAchievement?.confidenceLevel ?? null,
+          xpReward: badge.xpReward || badge.xp || 50,
+          unlockCondition: badge.unlockCondition,
+          isActive: true,
+        };
+      });
+  }
+
+  return [];
 }

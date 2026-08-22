@@ -10,7 +10,7 @@ interface ReviewCenterGridProps {
   onResetFilters: () => void;
   onView: (item: ReviewCenterRepresentative) => void;
   onEdit: (item: ReviewCenterRepresentative) => void;
-  onDelete: (item: ReviewCenterRepresentative) => void;
+  onDelete?: (item: ReviewCenterRepresentative) => void;
 }
 
 export default function ReviewCenterGrid({

@@ -213,6 +213,11 @@ export class StudentService {
           take: 5,
         },
         userBadges: {
+          where: {
+            badge: {
+              isActive: true,
+            },
+          },
           include: {
             badge: true,
           },
@@ -238,8 +243,16 @@ export class StudentService {
 
     const total = await this.db.user.count({ where });
 
+    // Ensure deactivated badges are stripped out on backend level
+    const sanitizedStudents = students.map((s: any) => ({
+      ...s,
+      userBadges: (s.userBadges || []).filter(
+        (ub: any) => !ub.badge || ub.badge.isActive !== false
+      ),
+    }));
+
     return {
-      data: students,
+      data: sanitizedStudents,
       pagination: {
         total,
         skip,
@@ -270,7 +283,17 @@ export class StudentService {
           },
           studyPlans: true,
           lessonCompletions: true,
-          userBadges: true,
+          userBadges: {
+            where: {
+              badge: {
+                isActive: true,
+              },
+            },
+            include: {
+              badge: true,
+            },
+            orderBy: { unlockedAt: "desc" },
+          },
           guidanceAssignments: {
             include: {
               advisor: {
@@ -285,6 +308,13 @@ export class StudentService {
         throw new ApiError(404, "Student not found");
       }
       const { password: _password, ...sanitizedStudent } = student;
+
+      // Filter out any deactivated badges on the backend level
+      if (sanitizedStudent.userBadges && Array.isArray(sanitizedStudent.userBadges)) {
+        sanitizedStudent.userBadges = sanitizedStudent.userBadges.filter(
+          (ub: any) => !ub.badge || ub.badge.isActive !== false
+        );
+      }
       
       return sanitizedStudent;
     } catch (err: any) {

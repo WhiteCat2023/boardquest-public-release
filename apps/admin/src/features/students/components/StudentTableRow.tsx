@@ -26,7 +26,6 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
   };
 
   const badges = getStudentEarnedBadges(student);
-  const unlockedBadges = badges.filter((b) => b.unlocked);
 
   return (
     <TableRow className="hover:bg-accent/40 transition-colors group border-b border-border">
@@ -77,7 +76,7 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
       {/* Badges Earned */}
       <TableCell className="hidden sm:table-cell py-2 px-3">
         <div className="flex items-center gap-1 flex-wrap max-w-[200px]">
-          {unlockedBadges.slice(0, 2).map((badge) => {
+          {badges.slice(0, 2).map((badge) => {
             const IconComp = badge.icon;
             return (
               <span
@@ -90,9 +89,9 @@ export default function StudentTableRow({ student, onAssignGuidance }: StudentTa
               </span>
             );
           })}
-          {unlockedBadges.length > 2 && (
+          {badges.length > 2 && (
             <span className="text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-              +{unlockedBadges.length - 2}
+              +{badges.length - 2}
             </span>
           )}
         </div>

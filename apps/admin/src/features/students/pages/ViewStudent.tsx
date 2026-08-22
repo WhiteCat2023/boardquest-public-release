@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useStudent, useStudents } from "@/features/students";
-import { useGameBadges } from "@/features/game-management/api/useGameManagement";
 import { getStudentEarnedBadges } from "@/utils/badgeUtils";
 import { StudentProfileHeader } from "../components/profile/StudentProfileHeader";
 import { StudentDetailsCard } from "../components/profile/StudentDetailsCard";
@@ -23,13 +22,12 @@ export default function ViewStudent() {
     skip: 0,
     take: 100,
   });
-  const { data: dbBadges = [], isLoading: isBadgesLoading } = useGameBadges();
 
   const fallbackStudent = (allStudentsData?.students || []).find(
     (s) => s.id === studentId,
   );
   const student = studentDirect || fallbackStudent;
-  const isLoading = (isDirectLoading || isListLoading || isBadgesLoading) && !student;
+  const isLoading = (isDirectLoading || isListLoading) && !student;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
@@ -74,8 +72,8 @@ export default function ViewStudent() {
   }
 
   const activeStudent = student;
-  const studentBadges = getStudentEarnedBadges(activeStudent, dbBadges);
-  const unlockedBadgesCount = studentBadges.filter((b) => b.unlocked).length;
+  const studentBadges = getStudentEarnedBadges(activeStudent);
+  const unlockedBadgesCount = studentBadges.length;
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-6xl mx-auto animate-in fade-in duration-300 font-sans bg-background text-foreground">
@@ -113,7 +111,7 @@ export default function ViewStudent() {
             variant="outline"
             className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs font-bold px-3 py-1 rounded-full w-fit"
           >
-            {unlockedBadgesCount} / {studentBadges.length} Unlocked
+            {unlockedBadgesCount} Earned
           </Badge>
         </div>
 

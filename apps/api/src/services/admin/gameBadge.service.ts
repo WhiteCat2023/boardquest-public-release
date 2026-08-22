@@ -32,8 +32,50 @@ export class GameBadgeService {
   /**
    * Get all badges with dynamically computed student unlock counts
    */
-  async getAllBadges() {
+  async getAllBadges(options?: {
+    activeOnly?: boolean;
+    search?: string;
+    category?: string;
+    badgeType?: string;
+    status?: string;
+  }) {
+    const andConditions: any[] = [];
+
+    if (options?.activeOnly) {
+      andConditions.push({ isActive: true });
+    }
+
+    if (options?.status && options.status !== "ALL") {
+      if (options.status === "active" || options.status === "true") {
+        andConditions.push({ isActive: true });
+      } else if (options.status === "inactive" || options.status === "false") {
+        andConditions.push({ isActive: false });
+      }
+    }
+
+    if (options?.category && options.category !== "ALL") {
+      andConditions.push({ category: { equals: options.category, mode: "insensitive" } });
+    }
+
+    if (options?.badgeType && options.badgeType !== "ALL") {
+      andConditions.push({ badgeType: options.badgeType });
+    }
+
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim();
+      andConditions.push({
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { category: { contains: q, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    const where: any = andConditions.length > 0 ? { AND: andConditions } : {};
+
     let badges = await prisma.badge.findMany({
+      where,
       include: {
         _count: {
           select: { userBadges: true },
@@ -43,7 +85,7 @@ export class GameBadgeService {
     });
 
     // Auto-seed if database is completely empty
-    if (badges.length === 0) {
+    if (badges.length === 0 && !options?.activeOnly) {
       for (const b of initialBadges) {
         await prisma.badge
           .create({
@@ -52,6 +94,7 @@ export class GameBadgeService {
           .catch(() => null);
       }
       badges = await prisma.badge.findMany({
+        where,
         include: {
           _count: {
             select: { userBadges: true },

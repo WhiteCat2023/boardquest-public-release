@@ -39,8 +39,8 @@ import useRoleFlags from "@/hooks/useRoleFlags";
 export default function CategoriesView() {
   const navigate = useNavigate();
   const { auth } = useAuth();
-  const { data: categories = [], isLoading } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: categories = [], isLoading } = useCategories({ search: searchTerm });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("BookOpen");
@@ -60,18 +60,7 @@ export default function CategoriesView() {
   const queryClient = useQueryClient();
   const { currentUser, isTeacher, isStaff: canManage, handledCategoryIds, isSubjectAssigned } = useRoleFlags();
 
-  const teacherCategories = isTeacher
-    ? categories.filter(
-        (cat: any) =>
-          isSubjectAssigned(cat.id) ||
-          (Array.isArray(cat.handlerIds) && cat.handlerIds.includes(currentUser?.id)) ||
-          (Array.isArray(cat.handlers) && cat.handlers.some((h: any) => h.id === currentUser?.id))
-      )
-    : categories;
-
-  const filteredCategories = teacherCategories.filter((cat: any) =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCategories = categories;
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();

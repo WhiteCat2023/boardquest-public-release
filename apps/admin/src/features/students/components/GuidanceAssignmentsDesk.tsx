@@ -22,10 +22,13 @@ export function GuidanceAssignmentsDesk() {
   const [search, setSearch] = useState("");
 
   const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ["guidanceAssignments", filterStatus],
+    queryKey: ["guidanceAssignments", filterStatus, search],
     queryFn: async () => {
       const res = await axiosPrivate.get("/guidance", {
-        params: { status: filterStatus !== "ALL" ? filterStatus : undefined },
+        params: {
+          status: filterStatus !== "ALL" ? filterStatus : undefined,
+          search: search.trim() || undefined,
+        },
       });
       return res.data?.data?.assignments || [];
     },
@@ -49,17 +52,7 @@ export function GuidanceAssignmentsDesk() {
     },
   });
 
-  const filteredAssignments = assignments.filter((item: any) => {
-    const studentName = item.student?.name || "";
-    const advisorName = item.advisor?.name || "";
-    const reason = item.reason || "";
-    const term = search.toLowerCase();
-    return (
-      studentName.toLowerCase().includes(term) ||
-      advisorName.toLowerCase().includes(term) ||
-      reason.toLowerCase().includes(term)
-    );
-  });
+  const filteredAssignments = assignments;
 
   return (
     <div className="space-y-4 font-sans text-foreground">

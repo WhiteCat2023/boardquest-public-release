@@ -111,8 +111,9 @@ export class CategoryService {
     handledCategoryIds?: string[];
     userRole?: string;
     userId?: string;
+    search?: string;
   }) {
-    const { isPublished, status, authorId, handledCategoryIds, userRole, userId } = options || {};
+    const { isPublished, status, authorId, handledCategoryIds, userRole, userId, search } = options || {};
 
     const questionWhere: any = {};
 
@@ -137,6 +138,11 @@ export class CategoryService {
     }
 
     const categoryWhere: any = {};
+
+    if (search && search.trim()) {
+      categoryWhere.name = { contains: search.trim(), mode: "insensitive" };
+    }
+
     if (userRole === "TEACHER") {
       categoryWhere.OR = [
         { id: { in: handledCategoryIds || [] } },

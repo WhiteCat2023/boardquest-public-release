@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Shield, Power, Clock, Lock } from "lucide-react";
+import { Eye, Shield, Power, Clock, Lock, Building2 } from "lucide-react";
 import type { FacultyMember } from "@/features/faculty";
 import { getRoleBadgeColor, isUserOnline } from "@/features/faculty/utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -57,12 +57,19 @@ export default function FacultyTableRow({
             />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-bold text-foreground truncate max-w-[160px]">
+            <span className="text-xs font-bold text-foreground truncate max-w-[180px]">
               {member.name}
             </span>
-            <span className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-tight">
-              ID: {member.employeeId}
-            </span>
+            <div className="flex items-center gap-1.5 text-[9.5px] font-bold text-muted-foreground">
+              <span className="uppercase tracking-tight font-mono">
+                ID: {member.employeeId}
+              </span>
+              {member.companyName && (
+                <span className="truncate max-w-[120px] text-purple-600 dark:text-purple-400 font-semibold">
+                  &bull; {member.companyName}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </TableCell>
@@ -75,8 +82,16 @@ export default function FacultyTableRow({
             member.role
           )}`}
         >
-          <Shield size={9} />
-          {member.role === "TEAMLEAD" ? "CO-ADMIN" : member.role}
+          {member.role === "EXTERNAL" ? (
+            <Building2 size={9} />
+          ) : (
+            <Shield size={9} />
+          )}
+          {member.role === "TEAMLEAD"
+            ? "CO-ADMIN"
+            : member.role === "EXTERNAL"
+            ? "EXTERNAL PARTNER"
+            : member.role}
         </Badge>
       </TableCell>
 

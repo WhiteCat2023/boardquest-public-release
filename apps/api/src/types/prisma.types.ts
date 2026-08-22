@@ -10,6 +10,7 @@ export enum Role {
   DEAN = "DEAN",
   TEAMLEAD = "TEAMLEAD",
   TEACHER = "TEACHER",
+  EXTERNAL = "EXTERNAL",
 }
 
 export enum QuestionDifficulty {
@@ -53,6 +54,8 @@ export interface AdminUser {
   lastName?: string;
   role: Role;
   phoneNumber: string;
+  companyName?: string;
+  location?: string;
   handledCategoryIds?: string[];
   isActive?: boolean;
   lastActiveAt?: Date;

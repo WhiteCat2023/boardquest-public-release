@@ -815,7 +815,7 @@ export class QuestionService {
     }).catch((err) => console.warn("Notification error:", err?.message));
   }
 
-  async getPendingReviewAuthors() {
+  async getPendingReviewAuthors(options?: { search?: string }) {
     const pendingQuestions = await this.db.question.findMany({
       where: {
         status: {
@@ -832,8 +832,18 @@ export class QuestionService {
     const authorIds = Array.from(
       new Set(pendingQuestions.map((q: any) => q.authorId).filter(Boolean)),
     );
+
+    const authorWhere: any = { id: { in: authorIds as string[] } };
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim();
+      authorWhere.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
     const authors = await this.db.adminUser.findMany({
-      where: { id: { in: authorIds as string[] } },
+      where: authorWhere,
       select: {
         id: true,
         name: true,

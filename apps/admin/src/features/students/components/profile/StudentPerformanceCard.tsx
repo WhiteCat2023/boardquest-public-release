@@ -36,7 +36,7 @@ export function StudentPerformanceCard({
 
         <div className="pt-2 text-muted-foreground leading-relaxed text-xs">
           <p>&bull; <strong>Mastery Records:</strong> {student.mastery?.length || 6} major subjects tracked</p>
-          <p>&bull; <strong>Badges Unlocked:</strong> {unlockedBadgesCount} / {studentBadges.length} achievements earned</p>
+          <p>&bull; <strong>Badges Earned:</strong> {unlockedBadgesCount} active achievements</p>
           <p>&bull; <strong>Completed Exams:</strong> {student.examResults?.length || 0} evaluations taken</p>
         </div>
       </CardContent>

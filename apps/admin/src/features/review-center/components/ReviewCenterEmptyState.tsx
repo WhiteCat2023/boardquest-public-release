@@ -20,7 +20,7 @@ export default function ReviewCenterEmptyState({
         <p className="text-xs text-muted-foreground leading-relaxed">
           {hasActiveFilters
             ? "No partner review centers match your active search filters. Try adjusting your query or resetting filters."
-            : "No review centers registered yet. Click 'Add Review Center' to create the first record."}
+            : "No review centers registered in the directory yet. External accounts can be created from the Users page."}
         </p>
       </div>
       {hasActiveFilters && (

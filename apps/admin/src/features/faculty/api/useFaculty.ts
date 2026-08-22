@@ -99,14 +99,23 @@ export function useCategories(params?: {
   isPublished?: boolean;
   status?: string;
   authorId?: string;
+  search?: string;
 }) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
     queryKey: ["categories", params],
     queryFn: async () => {
+      const cleanParams = params
+        ? Object.fromEntries(
+            Object.entries(params).filter(
+              ([_, val]) => val !== undefined && val !== ""
+            )
+          )
+        : undefined;
+
       const response = await axiosPrivate.get("/questions/category/get", {
-        params,
+        params: cleanParams,
       });
       return response.data?.data?.categories ?? response.data?.data ?? [];
     },

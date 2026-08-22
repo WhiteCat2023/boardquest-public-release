@@ -535,7 +535,8 @@ export const createSynthesizedQuestion = asyncHandler(
 
 export const getPendingReviewAuthors = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const authors = await QuestionService.getPendingReviewAuthors();
+    const search = req.query.search ? String(req.query.search) : undefined;
+    const authors = await QuestionService.getPendingReviewAuthors({ search });
     return new ApiResponse(
       200,
       { authors },

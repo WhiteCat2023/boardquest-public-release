@@ -21,12 +21,13 @@ export const createCategory = asyncHandler(async (req: AuthenticatedRequest | Re
 });
 
 export const getCategories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { isPublished, status, authorId } = req.query;
+  const { isPublished, status, authorId, search } = req.query;
   const user = req.user;
   const categories = await categoryServices.getAllCategories({
     isPublished: isPublished as any,
     status: status as string,
     authorId: authorId as string,
+    search: search ? String(search) : undefined,
     handledCategoryIds: user?.handledCategoryIds,
     userRole: user?.role,
     userId: user?.id,

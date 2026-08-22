@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import type { GameBadge, BadgeCategory, BadgeType } from "../types/types";
 import { BADGE_TYPES } from "./BadgeEditorModal";
+import { useGameBadges } from "../api/useGameManagement";
 
 interface BadgesManagementTabProps {
   badges: GameBadge[];
@@ -95,31 +96,14 @@ export function BadgesManagementTab({
     {},
   );
 
-  const filteredBadges = badges.filter((badge) => {
-    const titleText = (badge.name || badge.title || "").toLowerCase();
-    const descText = (badge.description || "").toLowerCase();
-    const catText = (badge.category || "").toLowerCase();
-    const query = searchTerm.toLowerCase();
-
-    const matchesSearch =
-      titleText.includes(query) ||
-      descText.includes(query) ||
-      catText.includes(query);
-
-    const matchesCategory =
-      selectedCategory === "ALL" ||
-      (badge.category || "").toLowerCase() === selectedCategory.toLowerCase();
-
-    const matchesTier =
-      selectedTier === "ALL" || badge.badgeType === selectedTier;
-
-    const matchesStatus =
-      selectedStatus === "ALL" ||
-      (selectedStatus === "active" && badge.isActive) ||
-      (selectedStatus === "inactive" && !badge.isActive);
-
-    return matchesSearch && matchesCategory && matchesTier && matchesStatus;
+  const { data: serverBadges } = useGameBadges({
+    search: searchTerm,
+    category: selectedCategory,
+    badgeType: selectedTier,
+    status: selectedStatus,
   });
+
+  const filteredBadges = serverBadges || badges;
 
   const totalBadges = badges.length;
   const activeBadges = badges.filter((b) => b.isActive).length;

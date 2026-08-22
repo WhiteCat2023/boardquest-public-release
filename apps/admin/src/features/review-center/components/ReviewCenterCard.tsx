@@ -6,7 +6,6 @@ import {
   Calendar, 
   Eye, 
   Edit3, 
-  Trash2, 
   CheckCircle2, 
   Copy,
   Check
@@ -19,14 +18,13 @@ interface ReviewCenterCardProps {
   reviewCenter: ReviewCenterRepresentative;
   onView: (item: ReviewCenterRepresentative) => void;
   onEdit: (item: ReviewCenterRepresentative) => void;
-  onDelete: (item: ReviewCenterRepresentative) => void;
+  onDelete?: (item: ReviewCenterRepresentative) => void;
 }
 
 export default function ReviewCenterCard({
   reviewCenter,
   onView,
   onEdit,
-  onDelete,
 }: ReviewCenterCardProps) {
   const [copied, setCopied] = useState(false);
 
@@ -173,16 +171,6 @@ export default function ReviewCenterCard({
             title="Edit Details"
           >
             <Edit3 size={13} />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(reviewCenter)}
-            className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer"
-            title="Delete / Deactivate"
-          >
-            <Trash2 size={13} />
           </Button>
         </div>
       </div>

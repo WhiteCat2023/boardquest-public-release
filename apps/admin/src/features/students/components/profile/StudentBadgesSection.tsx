@@ -7,7 +7,7 @@ interface StudentBadgesSectionProps {
   badges: StudentBadge[];
 }
 
-export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
+export function StudentBadgesSection({ badges = [] }: StudentBadgesSectionProps) {
   const [imageErrorIds, setImageErrorIds] = useState<Record<string, boolean>>({});
 
   const handleImageError = (badgeId: string) => {
@@ -18,11 +18,14 @@ export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
     return (
       <div>
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-3">
-          Gamification Badges Showcase
+          Earned Gamification Badges
         </h3>
         <div className="p-6 text-center rounded-2xl border border-dashed border-border bg-muted/20">
           <p className="text-xs text-muted-foreground font-semibold">
-            No gamification badges configured in the database yet.
+            No gamification badges earned yet by this student.
+          </p>
+          <p className="text-[10.5px] text-muted-foreground/75 mt-1">
+            Badges will automatically appear here as the student achieves evaluation milestones and maintains study streaks.
           </p>
         </div>
       </div>
@@ -33,10 +36,10 @@ export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
-          Gamification Badges Showcase
+          Earned Gamification Badges ({badges.length})
         </h3>
         <span className="text-[10px] text-muted-foreground font-semibold">
-          Fetched from Database Configuration
+          Active Student Achievements
         </span>
       </div>
 
@@ -50,11 +53,7 @@ export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
           return (
             <div
               key={badge.id || badge.badgeId}
-              className={`p-4 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${
-                badge.unlocked
-                  ? `${badge.bgColor} ${badge.borderColor} shadow-xs hover:-translate-y-0.5`
-                  : "bg-muted/30 border-border opacity-55 grayscale hover:grayscale-0 hover:opacity-85"
-              }`}
+              className={`p-4 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${badge.bgColor} ${badge.borderColor} shadow-xs hover:-translate-y-0.5`}
             >
               <div className="flex items-start justify-between gap-2">
                 {/* Artwork / Icon */}
@@ -82,13 +81,9 @@ export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
                 <div className="flex flex-col items-end gap-1">
                   <Badge
                     variant="outline"
-                    className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                      badge.unlocked
-                        ? "bg-card text-foreground border-border shadow-2xs"
-                        : "bg-muted text-muted-foreground border-border"
-                    }`}
+                    className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-card text-foreground border-border shadow-2xs"
                   >
-                    {badge.unlocked ? "UNLOCKED" : "LOCKED"}
+                    EARNED
                   </Badge>
 
                   {badge.xpReward && (
@@ -102,11 +97,7 @@ export function StudentBadgesSection({ badges }: StudentBadgesSectionProps) {
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-1">
-                  <h4
-                    className={`text-xs font-bold ${
-                      badge.unlocked ? "text-foreground" : "text-muted-foreground"
-                    }`}
-                  >
+                  <h4 className="text-xs font-bold text-foreground">
                     {badge.name || badge.title}
                   </h4>
                   {badge.category && (

@@ -16,6 +16,8 @@ export interface FacultyMember {
   email: string;
   role: RoleType;
   phoneNumber: string;
+  companyName?: string;
+  location?: string;
   handledCategories?: Category[];
   handledCategoryIds?: string[];
   isActive?: boolean;
@@ -31,6 +33,8 @@ export interface CreateFacultyPayload {
   email: string;
   password?: string;
   phoneNumber: string;
+  companyName?: string;
+  location?: string;
   handledCategoryIds?: string[];
   role: RoleType;
 }
@@ -49,6 +53,8 @@ export interface ParsedFacultyRow {
   role: string;
   employeeId?: string;
   phoneNumber?: string;
+  companyName?: string;
+  location?: string;
   isValid: boolean;
   validationError?: string;
 }

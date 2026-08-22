@@ -2,13 +2,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import type { GameBadge, GameConfigSettings } from "../types/types";
 
-export function useGameBadges() {
+export function useGameBadges(params?: {
+  search?: string;
+  category?: string;
+  badgeType?: string;
+  status?: string;
+  activeOnly?: boolean;
+}) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<GameBadge[]>({
-    queryKey: ["game-badges"],
+    queryKey: ["game-badges", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/game/badges");
+      const cleanParams = params
+        ? Object.fromEntries(
+            Object.entries(params).filter(
+              ([_, val]) => val !== undefined && val !== "" && val !== "ALL"
+            )
+          )
+        : undefined;
+
+      const response = await axiosPrivate.get("/game/badges", {
+        params: cleanParams,
+      });
       const data = response.data?.data;
       return Array.isArray(data) ? data : [];
     },

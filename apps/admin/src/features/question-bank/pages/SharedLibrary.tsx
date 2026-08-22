@@ -40,6 +40,7 @@ export default function SharedLibrary() {
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useCategories({
       status: "APPROVED",
+      search: categorySearch,
     });
 
   useEffect(() => {
@@ -52,9 +53,7 @@ export default function SharedLibrary() {
     (cat: any) => cat.id === selectedCategory,
   );
 
-  const filteredCategories = categories.filter((cat: any) =>
-    cat.name.toLowerCase().includes(categorySearch.toLowerCase()),
-  );
+  const filteredCategories = categories;
 
   const getCategoryQuestionCount = (cat: any) => {
     if (typeof cat.questionCount === "number") {

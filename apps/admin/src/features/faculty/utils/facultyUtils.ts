@@ -22,6 +22,11 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
         label: "Teacher",
         description: "Academic staff allowed to create questions and manage course materials."
       },
+      {
+        value: UserRole.EXTERNAL,
+        label: "External Partner / Review Center",
+        description: "External review center representative with access limited exclusively to the Review Center portal."
+      },
     ];
   }
   if (currentUserRole === UserRole.DEAN) {
@@ -35,6 +40,11 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
         value: UserRole.TEACHER,
         label: "Teacher",
         description: "Academic staff allowed to create questions and manage course materials."
+      },
+      {
+        value: UserRole.EXTERNAL,
+        label: "External Partner / Review Center",
+        description: "External review center representative with access limited exclusively to the Review Center portal."
       },
     ];
   }
@@ -56,7 +66,7 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
 export const isAllowedToManageRole = (creatorRole: RoleType, targetRole: RoleType): boolean => {
   if (creatorRole === UserRole.SUPERADMIN) return true;
   if (creatorRole === UserRole.DEAN) {
-    return targetRole === UserRole.TEAMLEAD || targetRole === UserRole.TEACHER;
+    return targetRole === UserRole.TEAMLEAD || targetRole === UserRole.TEACHER || targetRole === UserRole.EXTERNAL;
   }
   if (creatorRole === UserRole.TEAMLEAD) {
     return targetRole === UserRole.TEACHER;
@@ -77,6 +87,8 @@ export const getRoleBadgeColor = (role: RoleType): string => {
       return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
     case UserRole.TEACHER:
       return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+    case UserRole.EXTERNAL:
+      return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
     default:
       return "bg-muted text-muted-foreground border-border";
   }

@@ -9,7 +9,7 @@ import {
   toggleFacultyStatus,
   updateFacultyCategories,
   bulkCreateFaculty
-} from "../../controller/admin/faculty.controller";
+} from "../../controller/admin/user.controller";
 
 const router = Router();
 

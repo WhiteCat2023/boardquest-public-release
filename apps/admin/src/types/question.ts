@@ -2,7 +2,8 @@ export enum UserRole {
   SUPERADMIN = 'SUPERADMIN',
   DEAN = 'DEAN',
   TEAMLEAD = 'TEAMLEAD',
-  TEACHER = 'TEACHER'
+  TEACHER = 'TEACHER',
+  EXTERNAL = 'EXTERNAL'
 }
 
 export enum QuestionDifficulty {

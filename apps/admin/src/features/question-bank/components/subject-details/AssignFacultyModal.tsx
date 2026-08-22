@@ -30,7 +30,7 @@ export function AssignFacultyModal({
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
 
-  const { data: facultyData, isLoading } = useFaculties();
+  const { data: facultyData, isLoading } = useFaculties({ search: searchTerm });
   const faculties = facultyData?.faculties || [];
 
   useEffect(() => {
@@ -124,12 +124,7 @@ export function AssignFacultyModal({
     saveMutation.mutate(selectedIds);
   };
 
-  const filteredFaculties = faculties.filter(
-    (f) =>
-      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (f.role && f.role.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredFaculties = faculties;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -2,15 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import type { StudentListItem, StudentAnalyticsResult } from "../types/types";
 
-export function useStudentsList() {
+export function useStudentsList(params?: { search?: string; take?: number }) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<StudentListItem[]>({
-    queryKey: ["studentsList"],
+    queryKey: ["studentsList", params],
     queryFn: async () => {
       try {
         const response = await axiosPrivate.get("/students/get", {
-          params: { take: 100 }
+          params: {
+            take: params?.take || 100,
+            search: params?.search?.trim() || undefined,
+          }
         });
         const resData = response.data?.data;
         const list = Array.isArray(resData) 

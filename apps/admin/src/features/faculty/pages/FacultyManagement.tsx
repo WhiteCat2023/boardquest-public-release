@@ -212,6 +212,7 @@ export default function FacultyManagement() {
               <SelectItem value="DEAN">Dean</SelectItem>
               <SelectItem value="TEAMLEAD">Team Lead</SelectItem>
               <SelectItem value="TEACHER">Teacher</SelectItem>
+              <SelectItem value="EXTERNAL">External Partner</SelectItem>
             </SelectContent>
           </Select>
 

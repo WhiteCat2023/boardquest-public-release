@@ -5,48 +5,63 @@ jest.mock('../services/prisma', () => ({
   __esModule: true,
   default: {
     user: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
     },
     question: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
     },
     category: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     adminUser: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     studyPlan: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      delete: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+      delete: jest.fn().mockResolvedValue({}),
     },
     examResult: {
-      create: jest.fn(),
-      findMany: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     achievement: {
-      create: jest.fn(),
-      findMany: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     lessonCompletion: {
-      create: jest.fn(),
-      findMany: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     subjectMastery: {
-      update: jest.fn(),
-      findUnique: jest.fn(),
+      update: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
+    reviewCenterRepresentativeUser: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+      create: jest.fn().mockResolvedValue({}),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+    },
+    badge: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+      create: jest.fn().mockResolvedValue({}),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
     },
   },
 }));
@@ -62,6 +77,18 @@ jest.mock('../utils/jwt.utils', () => ({
       return { payload: null, expired: false };
     }
     return { payload: { id: '1', email: 'test@example.com', role: 'DEAN' }, expired: false };
+  }),
+  extractUserIdFromToken: jest.fn((token) => {
+    if (token === 'expired_token' || token === 'invalid_token') {
+      throw new Error('InvalidToken');
+    }
+    return '1';
+  }),
+  decodedId: jest.fn((token) => {
+    if (token === 'expired_token' || token === 'invalid_token') {
+      throw new Error('InvalidToken');
+    }
+    return '1';
   }),
 }));
 

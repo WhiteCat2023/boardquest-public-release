@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { ReviewCenterRepresentative } from "../types/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +15,8 @@ import ViewReviewCenterModal from "../components/ViewReviewCenterModal";
 import DeleteReviewCenterDialog from "../components/DeleteReviewCenterDialog";
 
 export default function ReviewCenterManagement() {
+  const navigate = useNavigate();
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
@@ -63,12 +66,6 @@ export default function ReviewCenterManagement() {
     selectedLocation !== "ALL" ||
     selectedCompany !== "ALL";
 
-  // Directory Action Handlers
-  const handleOpenAdd = () => {
-    setEditingItem(null);
-    setIsAddEditOpen(true);
-  };
-
   const handleOpenEdit = (item: ReviewCenterRepresentative) => {
     setEditingItem(item);
     setIsAddEditOpen(true);
@@ -104,7 +101,7 @@ export default function ReviewCenterManagement() {
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* Header */}
-      <ReviewCenterHeader onAddClick={handleOpenAdd} />
+      <ReviewCenterHeader />
 
       {/* Search & Filters Bar Component */}
       <ReviewCenterFilters

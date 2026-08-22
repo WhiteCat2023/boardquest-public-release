@@ -51,6 +51,7 @@ export default function MyQuestions() {
     useCategories({
       status: filters.status,
       authorId: filters.authorId,
+      search: categorySearch,
     });
 
   useEffect(() => {
@@ -63,9 +64,7 @@ export default function MyQuestions() {
     (cat: any) => cat.id === selectedCategory,
   );
 
-  const filteredCategories = categories.filter((cat: any) =>
-    cat.name.toLowerCase().includes(categorySearch.toLowerCase()),
-  );
+  const filteredCategories = categories;
 
   const getCategoryQuestionCount = (cat: any) => {
     if (typeof cat.questionCount === "number") {

@@ -2,12 +2,12 @@ import './setup';
 import request from 'supertest';
 import express, { Express } from 'express';
 import facultyRouter from '../routes/admin/faculty.routes';
-import * as facultyService from '../services/admin/faculty.service';
+import * as facultyService from '../services/admin/user.service';
 import { ApiError } from '../utils/apiError';
 import { authenticateToken } from '../middleware/auth.middleware';
 
-// Mock faculty services
-jest.mock('../services/admin/faculty.service');
+// Mock user/faculty services
+jest.mock('../services/admin/user.service');
 
 let app: Express;
 

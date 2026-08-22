@@ -24,5 +24,17 @@ export function verifyJWT(token: string) {
     }
 }
 
+export function extractUserIdFromToken(token: string): string {
+    const { payload, expired } = verifyJWT(token);
+    if (expired || !payload) {
+        throw new Error("InvalidToken");
+    }
+    return (payload as { id: string }).id;
+}
+
+// Alias for backward compatibility
+export const decodedId = extractUserIdFromToken;
+
+
 
   

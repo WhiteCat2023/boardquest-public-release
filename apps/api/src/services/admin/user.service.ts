@@ -7,7 +7,7 @@ import { sendFacultyCredentialsEmail } from "../mail.service";
 
 // ============ Validation Schemas ============
 
-export const createFacultySchema = z
+export const createUserSchema = z
   .object({
     employeeId: z.string().min(1, "Employee ID is required"),
     name: z.string().optional(),
@@ -15,7 +15,9 @@ export const createFacultySchema = z
     lastName: z.string().optional(),
     email: z.string().email("Invalid email address"),
     role: z.nativeEnum(Role),
-    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+    phoneNumber: z.string().min(7, "Phone number is required"),
+    companyName: z.string().optional(),
+    location: z.string().optional(),
     password: z.string().optional().default(""),
     handledCategoryIds: z.array(z.string()).optional().default([]),
   })
@@ -24,7 +26,8 @@ export const createFacultySchema = z
       Boolean(
         (data.name && data.name.trim().length > 0) ||
           (data.firstName && data.firstName.trim().length > 0) ||
-          (data.lastName && data.lastName.trim().length > 0)
+          (data.lastName && data.lastName.trim().length > 0) ||
+          (data.role === Role.EXTERNAL && data.companyName && data.companyName.trim().length > 0)
       ),
     {
       message: "First name and last name, or full name, are required",
@@ -32,15 +35,17 @@ export const createFacultySchema = z
     }
   );
 
-export const updateFacultySchema = z.object({
+export const updateUserSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   email: z.string().email("Invalid email address").optional(),
   role: z.nativeEnum(Role).optional(),
+  companyName: z.string().optional(),
+  location: z.string().optional(),
   phoneNumber: z
     .string()
-    .min(10, "Phone number must be at least 10 digits")
+    .min(7, "Phone number is required")
     .optional(),
   password: z
     .string()
@@ -48,12 +53,18 @@ export const updateFacultySchema = z.object({
     .optional(),
 });
 
+// Alias for backward compatibility
+export const createFacultySchema = createUserSchema;
+export const updateFacultySchema = updateUserSchema;
+
 // ============ Type Definitions ============
 
-export type CreateFacultyInput = z.infer<typeof createFacultySchema>;
-export type UpdateFacultyInput = z.infer<typeof updateFacultySchema>;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type CreateFacultyInput = CreateUserInput;
+export type UpdateFacultyInput = UpdateUserInput;
 
-const facultySelect = {
+const userSelect = {
   id: true,
   employeeId: true,
   name: true,
@@ -76,16 +87,16 @@ const facultySelect = {
   },
 };
 
-// ============ Faculty Services ============
+// ============ User Services ============
 
-export class FacultyService {
+export class UserService {
   constructor(private readonly db: typeof prisma = prisma) {}
 
   isAllowedToManageRole(creatorRole: string, targetRole: string): boolean {
     if (creatorRole === "SUPERADMIN") return true;
     if (creatorRole === "DEAN") {
-      // DEAN can add new CO-ADMIN(TEAMLEAD) and TEACHER
-      return targetRole === "TEAMLEAD" || targetRole === "TEACHER";
+      // DEAN can add new CO-ADMIN(TEAMLEAD), TEACHER, and EXTERNAL
+      return targetRole === "TEAMLEAD" || targetRole === "TEACHER" || targetRole === "EXTERNAL";
     }
     if (creatorRole === "TEAMLEAD") {
       // CO-ADMIN(TEAMLEAD) can add TEACHERS
@@ -123,7 +134,7 @@ export class FacultyService {
 
     const allAdmins = await this.db.adminUser.findMany({
       where,
-      select: facultySelect,
+      select: userSelect,
       orderBy: {
         createdAt: "desc",
       },
@@ -168,6 +179,49 @@ export class FacultyService {
     const { search, role, status, cursor, limit, requesterRole } =
       filters || {};
 
+    const limitNum = limit || 10;
+
+    // 1. If role is explicitly "EXTERNAL", query exclusively from ReviewCenterRepresentativeUser collection
+    if (role === "EXTERNAL") {
+      const repWhere: any = {};
+      if (search && search.trim()) {
+        const q = search.trim();
+        repWhere.OR = [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { employeeId: { contains: q, mode: "insensitive" } },
+          { companyName: { contains: q, mode: "insensitive" } },
+        ];
+      }
+      if (status && status !== "ALL") {
+        repWhere.isActive = status === "ACTIVE";
+      }
+
+      const reps = await this.db.reviewCenterRepresentativeUser.findMany({
+        where: repWhere,
+        orderBy: { createdAt: "desc" },
+      });
+
+      const formattedReps = reps.map((r: any) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        name: r.name,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: r.email,
+        role: "EXTERNAL" as any,
+        phoneNumber: r.phonenumber,
+        companyName: r.companyName,
+        location: r.location || "Philippines",
+        isActive: r.isActive,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      }));
+
+      return this.paginateResults(formattedReps, limitNum, cursor);
+    }
+
+    // 2. Query internal AdminUser collection
     const where: any = {};
 
     if (search && search.trim()) {
@@ -184,7 +238,11 @@ export class FacultyService {
     // 2. DEAN -> Returns both TEAMLEAD and TEACHER accounts
     // 3. TEAMLEAD -> Only returns TEACHER accounts
     if (requesterRole === "SUPERADMIN") {
-      where.role = { in: ["DEAN", "TEAMLEAD", "TEACHER"] };
+      if (role && role !== "ALL") {
+        where.role = role;
+      } else {
+        where.role = { in: ["DEAN", "TEAMLEAD", "TEACHER"] };
+      }
     } else if (requesterRole === "DEAN") {
       if (role && role !== "ALL" && ["TEAMLEAD", "TEACHER"].includes(role)) {
         where.role = role;
@@ -207,34 +265,81 @@ export class FacultyService {
 
     const allFaculties = await this.db.adminUser.findMany({
       where,
-      select: facultySelect,
+      select: userSelect,
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    if (!limit) return allFaculties;
+    let combinedList: any[] = allFaculties.map((f: any) => ({
+      ...f,
+      createdAt: f.createdAt ? f.createdAt.toISOString() : new Date().toISOString(),
+    }));
 
-    const limitNum = limit || 10;
+    // If role is "ALL" and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
+    if ((role === "ALL" || !role) && (requesterRole === "SUPERADMIN" || requesterRole === "DEAN")) {
+      const repWhere: any = {};
+      if (search && search.trim()) {
+        const q = search.trim();
+        repWhere.OR = [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { employeeId: { contains: q, mode: "insensitive" } },
+          { companyName: { contains: q, mode: "insensitive" } },
+        ];
+      }
+      if (status && status !== "ALL") {
+        repWhere.isActive = status === "ACTIVE";
+      }
+
+      const reps = await this.db.reviewCenterRepresentativeUser.findMany({
+        where: repWhere,
+        orderBy: { createdAt: "desc" },
+      });
+
+      const formattedReps = reps.map((r: any) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        name: r.name,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: r.email,
+        role: "EXTERNAL" as any,
+        phoneNumber: r.phonenumber,
+        companyName: r.companyName,
+        location: r.location || "Philippines",
+        isActive: r.isActive,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      }));
+
+      combinedList = [...combinedList, ...formattedReps].sort(
+        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    }
+
+    return this.paginateResults(combinedList, limitNum, cursor);
+  }
+
+  private paginateResults(items: any[], limitNum: number, cursor?: string) {
     let startIndex = 0;
 
     if (cursor) {
-      const cursorIndex = allFaculties.findIndex((item: any) => item.id === cursor);
+      const cursorIndex = items.findIndex((item: any) => item.id === cursor);
       if (cursorIndex !== -1) {
         startIndex = cursorIndex + 1;
       }
     }
 
-    const sliced = allFaculties.slice(startIndex, startIndex + limitNum + 1);
+    const sliced = items.slice(startIndex, startIndex + limitNum + 1);
     const hasNextPage = sliced.length > limitNum;
     if (hasNextPage) sliced.pop();
 
-    const totalCount = await this.db.adminUser.count({ where });
     const nextCursor =
       hasNextPage && sliced.length > 0 ? sliced[sliced.length - 1].id : null;
 
     return {
-      total: totalCount,
+      total: items.length,
       faculties: sliced,
       nextCursor,
       hasNextPage,
@@ -260,7 +365,7 @@ export class FacultyService {
   }
 
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
-    const parsed = createFacultySchema.safeParse(data);
+    const parsed = createUserSchema.safeParse(data);
     if (!parsed.success) {
       const errors = parsed.error.flatten().fieldErrors;
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
@@ -274,6 +379,8 @@ export class FacultyService {
       email,
       role,
       phoneNumber,
+      companyName,
+      location,
       password,
       handledCategoryIds,
     } = parsed.data;
@@ -288,7 +395,95 @@ export class FacultyService {
       );
     }
 
-    // Check unique constraints
+    // If role is EXTERNAL, save into ReviewCenterRepresentativeUser collection
+    if (role === Role.EXTERNAL) {
+      if (!companyName || !companyName.trim()) {
+        throw new ApiError(400, "Review Center / Company name is required for external accounts.");
+      }
+
+      // Check unique constraints in ReviewCenterRepresentativeUser collection
+      const existingRep = await this.db.reviewCenterRepresentativeUser.findFirst({
+        where: {
+          OR: [{ email }, { employeeId }],
+        },
+      });
+
+      if (existingRep) {
+        if (existingRep.email === email)
+          throw new ApiError(409, "Email is already registered for another review center account.");
+        if (existingRep.employeeId === employeeId)
+          throw new ApiError(409, "Partner / Employee ID is already in use.");
+      }
+
+      // Find or create ReviewCenter organization entity
+      let reviewCenter = await this.db.reviewCenter.findFirst({
+        where: { name: { equals: companyName.trim(), mode: "insensitive" } },
+      });
+
+      if (!reviewCenter) {
+        const centerCode = `RC-${companyName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+        reviewCenter = await this.db.reviewCenter.create({
+          data: {
+            name: companyName.trim(),
+            code: centerCode,
+            location: location?.trim() || "Philippines",
+            contactEmail: email,
+            contactPhone: phoneNumber,
+            isActive: true,
+          },
+        });
+      }
+
+      const tempPassword =
+        password && password.trim().length >= 6
+          ? password.trim()
+          : `BQ-RC-${Math.random().toString(36).slice(-6).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`;
+
+      const hash = await hashedPassword(tempPassword);
+
+      const newRep = await this.db.reviewCenterRepresentativeUser.create({
+        data: {
+          employeeId,
+          name: name || `${companyName} Representative`,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          email,
+          companyName: companyName.trim(),
+          phonenumber: phoneNumber,
+          password: hash,
+          location: location?.trim() || "Philippines",
+          isActive: true,
+          reviewCenterId: reviewCenter.id,
+        },
+      });
+
+      // Send welcome credentials email
+      sendFacultyCredentialsEmail({
+        toEmail: email,
+        name: newRep.name,
+        password: tempPassword,
+        role: "EXTERNAL",
+        employeeId,
+      }).catch((err) => console.error("[createFaculty EXTERNAL] Email send error:", err));
+
+      return {
+        id: newRep.id,
+        employeeId: newRep.employeeId,
+        name: newRep.name,
+        firstName: newRep.firstName,
+        lastName: newRep.lastName,
+        email: newRep.email,
+        role: "EXTERNAL" as any,
+        phoneNumber: newRep.phonenumber,
+        companyName: newRep.companyName,
+        location: newRep.location,
+        isActive: newRep.isActive,
+        createdAt: newRep.createdAt,
+        updatedAt: newRep.updatedAt,
+      };
+    }
+
+    // Otherwise, internal user saved into AdminUser collection
     const existing = await this.db.adminUser.findFirst({
       where: {
         OR: [{ email }, { employeeId }],
@@ -322,7 +517,7 @@ export class FacultyService {
         password: hash,
         handledCategoryIds: handledCategoryIds || [],
       },
-      select: facultySelect,
+      select: userSelect,
     });
 
     // Send welcome credentials email containing the temporary password
@@ -342,12 +537,26 @@ export class FacultyService {
     isActive: boolean,
     creatorRole: string,
   ) {
-    const userToUpdate = await this.db.adminUser.findUnique({
+    let userToUpdate = await this.db.adminUser.findUnique({
       where: { id },
     });
 
+    let isExternal = false;
     if (!userToUpdate) {
-      throw new ApiError(404, "Faculty member not found");
+      const repUser = await this.db.reviewCenterRepresentativeUser.findUnique({
+        where: { id },
+      });
+      if (repUser) {
+        isExternal = true;
+        userToUpdate = {
+          ...repUser,
+          role: "EXTERNAL" as any,
+        } as any;
+      }
+    }
+
+    if (!userToUpdate) {
+      throw new ApiError(404, "User account not found");
     }
 
     if (
@@ -368,10 +577,32 @@ export class FacultyService {
       );
     }
 
+    if (isExternal) {
+      const updatedRep = await this.db.reviewCenterRepresentativeUser.update({
+        where: { id },
+        data: { isActive },
+      });
+      return {
+        id: updatedRep.id,
+        employeeId: updatedRep.employeeId,
+        name: updatedRep.name,
+        firstName: updatedRep.firstName,
+        lastName: updatedRep.lastName,
+        email: updatedRep.email,
+        role: "EXTERNAL" as any,
+        phoneNumber: updatedRep.phonenumber,
+        companyName: updatedRep.companyName,
+        location: updatedRep.location,
+        isActive: updatedRep.isActive,
+        createdAt: updatedRep.createdAt,
+        updatedAt: updatedRep.updatedAt,
+      };
+    }
+
     return await this.db.adminUser.update({
       where: { id },
       data: { isActive },
-      select: facultySelect,
+      select: userSelect,
     });
   }
 
@@ -439,7 +670,7 @@ export class FacultyService {
       data: {
         handledCategoryIds: categoryIds,
       },
-      select: facultySelect,
+      select: userSelect,
     });
   }
 
@@ -557,15 +788,22 @@ export class FacultyService {
   }
 }
 
-export const facultyService = new FacultyService();
+export const userService = new UserService();
+export const facultyService = userService;
+export const FacultyService = UserService;
 
 export const isAllowedToManageRole =
-  facultyService.isAllowedToManageRole.bind(facultyService);
-export const getAllFaculty = facultyService.getAllFaculty.bind(facultyService);
-export const createFaculty = facultyService.createFaculty.bind(facultyService);
+  userService.isAllowedToManageRole.bind(userService);
+export const getAllFaculty = userService.getAllFaculty.bind(userService);
+export const getAllUsers = getAllFaculty;
+export const createFaculty = userService.createFaculty.bind(userService);
+export const createUser = createFaculty;
 export const bulkCreateFaculty =
-  facultyService.bulkCreateFaculty.bind(facultyService);
+  userService.bulkCreateFaculty.bind(userService);
+export const bulkCreateUsers = bulkCreateFaculty;
 export const toggleFacultyStatus =
-  facultyService.toggleFacultyStatus.bind(facultyService);
+  userService.toggleFacultyStatus.bind(userService);
+export const toggleUserStatus = toggleFacultyStatus;
 export const updateFacultyCategories =
-  facultyService.updateFacultyCategories.bind(facultyService);
+  userService.updateFacultyCategories.bind(userService);
+export const updateUserCategories = updateFacultyCategories;

@@ -23,15 +23,11 @@ export default function AnalyticsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(urlStudentId);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
-  // Query: Get all students
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudentsList();
+  // Query: Get all students (search filtered on backend)
+  const { data: studentsData, isLoading: isStudentsLoading } = useStudentsList({ search: searchQuery });
   const studentsList = Array.isArray(studentsData) ? studentsData : [];
 
-  // Filter students by search query
-  const filteredStudents = studentsList.filter((s: StudentListItem) => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = studentsList;
 
   // Sync selected student from URL or fallback to first valid student
   useEffect(() => {

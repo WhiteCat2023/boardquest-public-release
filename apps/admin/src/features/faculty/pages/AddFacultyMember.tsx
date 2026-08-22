@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { UserPlus, Users, ArrowLeft } from "lucide-react";
+import { UserPlus, Users, ArrowLeft, Building2, Shield } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { UserRole } from "@/types/question";
 import type { RoleType, CreateFacultyPayload, ParsedFacultyRow } from "@/features/faculty";
 import { getAllowedRolesToCreate } from "@/features/faculty/utils/facultyUtils";
 import {
-
   useCreateFaculty,
   useBulkCreateFaculty,
 } from "@/features/faculty";
 import AddIndividualFacultyTab from "../components/AddIndividualFacultyTab";
 import AddBulkFacultyTab from "../components/AddBulkFacultyTab";
+import AddExternalFacultyTab from "../components/AddExternalFacultyTab";
 
 export default function AddFacultyMember() {
   const navigate = useNavigate();
@@ -20,9 +20,21 @@ export default function AddFacultyMember() {
   const { auth } = useAuth();
   const currentUserRole = (auth as any)?.data?.user?.role as RoleType;
 
-  // Active Tab: "individual" | "bulk"
+  // Account Category: "internal" | "external"
+  const initialCategory =
+    searchParams.get("tab") === "external" || searchParams.get("type") === "external"
+      ? "external"
+      : "internal";
+  const [accountCategory, setAccountCategory] = useState<"internal" | "external">(initialCategory);
+
+  // Internal Sub-tab: "individual" | "bulk"
   const initialTab = searchParams.get("tab") === "bulk" ? "bulk" : "individual";
   const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+
+  const handleCategoryChange = (cat: "internal" | "external") => {
+    setAccountCategory(cat);
+    setSearchParams({ tab: cat === "external" ? "external" : activeTab });
+  };
 
   const handleTabChange = (tab: "individual" | "bulk") => {
     setActiveTab(tab);
@@ -90,6 +102,21 @@ export default function AddFacultyMember() {
       },
       onError: (err: any) => {
         const msg = err.response?.data?.message || "Failed to register faculty member.";
+        setErrorMsg(msg);
+        toast.error(msg);
+      },
+    });
+  };
+
+  const handleExternalSubmit = (payload: CreateFacultyPayload) => {
+    setErrorMsg("");
+    createMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success("Review Center representative account created successfully!");
+        navigate("/faculty-management");
+      },
+      onError: (err: any) => {
+        const msg = err.response?.data?.message || "Failed to create external partner account.";
         setErrorMsg(msg);
         toast.error(msg);
       },
@@ -292,55 +319,108 @@ export default function AddFacultyMember() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-              <div className="p-1.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
-                {activeTab === "individual" ? (
+              <div className={`p-1.5 rounded-xl border ${
+                accountCategory === "external"
+                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                  : "bg-primary/10 text-primary border-primary/20"
+              }`}>
+                {accountCategory === "external" ? (
+                  <Building2 size={18} className="stroke-[2.5]" />
+                ) : activeTab === "individual" ? (
                   <UserPlus size={18} className="stroke-[2.5]" />
                 ) : (
                   <Users size={18} className="stroke-[2.5]" />
                 )}
               </div>
-              {activeTab === "individual" ? "Add New Faculty Member" : "Bulk Import Faculty Members"}
+              {accountCategory === "external"
+                ? "Register Review Center Account"
+                : activeTab === "individual"
+                ? "Add New Faculty Member"
+                : "Bulk Import Faculty Members"}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {activeTab === "individual"
+              {accountCategory === "external"
+                ? "Create a dedicated external partner account for review center representatives."
+                : activeTab === "individual"
                 ? "Register an individual faculty member account for academic access and management."
                 : "Batch upload multiple faculty accounts via CSV spreadsheet."}
             </p>
           </div>
 
-          {/* ── Segmented Pill Tabs: Add User(individual) & Add Users(bulk) ── */}
-          <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
-            <button
-              type="button"
-              onClick={() => handleTabChange("individual")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "individual"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <UserPlus size={13} />
-              Individual
-            </button>
+          {/* ── Sub-tabs for Internal accounts: Individual vs Bulk ── */}
+          {accountCategory === "internal" && (
+            <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
+              <button
+                type="button"
+                onClick={() => handleTabChange("individual")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "individual"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <UserPlus size={13} />
+                Individual
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleTabChange("bulk")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "bulk"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users size={13} />
-              Bulk
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => handleTabChange("bulk")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "bulk"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Users size={13} />
+                Bulk
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Top-Level Account Type Category Switcher ── */}
+        <div className="flex items-center gap-2 border-b border-border/60 pb-1 mt-1">
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("internal")}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              accountCategory === "internal"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            }`}
+          >
+            <Shield size={14} />
+            Internal Account (Faculty & Staff)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("external")}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              accountCategory === "external"
+                ? "bg-purple-600 text-white shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            }`}
+          >
+            <Building2 size={14} />
+            External Account (Review Center)
+          </button>
         </div>
       </div>
 
-      {/* ── TAB 1: Add User (individual) ── */}
-      {activeTab === "individual" && (
+      {/* ── EXTERNAL ACCOUNT TAB ── */}
+      {accountCategory === "external" && (
+        <AddExternalFacultyTab
+          errorMsg={errorMsg}
+          isPending={createMutation.isPending}
+          onSubmitExternal={handleExternalSubmit}
+          onCancel={() => navigate("/faculty-management")}
+        />
+      )}
+
+      {/* ── INTERNAL: TAB 1 (Individual) ── */}
+      {accountCategory === "internal" && activeTab === "individual" && (
         <AddIndividualFacultyTab
           errorMsg={errorMsg}
           formData={formData}
@@ -361,8 +441,8 @@ export default function AddFacultyMember() {
         />
       )}
 
-      {/* ── TAB 2: Add Users (bulk) ── */}
-      {activeTab === "bulk" && (
+      {/* ── INTERNAL: TAB 2 (Bulk) ── */}
+      {accountCategory === "internal" && activeTab === "bulk" && (
         <AddBulkFacultyTab
           file={file}
           parsedRows={parsedRows}

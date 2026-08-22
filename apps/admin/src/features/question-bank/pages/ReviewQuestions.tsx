@@ -42,7 +42,9 @@ export default function ReviewQuestions() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
 
-  const { data: authors = [], isLoading: isAuthorsLoading } = usePendingReviewAuthors();
+  const { data: authors = [], isLoading: isAuthorsLoading } = usePendingReviewAuthors({
+    search: authorSearch,
+  });
 
   // Auto-select first author when data is loaded
   useEffect(() => {
@@ -102,12 +104,8 @@ export default function ReviewQuestions() {
     approveAuthorMutation.mutate(selectedAuthorId);
   };
 
-  // Filter Authors List
-  const filteredAuthors = authors.filter(
-    (a) =>
-      a.name.toLowerCase().includes(authorSearch.toLowerCase()) ||
-      a.email.toLowerCase().includes(authorSearch.toLowerCase())
-  );
+  // Authors List (filtered on backend)
+  const filteredAuthors = authors;
 
   const totalPendingAcrossAuthors = authors.reduce((sum, a) => sum + a.pendingCount, 0);
 

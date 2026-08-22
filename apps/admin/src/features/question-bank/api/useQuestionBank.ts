@@ -69,13 +69,19 @@ export function useQuestionDetail(questionId: string | null | undefined) {
     });
 }
 
-export function usePendingReviewAuthors() {
+export function usePendingReviewAuthors(params?: { search?: string }) {
     const axiosPrivate = useAxiosPrivate();
 
     return useQuery({
-        queryKey: ["pendingReviewAuthors"],
+        queryKey: ["pendingReviewAuthors", params],
         queryFn: async () => {
-            const response = await axiosPrivate.get("/questions/review/authors");
+            const cleanParams = params?.search?.trim()
+                ? { search: params.search.trim() }
+                : undefined;
+
+            const response = await axiosPrivate.get("/questions/review/authors", {
+                params: cleanParams,
+            });
             return (response.data?.data?.authors || []) as PendingReviewAuthor[];
         },
     });

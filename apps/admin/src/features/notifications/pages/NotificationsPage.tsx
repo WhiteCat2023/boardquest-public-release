@@ -28,7 +28,11 @@ export default function NotificationsPage() {
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [unreadOnly, setUnreadOnly] = useState(false);
 
-  const { data, isLoading, refetch } = useNotifications({ unreadOnly });
+  const { data, isLoading, refetch } = useNotifications({
+    unreadOnly,
+    search: searchTerm,
+    type: selectedType,
+  });
 
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
@@ -38,23 +42,11 @@ export default function NotificationsPage() {
   const allNotifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
 
-  // Filter notifications based on search & category type
-  const filteredNotifications = allNotifications.filter((n) => {
-    const matchesSearch =
-      n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      n.message.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesType =
-      selectedType === "ALL" || n.type.toUpperCase() === selectedType.toUpperCase();
-
-    return matchesSearch && matchesType;
-  });
-
-  // Group filtered notifications by date
+  // Group notifications directly by date (filtering is done on backend)
   const groupedNotifications = (() => {
     const groups: { [key: string]: NotificationItem[] } = {};
 
-    filteredNotifications.forEach((item) => {
+    allNotifications.forEach((item) => {
       let dateKey: string;
       try {
         const d = new Date(item.createdAt);
@@ -207,7 +199,7 @@ export default function NotificationsPage() {
           <div className="p-10 text-center text-xs text-muted-foreground italic font-medium">
             Loading notification records...
           </div>
-        ) : filteredNotifications.length === 0 ? (
+        ) : allNotifications.length === 0 ? (
           <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
             <div className="p-3 rounded-2xl bg-muted/60 text-muted-foreground border border-border">
               <Inbox size={26} />

@@ -4,17 +4,27 @@ import type { NotificationItem } from "../types/types";
 
 interface UseNotificationsParams {
   unreadOnly?: boolean;
+  search?: string;
+  type?: string;
 }
 
-export function useNotifications({ unreadOnly = false }: UseNotificationsParams = {}) {
+export function useNotifications({
+  unreadOnly = false,
+  search,
+  type,
+}: UseNotificationsParams = {}) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
-    queryKey: ["notifications", { unreadOnly }],
+    queryKey: ["notifications", { unreadOnly, search, type }],
     queryFn: async () => {
       try {
         const response = await axiosPrivate.get("/notifications/get", {
-          params: { unreadOnly },
+          params: {
+            unreadOnly,
+            search: search?.trim() || undefined,
+            type: type && type !== "ALL" ? type : undefined,
+          },
         });
         const data = response.data?.data || response.data || {};
         return {

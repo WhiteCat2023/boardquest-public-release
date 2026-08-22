@@ -172,6 +172,13 @@ export class AuthService {
     });
 
     if (!user) {
+      const isRep = await this.db.reviewCenterRepresentativeUser.findUnique({ where: { email } });
+      if (isRep) {
+        throw new ApiError(
+          403,
+          "External Review Center accounts cannot access the admin management portal. Please log in via the Review Center portal."
+        );
+      }
       throw new ApiError(401, "Invalid email or password");
     }
 
