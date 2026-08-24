@@ -1,33 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import { isAxiosError } from "axios";
 import rcAxios from "../lib/axios";
-
-export interface ReviewCenterUser {
-  id: string;
-  employeeId: string;
-  name: string;
-  email: string;
-  companyName: string;
-  phonenumber?: string;
-  location?: string;
-  role: "REVIEW_CENTER_REPRESENTATIVE";
-  reviewCenterId?: string;
-  reviewCenter?: {
-    id: string;
-    name: string;
-    location?: string;
-  };
-}
-
-interface ReviewCenterAuthContextType {
-  user: ReviewCenterUser | null;
-  isLoading: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
-  logout: () => Promise<void>;
-  isError: boolean;
-  errorMessage: string | null;
-}
-
-const ReviewCenterAuthContext = createContext<ReviewCenterAuthContextType | undefined>(undefined);
+import {
+  ReviewCenterAuthContext,
+  type ReviewCenterUser,
+} from "./ReviewCenterAuthContext";
 
 export function ReviewCenterAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ReviewCenterUser | null>(null);
@@ -35,25 +12,32 @@ export function ReviewCenterAuthProvider({ children }: { children: ReactNode }) 
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchCurrentUser = async () => {
-    try {
-      setIsLoading(true);
-      const res = await rcAxios.get("/auth/me");
-      const userData = res.data?.data?.user || res.data?.user;
-      if (userData) {
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await rcAxios.get("/auth/me");
+        const userData = res.data?.data?.user || res.data?.user;
+        if (isMounted) {
+          setUser(userData || null);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     fetchCurrentUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
@@ -64,17 +48,22 @@ export function ReviewCenterAuthProvider({ children }: { children: ReactNode }) 
 
       const res = await rcAxios.post("/auth/login", credentials);
       const userData = res.data?.data?.user || res.data?.user;
-      
+
       if (userData) {
         setUser(userData);
       } else {
         throw new Error("Invalid response from server");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsError(true);
-      const msg = err.response?.data?.message || err.message || "Failed to log in to Review Center portal";
+      let msg = "Failed to log in to Review Center portal";
+      if (isAxiosError(err)) {
+        msg = (err.response?.data as { message?: string } | undefined)?.message || err.message || msg;
+      } else if (err instanceof Error) {
+        msg = err.message || msg;
+      }
       setErrorMessage(msg);
-      throw new Error(msg);
+      throw new Error(msg, { cause: err });
     } finally {
       setIsLoading(false);
     }
@@ -108,10 +97,4 @@ export function ReviewCenterAuthProvider({ children }: { children: ReactNode }) 
   );
 }
 
-export function useReviewCenterAuth() {
-  const context = useContext(ReviewCenterAuthContext);
-  if (!context) {
-    throw new Error("useReviewCenterAuth must be used within a ReviewCenterAuthProvider");
-  }
-  return context;
-}
+export default ReviewCenterAuthProvider;

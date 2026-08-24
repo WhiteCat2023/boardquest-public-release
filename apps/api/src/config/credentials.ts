@@ -16,6 +16,7 @@ export interface SuperAdminCredentialsConfig {
   phoneNumber: string;
   role: "SUPERADMIN";
   location: string;
+  accountStatus: "ACTIVE" | "DEACTIVATED";
   isActive: boolean;
 }
 
@@ -29,6 +30,7 @@ export interface SuperAdminProfile {
   role: "SUPERADMIN";
   phoneNumber: string;
   location: string;
+  accountStatus: "ACTIVE" | "DEACTIVATED";
   isActive: boolean;
   lastActiveAt: Date;
   createdAt: Date;
@@ -49,6 +51,7 @@ export const superAdminCredentials: SuperAdminCredentialsConfig = {
   phoneNumber: "00000000000",
   role: "SUPERADMIN",
   location: "Main HQ",
+  accountStatus: "ACTIVE",
   isActive: true,
 };
 
@@ -66,6 +69,7 @@ export function getSuperAdminProfile(): SuperAdminProfile {
     role: superAdminCredentials.role,
     phoneNumber: superAdminCredentials.phoneNumber,
     location: superAdminCredentials.location,
+    accountStatus: "ACTIVE",
     isActive: true,
     lastActiveAt: new Date(),
     createdAt: new Date("2026-01-01"),

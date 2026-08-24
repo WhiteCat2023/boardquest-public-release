@@ -1,46 +1,34 @@
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
+import { superAdminCredentials } from "../../config/credentials";
 export async function ensureSuperAdminExists() {
-    const default_id = process.env.SUPERADMIN_DEFAULT_ID;
-    const email = process.env.SUPERADMIN_EMAIL?.toLowerCase();
-    const password = process.env.SUPERADMIN_PASSWORD;
-    const username = process.env.SUPERADMIN_USERNAME;
-    const employeeId = process.env.SUPERADMIN_EMPLOYEE_ID;
-    const phoneNumber = process.env.SUPERADMIN_PHONE_NUMBER;
-    const lastName = process.env.SUPERADMIN_LASTNAME;
-    const firstName = process.env.SUPERADMIN_FIRSTNAME;
+    const { id, employeeId, email, password, firstName, lastName, name, phoneNumber, role, } = superAdminCredentials;
     try {
         const existing = await prisma.adminUser.findFirst({
             where: {
-                OR: [
-                    { id: default_id },
-                    { email },
-                    { username },
-                    { role: "SUPERADMIN" },
-                ],
+                OR: [{ id }, { email }, { role: "SUPERADMIN" }],
             },
         });
         if (existing) {
             return existing;
         }
-        const name = `${firstName} ${lastName}`;
         const hash = await hashedPassword(password);
         const newSuperAdmin = await prisma.adminUser.create({
             data: {
-                id: default_id,
+                id,
                 employeeId,
                 name,
                 firstName,
                 lastName,
                 email,
-                username,
                 password: hash,
-                role: "SUPERADMIN",
+                role,
                 phoneNumber,
+                accountStatus: "ACTIVE",
                 isActive: true,
             },
         });
-        console.log("⚡ [Bootstrap] Auto-healed Super Admin account in database (ID:", default_id, ")");
+        console.log("⚡ [Bootstrap] Auto-healed Super Admin account in database (ID:", id, ")");
         return newSuperAdmin;
     }
     catch (error) {

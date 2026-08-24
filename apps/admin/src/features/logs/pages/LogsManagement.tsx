@@ -6,12 +6,12 @@ import LogsHeader from "../components/LogsHeader";
 import LogStatsCards from "../components/LogStatsCards";
 import LogFilters from "../components/LogFilters";
 import LogTable from "../components/LogTable";
-import ClearLogsDialog from "../components/ClearLogsDialog";
+import { useConfirm } from "@/components/modal";
 
 export default function LogsManagement() {
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
+  const { confirm } = useConfirm();
 
   // Pagination State (Limit 20 logs per page to boost UI performance)
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,15 +57,22 @@ export default function LogsManagement() {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const handleConfirmClear = () => {
+  const handleOpenClearDialog = async () => {
+    const confirmed = await confirm({
+      title: "Clear Audit Log History?",
+      description: "This action will purge all current system audit logs (INFO, WARN, ERROR, FATAL). This action cannot be undone.",
+      variant: "destructive",
+      confirmText: "Confirm Purge",
+    });
+
+    if (!confirmed) return;
+
     clearLogsMutation.mutate(undefined, {
       onSuccess: () => {
         toast.success("Cleared system audit logs.");
-        setIsConfirmClearOpen(false);
       },
       onError: (err: any) => {
         toast.error(err.response?.data?.message || "Failed to clear logs.");
-        setIsConfirmClearOpen(false);
       },
     });
   };
@@ -111,7 +118,7 @@ export default function LogsManagement() {
         isLoading={isLogsLoading}
         onRefresh={refetch}
         onExportCSV={handleExportCSV}
-        onOpenClearDialog={() => setIsConfirmClearOpen(true)}
+        onOpenClearDialog={handleOpenClearDialog}
       />
 
       {/* KPI Stats Cards */}
@@ -142,13 +149,6 @@ export default function LogsManagement() {
         isLoading={isLogsLoading}
         selectedLevel={selectedLevel}
         searchTerm={searchTerm}
-      />
-
-      {/* Confirmation Dialog */}
-      <ClearLogsDialog
-        isOpen={isConfirmClearOpen}
-        onOpenChange={setIsConfirmClearOpen}
-        onConfirmClear={handleConfirmClear}
       />
     </div>
   );

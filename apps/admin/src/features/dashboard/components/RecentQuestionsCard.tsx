@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import appContent from "@/constants/appContent";
+import { getDifficultyColor } from "@/utils/style";
 
 interface RecentQuestionsCardProps {
   isTeacher: boolean;
@@ -29,7 +30,7 @@ export function RecentQuestionsCard({
           {isTeacher ? content.titles.teacher : content.titles.admin}
         </h2>
         <Link
-          to={isTeamLead ? "/review-center" : "/question-bank"}
+          to="/question-bank"
           className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
         >
           {isTeamLead ? content.actions.teamlead : content.actions.admin} <ArrowRight size={12} />
@@ -75,15 +76,9 @@ export function RecentQuestionsCard({
               <div className="flex items-center gap-1.5 shrink-0">
                 <Badge
                   variant="outline"
-                  className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                    q.isPublished || q.status === "APPROVED"
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                  }`}
+                  className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${getDifficultyColor(q.difficulty)}`}
                 >
-                  {q.isPublished || q.status === "APPROVED"
-                    ? content.badges.published
-                    : content.badges.underReview}
+                  {q.difficulty || "MEDIUM"}
                 </Badge>
               </div>
             </div>

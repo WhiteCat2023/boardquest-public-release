@@ -2,7 +2,13 @@ import { Users } from "lucide-react";
 import type { FacultyMember, RoleType } from "@/features/faculty";
 import FacultyTableRow from "./FacultyTableRow";
 import { Card } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableHead, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table";
 import { isAllowedToManageRole } from "@/features/faculty/utils/facultyUtils";
 
 interface FacultyTableProps {
@@ -27,6 +33,7 @@ export default function FacultyTable({
           name: "Loading Faculty Name",
           email: "loading.faculty@university.edu",
           role: "TEACHER",
+          accountStatus: "ACTIVE",
           isActive: true,
           handledCategories: [{ id: "1", name: "Category" }],
         }) as FacultyMember[])
@@ -37,7 +44,10 @@ export default function FacultyTable({
       <phantom-ui loading={isLoading}>
         {!isLoading && faculties.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
-            <Users size={38} className="text-muted-foreground/40 stroke-[1.5]" />
+            <Users
+              size={38}
+              className="text-muted-foreground/40 stroke-[1.5]"
+            />
             <p className="font-bold text-foreground text-sm">
               No Administrators Registered
             </p>

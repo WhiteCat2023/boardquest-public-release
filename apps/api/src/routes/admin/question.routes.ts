@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   authenticateToken,
-  requireAdmin,
   requireRoles,
 } from "../../middleware/auth.middleware";
 import {
@@ -14,12 +13,8 @@ import {
   bulkUploadQuestions,
   extractQuestions,
   bulkDeleteQuestions,
-  bulkApproveQuestions,
-  bulkUpdateStatusQuestions,
-  bulkFeedbackQuestions,
   synthesizeQuestion,
   createSynthesizedQuestion,
-  getPendingReviewAuthors,
   getQuestionStats,
   getQuestionComments,
   createQuestionComment,
@@ -52,10 +47,6 @@ router.post("/create-synthesized", authenticateToken, createSynthesizedQuestion)
 router.post("/bulk-upload", authenticateToken, bulkUploadQuestions);
 router.post("/extract", authenticateToken, extractQuestions);
 router.post("/bulk/delete", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkDeleteQuestions);
-router.post("/bulk/approve", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkApproveQuestions);
-router.post("/bulk/status", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkUpdateStatusQuestions);
-router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkFeedbackQuestions);
-router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.get("/:questionId/comments", authenticateToken, getQuestionComments);

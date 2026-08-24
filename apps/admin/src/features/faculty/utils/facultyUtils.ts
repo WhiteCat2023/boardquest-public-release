@@ -4,28 +4,34 @@ import type { RoleType, RoleOption } from "@/features/faculty";
 /**
  * Returns allowed roles that a given user role can create.
  */
-export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[] => {
+export const getAllowedRolesToCreate = (
+  currentUserRole: RoleType,
+): RoleOption[] => {
   if (currentUserRole === UserRole.SUPERADMIN) {
     return [
       {
         value: UserRole.DEAN,
         label: "Dean",
-        description: "Full management access across academic programs and faculty accounts."
+        description:
+          "Full management access across academic programs and faculty accounts.",
       },
       {
         value: UserRole.TEAMLEAD,
         label: "Co-Admin (Team Lead)",
-        description: "Academic lead capable of reviewing questions and managing teachers."
+        description:
+          "Academic lead capable of reviewing questions and managing teachers.",
       },
       {
         value: UserRole.TEACHER,
         label: "Teacher",
-        description: "Academic staff allowed to create questions and manage course materials."
+        description:
+          "Academic staff allowed to create questions and manage course materials.",
       },
       {
         value: UserRole.EXTERNAL,
         label: "External Partner / Review Center",
-        description: "External review center representative with access limited exclusively to the Review Center portal."
+        description:
+          "External review center representative with access limited exclusively to the Review Center portal.",
       },
     ];
   }
@@ -34,17 +40,20 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
       {
         value: UserRole.TEAMLEAD,
         label: "Co-Admin (Team Lead)",
-        description: "Academic lead capable of reviewing questions and managing teachers."
+        description:
+          "Academic lead capable of reviewing questions and managing teachers.",
       },
       {
         value: UserRole.TEACHER,
         label: "Teacher",
-        description: "Academic staff allowed to create questions and manage course materials."
+        description:
+          "Academic staff allowed to create questions and manage course materials.",
       },
       {
         value: UserRole.EXTERNAL,
         label: "External Partner / Review Center",
-        description: "External review center representative with access limited exclusively to the Review Center portal."
+        description:
+          "External review center representative with access limited exclusively to the Review Center portal.",
       },
     ];
   }
@@ -53,7 +62,8 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
       {
         value: UserRole.TEACHER,
         label: "Teacher",
-        description: "Academic staff allowed to create questions and manage course materials."
+        description:
+          "Academic staff allowed to create questions and manage course materials.",
       },
     ];
   }
@@ -63,10 +73,17 @@ export const getAllowedRolesToCreate = (currentUserRole: RoleType): RoleOption[]
 /**
  * Checks if creator role has permissions to manage (e.g. delete) target role.
  */
-export const isAllowedToManageRole = (creatorRole: RoleType, targetRole: RoleType): boolean => {
+export const isAllowedToManageRole = (
+  creatorRole: RoleType,
+  targetRole: RoleType,
+): boolean => {
   if (creatorRole === UserRole.SUPERADMIN) return true;
   if (creatorRole === UserRole.DEAN) {
-    return targetRole === UserRole.TEAMLEAD || targetRole === UserRole.TEACHER || targetRole === UserRole.EXTERNAL;
+    return (
+      targetRole === UserRole.TEAMLEAD ||
+      targetRole === UserRole.TEACHER ||
+      targetRole === UserRole.EXTERNAL
+    );
   }
   if (creatorRole === UserRole.TEAMLEAD) {
     return targetRole === UserRole.TEACHER;
@@ -97,7 +114,10 @@ export const getRoleBadgeColor = (role: RoleType): string => {
 /**
  * Determines if a faculty member is currently online (active within last 5 minutes and account active).
  */
-export const isUserOnline = (lastActiveAt?: string, isActive?: boolean): boolean => {
+export const isUserOnline = (
+  lastActiveAt?: string,
+  isActive?: boolean,
+): boolean => {
   if (isActive === false || !lastActiveAt) return false;
   const lastActiveDate = new Date(lastActiveAt);
   const diffMinutes = (Date.now() - lastActiveDate.getTime()) / (1000 * 60);

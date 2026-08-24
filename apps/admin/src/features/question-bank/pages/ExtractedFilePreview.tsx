@@ -243,7 +243,6 @@ function ExtractedFilePreview() {
               difficulty: (targetRowQuestion.difficulty as "EASY" | "MEDIUM" | "HARD") || "MEDIUM",
               type: (targetRowQuestion.type as "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER") || "MCQ",
               categoryId: (targetRowQuestion as any).categoryId || "",
-              status: "PENDING_REVIEW",
             }}
             onSaveBoth={handleSaveBothRows}
             onSaveSynthesizedOnly={async (synth) => handleApplySynthesizedToRow(synth)}

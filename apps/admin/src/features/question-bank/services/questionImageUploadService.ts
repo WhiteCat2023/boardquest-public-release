@@ -4,7 +4,7 @@ export async function uploadQuestionImage(
   imageSource: string | File,
   fileName?: string
 ): Promise<string> {
-  let base64String = "";
+  let base64String: string;
 
   if (typeof imageSource === "string") {
     base64String = imageSource;

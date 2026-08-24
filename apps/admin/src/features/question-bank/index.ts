@@ -1,6 +1,5 @@
 
 export { default as MyQuestions } from './pages/MyQuestions';
-export { default as ReviewQuestions } from './pages/ReviewQuestions';
 export { default as SharedLibrary } from './pages/SharedLibrary';
 export { default as AddQuestion } from './pages/AddQuestion';
 export { default as ViewQuestion } from './pages/ViewQuestion';

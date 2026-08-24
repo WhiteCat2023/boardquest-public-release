@@ -162,11 +162,17 @@ export const toggleFacultyStatus = asyncHandler(
     }
 
     const { id } = req.params;
-    const { isActive } = req.body;
+    const { accountStatus, account_status, isActive } = req.body;
+    const nextStatus =
+      accountStatus !== undefined
+        ? accountStatus
+        : account_status !== undefined
+        ? account_status
+        : Boolean(isActive);
 
     const faculty = await userService.toggleFacultyStatus(
       id as string,
-      Boolean(isActive),
+      nextStatus,
       creatorRole,
     );
 

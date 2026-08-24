@@ -1,6 +1,7 @@
 import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
-import { ensureSuperAdminExists, SUPERADMIN_DEFAULT_ID } from "../services/admin/bootstrap.service";
+import { ensureSuperAdminExists } from "../services/admin/bootstrap.service";
+import { isSuperAdmin, getSuperAdminProfile } from "../config/credentials";
 export const authenticateToken = async (req, res, next) => {
     try {
         let token = req.cookies?.accessToken || req.cookies?.token;
@@ -26,30 +27,21 @@ export const authenticateToken = async (req, res, next) => {
             return;
         }
         const decoded = payload;
-        const superAdminId = "superadmin-env-id";
-        const envSuperAdminEmail = (process.env.SUPERADMIN_EMAIL || "superadmin@boardquest.edu.ph").toLowerCase();
         let user;
-        if (decoded.id === superAdminId || decoded.id === envSuperAdminEmail || decoded.id === SUPERADMIN_DEFAULT_ID) {
+        if (isSuperAdmin(decoded.id)) {
             const dbSuperAdmin = await ensureSuperAdminExists();
             if (dbSuperAdmin) {
                 user = {
                     id: dbSuperAdmin.id,
                     email: dbSuperAdmin.email,
-                    username: dbSuperAdmin.username,
                     name: dbSuperAdmin.name,
                     role: dbSuperAdmin.role,
+                    accountStatus: "ACTIVE",
                     isActive: true,
                 };
             }
             else {
-                user = {
-                    id: SUPERADMIN_DEFAULT_ID,
-                    email: envSuperAdminEmail,
-                    username: process.env.SUPERADMIN_USERNAME || "superadmin",
-                    name: process.env.SUPERADMIN_NAME || "System Super Administrator",
-                    role: "SUPERADMIN",
-                    isActive: true,
-                };
+                user = getSuperAdminProfile();
             }
         }
         else {
@@ -58,9 +50,9 @@ export const authenticateToken = async (req, res, next) => {
                 select: {
                     id: true,
                     email: true,
-                    username: true,
                     name: true,
                     role: true,
+                    accountStatus: true,
                     isActive: true,
                     handledCategoryIds: true,
                     handledCategories: { select: { id: true, name: true } },
@@ -73,12 +65,20 @@ export const authenticateToken = async (req, res, next) => {
                 });
                 return;
             }
-            // Update isActive and lastActiveAt asynchronously
+            const accountStatus = user.accountStatus;
+            if (accountStatus === "DEACTIVATED") {
+                res.status(403).json({
+                    message: "Your account has been deactivated. Please contact your administrator for assistance.",
+                    error: "ACCOUNT_DEACTIVATED",
+                });
+                return;
+            }
+            user.accountStatus = accountStatus;
+            // Update lastActiveAt asynchronously without touching accountStatus
             prisma.adminUser
                 .update({
                 where: { id: user.id },
                 data: {
-                    isActive: true,
                     lastActiveAt: new Date(),
                 },
             })
@@ -104,9 +104,9 @@ export const requireAdmin = (req, res, next) => {
         });
         return;
     }
-    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+    if (req.user.role !== "DEAN" && req.user.role !== "SUPERADMIN") {
         res.status(403).json({
-            message: "Admin privileges required",
+            message: "Dean or Superadmin privileges required",
             error: "INSUFFICIENT_PRIVILEGES",
         });
         return;

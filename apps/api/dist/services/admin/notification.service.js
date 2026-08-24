@@ -8,7 +8,7 @@ function getOrConditions(userId, role) {
     if (role) {
         const uppercaseRole = role.toUpperCase();
         OR_conditions.push({ recipientRole: uppercaseRole });
-        if (["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(uppercaseRole)) {
+        if (["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(uppercaseRole)) {
             OR_conditions.push({ recipientRole: "REVIEWER" });
             OR_conditions.push({ recipientRole: "STAFF" });
         }
@@ -40,15 +40,35 @@ export async function createNotification(input) {
     return notif;
 }
 export async function getUserNotifications(input) {
-    const { userId, role, unreadOnly = false, limit = 50 } = input;
-    const whereClause = {
-        OR: getOrConditions(userId, role),
-    };
+    const { userId, role, unreadOnly = false, limit = 50, search, type } = input;
+    const andConditions = [];
     if (userId) {
-        whereClause.NOT = {
-            deletedUserIds: { has: userId },
-        };
+        andConditions.push({
+            NOT: {
+                deletedUserIds: { has: userId },
+            },
+        });
     }
+    if (type && type !== "ALL") {
+        andConditions.push({
+            type: type.toUpperCase(),
+        });
+    }
+    if (search && search.trim()) {
+        const q = search.trim();
+        andConditions.push({
+            OR: [
+                { title: { contains: q, mode: "insensitive" } },
+                { message: { contains: q, mode: "insensitive" } },
+            ],
+        });
+    }
+    const whereClause = {
+        AND: [
+            { OR: getOrConditions(userId, role) },
+            ...andConditions,
+        ],
+    };
     const rawNotifications = await prisma.notification.findMany({
         where: whereClause,
         orderBy: { createdAt: "desc" },

@@ -25,12 +25,6 @@ export enum QuestionType {
   SHORT_ANSWER = "SHORT_ANSWER",
 }
 
-export enum QuestionStatus {
-  APPROVED = "APPROVED",
-  PENDING_REVIEW = "PENDING_REVIEW",
-  PENDING_REVISION = "PENDING_REVISION",
-}
-
 export enum RequestStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
@@ -42,6 +36,11 @@ export enum GuidanceStatus {
   IN_PROGRESS = "IN_PROGRESS",
   RESOLVED = "RESOLVED",
   CANCELLED = "CANCELLED",
+}
+
+export enum AccountStatus {
+  ACTIVE = "ACTIVE",
+  DEACTIVATED = "DEACTIVATED",
 }
 
 export interface AdminUser {
@@ -57,6 +56,7 @@ export interface AdminUser {
   companyName?: string;
   location?: string;
   handledCategoryIds?: string[];
+  accountStatus?: AccountStatus | string;
   isActive?: boolean;
   lastActiveAt?: Date;
   createdAt?: Date;
@@ -90,7 +90,9 @@ export interface ReviewCenterRepresentativeUser {
   companyName: string;
   phonenumber: string;
   location?: string;
+  accountStatus?: AccountStatus | string;
   isActive?: boolean;
+  lastActiveAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -116,7 +118,6 @@ export interface Question {
   topic: string;
   difficulty: QuestionDifficulty;
   type: QuestionType;
-  status: QuestionStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }

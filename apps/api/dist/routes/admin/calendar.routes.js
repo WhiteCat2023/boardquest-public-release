@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken, requireRoles } from "../../middleware/auth.middleware";
 import { getReviewSchedules, createReviewSchedule, updateReviewSchedule, deleteReviewSchedule, } from "../../controller/admin/calendar.controller";
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "ADMIN", "TEAMLEAD"];
+const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
 // Calendar & Schedule Routes
 router.get("/schedules/get", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);
 router.post("/schedules/create", authenticateToken, requireRoles(allowedRoles), createReviewSchedule);

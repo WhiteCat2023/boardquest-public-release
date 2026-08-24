@@ -6,7 +6,6 @@ import {
 import { useStudents } from "@/features/students";
 
 import { DashboardBanner } from "../components/DashboardBanner";
-import type { UserRole } from "../components/DashboardBanner";
 import { DashboardKpiCards } from "../components/DashboardKpiCards";
 import { SubjectOverviewSection } from "../components/SubjectOverviewSection";
 import { RecentQuestionsCard } from "../components/RecentQuestionsCard";
@@ -44,11 +43,7 @@ export default function Dashboard() {
   const totalQuestions = isTeacher
     ? (statsData?.teacherAuthoredCount ?? 0)
     : (statsData?.totalQuestions ?? 0);
-  const publishedQuestions = statsData?.publishedQuestions ?? 0;
-  const pendingReviewQuestions = statsData?.pendingReviewQuestions ?? 0;
   const teacherAuthoredCount = statsData?.teacherAuthoredCount ?? 0;
-  const teacherPublishedCount = statsData?.teacherPublishedCount ?? 0;
-  const teacherDraftCount = statsData?.teacherDraftCount ?? 0;
 
   const activeQuestions = rawQuestions;
   const studentsList = studentData?.students || [];
@@ -65,19 +60,13 @@ export default function Dashboard() {
       <DashboardBanner
         userRole={(userRole || "TEACHER") as any}
         userName={currentUser?.name}
-        teacherDraftCount={teacherDraftCount}
-        pendingReviewQuestions={pendingReviewQuestions}
       />
 
       {/* System Overview KPI Cards */}
       <DashboardKpiCards
         userRole={(userRole || "TEACHER") as any}
         teacherAuthoredCount={teacherAuthoredCount}
-        teacherPublishedCount={teacherPublishedCount}
-        teacherDraftCount={teacherDraftCount}
-        pendingReviewQuestions={pendingReviewQuestions}
         totalQuestions={totalQuestions}
-        publishedQuestions={publishedQuestions}
         handledCategoriesCount={
           Array.isArray(dbCategories)
             ? dbCategories.length

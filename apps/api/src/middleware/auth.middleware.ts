@@ -10,6 +10,7 @@ export interface AuthenticatedRequest extends Request {
     email: string;
     name: string;
     role?: string;
+    accountStatus?: string;
     isActive?: boolean;
     handledCategoryIds?: string[];
     handledCategories?: Array<{ id: string; name: string }>;
@@ -58,6 +59,7 @@ export const authenticateToken = async (
           email: dbSuperAdmin.email,
           name: dbSuperAdmin.name,
           role: dbSuperAdmin.role,
+          accountStatus: "ACTIVE",
           isActive: true,
         };
       } else {
@@ -71,6 +73,7 @@ export const authenticateToken = async (
           email: true,
           name: true,
           role: true,
+          accountStatus: true,
           isActive: true,
           handledCategoryIds: true,
           handledCategories: { select: { id: true, name: true } },
@@ -85,16 +88,29 @@ export const authenticateToken = async (
         return;
       }
 
-      // Update isActive and lastActiveAt asynchronously
+      const accountStatus = user.accountStatus!;
+      if (accountStatus === "DEACTIVATED") {
+        res.status(403).json({
+          message:
+            "Your account has been deactivated. Please contact your administrator for assistance.",
+          error: "ACCOUNT_DEACTIVATED",
+        });
+        return;
+      }
+
+      user.accountStatus = accountStatus;
+
+      // Update lastActiveAt asynchronously without touching accountStatus
       prisma.adminUser
         .update({
           where: { id: user.id },
           data: {
-            isActive: true,
             lastActiveAt: new Date(),
           },
         })
-        .catch((err: any) => console.error("Error updating user active status:", err));
+        .catch((err: any) =>
+          console.error("Error updating user active status:", err),
+        );
     }
 
     req.user = user;
@@ -158,7 +174,6 @@ export const requireRoles = (roles: string[]) => {
     next();
   };
 };
-
 
 // Optional authentication - user can be authenticated or not
 export const optionalAuth = async (

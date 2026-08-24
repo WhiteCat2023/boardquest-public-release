@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import useAuth from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Edit,
@@ -12,29 +11,18 @@ import {
   GraduationCap,
   Calendar,
   AlertCircle,
-  Send,
   KeyRound,
-  CheckCircle2,
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
-import { QuestionStatus } from "@/types/question";
-import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
+import { getDifficultyColor, getInitials } from "@/utils/style";
 import { useQuestionPermissions } from "@/features/question-bank";
-import QuestionLifecycleStepper from "../components/QuestionLifecycleStepper";
 import { useQuestionDetail } from "@/features/question-bank";
 import { Spinner } from "@/components/ui/spinner";
 import QuestionCommentsPanel from "../components/QuestionCommentsPanel";
 import { useQuestionComments } from "../api/useQuestionComments";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 
 export default function ViewQuestion() {
   const { questionId } = useParams();
@@ -42,7 +30,6 @@ export default function ViewQuestion() {
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { auth } = useAuth();
 
   const from = location.state?.from || null;
 
@@ -61,76 +48,8 @@ export default function ViewQuestion() {
   const { data: comments = [] } = useQuestionComments(questionId);
   const commentsCount =
     comments.length || (question as any)?._count?.comments || 0;
-  const unresolvedCommentsCount = comments.filter((c) => !c.isResolved).length;
-  const hasUnresolvedComments = unresolvedCommentsCount > 0;
 
-  const handleSubmitRevisions = () => {
-    if (hasUnresolvedComments) {
-      toast.error(
-        `Cannot resubmit question while there ${unresolvedCommentsCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCommentsCount} unresolved comments`}. Please resolve all comments first.`,
-      );
-      setShowComments(true);
-      return;
-    }
-    submitRevisionMutation.mutate();
-  };
-
-  const { canEdit, canDelete, canApprove, isAuthor } =
-    useQuestionPermissions(question);
-
-  const approveMutation = useMutation({
-    mutationFn: async () => {
-      await axiosPrivate.post("/questions/bulk/approve", { ids: [questionId] });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["questionDetail", questionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-      toast.success("Question approved successfully.");
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to approve question.");
-    },
-  });
-
-  const submitRevisionMutation = useMutation({
-    mutationFn: async () => {
-      await axiosPrivate.post("/questions/bulk/status", {
-        ids: [questionId],
-        status: QuestionStatus.PENDING_REVIEW,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["questionDetail", questionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-      showUndoToast({
-        title: "Revisions Submitted",
-        message: "Question status updated to Pending Review",
-        duration: 5000,
-        onUndo: async () => {
-          try {
-            await axiosPrivate.post("/questions/bulk/status", {
-              ids: [questionId],
-              status: QuestionStatus.PENDING_REVISION,
-            });
-            toast.info("Reverted revision submission.");
-            queryClient.invalidateQueries({
-              queryKey: ["questionDetail", questionId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-          } catch (err: any) {
-            toast.error("Failed to undo revision submission.");
-          }
-        },
-      });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to submit revisions.");
-    },
-  });
+  const { canEdit, canDelete } = useQuestionPermissions(question);
 
   const handleDelete = () => {
     queryClient.setQueriesData<any>({ queryKey: ["questions"] }, (old: any) => {
@@ -221,13 +140,8 @@ export default function ViewQuestion() {
           className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
         >
           <ArrowLeft size={14} />
-          {from?.includes("/review")
-            ? "Back to Review Questions Desk"
-            : "Back to Question Bank"}
+          Back to Question Bank
         </button>
-
-        {/* Visual Question Lifecycle Stepper */}
-        <QuestionLifecycleStepper status={question.status} />
 
         {/* Main Question Card Container */}
         <div className="bg-card border border-border/80 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all duration-300">
@@ -244,11 +158,6 @@ export default function ViewQuestion() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span
-                className={`rounded-full border px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-widest ${getStatusColor(question.status)}`}
-              >
-                {question.status}
-              </span>
               <Button
                 type="button"
                 variant="outline"
@@ -486,7 +395,7 @@ export default function ViewQuestion() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-foreground">
-                    {authorName || "Faculty Reviewer"}
+                    {authorName || "Faculty Member"}
                   </span>
                   <span className="text-[9px] font-medium text-muted-foreground">
                     Author Profile
@@ -557,53 +466,6 @@ export default function ViewQuestion() {
                 >
                   <Edit size={13} />
                   Edit
-                </Button>
-              )}
-
-              {question.status === QuestionStatus.PENDING_REVIEW &&
-                canApprove && (
-                  <Button
-                    type="button"
-                    onClick={() => approveMutation.mutate()}
-                    disabled={approveMutation.isPending}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs border border-emerald-600/20"
-                  >
-                    {approveMutation.isPending ? (
-                      <Spinner size="sm" variant="current" />
-                    ) : (
-                      <>
-                        <CheckCircle2 size={13} />
-                        Approve
-                      </>
-                    )}
-                  </Button>
-                )}
-
-              {(question.status === QuestionStatus.PENDING_REVISION ||
-                (question.status as string) === "NEEDS_REVISION") && (
-                <Button
-                  type="button"
-                  onClick={handleSubmitRevisions}
-                  disabled={submitRevisionMutation.isPending}
-                  className={`font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
-                    hasUnresolvedComments
-                      ? "bg-amber-600/80 hover:bg-amber-600 text-white opacity-90"
-                      : "bg-amber-600 hover:bg-amber-700 text-white"
-                  }`}
-                  title={
-                    hasUnresolvedComments
-                      ? `Cannot resubmit while there are ${unresolvedCommentsCount} unresolved comment(s)`
-                      : "Submit Revisions"
-                  }
-                >
-                  {submitRevisionMutation.isPending ? (
-                    <Spinner size="sm" variant="current" />
-                  ) : (
-                    <>
-                      <Send size={13} />
-                      Submit Revisions
-                    </>
-                  )}
                 </Button>
               )}
             </div>

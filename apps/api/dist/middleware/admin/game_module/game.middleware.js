@@ -63,8 +63,8 @@ export const validateGameConfigUpdate = (req, res, next) => {
  */
 export const requireGameAdmin = (req, res, next) => {
     const userRole = req.body.role;
-    if (!userRole || !["ADMIN", "SUPERADMIN"].includes(userRole)) {
-        throw new ApiError(403, "Insufficient privileges: Only admins can modify game configuration");
+    if (!userRole || !["DEAN", "SUPERADMIN"].includes(userRole)) {
+        throw new ApiError(403, "Insufficient privileges: Only deans and superadmins can modify game configuration");
     }
     next();
 };

@@ -11,11 +11,11 @@ export const agenda = new Agenda({
 });
 // Define the bulk-question-upload job
 agenda.define("bulk-question-upload", async (job) => {
-    const { questions, categoryId, authorId, status } = job.attrs
+    const { questions, categoryId, authorId } = job.attrs
         .data;
     console.log(`[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions...`);
     try {
-        const imported = await importQuestions(questions, categoryId, authorId, status);
+        const imported = await importQuestions(questions, categoryId, authorId);
         console.log(`[Queue] Background bulk upload completed successfully. Imported ${imported.length} questions.`);
     }
     catch (error) {

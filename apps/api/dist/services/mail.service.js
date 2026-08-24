@@ -131,7 +131,7 @@ export async function sendPasswordResetEmail({ toEmail, resetToken, userName, })
         return null;
     }
 }
-export async function sendFacultyCredentialsEmail({ toEmail, name, password, role, employeeId, username, }) {
+export async function sendFacultyCredentialsEmail({ toEmail, name, password, role, employeeId, }) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const loginUrl = `${frontendUrl}/login`;
     const htmlContent = `
@@ -186,11 +186,6 @@ export async function sendFacultyCredentialsEmail({ toEmail, name, password, rol
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Email / Login:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #111827;">${toEmail}</td>
                   </tr>
-                  ${username ? `
-                  <tr>
-                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Username:</td>
-                    <td style="padding: 6px 0; font-weight: 700; color: #111827;">${username}</td>
-                  </tr>` : ""}
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Temporary Password:</td>
                     <td style="padding: 6px 0;">

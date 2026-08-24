@@ -3,7 +3,7 @@ import { authenticateToken, requireRoles } from "../../middleware/auth.middlewar
 import { getReviewCenters, getReviewCenterById, createReviewCenter, updateReviewCenter, deleteReviewCenter, } from "../../controller/admin/reviewCenter.controller";
 import { getReviewSchedules, createReviewSchedule, updateReviewSchedule, deleteReviewSchedule, } from "../../controller/admin/calendar.controller";
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "ADMIN", "TEAMLEAD"];
+const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
 // Review Center Representative Directory Routes
 router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewCenters);
 router.get("/representatives/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);

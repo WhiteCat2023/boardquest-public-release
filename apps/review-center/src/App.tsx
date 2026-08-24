@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ReviewCenterAuthProvider, useReviewCenterAuth } from "./context/ReviewCenterAuthProvider";
+import { ReviewCenterAuthProvider } from "./context/ReviewCenterAuthProvider";
+import { useReviewCenterAuth } from "./hooks/useReviewCenterAuth";
 import ReviewCenterLoginPage from "./pages/ReviewCenterLoginPage";
 import ReviewCenterDashboard from "./pages/ReviewCenterDashboard";
 import { Loader2 } from "lucide-react";

@@ -1,4 +1,19 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
+const cwd = process.cwd();
+const possiblePaths = [
+    path.resolve(cwd, ".env"),
+    path.resolve(cwd, "apps/api/.env"),
+    path.resolve(cwd, "../.env"),
+    path.resolve(cwd, "../../.env"),
+];
+for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+        dotenv.config({ path: p });
+    }
+}
+dotenv.config();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";

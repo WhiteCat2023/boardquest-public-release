@@ -36,7 +36,6 @@ export default function MyQuestions() {
     setSelectedCategory,
     selectedDifficulty,
     selectedType,
-    selectedStatus,
   } = useQuestionBankFilterStore();
 
   const filters: any = {
@@ -50,13 +49,8 @@ export default function MyQuestions() {
     authorId: currentUserId,
   };
 
-  if (selectedStatus && selectedStatus !== "ALL") {
-    filters.status = selectedStatus;
-  }
-
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useCategories({
-      status: filters.status,
       authorId: filters.authorId,
       search: categorySearch,
     });
@@ -302,8 +296,6 @@ export default function MyQuestions() {
           <QuestionFilter view="my-questions" />
           <QuestionList
             filters={filters}
-            isLiveView={false}
-            isBankView={false}
           />
         </div>
       </main>

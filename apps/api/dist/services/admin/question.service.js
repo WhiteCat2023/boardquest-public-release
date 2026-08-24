@@ -1,32 +1,34 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../types/prisma.types";
+import { QuestionDifficulty, QuestionType, } from "../../types/prisma.types";
 import { questionSynthesizerService, } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 // ============ Validation Schemas ============
 export const CreateQuestionSchema = z.object({
     question: z.string().min(1, "Question title is required"),
+    imageUrl: z.string().optional().nullable(),
     choices: z.array(z.string()).optional().default([]),
+    choiceImages: z.array(z.string()).optional().default([]),
     correctAnswer: z.string().min(1, "Correct answer is required"),
     categoryId: z.string().min(1, "Question category is required"),
     authorId: z.string().optional(),
     topic: z.string().min(1, "Topic is required"),
     difficulty: z.preprocess((val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val), z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)),
     type: z.preprocess((val) => (val === "" || !val ? QuestionType.MCQ : val), z.nativeEnum(QuestionType).default(QuestionType.MCQ)),
-    status: z.preprocess((val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val), z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)),
 });
 export const UpdateQuestionSchema = z.object({
     id: z.string().min(1, "Question ID is required"),
     question: z.string().min(1, "Question title is required"),
+    imageUrl: z.string().optional().nullable(),
     choices: z.array(z.string()).optional().default([]),
+    choiceImages: z.array(z.string()).optional().default([]),
     correctAnswer: z.string().min(1, "Correct answer is required"),
     categoryId: z.string().min(1, "Question category is required"),
     authorId: z.string().optional(),
     topic: z.string().min(1, "Topic is required"),
     difficulty: z.preprocess((val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val), z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)),
     type: z.preprocess((val) => (val === "" || !val ? QuestionType.MCQ : val), z.nativeEnum(QuestionType).default(QuestionType.MCQ)),
-    status: z.preprocess((val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val), z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)),
 });
 // ============ Question Services ============
 export class QuestionService {
@@ -40,65 +42,45 @@ export class QuestionService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, } = parsed.data;
+        const { question, imageUrl, choices, choiceImages, correctAnswer, categoryId, authorId, topic, difficulty, type, } = parsed.data;
         let finalAuthorId = authorId || "";
         const isValidObjectId = (id) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
         if (!isValidObjectId(finalAuthorId)) {
             const existingAdmin = await this.db.adminUser.findFirst();
             finalAuthorId = existingAdmin?.id || "507f1f77bcf86cd799439011";
         }
-        // Automatically assign review status in the background based on author's role
-        let computedStatus = QuestionStatus.PENDING_REVIEW;
-        let authorUser = null;
         if (finalAuthorId) {
-            authorUser = await this.db.adminUser.findUnique({
+            const authorUser = await this.db.adminUser.findUnique({
                 where: { id: finalAuthorId },
             });
-            if (authorUser?.role === "SUPERADMIN" || authorUser?.role === "ADMIN") {
-                computedStatus = QuestionStatus.APPROVED;
-            }
-            else {
-                if (authorUser?.role === "TEACHER" &&
-                    authorUser?.handledCategoryIds?.length) {
-                    if (!authorUser.handledCategoryIds.includes(categoryId)) {
-                        throw new ApiError(403, "Teachers can only create questions for subjects assigned to them.");
-                    }
+            if (authorUser?.role === "TEACHER" &&
+                authorUser?.handledCategoryIds?.length) {
+                if (!authorUser.handledCategoryIds.includes(categoryId)) {
+                    throw new ApiError(403, "Teachers can only create questions for subjects assigned to them.");
                 }
-                computedStatus = status || QuestionStatus.PENDING_REVIEW;
             }
         }
         const newQuestion = await this.db.question.create({
             data: {
                 question: question.toLowerCase().trim(),
+                imageUrl: imageUrl || null,
                 choices,
+                choiceImages: choiceImages || [],
                 correctAnswer: correctAnswer.toLowerCase().trim(),
                 categoryId: categoryId.trim(),
                 authorId: finalAuthorId,
                 topic: topic.trim(),
                 difficulty,
                 type,
-                status: computedStatus,
             },
         });
-        if (computedStatus === QuestionStatus.APPROVED) {
-            createNotification({
-                recipientRole: "ALL",
-                title: "New Question Approved",
-                message: `A new question for topic "${topic}" was created and published to the question bank.`,
-                type: "QUESTION_APPROVED",
-                link: "/question-bank",
-            }).catch((err) => console.warn("Notification error:", err?.message));
-        }
-        else if (computedStatus === QuestionStatus.PENDING_REVIEW) {
-            const authorName = authorUser?.name || "A teacher";
-            createNotification({
-                recipientRole: "REVIEWER",
-                title: "New Question Submitted for Review",
-                message: `A new question for topic "${topic}" was submitted by ${authorName} and is awaiting review.`,
-                type: "INFO",
-                link: "/question-bank/review",
-            }).catch((err) => console.warn("Notification error:", err?.message));
-        }
+        createNotification({
+            recipientRole: "ALL",
+            title: "New Question Added",
+            message: `A new question for topic "${topic}" was added to the question bank.`,
+            type: "INFO",
+            link: "/question-bank",
+        }).catch((err) => console.warn("Notification error:", err?.message));
         return newQuestion;
     }
     async synthesizeQuestion(input) {
@@ -129,45 +111,24 @@ export class QuestionService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { question, choices, correctAnswer, categoryId, authorId, topic, difficulty, type, status, } = parsed.data;
-        if (status === QuestionStatus.APPROVED) {
-            const existingQuestion = await this.db.question.findUnique({
-                where: { id: questionId },
-            });
-            if (existingQuestion &&
-                (existingQuestion.status === QuestionStatus.PENDING_REVISION ||
-                    existingQuestion.status === "NEEDS_REVISION")) {
-                throw new ApiError(400, "Questions in Pending Revision status cannot be approved until all comments are resolved and the author resubmits them for review.");
-            }
-        }
+        const { question, imageUrl, choices, choiceImages, correctAnswer, categoryId, authorId, topic, difficulty, type, } = parsed.data;
         const updatedQuestion = await this.db.question.update({
             where: {
                 id: questionId,
             },
             data: {
                 question: question.toLowerCase().trim(),
+                ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
                 choices,
+                ...(choiceImages !== undefined && { choiceImages }),
                 correctAnswer: correctAnswer.toLowerCase().trim(),
                 categoryId: categoryId.trim(),
                 authorId,
                 topic: topic.trim(),
                 difficulty,
                 type,
-                status,
             },
         });
-        if (status === QuestionStatus.PENDING_REVIEW) {
-            await this.checkUnresolvedComments(questionId);
-        }
-        if (status === QuestionStatus.APPROVED) {
-            createNotification({
-                recipientRole: "ALL",
-                title: "Question Approved",
-                message: `Question for topic "${topic}" was approved and published to the question bank.`,
-                type: "QUESTION_APPROVED",
-                link: "/question-bank",
-            }).catch((err) => console.warn("Notification error:", err?.message));
-        }
         return updatedQuestion;
     }
     async getAllQuestions(cursor, limit, authorId) {
@@ -216,21 +177,7 @@ export class QuestionService {
             return { questions: formatted, nextCursor, hasNextPage };
         }
     }
-    async getFilteredQuestions(search, difficulty, category, type, status, cursor, limit, authorId, isPublished, schoolYear, handledCategoryIds, userRole) {
-        let statusFilter = undefined;
-        if (status) {
-            if (typeof status === "string" && status.includes(",")) {
-                statusFilter = {
-                    in: status.split(","),
-                };
-            }
-            else if (Array.isArray(status)) {
-                statusFilter = { in: status };
-            }
-            else {
-                statusFilter = status;
-            }
-        }
+    async getFilteredQuestions(search, difficulty, category, type, cursor, limit, authorId, isPublished, schoolYear, handledCategoryIds, userRole) {
         let categoryFilter = category;
         if (userRole === "TEACHER" && !category && handledCategoryIds?.length) {
             categoryFilter = { in: handledCategoryIds };
@@ -240,7 +187,6 @@ export class QuestionService {
             difficulty,
             categoryId: categoryFilter,
             type,
-            status: statusFilter,
             authorId,
             isPublished,
             ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
@@ -292,89 +238,29 @@ export class QuestionService {
     async getQuestionStats(authorId) {
         const isValidObjectId = (id) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
         const targetAuthorId = isValidObjectId(authorId) ? authorId : undefined;
-        const [totalQuestions, publishedQuestions, pendingReviewQuestions, teacherAuthoredCount, teacherPublishedCount, teacherDraftCount,] = await Promise.all([
+        const [totalQuestions, teacherAuthoredCount,] = await Promise.all([
             this.db.question.count(),
-            this.db.question.count({
-                where: {
-                    OR: [{ status: QuestionStatus.APPROVED }],
-                },
-            }),
-            this.db.question.count({
-                where: {
-                    status: QuestionStatus.PENDING_REVIEW,
-                },
-            }),
             targetAuthorId
                 ? this.db.question.count({ where: { authorId: targetAuthorId } })
-                : Promise.resolve(0),
-            targetAuthorId
-                ? this.db.question.count({
-                    where: {
-                        authorId: targetAuthorId,
-                        OR: [{ status: QuestionStatus.APPROVED }],
-                    },
-                })
-                : Promise.resolve(0),
-            targetAuthorId
-                ? this.db.question.count({
-                    where: {
-                        authorId: targetAuthorId,
-                        status: { not: QuestionStatus.APPROVED },
-                    },
-                })
                 : Promise.resolve(0),
         ]);
         return {
             totalQuestions,
-            publishedQuestions,
-            pendingReviewQuestions,
+            publishedQuestions: totalQuestions,
+            pendingReviewQuestions: 0,
             teacherAuthoredCount,
-            teacherPublishedCount,
-            teacherDraftCount,
+            teacherPublishedCount: teacherAuthoredCount,
+            teacherDraftCount: 0,
         };
     }
-    async syncQuestionRevisionStatus(questionId) {
-        const question = await this.db.question.findUnique({
-            where: { id: questionId },
-        });
-        if (!question)
-            return;
-        const unresolvedCount = await this.db.questionComment.count({
-            where: {
-                questionId,
-                isResolved: false,
-            },
-        });
-        if (unresolvedCount > 0) {
-            if (question.status === QuestionStatus.PENDING_REVIEW) {
-                await this.db.question.update({
-                    where: { id: questionId },
-                    data: { status: QuestionStatus.PENDING_REVISION },
-                });
-            }
-        }
-        else {
-            if (question.status === QuestionStatus.PENDING_REVISION) {
-                await this.db.question.update({
-                    where: { id: questionId },
-                    data: { status: QuestionStatus.PENDING_REVIEW },
-                });
-            }
-        }
-    }
     async getQuestionById(questionId) {
-        await this.syncQuestionRevisionStatus(questionId);
         const question = await this.db.question.findUnique({
             where: {
                 id: questionId,
             },
             include: {
                 category: true,
-                _count: {
-                    select: {
-                        comments: true,
-                    },
-                },
+                author: { select: { id: true, name: true, role: true } },
             },
         });
         if (!question) {
@@ -383,39 +269,19 @@ export class QuestionService {
         return question;
     }
     async deleteQuestion(questionId) {
-        try {
-            const existingQuestion = await this.db.question.findUnique({
-                where: {
-                    id: questionId.trim(),
-                },
-            });
-            if (!existingQuestion) {
-                throw new ApiError(404, "Question not found");
-            }
-            const deletedQuestion = await this.db.question.delete({
-                where: {
-                    id: questionId.trim(),
-                },
-            });
-            return deletedQuestion;
-        }
-        catch (error) {
-            console.error("Error deleting question:", error);
-            throw error;
-        }
+        const question = await this.db.question.delete({
+            where: {
+                id: questionId,
+            },
+        });
+        return question;
     }
     async getQuestionsByCategory(categoryId) {
         const questions = await this.db.question.findMany({
             where: {
                 categoryId,
             },
-            include: {
-                category: true,
-            },
         });
-        if (questions.length === 0) {
-            throw new ApiError(404, "No questions found for this category");
-        }
         return questions;
     }
     async getQuestionByDifficulty(difficulty) {
@@ -434,14 +300,6 @@ export class QuestionService {
         });
         return questions;
     }
-    async getQuestionByStatus(status) {
-        const questions = await this.db.question.findMany({
-            where: {
-                status,
-            },
-        });
-        return questions;
-    }
     async getQuestionBySearch(search) {
         const questions = await this.db.question.findMany({
             where: {
@@ -452,7 +310,7 @@ export class QuestionService {
         });
         return questions;
     }
-    async importQuestions(questions, categoryId, authorId, status = QuestionStatus.PENDING_REVIEW) {
+    async importQuestions(questions, categoryId, authorId) {
         if (!Array.isArray(questions) || questions.length === 0) {
             throw new ApiError(400, "No questions provided for import");
         }
@@ -471,27 +329,17 @@ export class QuestionService {
                     topic: q.topic.trim(),
                     difficulty: q.difficulty,
                     type: q.type,
-                    status,
                 },
             });
         });
         const createdQuestions = await this.db.$transaction(queries);
-        if (status === QuestionStatus.PENDING_REVIEW &&
-            createdQuestions.length > 0) {
-            this.db.adminUser
-                .findUnique({ where: { id: authorId }, select: { name: true } })
-                .then((u) => {
-                const authorName = u?.name || "A teacher";
-                createNotification({
-                    recipientRole: "REVIEWER",
-                    title: "Bulk Questions Uploaded for Review",
-                    message: `${createdQuestions.length} new question(s) were bulk uploaded by ${authorName} and are awaiting review.`,
-                    type: "INFO",
-                    link: "/question-bank/review",
-                }).catch((err) => console.warn("Notification error:", err?.message));
-            })
-                .catch(() => null);
-        }
+        createNotification({
+            recipientRole: "ALL",
+            title: "Bulk Questions Uploaded",
+            message: `${createdQuestions.length} new question(s) were added to the question bank.`,
+            type: "INFO",
+            link: "/question-bank",
+        }).catch((err) => console.warn("Notification error:", err?.message));
         return createdQuestions;
     }
     async bulkDeleteQuestions(ids, user) {
@@ -501,7 +349,8 @@ export class QuestionService {
         for (const question of questions) {
             const isAuthor = question.authorId === user.id;
             const canDelete = user.role === "SUPERADMIN" ||
-                user.role === "ADMIN" ||
+                user.role === "DEAN" ||
+                user.role === "TEAMLEAD" ||
                 (user.role === "TEACHER" && isAuthor);
             if (!canDelete) {
                 throw new ApiError(403, `You do not have permission to delete question Q-${question.id.slice(-4).toUpperCase()}`);
@@ -510,130 +359,6 @@ export class QuestionService {
         await this.db.question.deleteMany({
             where: { id: { in: ids } },
         });
-    }
-    async bulkApproveQuestions(ids, user) {
-        const canApprove = user.role === "SUPERADMIN" ||
-            user.role === "ADMIN" ||
-            user.role === "TEAMLEAD";
-        if (!canApprove) {
-            throw new ApiError(403, "Only administrators and team leads can approve questions.");
-        }
-        const targetQuestions = await this.db.question.findMany({
-            where: { id: { in: ids } },
-        });
-        const pendingRevisionQuestions = targetQuestions.filter((q) => q.status === QuestionStatus.PENDING_REVISION ||
-            q.status === "NEEDS_REVISION");
-        if (pendingRevisionQuestions.length > 0) {
-            throw new ApiError(400, `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`);
-        }
-        await this.db.question.updateMany({
-            where: { id: { in: ids } },
-            data: {
-                status: QuestionStatus.APPROVED,
-            },
-        });
-        createNotification({
-            recipientRole: "ALL",
-            title: "Question Set Approved",
-            message: `${ids.length} question(s) were approved and published to the question bank by ${user?.name || "Admin"}.`,
-            type: "QUESTION_APPROVED",
-            link: "/question-bank",
-        }).catch((err) => console.warn("Notification error:", err?.message));
-    }
-    async bulkUpdateStatusQuestions(ids, status, user) {
-        const canManage = user.role === "SUPERADMIN" ||
-            user.role === "ADMIN" ||
-            user.role === "TEAMLEAD";
-        if (!canManage) {
-            throw new ApiError(403, "You do not have permission to update question status.");
-        }
-        if (status === QuestionStatus.APPROVED) {
-            const targetQuestions = await this.db.question.findMany({
-                where: { id: { in: ids } },
-            });
-            const pendingRevisionQuestions = targetQuestions.filter((q) => q.status === QuestionStatus.PENDING_REVISION ||
-                q.status === "NEEDS_REVISION");
-            if (pendingRevisionQuestions.length > 0) {
-                throw new ApiError(400, `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`);
-            }
-        }
-        if (status === QuestionStatus.PENDING_REVIEW) {
-            for (const id of ids) {
-                await this.checkUnresolvedComments(id);
-            }
-        }
-        await this.db.question.updateMany({
-            where: { id: { in: ids } },
-            data: { status },
-        });
-        if (status === QuestionStatus.APPROVED) {
-            createNotification({
-                recipientRole: "ALL",
-                title: "Question Set Approved",
-                message: `${ids.length} question(s) were approved and published to the question bank.`,
-                type: "QUESTION_APPROVED",
-                link: "/question-bank",
-            }).catch((err) => console.warn("Notification error:", err?.message));
-        }
-    }
-    async bulkFeedbackQuestions(ids, feedback, user) {
-        const canFeedback = user.role === "SUPERADMIN" ||
-            user.role === "ADMIN" ||
-            user.role === "TEAMLEAD";
-        if (!canFeedback) {
-            throw new ApiError(403, "Only administrators and team leads can provide revision feedback.");
-        }
-        await this.db.question.updateMany({
-            where: { id: { in: ids } },
-            data: {
-                status: QuestionStatus.PENDING_REVISION,
-            },
-        });
-        createNotification({
-            recipientRole: "ALL",
-            title: "Revision Requested",
-            message: `Revision feedback was provided for ${ids.length} question(s) by ${user?.name || "Reviewer"}.`,
-            type: "WARNING",
-            link: "/question-bank?view=my-questions",
-        }).catch((err) => console.warn("Notification error:", err?.message));
-    }
-    async getPendingReviewAuthors() {
-        const pendingQuestions = await this.db.question.findMany({
-            where: {
-                status: {
-                    in: [QuestionStatus.PENDING_REVIEW, QuestionStatus.PENDING_REVISION],
-                },
-            },
-            select: {
-                id: true,
-                authorId: true,
-                createdAt: true,
-            },
-        });
-        const authorIds = Array.from(new Set(pendingQuestions.map((q) => q.authorId).filter(Boolean)));
-        const authors = await this.db.adminUser.findMany({
-            where: { id: { in: authorIds } },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-            },
-        });
-        const result = authors.map((author) => {
-            const authorQuestions = pendingQuestions.filter((q) => q.authorId === author.id);
-            const latestSubmissionAt = authorQuestions.reduce((latest, q) => {
-                return !latest || new Date(q.createdAt) > new Date(latest)
-                    ? q.createdAt
-                    : latest;
-            }, null);
-            return {
-                ...author,
-                pendingCount: authorQuestions.length,
-                latestSubmissionAt,
-            };
-        });
-        return result.sort((a, b) => b.pendingCount - a.pendingCount);
     }
     async getQuestionComments(questionId) {
         const question = await this.db.question.findUnique({
@@ -685,19 +410,18 @@ export class QuestionService {
                 },
             },
         });
-        // Notify author if comment is from a reviewer/another user (e.g. SUPERADMIN, ADMIN, TEAMLEAD)
         if (question.authorId && question.authorId !== authorId) {
             try {
                 const commenter = comment.author;
                 const commenterRole = commenter?.role;
                 const roleLabel = commenterRole === "SUPERADMIN"
                     ? "Super Administrator"
-                    : commenterRole === "ADMIN"
-                        ? "Administrator"
+                    : commenterRole === "DEAN"
+                        ? "Dean"
                         : commenterRole === "TEAMLEAD"
                             ? "Team Lead"
                             : commenterRole || "Reviewer";
-                const commenterName = commenter?.name || "A reviewer";
+                const commenterName = commenter?.name || "A faculty member";
                 const contentSnippet = content.trim().length > 60
                     ? content.trim().slice(0, 60) + "..."
                     : content.trim();
@@ -713,7 +437,6 @@ export class QuestionService {
                 // notification failure shouldn't block comment creation
             }
         }
-        await this.syncQuestionRevisionStatus(questionId);
         return comment;
     }
     async deleteQuestionComment(questionId, commentId, userId, userRole) {
@@ -724,26 +447,14 @@ export class QuestionService {
             throw new ApiError(404, "Comment not found");
         }
         const isAuthor = comment.authorId === userId;
-        const isAdminOrLead = ["SUPERADMIN", "ADMIN", "TEAMLEAD"].includes(userRole);
+        const isAdminOrLead = ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(userRole);
         if (!isAuthor && !isAdminOrLead) {
-            throw new ApiError(430, "You do not have permission to delete this comment");
+            throw new ApiError(403, "You do not have permission to delete this comment");
         }
         await this.db.questionComment.delete({
             where: { id: commentId },
         });
-        await this.syncQuestionRevisionStatus(questionId);
         return { message: "Comment deleted successfully" };
-    }
-    async checkUnresolvedComments(questionId) {
-        const unresolvedCount = await this.db.questionComment.count({
-            where: {
-                questionId,
-                isResolved: false,
-            },
-        });
-        if (unresolvedCount > 0) {
-            throw new ApiError(400, `Cannot resubmit question while there ${unresolvedCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCount} unresolved comments`}. Please resolve all comments first.`);
-        }
     }
     async toggleResolveComment(questionId, commentId, isResolved) {
         const comment = await this.db.questionComment.findUnique({
@@ -767,7 +478,6 @@ export class QuestionService {
                 },
             },
         });
-        await this.syncQuestionRevisionStatus(questionId);
         return updatedComment;
     }
 }
@@ -781,16 +491,11 @@ export const deleteQuestion = questionService.deleteQuestion.bind(questionServic
 export const getQuestionsByCategory = questionService.getQuestionsByCategory.bind(questionService);
 export const getQuestionByDifficulty = questionService.getQuestionByDifficulty.bind(questionService);
 export const getQuestionByType = questionService.getQuestionByType.bind(questionService);
-export const getQuestionByStatus = questionService.getQuestionByStatus.bind(questionService);
 export const getQuestionBySearch = questionService.getQuestionBySearch.bind(questionService);
 export const importQuestions = questionService.importQuestions.bind(questionService);
 export const bulkDeleteQuestions = questionService.bulkDeleteQuestions.bind(questionService);
-export const bulkApproveQuestions = questionService.bulkApproveQuestions.bind(questionService);
-export const bulkUpdateStatusQuestions = questionService.bulkUpdateStatusQuestions.bind(questionService);
-export const bulkFeedbackQuestions = questionService.bulkFeedbackQuestions.bind(questionService);
 export const synthesizeQuestion = questionService.synthesizeQuestion.bind(questionService);
 export const createSynthesizedQuestion = questionService.createSynthesizedQuestion.bind(questionService);
-export const getPendingReviewAuthors = questionService.getPendingReviewAuthors.bind(questionService);
 export const getQuestionStats = questionService.getQuestionStats.bind(questionService);
 export const getQuestionComments = questionService.getQuestionComments.bind(questionService);
 export const createQuestionComment = questionService.createQuestionComment.bind(questionService);

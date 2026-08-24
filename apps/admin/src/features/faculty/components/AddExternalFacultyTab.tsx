@@ -7,7 +7,6 @@ import {
   MapPin, 
   ShieldAlert, 
   Sparkles, 
-  KeyRound, 
   AlertCircle,
   IdCard
 } from "lucide-react";
@@ -37,7 +36,6 @@ export default function AddExternalFacultyTab({
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [location, setLocation] = useState("Philippines");
-  const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
 
   useEffect(() => {
@@ -77,7 +75,6 @@ export default function AddExternalFacultyTab({
       phoneNumber: phoneNumber.trim(),
       companyName: companyName.trim(),
       location: location.trim() || "Philippines",
-      password: password.trim() || undefined,
       role: UserRole.EXTERNAL,
     };
 
@@ -235,24 +232,6 @@ export default function AddExternalFacultyTab({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
-            />
-          </div>
-
-          {/* Custom Password (Optional) */}
-          <div className="md:col-span-2 flex flex-col gap-1.5">
-            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <KeyRound size={12} className="text-muted-foreground" />
-              Custom Temporary Password{" "}
-              <span className="text-muted-foreground font-normal text-[10px] lowercase">
-                (optional &bull; auto-generated if left empty)
-              </span>
-            </Label>
-            <Input
-              type="text"
-              placeholder="Leave blank for secure auto-generated password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-9 bg-muted/30 border-border/80 rounded-lg text-xs font-mono placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary"
             />
           </div>
         </div>

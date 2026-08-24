@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Login failed:", error?.response?.data?.message || error);
+      throw error;
     }
   };
 

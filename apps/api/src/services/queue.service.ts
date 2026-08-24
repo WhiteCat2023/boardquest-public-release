@@ -1,7 +1,6 @@
 import { Agenda, Job } from "agenda";
 import { MongoBackend } from "@agendajs/mongo-backend";
 import { importQuestions, ImportedQuestion } from "./admin/question.service";
-import { QuestionStatus } from "../types/prisma.types";
 
 const databaseUrl = process.env.DATABASE_URL || "";
 
@@ -18,12 +17,11 @@ interface BulkUploadJobData {
   questions: ImportedQuestion[];
   categoryId: string;
   authorId: string;
-  status: QuestionStatus;
 }
 
 // Define the bulk-question-upload job
 agenda.define("bulk-question-upload", async (job: Job) => {
-  const { questions, categoryId, authorId, status } = job.attrs
+  const { questions, categoryId, authorId } = job.attrs
     .data as BulkUploadJobData;
   console.log(
     `[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions...`,
@@ -34,7 +32,6 @@ agenda.define("bulk-question-upload", async (job: Job) => {
       questions,
       categoryId,
       authorId,
-      status,
     );
     console.log(
       `[Queue] Background bulk upload completed successfully. Imported ${imported.length} questions.`,

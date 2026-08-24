@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useReviewCenterAuth } from "../context/ReviewCenterAuthProvider";
-import { Mail, Lock, Eye, EyeOff, Building2, ShieldCheck, Loader2 } from "lucide-react";
+import { useReviewCenterAuth } from "../hooks/useReviewCenterAuth";
+import { Mail, Lock, Eye, EyeOff, Building2, ShieldCheck, Loader2, UserX, ShieldAlert } from "lucide-react";
 
 export function ReviewCenterLoginPage() {
   const { login, isLoading, isError, errorMessage } = useReviewCenterAuth();
@@ -8,14 +8,26 @@ export function ReviewCenterLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isDeactivatedDialogOpen, setIsDeactivatedDialogOpen] = useState(false);
+  const [deactivatedMsg, setDeactivatedMsg] = useState(
+    "Your partner account is currently deactivated. Please contact your system administrator or Dean for assistance."
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
     try {
       await login({ email, password });
-    } catch (err: any) {
-      setLocalError(err.message || "Failed to sign in. Please verify your credentials.");
+    } catch (err: unknown) {
+      const errorObj = err as any;
+      const status = errorObj?.response?.status;
+      const message = errorObj?.response?.data?.message || (err instanceof Error ? err.message : "") || "";
+      if (status === 403 || message.toLowerCase().includes("deactivated")) {
+        if (message) setDeactivatedMsg(message);
+        setIsDeactivatedDialogOpen(true);
+      } else {
+        setLocalError(message || "Failed to sign in. Please verify your credentials.");
+      }
     }
   };
 
@@ -93,7 +105,7 @@ export function ReviewCenterLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                  className="absolute right-3 text-muted-foreground hover:text-foreground p-1 transition-colors cursor-pointer"
                 >
                   {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -117,7 +129,7 @@ export function ReviewCenterLoginPage() {
           </div>
 
           {/* Error Message */}
-          {(isError || localError) && (
+          {(isError || localError) && !isDeactivatedDialogOpen && (
             <div className="mt-4 text-xs font-bold text-destructive text-center">
               {localError || errorMessage || "Login failed"}
             </div>
@@ -138,6 +150,49 @@ export function ReviewCenterLoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Account Deactivated Modal Dialog */}
+      {isDeactivatedDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-card rounded-3xl p-6 border border-border shadow-2xl max-w-md w-full text-foreground font-sans animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shrink-0 mt-0.5">
+                <UserX size={24} className="stroke-[2.5]" />
+              </div>
+              <div className="space-y-1 flex-1">
+                <h3 className="text-base font-bold text-foreground">
+                  Account Deactivated
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your partner account is currently <strong className="text-destructive font-bold">deactivated</strong>. You cannot access the Review Center Portal while your account status is inactive.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-muted/40 rounded-2xl border border-border/80 text-xs text-muted-foreground flex items-start gap-2.5 my-3">
+              <ShieldAlert
+                size={18}
+                className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+              />
+              <p className="leading-relaxed">
+                {deactivatedMsg.includes("administrator")
+                  ? deactivatedMsg
+                  : "Please contact your system administrator or Dean to restore access to your account."}
+              </p>
+            </div>
+
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => setIsDeactivatedDialogOpen(false)}
+                className="w-full rounded-xl text-xs font-semibold h-10 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer transition-all"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

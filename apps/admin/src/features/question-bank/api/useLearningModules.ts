@@ -6,7 +6,7 @@ export interface LearningModule {
   id: string;
   title: string;
   description?: string | null;
-  fileUrl?: string | null;
+  fileUrls: string[];
   order: number;
   isPublished: boolean;
   categoryId: string;
@@ -21,7 +21,7 @@ export interface LearningModule {
 export interface CreateModuleInput {
   title: string;
   description?: string;
-  fileUrl?: string;
+  fileUrls?: string[];
   order?: number;
   isPublished?: boolean;
 }
@@ -29,7 +29,7 @@ export interface CreateModuleInput {
 export interface UpdateModuleInput {
   title?: string;
   description?: string;
-  fileUrl?: string;
+  fileUrls?: string[];
   order?: number;
   isPublished?: boolean;
 }

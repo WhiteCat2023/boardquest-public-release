@@ -172,6 +172,17 @@ export class StudentService {
                     orderBy: { timestamp: "desc" },
                     take: 5,
                 },
+                userBadges: {
+                    where: {
+                        badge: {
+                            isActive: true,
+                        },
+                    },
+                    include: {
+                        badge: true,
+                    },
+                    orderBy: { unlockedAt: "desc" },
+                },
                 guidanceAssignments: {
                     select: {
                         id: true,
@@ -190,8 +201,13 @@ export class StudentService {
             },
         });
         const total = await this.db.user.count({ where });
+        // Ensure deactivated badges are stripped out on backend level
+        const sanitizedStudents = students.map((s) => ({
+            ...s,
+            userBadges: (s.userBadges || []).filter((ub) => !ub.badge || ub.badge.isActive !== false),
+        }));
         return {
-            data: students,
+            data: sanitizedStudents,
             pagination: {
                 total,
                 skip,
@@ -212,16 +228,42 @@ export class StudentService {
                 where: { id: studentId },
                 include: {
                     mastery: true,
-                    achievements: true,
-                    examResults: true,
+                    achievements: {
+                        orderBy: { timestamp: "desc" },
+                    },
+                    examResults: {
+                        orderBy: { timestamp: "desc" },
+                    },
                     studyPlans: true,
                     lessonCompletions: true,
+                    userBadges: {
+                        where: {
+                            badge: {
+                                isActive: true,
+                            },
+                        },
+                        include: {
+                            badge: true,
+                        },
+                        orderBy: { unlockedAt: "desc" },
+                    },
+                    guidanceAssignments: {
+                        include: {
+                            advisor: {
+                                select: { id: true, name: true, email: true },
+                            },
+                        },
+                    },
                 },
             });
             if (!student) {
                 throw new ApiError(404, "Student not found");
             }
             const { password: _password, ...sanitizedStudent } = student;
+            // Filter out any deactivated badges on the backend level
+            if (sanitizedStudent.userBadges && Array.isArray(sanitizedStudent.userBadges)) {
+                sanitizedStudent.userBadges = sanitizedStudent.userBadges.filter((ub) => !ub.badge || ub.badge.isActive !== false);
+            }
             return sanitizedStudent;
         }
         catch (err) {

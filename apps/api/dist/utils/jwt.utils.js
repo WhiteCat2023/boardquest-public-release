@@ -16,3 +16,12 @@ export function verifyJWT(token) {
         return { payload: null, expired: true, error: error.message.includes("jwt expired") };
     }
 }
+export function extractUserIdFromToken(token) {
+    const { payload, expired } = verifyJWT(token);
+    if (expired || !payload) {
+        throw new Error("InvalidToken");
+    }
+    return payload.id;
+}
+// Alias for backward compatibility
+export const decodedId = extractUserIdFromToken;

@@ -3,8 +3,8 @@ import { authenticateToken, requireRoles, } from "../../middleware/auth.middlewa
 import { createGuidanceAssignment, getGuidanceAssignments, updateGuidanceAssignment, getFailingStudents, } from "../../controller/admin/guidance.controller";
 const router = Router();
 router.use(authenticateToken);
-router.post("/", requireRoles(["SUPERADMIN", "ADMIN"]), createGuidanceAssignment);
-router.get("/", requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]), getGuidanceAssignments);
-router.put("/:id", requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD", "TEACHER"]), updateGuidanceAssignment);
-router.get("/failing-students", requireRoles(["SUPERADMIN", "ADMIN", "TEAMLEAD"]), getFailingStudents);
+router.post("/", requireRoles(["SUPERADMIN", "DEAN"]), createGuidanceAssignment);
+router.get("/", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), getGuidanceAssignments);
+router.put("/:id", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), updateGuidanceAssignment);
+router.get("/failing-students", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), getFailingStudents);
 export default router;

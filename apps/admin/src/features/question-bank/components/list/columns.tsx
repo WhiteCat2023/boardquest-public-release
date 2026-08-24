@@ -1,7 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { UserRole, QuestionStatus, type Question } from "@/types/question";
-import { Eye, Trash2, Edit, Tag, MessageSquare } from "lucide-react";
-import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
+import { UserRole, type Question } from "@/types/question";
+import { Eye, Trash2, Edit, Tag } from "lucide-react";
+import { getDifficultyColor, getInitials } from "@/utils/style";
 
 interface GetColumnsProps {
   currentUserId: string;
@@ -17,7 +17,6 @@ export const getQuestionColumns = ({
   currentUserRole,
   onView,
   onDelete,
-  onFeedback,
   navigate,
 }: GetColumnsProps): ColumnDef<Question>[] => [
   {
@@ -81,11 +80,6 @@ export const getQuestionColumns = ({
             </span>
             <span className="lg:hidden rounded bg-muted border border-border px-1.5 py-0.5 text-[8.5px] font-semibold text-muted-foreground shrink-0">
               {row.original.difficulty}
-            </span>
-            <span
-              className={`lg:hidden rounded-full border px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider shrink-0 ${getStatusColor(row.original.status)}`}
-            >
-              {row.original.status}
             </span>
           </div>
         </div>
@@ -159,22 +153,6 @@ export const getQuestionColumns = ({
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
-    meta: {
-      className: "hidden lg:table-cell",
-    },
-    cell: ({ row }) => (
-      <div className="flex flex-col gap-1 items-start">
-        <span
-          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      </div>
-    ),
-  },
-  {
     id: "actions",
     meta: {
       className: "w-24 sm:w-28 lg:w-36 text-right pr-2 lg:pr-6 shrink-0",
@@ -191,15 +169,12 @@ export const getQuestionColumns = ({
         currentUserRole === UserRole.SUPERADMIN ||
         currentUserRole === UserRole.DEAN ||
         currentUserRole === UserRole.TEAMLEAD ||
-        (currentUserRole === UserRole.TEACHER &&
-          isAuthor &&
-          item.status !== QuestionStatus.APPROVED);
+        (currentUserRole === UserRole.TEACHER && isAuthor);
       const canDelete =
         currentUserRole === UserRole.SUPERADMIN ||
         currentUserRole === UserRole.DEAN ||
-        (currentUserRole === UserRole.TEACHER &&
-          isAuthor &&
-          item.status !== QuestionStatus.APPROVED);
+        currentUserRole === UserRole.TEAMLEAD ||
+        (currentUserRole === UserRole.TEACHER && isAuthor);
 
       return (
         <div className="flex items-center justify-end gap-1 pr-1 lg:pr-4 shrink-0">

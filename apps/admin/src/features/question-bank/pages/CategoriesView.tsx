@@ -35,6 +35,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { IconPicker, getCategoryIcon } from "../components/IconPicker";
 import useRoleFlags from "@/hooks/useRoleFlags";
+import { useConfirm } from "@/components/modal";
 
 export default function CategoriesView() {
   const navigate = useNavigate();
@@ -52,10 +53,7 @@ export default function CategoriesView() {
   const [editCategoryIcon, setEditCategoryIcon] = useState("BookOpen");
   const [isEditingSubmitting, setIsEditingSubmitting] = useState(false);
 
-  // Delete State
-  const [deletingCategory, setDeletingCategory] = useState<any | null>(null);
-  const [isDeletingSubmitting, setIsDeletingSubmitting] = useState(false);
-
+  const { confirm } = useConfirm();
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
   const { currentUser, isTeacher, isStaff: canManage, handledCategoryIds, isSubjectAssigned } = useRoleFlags();
@@ -120,23 +118,27 @@ export default function CategoriesView() {
     }
   };
 
-  const handleDeleteCategory = async () => {
-    if (!deletingCategory) return;
+  const handleDeleteCategory = async (cat: any) => {
+    const confirmed = await confirm({
+      title: "Delete Subject Category",
+      description: (
+        <>
+          Are you sure you want to delete{" "}
+          <strong className="text-foreground">{cat?.name}</strong>? This action cannot be undone.
+        </>
+      ),
+      variant: "destructive",
+      confirmText: "Delete Subject",
+    });
 
-    setIsDeletingSubmitting(true);
+    if (!confirmed) return;
+
     try {
-      await axiosPrivate.delete(
-        `/questions/category/single/${deletingCategory.id}`
-      );
-      toast.success(
-        `Category "${deletingCategory.name}" deleted successfully!`
-      );
+      await axiosPrivate.delete(`/questions/category/single/${cat.id}`);
+      toast.success(`Category "${cat.name}" deleted successfully!`);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      setDeletingCategory(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to delete category.");
-    } finally {
-      setIsDeletingSubmitting(false);
     }
   };
 
@@ -325,7 +327,7 @@ export default function CategoriesView() {
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDeletingCategory(cat);
+                          handleDeleteCategory(cat);
                         }}
                         className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
                         title="Delete Subject"
@@ -462,53 +464,6 @@ export default function CategoriesView() {
                 </Button>
               </AlertDialogFooter>
             </form>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
-      {/* Delete Subject Category Dialog */}
-      {canManage && (
-        <AlertDialog
-          open={!!deletingCategory}
-          onOpenChange={(open) => !open && setDeletingCategory(null)}
-        >
-          <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-xl max-w-md text-foreground font-sans">
-            <AlertDialogHeader className="text-left space-y-2">
-              <div className="flex flex-row items-center gap-3">
-                <div className="p-2.5 bg-destructive/10 text-destructive rounded-2xl border border-destructive/15 shrink-0">
-                  <AlertTriangle size={20} className="stroke-[2.5]" />
-                </div>
-                <AlertDialogTitle className="text-base font-bold text-foreground">
-                  Delete Subject Category
-                </AlertDialogTitle>
-              </div>
-
-              <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
-                Are you sure you want to delete{" "}
-                <strong className="text-foreground">
-                  {deletingCategory?.name}
-                </strong>
-                ? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            <AlertDialogFooter className="flex items-center justify-end gap-2.5 border-t border-border pt-4 mt-2">
-              <AlertDialogCancel
-                type="button"
-                onClick={() => setDeletingCategory(null)}
-                className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 h-9 cursor-pointer"
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                type="button"
-                onClick={handleDeleteCategory}
-                disabled={isDeletingSubmitting}
-                className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs"
-              >
-                {isDeletingSubmitting ? "Deleting..." : "Delete Subject"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       )}

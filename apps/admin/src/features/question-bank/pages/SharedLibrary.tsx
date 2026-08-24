@@ -41,12 +41,10 @@ export default function SharedLibrary() {
         : selectedCategory,
     difficulty: selectedDifficulty,
     type: selectedType,
-    status: "APPROVED",
   };
 
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useCategories({
-      status: "APPROVED",
       search: categorySearch,
     });
 
@@ -291,8 +289,6 @@ export default function SharedLibrary() {
           <QuestionFilter view="bank" />
           <QuestionList
             filters={filters}
-            isLiveView={false}
-            isBankView={true}
           />
         </div>
       </main>

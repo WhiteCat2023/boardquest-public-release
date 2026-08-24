@@ -2,11 +2,11 @@ import './setup';
 import request from 'supertest';
 import express from 'express';
 import facultyRouter from '../routes/admin/faculty.routes';
-import * as facultyService from '../services/admin/faculty.service';
+import * as facultyService from '../services/admin/user.service';
 import { ApiError } from '../utils/apiError';
 import { authenticateToken } from '../middleware/auth.middleware';
-// Mock faculty services
-jest.mock('../services/admin/faculty.service');
+// Mock user/faculty services
+jest.mock('../services/admin/user.service');
 let app;
 beforeAll(() => {
     app = express();
@@ -19,7 +19,6 @@ describe('Faculty Routes', () => {
         employeeId: 'EMP-001',
         name: 'Jane Doe',
         email: 'jane@example.com',
-        username: 'janedoe',
         role: 'TEACHER',
         phoneNumber: '09171234567',
         createdAt: new Date(),
@@ -27,9 +26,9 @@ describe('Faculty Routes', () => {
     };
     afterEach(() => {
         jest.clearAllMocks();
-        // Restore default auth mock implementation (ADMIN role)
+        // Restore default auth mock implementation (DEAN role)
         authenticateToken.mockImplementation((req, res, next) => {
-            req.user = { id: '1', email: 'admin@example.com', role: 'ADMIN', username: 'admin', name: 'Admin User' };
+            req.user = { id: '1', email: 'admin@example.com', role: 'DEAN', name: 'Dean User' };
             next();
         });
     });
@@ -37,7 +36,7 @@ describe('Faculty Routes', () => {
         it('should retrieve all faculty members and sanitize passwords', async () => {
             const mockFacultyList = [
                 { ...mockFacultyMember, password: 'hashedpassword' },
-                { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', username: 'johnsmith', role: 'TEAMLEAD', phoneNumber: '09177654321', password: 'hashedpassword2' }
+                { id: 'faculty-2', employeeId: 'EMP-002', name: 'John Smith', email: 'john@example.com', role: 'TEAMLEAD', phoneNumber: '09177654321', password: 'hashedpassword2' }
             ];
             facultyService.getAllFaculty.mockResolvedValue(mockFacultyList);
             const response = await request(app).get('/api/faculty');
@@ -51,7 +50,7 @@ describe('Faculty Routes', () => {
         it('should block GET request if role is not authorized (e.g. TEACHER)', async () => {
             // Mock user as TEACHER
             authenticateToken.mockImplementation((req, res, next) => {
-                req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER', username: 'teacher', name: 'Teacher User' };
+                req.user = { id: '3', email: 'teacher@example.com', role: 'TEACHER', name: 'Teacher User' };
                 next();
             });
             const response = await request(app).get('/api/faculty');
@@ -64,7 +63,6 @@ describe('Faculty Routes', () => {
             employeeId: 'EMP-001',
             name: 'Jane Doe',
             email: 'jane@example.com',
-            username: 'janedoe',
             password: 'password123',
             phoneNumber: '09171234567',
             role: 'TEACHER'
@@ -81,7 +79,7 @@ describe('Faculty Routes', () => {
             expect(response.body.data.faculty).toBeDefined();
             expect(response.body.data.faculty.password).toBeUndefined();
             expect(response.body.data.faculty.employeeId).toBe('EMP-001');
-            expect(facultyService.createFaculty).toHaveBeenCalledWith(createPayload, 'ADMIN');
+            expect(facultyService.createFaculty).toHaveBeenCalledWith(createPayload, 'DEAN');
         });
         it('should handle validation or logic error from service', async () => {
             facultyService.createFaculty.mockRejectedValue(new ApiError(400, 'Invalid input data'));

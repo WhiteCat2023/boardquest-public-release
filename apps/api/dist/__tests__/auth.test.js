@@ -22,7 +22,7 @@ describe("Auth Routes", () => {
                 id: "1",
                 email: "newadmin@example.com",
                 password: "hashed_password",
-                role: "ADMIN",
+                role: "DEAN",
             };
             authService.signupAdmin.mockResolvedValue(newUser);
             const response = await request(app).post("/api/auth/signup").send({
@@ -49,7 +49,7 @@ describe("Auth Routes", () => {
                 id: "1",
                 email: "test@example.com",
                 password: "hashed_password",
-                role: "ADMIN",
+                role: "DEAN",
             };
             authService.login.mockResolvedValue(user);
             const response = await request(app).post("/api/auth/login").send({
@@ -73,7 +73,7 @@ describe("Auth Routes", () => {
             const user = {
                 id: "1",
                 email: "test@example.com",
-                role: "ADMIN",
+                role: "DEAN",
             };
             authService.login.mockResolvedValue(user);
             const response = await request(app).post("/api/auth/login").send({
@@ -100,7 +100,6 @@ describe("Auth Routes", () => {
                 id: "1",
                 email: "test@example.com",
                 name: "Test User",
-                username: "testuser",
             };
             const prisma = (await import("../services/prisma")).default;
             prisma.adminUser.findUnique.mockResolvedValue(user);

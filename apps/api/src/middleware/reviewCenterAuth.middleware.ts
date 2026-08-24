@@ -6,10 +6,13 @@ import { AuthenticatedRequest } from "./auth.middleware";
 export const authenticateReviewCenterToken = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    let token = req.cookies?.rc_accessToken || req.cookies?.accessToken || req.cookies?.token;
+    let token =
+      req.cookies?.rc_accessToken ||
+      req.cookies?.accessToken ||
+      req.cookies?.token;
     if (!token) {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -43,17 +46,31 @@ export const authenticateReviewCenterToken = async (
         name: true,
         companyName: true,
         reviewCenterId: true,
+        accountStatus: true,
         isActive: true,
       },
     });
 
-    if (!repUser || !repUser.isActive) {
-      res.status(401).json({
-        message: "Review Center Representative user not found or inactive",
-        error: "USER_NOT_FOUND",
+    const accountStatus = (repUser as any)?.accountStatus!;
+    if (!repUser || accountStatus === "DEACTIVATED") {
+      res.status(403).json({
+        message: "Your account has been deactivated. Please contact your administrator for assistance.",
+        error: "ACCOUNT_DEACTIVATED",
       });
       return;
     }
+
+    // Update lastActiveAt asynchronously
+    prisma.reviewCenterRepresentativeUser
+      .update({
+        where: { id: repUser.id },
+        data: {
+          lastActiveAt: new Date(),
+        },
+      })
+      .catch((err: any) =>
+        console.error("Error updating rep active status:", err),
+      );
 
     req.user = {
       ...repUser,

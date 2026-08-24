@@ -12,7 +12,7 @@ import ReviewCenterFilters from "../components/ReviewCenterFilters";
 import ReviewCenterGrid from "../components/ReviewCenterGrid";
 import AddEditReviewCenterModal from "../components/AddEditReviewCenterModal";
 import ViewReviewCenterModal from "../components/ViewReviewCenterModal";
-import DeleteReviewCenterDialog from "../components/DeleteReviewCenterDialog";
+import { useConfirm } from "@/components/modal";
 
 export default function ReviewCenterManagement() {
   const navigate = useNavigate();
@@ -31,20 +31,14 @@ export default function ReviewCenterManagement() {
 
   const reviewCenters = Array.isArray(rawReviewCenters) ? rawReviewCenters : [];
 
+  const { confirm } = useConfirm();
+
   // Modals & Dialogs State
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ReviewCenterRepresentative | null>(null);
 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<ReviewCenterRepresentative | null>(null);
-
-  const [confirmDelete, setConfirmDelete] = useState<{
-    isOpen: boolean;
-    item: ReviewCenterRepresentative | null;
-  }>({
-    isOpen: false,
-    item: null,
-  });
 
   // Dynamic filter option dropdown lists
   const uniqueLocations = Array.from(
@@ -76,24 +70,29 @@ export default function ReviewCenterManagement() {
     setIsViewOpen(true);
   };
 
-  const handleOpenDelete = (item: ReviewCenterRepresentative) => {
-    setConfirmDelete({
-      isOpen: true,
-      item,
+  const handleOpenDelete = async (item: ReviewCenterRepresentative) => {
+    const confirmed = await confirm({
+      title: "Remove Review Center",
+      description: (
+        <>
+          Are you sure you want to remove{" "}
+          <strong className="text-foreground">{item?.companyName}</strong> ({item?.name}) from the directory?
+          <br />
+          This action will revoke representative credentials for this institution.
+        </>
+      ),
+      variant: "destructive",
+      confirmText: "Confirm Removal",
     });
-  };
 
-  const handleConfirmDelete = () => {
-    if (!confirmDelete.item) return;
+    if (!confirmed) return;
 
-    deleteCenterMutation.mutate(confirmDelete.item.id, {
+    deleteCenterMutation.mutate(item.id, {
       onSuccess: () => {
-        toast.success(`Review Center partner "${confirmDelete.item?.companyName || confirmDelete.item?.name}" removed.`);
-        setConfirmDelete({ isOpen: false, item: null });
+        toast.success(`Review Center partner "${item?.companyName || item?.name}" removed.`);
       },
       onError: (err: any) => {
         toast.error(err.response?.data?.message || "Failed to remove review center.");
-        setConfirmDelete({ isOpen: false, item: null });
       },
     });
   };
@@ -143,13 +142,6 @@ export default function ReviewCenterManagement() {
         }}
         reviewCenter={viewingItem}
         onEditClick={handleOpenEdit}
-      />
-
-      <DeleteReviewCenterDialog
-        isOpen={confirmDelete.isOpen}
-        onOpenChange={(open: boolean) => !open && setConfirmDelete({ isOpen: false, item: null })}
-        item={confirmDelete.item}
-        onConfirm={handleConfirmDelete}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import useAuth from "@/hooks/useAuth";
-import { QuestionStatus, UserRole, type Question } from "@/types/question";
+import { UserRole, type Question } from "@/types/question";
 
 export interface QuestionPermissions {
   currentUserRole: string | undefined;
@@ -8,8 +8,6 @@ export interface QuestionPermissions {
   canView: boolean;
   canEdit: boolean;
   canDelete: boolean;
-  canFeedback: boolean;
-  canApprove: boolean;
   canComment: boolean;
 }
 
@@ -27,8 +25,6 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
       canView: false,
       canEdit: false,
       canDelete: false,
-      canFeedback: false,
-      canApprove: false,
       canComment: false,
     };
   }
@@ -42,7 +38,7 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD ||
-      (currentUserRole === UserRole.TEACHER && isAuthor)
+      currentUserRole === UserRole.TEACHER
   );
 
   // Edit Permissions
@@ -50,37 +46,18 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.DEAN ||
       currentUserRole === UserRole.TEAMLEAD ||
-      (currentUserRole === UserRole.TEACHER &&
-        isAuthor &&
-        (question?.status === QuestionStatus.PENDING_REVISION ||
-          question?.status === QuestionStatus.PENDING_REVIEW))
+      (currentUserRole === UserRole.TEACHER && isAuthor)
   );
 
   // Delete Permissions
   const canDelete = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.DEAN ||
-      (currentUserRole === UserRole.TEACHER &&
-        isAuthor &&
-        (question?.status === QuestionStatus.PENDING_REVIEW ||
-          question?.status === QuestionStatus.PENDING_REVISION))
+      currentUserRole === UserRole.TEAMLEAD ||
+      (currentUserRole === UserRole.TEACHER && isAuthor)
   );
 
-  // Feedback & Revision Request Permissions
-  const canFeedback = Boolean(
-    currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.DEAN ||
-      currentUserRole === UserRole.TEAMLEAD
-  );
-
-  // Approval Permissions
-  const canApprove = Boolean(
-    currentUserRole === UserRole.SUPERADMIN ||
-      currentUserRole === UserRole.DEAN ||
-      currentUserRole === UserRole.TEAMLEAD
-  );
-
-  // Comment / Feedback reply permissions
+  // Comment permissions
   const canComment = Boolean(
     currentUserRole === UserRole.SUPERADMIN ||
       currentUserRole === UserRole.DEAN ||
@@ -95,8 +72,6 @@ export function useQuestionPermissions(question?: Question | null): QuestionPerm
     canView,
     canEdit,
     canDelete,
-    canFeedback,
-    canApprove,
     canComment,
   };
 }

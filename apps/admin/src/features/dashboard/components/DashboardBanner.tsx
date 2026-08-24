@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Plus, FileEdit, Clock, GraduationCap } from "lucide-react";
+import { Plus, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import appContent from "@/constants/appContent";
@@ -9,22 +9,12 @@ export type UserRole = "SUPERADMIN" | "DEAN" | "TEAMLEAD" | "TEACHER";
 interface DashboardBannerProps {
   userRole: UserRole;
   userName?: string;
-  teacherDraftCount: number;
-  pendingReviewQuestions: number;
 }
 
 export function DashboardBanner({
   userRole,
   userName = appContent.dashboard.banner.greetings.defaultUser,
-  teacherDraftCount,
-  pendingReviewQuestions,
 }: DashboardBannerProps) {
-  const isTeacher = userRole === "TEACHER";
-  const isTeamLead = userRole === "TEAMLEAD";
-  const isDeanOrSuper = userRole === "DEAN" || userRole === "SUPERADMIN";
-
-  
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return appContent.dashboard.banner.greetings.morning;
@@ -69,65 +59,21 @@ export function DashboardBanner({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {isTeacher && (
-          <>
-            <Link to="/question-bank">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
-                <Plus size={14} />
-                {appContent.dashboard.banner.actions.addNewQuestion}
-              </Button>
-            </Link>
-            <Link to="/question-bank">
-              <Button
-                variant="outline"
-                className="bg-muted/40 hover:bg-accent border-border text-foreground rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer"
-              >
-                <FileEdit size={14} className="text-primary" />
-                {appContent.dashboard.banner.actions.myDrafts} ({teacherDraftCount})
-              </Button>
-            </Link>
-          </>
-        )}
-
-        {isTeamLead && (
-          <>
-            <Link to="/review-center">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
-                <Clock size={14} />
-                {appContent.dashboard.banner.actions.reviewQueue} ({pendingReviewQuestions})
-              </Button>
-            </Link>
-            <Link to="/question-bank">
-              <Button
-                variant="outline"
-                className="bg-muted/40 hover:bg-accent border-border text-foreground rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer"
-              >
-                <Plus size={14} className="text-primary" />
-                {appContent.dashboard.banner.actions.addQuestion}
-              </Button>
-            </Link>
-          </>
-        )}
-
-        {isDeanOrSuper && (
-          <>
-            <Link to="/question-bank">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
-                <Plus size={14} />
-                {appContent.dashboard.banner.actions.addQuestion}
-              </Button>
-            </Link>
-            <Link to="/student-management">
-              <Button
-                variant="outline"
-                className="bg-muted/40 hover:bg-accent border-border text-foreground rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer"
-              >
-                <GraduationCap size={14} className="text-primary" />
-                {appContent.dashboard.banner.actions.studentRoster}
-              </Button>
-            </Link>
-          </>
-        )}
+        <Link to="/question-bank">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer shadow-xs">
+            <Plus size={14} />
+            {appContent.dashboard.banner.actions.addNewQuestion || "Add Question"}
+          </Button>
+        </Link>
+        <Link to="/student-management">
+          <Button
+            variant="outline"
+            className="bg-muted/40 hover:bg-accent border-border text-foreground rounded-xl px-3.5 h-8 text-xs font-bold gap-1.5 cursor-pointer"
+          >
+            <GraduationCap size={14} className="text-primary" />
+            {appContent.dashboard.banner.actions.studentRoster || "Students"}
+          </Button>
+        </Link>
       </div>
     </div>
   );

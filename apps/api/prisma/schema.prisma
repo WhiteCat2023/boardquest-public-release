@@ -32,12 +32,6 @@ enum QuestionType {
   SHORT_ANSWER
 }
 
-enum QuestionStatus {
-  APPROVED
-  PENDING_REVIEW
-  PENDING_REVISION
-}
-
 enum RequestStatus {
   PENDING
   APPROVED
@@ -57,7 +51,11 @@ enum BadgeCategory {
   BOSS
   SUBJECT
   EXAM
-  
+}
+
+enum AccountStatus {
+  ACTIVE
+  DEACTIVATED
 }
 
 // [ Admin Schema ]
@@ -81,7 +79,8 @@ model AdminUser {
   questionPermissions Json?
 
   location  String?  @default("Philippines")
-  isActive  Boolean  @default(false)
+  accountStatus AccountStatus @default(ACTIVE)
+  isActive  Boolean  @default(true)
   lastActiveAt DateTime? @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,7 +98,6 @@ model Question {
   choices       String[]
   choiceImages  String[] @default([])
   correctAnswer String
-  status        QuestionStatus
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -161,7 +159,7 @@ model LearningModule {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
-  fileUrl     String?
+  fileUrls    String[] @default([])
   order       Int      @default(0)
   isPublished Boolean  @default(true)
 
@@ -207,7 +205,9 @@ model ReviewCenterRepresentativeUser {
   phonenumber    String
   password       String
   location       String?       @default("Philippines")
+  accountStatus  AccountStatus @default(ACTIVE)
   isActive       Boolean       @default(true)
+  lastActiveAt   DateTime?     @default(now())
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

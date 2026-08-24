@@ -32,7 +32,6 @@ interface QuestionSynthesizerDialogProps {
     difficulty: "EASY" | "MEDIUM" | "HARD";
     type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
     categoryId: string;
-    status: string;
   };
   onSaveBoth: (synthesized: SynthesizedResult) => Promise<void>;
   onSaveSynthesizedOnly: (synthesized: SynthesizedResult) => Promise<void>;

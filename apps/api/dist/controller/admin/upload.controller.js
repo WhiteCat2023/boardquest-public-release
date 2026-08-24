@@ -19,5 +19,26 @@ export const uploadBadgeImage = asyncHandler(async (req, res) => {
         width: result.width,
         height: result.height,
         bytes: result.bytes,
-    }, "Badge image uploaded to Cloudinary successfully").send(res);
+    }, "Badge image uploaded to Supabase Cloud Storage successfully").send(res);
+});
+export const uploadModuleFile = asyncHandler(async (req, res) => {
+    const { file, image, fileName, folder = "learning_modules" } = req.body;
+    const payload = file || image;
+    if (!payload) {
+        throw new ApiError(400, "File payload is required (base64 data URL string)");
+    }
+    // Generate clean public_id from fileName or timestamp
+    const cleanBase = fileName
+        ? String(fileName).replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase()
+        : "module";
+    const sanitizedFileName = `doc_${cleanBase}_${Date.now()}`;
+    const result = await uploadImage(payload, sanitizedFileName, folder);
+    return new ApiResponse(200, {
+        fileUrl: result.secure_url || result.url,
+        imageUrl: result.secure_url || result.url,
+        publicId: result.public_id,
+        format: result.format,
+        bytes: result.bytes,
+        originalName: fileName || "module.pdf",
+    }, "Module material uploaded to Cloud Storage successfully").send(res);
 });

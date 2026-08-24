@@ -3,7 +3,6 @@ import {
   HelpCircle,
   BookOpen,
   GraduationCap,
-  FileEdit,
   Users,
   ArrowRight,
 } from "lucide-react";
@@ -15,11 +14,7 @@ import appContent from "@/constants/appContent";
 interface DashboardKpiCardsProps {
   userRole: UserRole;
   teacherAuthoredCount: number;
-  teacherPublishedCount: number;
-  teacherDraftCount: number;
-  pendingReviewQuestions: number;
   totalQuestions: number;
-  publishedQuestions: number;
   handledCategoriesCount: number;
   totalCategories: number;
   totalStudents: number;
@@ -29,23 +24,18 @@ interface DashboardKpiCardsProps {
 export function DashboardKpiCards({
   userRole,
   teacherAuthoredCount,
-  teacherPublishedCount,
-  teacherDraftCount,
-  pendingReviewQuestions,
   totalQuestions,
-  publishedQuestions,
   handledCategoriesCount,
   totalCategories,
   totalStudents,
   totalFaculties,
 }: DashboardKpiCardsProps) {
   const isTeacher = userRole === "TEACHER";
-  const isTeamLead = userRole === "TEAMLEAD";
   const kpi = appContent.dashboard.kpiCards;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 font-sans">
-      {/* Card 1: Question Bank / Needs Review / My Questions */}
+      {/* Card 1: Question Bank / My Questions */}
       <Card className="bg-card border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col justify-between gap-2 sm:gap-3 hover:border-primary/30 transition-all min-w-0">
         <div className="flex items-center justify-between gap-1">
           <div className="p-1.5 sm:p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg sm:rounded-xl border border-purple-500/20 shrink-0">
@@ -55,39 +45,21 @@ export function DashboardKpiCards({
             variant="outline"
             className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[85px] sm:max-w-none"
           >
-            {isTeacher
-              ? kpi.questionBank.badges.teacher
-              : isTeamLead
-              ? kpi.questionBank.badges.teamlead
-              : (kpi.questionBank.badges as any).dean || (kpi.questionBank.badges as any).admin}
+            {isTeacher ? "My Questions" : "Question Bank"}
           </Badge>
         </div>
         <div className="min-w-0">
           <span className="text-xl sm:text-2xl font-black text-foreground block truncate">
-            {isTeacher
-              ? teacherAuthoredCount
-              : isTeamLead
-              ? pendingReviewQuestions
-              : totalQuestions}
+            {isTeacher ? teacherAuthoredCount : totalQuestions}
           </span>
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mt-0.5 truncate">
-            {isTeacher
-              ? kpi.questionBank.labels.teacher
-              : isTeamLead
-              ? kpi.questionBank.labels.teamlead
-              : (kpi.questionBank.labels as any).dean || (kpi.questionBank.labels as any).admin}
+            {isTeacher ? "Authored Questions" : "Total Questions"}
           </p>
         </div>
         <div className="pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[10.5px] text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">
-            {isTeacher
-              ? `${teacherPublishedCount} ${kpi.questionBank.approved}`
-              : isTeamLead
-              ? `${publishedQuestions} ${kpi.questionBank.published}`
-              : `${publishedQuestions} ${kpi.questionBank.approved}`}
-          </span>
+          <span className="truncate">View in repository</span>
           <Link
-            to={isTeamLead ? "/review-center" : "/question-bank"}
+            to="/question-bank"
             className="text-primary font-bold flex items-center gap-0.5 hover:underline shrink-0 text-[9.5px] sm:text-[10.5px]"
           >
             {kpi.questionBank.actionView} <ArrowRight size={10} />
@@ -161,49 +133,34 @@ export function DashboardKpiCards({
         </div>
       </Card>
 
-      {/* Card 4: Draft Items / Instructors */}
+      {/* Card 4: Faculty / Instructors */}
       <Card className="bg-card border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col justify-between gap-2 sm:gap-3 hover:border-primary/30 transition-all min-w-0">
         <div className="flex items-center justify-between gap-1">
           <div className="p-1.5 sm:p-2 bg-primary/10 text-primary rounded-lg sm:rounded-xl border border-primary/20 shrink-0">
-            {isTeacher ? (
-              <FileEdit className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
-            ) : (
-              <Users className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
-            )}
+            <Users className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
           </div>
           <Badge
             variant="outline"
             className="bg-primary/10 text-primary border-primary/20 text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[85px] sm:max-w-none"
           >
-            {isTeacher
-              ? kpi.instructorsAndDrafts.badges.teacher
-              : (kpi.instructorsAndDrafts.badges as any).dean || (kpi.instructorsAndDrafts.badges as any).admin}
+            Faculty
           </Badge>
         </div>
         <div className="min-w-0">
           <span className="text-xl sm:text-2xl font-black text-foreground block truncate">
-            {isTeacher ? teacherDraftCount : totalFaculties}
+            {totalFaculties}
           </span>
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mt-0.5 truncate">
-            {isTeacher
-              ? kpi.instructorsAndDrafts.labels.teacher
-              : (kpi.instructorsAndDrafts.labels as any).dean || (kpi.instructorsAndDrafts.labels as any).admin}
+            Active Faculty Members
           </p>
         </div>
         <div className="pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[10.5px] text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">
-            {isTeacher
-              ? kpi.instructorsAndDrafts.subtitles.teacher
-              : (kpi.instructorsAndDrafts.subtitles as any).dean || (kpi.instructorsAndDrafts.subtitles as any).admin}
-          </span>
+          <span className="truncate">Faculty team</span>
           <Link
-            to={isTeacher ? "/question-bank" : "/faculty-management"}
+            to="/faculty-management"
             className="text-primary font-bold flex items-center gap-0.5 hover:underline shrink-0 text-[9.5px] sm:text-[10.5px]"
           >
-            {isTeacher
-              ? kpi.instructorsAndDrafts.actions.teacher
-              : (kpi.instructorsAndDrafts.actions as any).dean || (kpi.instructorsAndDrafts.actions as any).admin}{" "}
-            <ArrowRight size={10} />
+            View Faculty <ArrowRight size={10} />
           </Link>
         </div>
       </Card>

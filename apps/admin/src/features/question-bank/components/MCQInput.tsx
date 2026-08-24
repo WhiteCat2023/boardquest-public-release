@@ -106,7 +106,9 @@ export default function MultipleChoiceInput({
               {handleImageChange && (
                 <div className="shrink-0 flex items-center">
                   <input
-                    ref={(el) => (fileInputRefs.current[index] = el)}
+                    ref={(el) => {
+                      fileInputRefs.current[index] = el;
+                    }}
                     type="file"
                     accept="image/*"
                     className="hidden"

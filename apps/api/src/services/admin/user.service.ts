@@ -25,14 +25,16 @@ export const createUserSchema = z
     (data) =>
       Boolean(
         (data.name && data.name.trim().length > 0) ||
-          (data.firstName && data.firstName.trim().length > 0) ||
-          (data.lastName && data.lastName.trim().length > 0) ||
-          (data.role === Role.EXTERNAL && data.companyName && data.companyName.trim().length > 0)
+        (data.firstName && data.firstName.trim().length > 0) ||
+        (data.lastName && data.lastName.trim().length > 0) ||
+        (data.role === Role.EXTERNAL &&
+          data.companyName &&
+          data.companyName.trim().length > 0),
       ),
     {
       message: "First name and last name, or full name, are required",
       path: ["firstName"],
-    }
+    },
   );
 
 export const updateUserSchema = z.object({
@@ -43,10 +45,7 @@ export const updateUserSchema = z.object({
   role: z.nativeEnum(Role).optional(),
   companyName: z.string().optional(),
   location: z.string().optional(),
-  phoneNumber: z
-    .string()
-    .min(7, "Phone number is required")
-    .optional(),
+  phoneNumber: z.string().min(7, "Phone number is required").optional(),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
@@ -75,6 +74,7 @@ const userSelect = {
   phoneNumber: true,
   handledCategoryIds: true,
   questionPermissions: true,
+  accountStatus: true,
   isActive: true,
   lastActiveAt: true,
   createdAt: true,
@@ -96,7 +96,11 @@ export class UserService {
     if (creatorRole === "SUPERADMIN") return true;
     if (creatorRole === "DEAN") {
       // DEAN can add new CO-ADMIN(TEAMLEAD), TEACHER, and EXTERNAL
-      return targetRole === "TEAMLEAD" || targetRole === "TEACHER" || targetRole === "EXTERNAL";
+      return (
+        targetRole === "TEAMLEAD" ||
+        targetRole === "TEACHER" ||
+        targetRole === "EXTERNAL"
+      );
     }
     if (creatorRole === "TEAMLEAD") {
       // CO-ADMIN(TEAMLEAD) can add TEACHERS
@@ -126,9 +130,9 @@ export class UserService {
 
     if (status && status !== "ALL") {
       if (status === "ACTIVE") {
-        where.isActive = true;
+        where.accountStatus = "ACTIVE";
       } else if (status === "DEACTIVATED") {
-        where.isActive = false;
+        where.accountStatus = "DEACTIVATED";
       }
     }
 
@@ -146,7 +150,9 @@ export class UserService {
     let startIndex = 0;
 
     if (cursor) {
-      const cursorIndex = allAdmins.findIndex((item: any) => item.id === cursor);
+      const cursorIndex = allAdmins.findIndex(
+        (item: any) => item.id === cursor,
+      );
       if (cursorIndex !== -1) {
         startIndex = cursorIndex + 1;
       }
@@ -194,7 +200,11 @@ export class UserService {
         ];
       }
       if (status && status !== "ALL") {
-        repWhere.isActive = status === "ACTIVE";
+        if (status === "ACTIVE") {
+          repWhere.accountStatus = "ACTIVE";
+        } else if (status === "DEACTIVATED") {
+          repWhere.accountStatus = "DEACTIVATED";
+        }
       }
 
       const reps = await this.db.reviewCenterRepresentativeUser.findMany({
@@ -213,7 +223,9 @@ export class UserService {
         phoneNumber: r.phonenumber,
         companyName: r.companyName,
         location: r.location || "Philippines",
-        isActive: r.isActive,
+        accountStatus: r.accountStatus || "ACTIVE",
+        isActive: r.isActive !== false,
+        lastActiveAt: r.lastActiveAt ? r.lastActiveAt.toISOString() : undefined,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
       }));
@@ -257,9 +269,9 @@ export class UserService {
 
     if (status && status !== "ALL") {
       if (status === "ACTIVE") {
-        where.isActive = true;
+        where.accountStatus = "ACTIVE";
       } else if (status === "DEACTIVATED") {
-        where.isActive = false;
+        where.accountStatus = "DEACTIVATED";
       }
     }
 
@@ -273,11 +285,19 @@ export class UserService {
 
     let combinedList: any[] = allFaculties.map((f: any) => ({
       ...f,
-      createdAt: f.createdAt ? f.createdAt.toISOString() : new Date().toISOString(),
+      accountStatus: f.accountStatus || "ACTIVE",
+      isActive: f.isActive !== false,
+      lastActiveAt: f.lastActiveAt ? f.lastActiveAt.toISOString() : undefined,
+      createdAt: f.createdAt
+        ? f.createdAt.toISOString()
+        : new Date().toISOString(),
     }));
 
     // If role is "ALL" and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
-    if ((role === "ALL" || !role) && (requesterRole === "SUPERADMIN" || requesterRole === "DEAN")) {
+    if (
+      (role === "ALL" || !role) &&
+      (requesterRole === "SUPERADMIN" || requesterRole === "DEAN")
+    ) {
       const repWhere: any = {};
       if (search && search.trim()) {
         const q = search.trim();
@@ -289,7 +309,11 @@ export class UserService {
         ];
       }
       if (status && status !== "ALL") {
-        repWhere.isActive = status === "ACTIVE";
+        if (status === "ACTIVE") {
+          repWhere.accountStatus = "ACTIVE";
+        } else if (status === "DEACTIVATED") {
+          repWhere.accountStatus = "DEACTIVATED";
+        }
       }
 
       const reps = await this.db.reviewCenterRepresentativeUser.findMany({
@@ -308,13 +332,16 @@ export class UserService {
         phoneNumber: r.phonenumber,
         companyName: r.companyName,
         location: r.location || "Philippines",
-        isActive: r.isActive,
+        accountStatus: r.accountStatus || "ACTIVE",
+        isActive: r.isActive !== false,
+        lastActiveAt: r.lastActiveAt ? r.lastActiveAt.toISOString() : undefined,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
       }));
 
       combinedList = [...combinedList, ...formattedReps].sort(
-        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     }
 
@@ -346,7 +373,11 @@ export class UserService {
     };
   }
 
-  private resolveNameParts(rawName?: string, rawFirst?: string, rawLast?: string) {
+  private resolveNameParts(
+    rawName?: string,
+    rawFirst?: string,
+    rawLast?: string,
+  ) {
     let firstName = rawFirst?.trim() || "";
     let lastName = rawLast?.trim() || "";
     let name = rawName?.trim() || "";
@@ -385,7 +416,11 @@ export class UserService {
       handledCategoryIds,
     } = parsed.data;
 
-    const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
+    const { name, firstName, lastName } = this.resolveNameParts(
+      rawName,
+      rawFirst,
+      rawLast,
+    );
 
     // Role hierarchy validation
     if (!this.isAllowedToManageRole(creatorRole, role)) {
@@ -398,19 +433,26 @@ export class UserService {
     // If role is EXTERNAL, save into ReviewCenterRepresentativeUser collection
     if (role === Role.EXTERNAL) {
       if (!companyName || !companyName.trim()) {
-        throw new ApiError(400, "Review Center / Company name is required for external accounts.");
+        throw new ApiError(
+          400,
+          "Review Center / Company name is required for external accounts.",
+        );
       }
 
       // Check unique constraints in ReviewCenterRepresentativeUser collection
-      const existingRep = await this.db.reviewCenterRepresentativeUser.findFirst({
-        where: {
-          OR: [{ email }, { employeeId }],
-        },
-      });
+      const existingRep =
+        await this.db.reviewCenterRepresentativeUser.findFirst({
+          where: {
+            OR: [{ email }, { employeeId }],
+          },
+        });
 
       if (existingRep) {
         if (existingRep.email === email)
-          throw new ApiError(409, "Email is already registered for another review center account.");
+          throw new ApiError(
+            409,
+            "Email is already registered for another review center account.",
+          );
         if (existingRep.employeeId === employeeId)
           throw new ApiError(409, "Partner / Employee ID is already in use.");
       }
@@ -421,7 +463,10 @@ export class UserService {
       });
 
       if (!reviewCenter) {
-        const centerCode = `RC-${companyName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+        const centerCode = `RC-${companyName
+          .replace(/[^a-zA-Z0-9]/g, "")
+          .slice(0, 6)
+          .toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
         reviewCenter = await this.db.reviewCenter.create({
           data: {
             name: companyName.trim(),
@@ -452,6 +497,7 @@ export class UserService {
           phonenumber: phoneNumber,
           password: hash,
           location: location?.trim() || "Philippines",
+          accountStatus: "ACTIVE",
           isActive: true,
           reviewCenterId: reviewCenter.id,
         },
@@ -464,7 +510,9 @@ export class UserService {
         password: tempPassword,
         role: "EXTERNAL",
         employeeId,
-      }).catch((err) => console.error("[createFaculty EXTERNAL] Email send error:", err));
+      }).catch((err) =>
+        console.error("[createFaculty EXTERNAL] Email send error:", err),
+      );
 
       return {
         id: newRep.id,
@@ -477,7 +525,8 @@ export class UserService {
         phoneNumber: newRep.phonenumber,
         companyName: newRep.companyName,
         location: newRep.location,
-        isActive: newRep.isActive,
+        accountStatus: (newRep as any).accountStatus || (newRep as any).account_status || "ACTIVE",
+        isActive: (newRep as any).isActive !== false,
         createdAt: newRep.createdAt,
         updatedAt: newRep.updatedAt,
       };
@@ -515,6 +564,8 @@ export class UserService {
         role,
         phoneNumber,
         password: hash,
+        accountStatus: "ACTIVE",
+        isActive: true,
         handledCategoryIds: handledCategoryIds || [],
       },
       select: userSelect,
@@ -534,9 +585,15 @@ export class UserService {
 
   async toggleFacultyStatus(
     id: string,
-    isActive: boolean,
+    nextStatusInput: boolean | string,
     creatorRole: string,
   ) {
+    const isActivating =
+      typeof nextStatusInput === "boolean"
+        ? nextStatusInput
+        : nextStatusInput === "ACTIVE" || nextStatusInput !== "DEACTIVATED";
+    const nextAccountStatus = isActivating ? "ACTIVE" : "DEACTIVATED";
+
     let userToUpdate = await this.db.adminUser.findUnique({
       where: { id },
     });
@@ -562,7 +619,7 @@ export class UserService {
     if (
       (userToUpdate.role === "SUPERADMIN" ||
         userToUpdate.employeeId === "SA-0001") &&
-      !isActive
+      !isActivating
     ) {
       throw new ApiError(
         400,
@@ -580,7 +637,11 @@ export class UserService {
     if (isExternal) {
       const updatedRep = await this.db.reviewCenterRepresentativeUser.update({
         where: { id },
-        data: { isActive },
+        data: {
+          accountStatus: nextAccountStatus as any,
+          account_status: nextAccountStatus as any,
+          isActive: isActivating,
+        } as any,
       });
       return {
         id: updatedRep.id,
@@ -593,17 +654,26 @@ export class UserService {
         phoneNumber: updatedRep.phonenumber,
         companyName: updatedRep.companyName,
         location: updatedRep.location,
-        isActive: updatedRep.isActive,
+        accountStatus: (updatedRep as any).accountStatus || (updatedRep as any).account_status || nextAccountStatus,
+        isActive: (updatedRep as any).isActive !== false,
         createdAt: updatedRep.createdAt,
         updatedAt: updatedRep.updatedAt,
       };
     }
 
-    return await this.db.adminUser.update({
+    const updatedAdmin = await this.db.adminUser.update({
       where: { id },
-      data: { isActive },
+      data: {
+        accountStatus: nextAccountStatus as any,
+        isActive: isActivating,
+      },
       select: userSelect,
     });
+
+    return {
+      ...updatedAdmin,
+      accountStatus: updatedAdmin.accountStatus || nextAccountStatus,
+    };
   }
 
   async updateFacultyCategories(
@@ -641,7 +711,9 @@ export class UserService {
         select: { handlerIds: true },
       });
       if (cat) {
-        const nextHandlers = (cat.handlerIds || []).filter((uid: string) => uid !== id);
+        const nextHandlers = (cat.handlerIds || []).filter(
+          (uid: string) => uid !== id,
+        );
         await this.db.category.update({
           where: { id: cid },
           data: { handlerIds: nextHandlers },
@@ -695,7 +767,11 @@ export class UserService {
 
     for (let i = 0; i < members.length; i++) {
       const item = members[i];
-      const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
+      const { name, firstName, lastName } = this.resolveNameParts(
+        item.name,
+        item.firstName,
+        item.lastName,
+      );
       const email = item.email?.trim().toLowerCase();
       const targetRole = (item.role?.trim().toUpperCase() ||
         "TEACHER") as string;
@@ -732,8 +808,7 @@ export class UserService {
         errors.push({
           email,
           name,
-          error:
-            "Account already exists (email or employee ID collision).",
+          error: "Account already exists (email or employee ID collision).",
         });
         continue;
       }

@@ -26,10 +26,7 @@ export class ReviewCenterAuthService {
     // Check database for ReviewCenterRepresentativeUser by email or employeeId
     let repUser = await this.db.reviewCenterRepresentativeUser.findFirst({
       where: {
-        OR: [
-          { email: normalizedIdent },
-          { employeeId: inputIdent.trim() },
-        ],
+        OR: [{ email: normalizedIdent }, { employeeId: inputIdent.trim() }],
       },
       include: {
         reviewCenter: {
@@ -45,7 +42,8 @@ export class ReviewCenterAuthService {
     // If no representative user exists in DB, check demo credentials or bootstrap one
     if (!repUser) {
       if (
-        (normalizedIdent === "rep@reviewcenter.edu.ph" || normalizedIdent === "rc-001") &&
+        (normalizedIdent === "rep@reviewcenter.edu.ph" ||
+          normalizedIdent === "rc-001") &&
         password === "password123"
       ) {
         // Try creating default demo review center and rep user
@@ -72,6 +70,7 @@ export class ReviewCenterAuthService {
             phonenumber: "+63-917-555-1234",
             password: hash,
             location: defaultCenter.location,
+            accountStatus: "ACTIVE",
             isActive: true,
             reviewCenterId: defaultCenter.id,
           },
@@ -90,8 +89,12 @@ export class ReviewCenterAuthService {
       }
     }
 
-    if (!repUser.isActive) {
-      throw new ApiError(403, "Account is disabled. Please contact system administrator.");
+    const accountStatus = (repUser as any).accountStatus!;
+    if (accountStatus === "DEACTIVATED") {
+      throw new ApiError(
+        403,
+        "Your account has been deactivated. Please contact your administrator for assistance.",
+      );
     }
 
     const isValidPassword =
@@ -102,9 +105,18 @@ export class ReviewCenterAuthService {
       throw new ApiError(401, "Invalid Review Center credentials");
     }
 
+    await this.db.reviewCenterRepresentativeUser.update({
+      where: { id: repUser.id },
+      data: {
+        isActive: true,
+        lastActiveAt: new Date(),
+      },
+    });
+
     const { password: _pw, ...sanitizedUser } = repUser;
     return {
       ...sanitizedUser,
+      lastActiveAt: new Date(),
       role: "REVIEW_CENTER_REPRESENTATIVE" as const,
     };
   }

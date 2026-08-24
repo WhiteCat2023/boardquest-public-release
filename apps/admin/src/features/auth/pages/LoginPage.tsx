@@ -2,25 +2,59 @@ import { useState } from "react";
 import { type LoginRequest } from "@/types/types";
 import { Link } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
-import { Mail, Lock, EyeClosed, Eye } from "lucide-react";
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Mail, Lock, EyeClosed, Eye, UserX, ShieldAlert } from "lucide-react";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function LoginPage() {
   const { login, loginMutation } = useAuth();
-  const isLoginInvalid = loginMutation.isError;
   const [loginInputs, setLoginInputs] = useState<LoginRequest>({
     email: "",
     password: "",
   });
 
   const [togglePassword, setTogglePassword] = useState(false);
+  const [isDeactivatedDialogOpen, setIsDeactivatedDialogOpen] = useState(false);
+  const [deactivatedMsg, setDeactivatedMsg] = useState(
+    "Your account has been deactivated. Please contact your system administrator or Dean for assistance."
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(loginInputs);
+    try {
+      await login(loginInputs);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const message = err?.response?.data?.message || err?.message || "";
+      if (status === 403 || message.toLowerCase().includes("deactivated")) {
+        if (message) setDeactivatedMsg(message);
+        setIsDeactivatedDialogOpen(true);
+      }
+    }
   };
+
+  const isLoginInvalid = loginMutation.isError && !isDeactivatedDialogOpen;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4">
@@ -107,7 +141,7 @@ function LoginPage() {
                         type="button"
                         variant="ghost"
                         onClick={() => setTogglePassword(!togglePassword)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
                       >
                         {togglePassword ? <Eye /> : <EyeClosed />}
                       </Button>
@@ -154,6 +188,49 @@ function LoginPage() {
           </FieldGroup>
         </form>
       </div>
+
+      {/* Account Deactivated Notification Modal Dialog */}
+      <AlertDialog
+        open={isDeactivatedDialogOpen}
+        onOpenChange={setIsDeactivatedDialogOpen}
+      >
+        <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-2xl max-w-md text-foreground font-sans animate-in zoom-in-95 duration-200">
+          <AlertDialogHeader className="flex flex-row items-start gap-4 text-left">
+            <div className="p-3 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shrink-0 mt-0.5">
+              <UserX size={24} className="stroke-[2.5]" />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <AlertDialogTitle className="text-base font-bold text-foreground">
+                Account Deactivated
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                Your account is currently <strong className="text-destructive font-bold">deactivated</strong>. You cannot access the BoardQuest administrative platform while your status is inactive.
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="p-3.5 bg-muted/40 rounded-2xl border border-border/80 text-xs text-muted-foreground flex items-start gap-2.5 my-2">
+            <ShieldAlert
+              size={18}
+              className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+            />
+            <p className="leading-relaxed">
+              {deactivatedMsg.includes("administrator")
+                ? deactivatedMsg
+                : "Please contact your system administrator or Dean to restore access to your account."}
+            </p>
+          </div>
+
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogAction
+              onClick={() => setIsDeactivatedDialogOpen(false)}
+              className="w-full rounded-xl text-xs font-semibold h-10 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+            >
+              Understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -50,11 +50,6 @@ export const adminNavItem: NavItemProps[] = [
         icon: "FileText",
       },
       {
-        title: "Review Questions",
-        path: "/question-bank/review-questions",
-        icon: "CheckSquare",
-      },
-      {
         title: "All Questions",
         path: "/question-bank/shared-library",
         icon: "Library",

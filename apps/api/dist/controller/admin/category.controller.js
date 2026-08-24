@@ -15,12 +15,13 @@ export const createCategory = asyncHandler(async (req, res) => {
     return new ApiResponse(201, { category }, "Category created successfully").send(res);
 });
 export const getCategories = asyncHandler(async (req, res) => {
-    const { isPublished, status, authorId } = req.query;
+    const { isPublished, status, authorId, search } = req.query;
     const user = req.user;
     const categories = await categoryServices.getAllCategories({
         isPublished: isPublished,
         status: status,
         authorId: authorId,
+        search: search ? String(search) : undefined,
         handledCategoryIds: user?.handledCategoryIds,
         userRole: user?.role,
         userId: user?.id,

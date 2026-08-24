@@ -21,52 +21,6 @@ export const superAdminNavItem: NavItemProps[] = [
             },
         ]
     },
-    // {
-    //     sideBarCategoryName: "LEARNING MANAGEMENT",
-    //     content: [
-    //         {
-    //             title: "Subject Management",
-    //             path: "/subject-management",
-    //             icon: "BookMarked"
-    //         },
-    //         {
-    //             title: "Review Center Management",
-    //             path: "/review-center",
-    //             icon: "BookOpen"
-    //         },
-    //         {
-    //             title: "Calendar Management",
-    //             path: "/calendar-management",
-    //             icon: "Calendar"
-    //         },
-    //         {
-    //             title: "Question Bank",
-    //             path: "/question-bank",
-    //             icon: "ClipboardList",
-    //             subItems: [
-    //                 { title: "My Questions", path: "/question-bank/my-questions" },
-    //                 { title: "Review Questions", path: "/question-bank/review-questions" },
-    //                 { title: "All Questions", path: "/question-bank/shared-library" },
-    //                 { title: "Revisions", path: "/question-bank/revisions" }
-    //             ]
-    //         },
-    //     ]
-    // },
-    // {
-    //     sideBarCategoryName: "STUDENT MANAGEMENT",
-    //     content: [
-    //         {
-    //             title: "Students",
-    //             path: "/student-management",
-    //             icon: "GraduationCap"
-    //         },
-    //         {
-    //             title: "Performance",
-    //             path: "/analytics",
-    //             icon: "BarChart2"
-    //         },
-    //     ]
-    // },
     {
         sideBarCategoryName: "SYSTEM & USER",
         content: [
@@ -82,4 +36,4 @@ export const superAdminNavItem: NavItemProps[] = [
             },
         ]
     },
-]
+];

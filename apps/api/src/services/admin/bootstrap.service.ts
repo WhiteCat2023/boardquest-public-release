@@ -18,11 +18,7 @@ export async function ensureSuperAdminExists() {
   try {
     const existing = await prisma.adminUser.findFirst({
       where: {
-        OR: [
-          { id },
-          { email },
-          { role: "SUPERADMIN" },
-        ],
+        OR: [{ id }, { email }, { role: "SUPERADMIN" }],
       },
     });
 
@@ -42,13 +38,21 @@ export async function ensureSuperAdminExists() {
         password: hash,
         role,
         phoneNumber,
+        accountStatus: "ACTIVE",
         isActive: true,
       },
     });
-    console.log("⚡ [Bootstrap] Auto-healed Super Admin account in database (ID:", id, ")");
+    console.log(
+      "⚡ [Bootstrap] Auto-healed Super Admin account in database (ID:",
+      id,
+      ")",
+    );
     return newSuperAdmin;
   } catch (error: any) {
-    console.error("❌ [Bootstrap] Error auto-healing Super Admin account:", error?.message || error);
+    console.error(
+      "❌ [Bootstrap] Error auto-healing Super Admin account:",
+      error?.message || error,
+    );
     return null;
   }
 }

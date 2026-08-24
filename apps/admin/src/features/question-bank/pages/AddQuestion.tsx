@@ -93,8 +93,6 @@ export default function AddQuestion() {
     setFormat,
     questionWording,
     setQuestionWording,
-    status,
-    setStatus,
   } = useQuestionFormStore();
 
   // MCQ States
@@ -167,7 +165,6 @@ export default function AddQuestion() {
       setFormat(existingQuestion.type || "MCQ");
       setQuestionWording(existingQuestion.question || "");
       setImageUrl(existingQuestion.imageUrl || "");
-      setStatus(existingQuestion.status || "PENDING_REVIEW");
 
       if (existingQuestion.type === "MCQ") {
         setMcqChoices(
@@ -194,7 +191,6 @@ export default function AddQuestion() {
     } else if (!isEditMode) {
       if (!difficulty) setDifficulty("MEDIUM");
       if (!format) setFormat("MCQ");
-      if (!status) setStatus("PENDING_REVIEW");
     }
   }, [
     existingQuestion,
@@ -204,7 +200,6 @@ export default function AddQuestion() {
     setDifficulty,
     setFormat,
     setQuestionWording,
-    setStatus,
   ]);
 
   const handleMcqChoiceChange = (index: number, val: string) => {
@@ -271,14 +266,6 @@ export default function AddQuestion() {
       finalChoices = [];
     }
 
-    const isNeedsRevision =
-      status === "PENDING_REVISION" || status === "NEEDS_REVISION";
-    const newStatus = isNeedsRevision
-      ? "PENDING_REVIEW"
-      : status && status !== ""
-        ? status
-        : "PENDING_REVIEW";
-
     const payload = {
       ...(isEditMode && { id: questionId }),
       question: questionWording,
@@ -290,23 +277,16 @@ export default function AddQuestion() {
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
       choiceImages: format === "MCQ" ? mcqChoiceImages : [],
-      status: newStatus,
     };
 
     try {
       if (isEditMode) {
         await axiosPrivate.put(`/questions/update/${questionId}`, payload);
         queryClient.invalidateQueries({ queryKey: ["questions"] });
-        queryClient.invalidateQueries({ queryKey: ["revisionCollection"] });
         queryClient.invalidateQueries({
           queryKey: ["questionDetail", questionId],
         });
-
-        if (isNeedsRevision) {
-          toast.success("Question revised and resubmitted for review!");
-        } else {
-          toast.success("Question updated successfully!");
-        }
+        toast.success("Question updated successfully!");
       } else {
         // If user applied AI wording, preserve their original base draft in MongoDB as well
         if (
@@ -317,14 +297,12 @@ export default function AddQuestion() {
             .post("/questions/create", {
               ...payload,
               question: originalQuestionDraft,
-              status: "PENDING_REVIEW",
             })
             .catch(() => {});
         }
 
         await axiosPrivate.post("/questions/create", payload);
         queryClient.invalidateQueries({ queryKey: ["questions"] });
-        queryClient.invalidateQueries({ queryKey: ["revisionCollection"] });
         toast.success("New question added to repository!");
       }
       handleBackNav();
@@ -459,15 +437,12 @@ export default function AddQuestion() {
 
     try {
       // Save Original Question
-      await axiosPrivate.post("/questions/create", {
-        ...originalPayload,
-        status: "PENDING_REVIEW",
-      });
+      await axiosPrivate.post("/questions/create", originalPayload);
       // Save AI Synthesized Question Variant
       await axiosPrivate.post("/questions/create", synthesizedPayload);
 
       toast.success(
-        "Both Original Question and AI Synthesized variant submitted for review!",
+        "Both Original Question and AI Synthesized variant saved to Question Bank!",
       );
       handleBackNav();
     } catch (err: any) {
@@ -492,10 +467,7 @@ export default function AddQuestion() {
     try {
       // Preserve Original Base Question in DB
       await axiosPrivate
-        .post("/questions/create", {
-          ...originalPayload,
-          status: "PENDING_REVIEW",
-        })
+        .post("/questions/create", originalPayload)
         .catch(() => {});
 
       // Save AI Synthesized Question
@@ -874,7 +846,6 @@ export default function AddQuestion() {
           difficulty: (difficulty as "EASY" | "MEDIUM" | "HARD") || "MEDIUM",
           type: (format as "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER") || "MCQ",
           categoryId,
-          status,
         }}
         onSaveBoth={handleSaveBoth}
         onSaveSynthesizedOnly={handleSaveSynthesizedOnly}

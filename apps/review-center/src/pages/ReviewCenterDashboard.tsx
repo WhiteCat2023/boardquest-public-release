@@ -1,4 +1,4 @@
-import { useReviewCenterAuth } from "../context/ReviewCenterAuthProvider";
+import { useReviewCenterAuth } from "../hooks/useReviewCenterAuth";
 import {
   Building2,
   LogOut,

@@ -86,11 +86,23 @@ export function useToggleFacultyStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      return await axiosPrivate.patch(`/faculty/${id}/status`, { isActive });
+    mutationFn: async ({
+      id,
+      accountStatus,
+      isActive,
+    }: {
+      id: string;
+      accountStatus?: "ACTIVE" | "DEACTIVATED" | string;
+      isActive?: boolean;
+    }) => {
+      return await axiosPrivate.patch(`/faculty/${id}/status`, {
+        accountStatus,
+        isActive,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
+      queryClient.invalidateQueries({ queryKey: ["faculty"] });
     },
   });
 }

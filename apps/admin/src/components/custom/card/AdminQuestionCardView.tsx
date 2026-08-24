@@ -1,6 +1,6 @@
-import { QuestionStatus, UserRole, type Question } from '../../../types/question';
+import { UserRole, type Question } from '../../../types/question';
 import { Tag, Eye, Trash2, Edit } from 'lucide-react';
-import { getDifficultyColor, getInitials, getStatusColor } from '@/utils/style';
+import { getDifficultyColor, getInitials } from '@/utils/style';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
@@ -28,7 +28,7 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
 
   const isAuthor = authorId === currentUserId;
   const canEdit = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.DEAN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor);
-  const canDelete = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.DEAN || (currentUserRole === UserRole.TEACHER && isAuthor);
+  const canDelete = currentUserRole === UserRole.SUPERADMIN || currentUserRole === UserRole.DEAN || currentUserRole === UserRole.TEAMLEAD || (currentUserRole === UserRole.TEACHER && isAuthor);
 
   return (
     <Card className="w-full border-border shadow-xs font-sans bg-card text-foreground overflow-hidden flex flex-col">
@@ -43,15 +43,6 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
               {item?.category?.name || 'Subject'}
             </span>
           </div>
-          <div className="flex flex-col gap-1 items-end">
-            <div
-              className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(
-                item?.status
-              )}`}
-            >
-              {item?.status}
-            </div>
-          </div>
         </div>
       </CardHeader>
 
@@ -61,8 +52,6 @@ export default function AdminQuestionCard({ item, onView, onDelete }: AQCardProp
           <h3 className="text-base font-bold leading-snug text-foreground">
             {item?.text || (item as any)?.question}
           </h3>
-
-
         </div>
 
         {/* Tags Row */}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate } from "@/utils/dateUtils";
+import useAuth from "@/hooks/useAuth";
 import {
   useCategoryDetail,
   useUpdateCategory,
@@ -11,7 +11,6 @@ import {
   useDeleteLearningModule,
   type LearningModule,
 } from "@/features/question-bank";
-import useAuth from "@/hooks/useAuth";
 
 import SubjectHeader from "../components/subject-details/SubjectHeader";
 import SubjectOverviewTab from "../components/subject-details/SubjectOverviewTab";
@@ -51,15 +50,7 @@ export default function SubjectDetailsPage() {
 
   // Module Modal States
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
-  const [moduleTitle, setModuleTitle] = useState("");
-  const [moduleDescription, setModuleDescription] = useState("");
-  const [moduleFileUrl, setModuleFileUrl] = useState("");
-
   const [editingModule, setEditingModule] = useState<LearningModule | null>(null);
-  const [editModuleTitle, setEditModuleTitle] = useState("");
-  const [editModuleDescription, setEditModuleDescription] = useState("");
-  const [editModuleFileUrl, setEditModuleFileUrl] = useState("");
-
   const [deletingModule, setDeletingModule] = useState<LearningModule | null>(null);
 
   // Subject Edit Modal State
@@ -97,54 +88,31 @@ export default function SubjectDetailsPage() {
     );
   };
 
-  const handleCreateModuleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!moduleTitle.trim()) return;
-
-    createModuleMutation.mutate(
-      {
-        title: moduleTitle.trim(),
-        description: moduleDescription.trim() || undefined,
-        fileUrl: moduleFileUrl.trim() || undefined,
-        order: modules.length + 1,
-      },
-      {
-        onSuccess: () => {
-          setModuleTitle("");
-          setModuleDescription("");
-          setModuleFileUrl("");
-          setIsAddModuleOpen(false);
-        },
-      }
-    );
+  const handleCreateModuleSubmit = async (data: {
+    title: string;
+    description?: string;
+    fileUrls?: string[];
+  }) => {
+    await createModuleMutation.mutateAsync({
+      title: data.title,
+      description: data.description,
+      fileUrls: data.fileUrls,
+      order: modules.length + 1,
+    });
   };
 
-  const handleOpenEditModule = (mod: LearningModule) => {
-    setEditingModule(mod);
-    setEditModuleTitle(mod.title);
-    setEditModuleDescription(mod.description || "");
-    setEditModuleFileUrl(mod.fileUrl || "");
-  };
-
-  const handleUpdateModuleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingModule || !editModuleTitle.trim()) return;
-
-    updateModuleMutation.mutate(
-      {
-        moduleId: editingModule.id,
-        data: {
-          title: editModuleTitle.trim(),
-          description: editModuleDescription.trim() || undefined,
-          fileUrl: editModuleFileUrl.trim() || undefined,
-        },
-      },
-      {
-        onSuccess: () => {
-          setEditingModule(null);
-        },
-      }
-    );
+  const handleUpdateModuleSubmit = async (
+    moduleId: string,
+    data: {
+      title: string;
+      description?: string;
+      fileUrls?: string[];
+    }
+  ) => {
+    await updateModuleMutation.mutateAsync({
+      moduleId,
+      data,
+    });
   };
 
   const handleDeleteModuleConfirm = () => {
@@ -152,6 +120,19 @@ export default function SubjectDetailsPage() {
     deleteModuleMutation.mutate(deletingModule.id, {
       onSuccess: () => setDeletingModule(null),
     });
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Invalid date";
+    }
   };
 
   return (
@@ -191,7 +172,7 @@ export default function SubjectDetailsPage() {
           isModulesLoading={isModulesLoading}
           canManage={canManage}
           onAddModule={() => setIsAddModuleOpen(true)}
-          onEditModule={handleOpenEditModule}
+          onEditModule={setEditingModule}
           onDeleteModule={setDeletingModule}
         />
       )}
@@ -216,14 +197,8 @@ export default function SubjectDetailsPage() {
           isOpen={isAddModuleOpen}
           onOpenChange={setIsAddModuleOpen}
           categoryName={category?.name}
-          moduleTitle={moduleTitle}
-          onModuleTitleChange={setModuleTitle}
-          moduleDescription={moduleDescription}
-          onModuleDescriptionChange={setModuleDescription}
-          moduleFileUrl={moduleFileUrl}
-          onModuleFileUrlChange={setModuleFileUrl}
           isPending={createModuleMutation.isPending}
-          onSubmit={handleCreateModuleSubmit}
+          onSubmitModule={handleCreateModuleSubmit}
         />
       )}
 
@@ -232,14 +207,8 @@ export default function SubjectDetailsPage() {
         <EditModuleModal
           editingModule={editingModule}
           onOpenChange={(open) => !open && setEditingModule(null)}
-          editModuleTitle={editModuleTitle}
-          onEditModuleTitleChange={setEditModuleTitle}
-          editModuleDescription={editModuleDescription}
-          onEditModuleDescriptionChange={setEditModuleDescription}
-          editModuleFileUrl={editModuleFileUrl}
-          onEditModuleFileUrlChange={setEditModuleFileUrl}
           isPending={updateModuleMutation.isPending}
-          onSubmit={handleUpdateModuleSubmit}
+          onUpdateModule={handleUpdateModuleSubmit}
         />
       )}
 

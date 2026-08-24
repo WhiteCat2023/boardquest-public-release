@@ -2,7 +2,9 @@ import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
 export const authenticateReviewCenterToken = async (req, res, next) => {
     try {
-        let token = req.cookies?.rc_accessToken || req.cookies?.accessToken || req.cookies?.token;
+        let token = req.cookies?.rc_accessToken ||
+            req.cookies?.accessToken ||
+            req.cookies?.token;
         if (!token) {
             const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -33,16 +35,27 @@ export const authenticateReviewCenterToken = async (req, res, next) => {
                 name: true,
                 companyName: true,
                 reviewCenterId: true,
+                accountStatus: true,
                 isActive: true,
             },
         });
-        if (!repUser || !repUser.isActive) {
-            res.status(401).json({
-                message: "Review Center Representative user not found or inactive",
-                error: "USER_NOT_FOUND",
+        const accountStatus = repUser?.accountStatus;
+        if (!repUser || accountStatus === "DEACTIVATED") {
+            res.status(403).json({
+                message: "Your account has been deactivated. Please contact your administrator for assistance.",
+                error: "ACCOUNT_DEACTIVATED",
             });
             return;
         }
+        // Update lastActiveAt asynchronously
+        prisma.reviewCenterRepresentativeUser
+            .update({
+            where: { id: repUser.id },
+            data: {
+                lastActiveAt: new Date(),
+            },
+        })
+            .catch((err) => console.error("Error updating rep active status:", err));
         req.user = {
             ...repUser,
             role: "REVIEW_CENTER_REPRESENTATIVE",

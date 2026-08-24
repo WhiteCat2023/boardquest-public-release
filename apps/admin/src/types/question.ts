@@ -18,12 +18,6 @@ export enum QuestionType {
   SHORT_ANSWER = "SHORT_ANSWER",
 }
 
-export enum QuestionStatus {
-  APPROVED = "APPROVED",
-  PENDING_REVIEW = "PENDING_REVIEW",
-  PENDING_REVISION = "PENDING_REVISION",
-}
-
 export interface Question {
   id: string;
   text?: string;
@@ -38,7 +32,6 @@ export interface Question {
   choices?: string[];
   choiceImages?: string[];
   correctAnswer: string;
-  status: QuestionStatus;
   createdAt: string;
 }
 

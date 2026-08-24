@@ -70,12 +70,18 @@ export default function UserProfileWidget() {
               </span>
             </div>
 
-            <Avatar className="h-9 w-9 border border-border shadow-2xs group-hover:border-primary/30 transition-colors bg-muted">
-              <AvatarImage src="" alt={userName} />
-              <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-9 w-9 border border-border shadow-2xs group-hover:border-primary/30 transition-colors bg-muted">
+                <AvatarImage src="" alt={userName} />
+                <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background ring-1 ring-emerald-500/20"
+                title="Active now"
+              />
+            </div>
 
             <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </button>
@@ -87,11 +93,17 @@ export default function UserProfileWidget() {
         >
           {/* User Details Header */}
           <DropdownMenuLabel className="p-3 bg-muted/50 border border-border rounded-xl mb-1 flex items-start gap-3">
-            <Avatar className="h-10 w-10 border border-border bg-primary/10 text-primary shrink-0">
-              <AvatarFallback className="font-extrabold text-xs bg-primary/10 text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative shrink-0">
+              <Avatar className="h-10 w-10 border border-border bg-primary/10 text-primary">
+                <AvatarFallback className="font-extrabold text-xs bg-primary/10 text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-card"
+                title="Active now"
+              />
+            </div>
 
             <div className="flex flex-col overflow-hidden min-w-0">
               <span className="text-sm font-bold text-foreground truncate leading-snug">

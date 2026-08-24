@@ -21,7 +21,7 @@ export const updateCategorySchema = z.object({
 export const createModuleSchema = z.object({
   title: z.string().min(1, "Module title is required"),
   description: z.string().optional(),
-  fileUrl: z.string().optional(),
+  fileUrls: z.array(z.string()).optional().default([]),
   order: z.number().optional(),
   isPublished: z.boolean().optional(),
   authorId: z.string().optional(),
@@ -30,7 +30,7 @@ export const createModuleSchema = z.object({
 export const updateModuleSchema = z.object({
   title: z.string().min(1, "Module title is required").optional(),
   description: z.string().optional(),
-  fileUrl: z.string().optional(),
+  fileUrls: z.array(z.string()).optional(),
   order: z.number().optional(),
   isPublished: z.boolean().optional(),
 });
@@ -299,14 +299,14 @@ export class CategoryService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { title, description, fileUrl, order, isPublished, authorId } =
+    const { title, description, fileUrls = [], order, isPublished, authorId } =
       parsed.data;
 
     const module = await (this.db as any).learningModule.create({
       data: {
         title: title.trim(),
         description: description?.trim() || null,
-        fileUrl: fileUrl?.trim() || null,
+        fileUrls: fileUrls || [],
         order: order ?? 0,
         isPublished: isPublished ?? true,
         categoryId,
@@ -331,12 +331,18 @@ export class CategoryService {
       throw new ApiError(404, "Learning module not found");
     }
 
+    const updatePayload: any = {
+      ...parsed.data,
+      ...(parsed.data.title ? { title: parsed.data.title.trim() } : {}),
+    };
+
+    if (parsed.data.fileUrls !== undefined) {
+      updatePayload.fileUrls = parsed.data.fileUrls;
+    }
+
     const updated = await (this.db as any).learningModule.update({
       where: { id: moduleId },
-      data: {
-        ...parsed.data,
-        ...(parsed.data.title ? { title: parsed.data.title.trim() } : {}),
-      },
+      data: updatePayload,
     });
 
     return updated;

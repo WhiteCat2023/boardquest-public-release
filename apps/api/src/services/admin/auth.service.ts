@@ -3,9 +3,7 @@ import { hashedPassword, verifyPassword } from "../../utils/hash";
 import { signJWT, verifyJWT } from "../../utils/jwt.utils";
 import { sendPasswordResetEmail } from "../mail.service";
 import prisma from "../prisma";
-import {
-  ensureSuperAdminExists,
-} from "./bootstrap.service";
+import { ensureSuperAdminExists } from "./bootstrap.service";
 import {
   superAdminCredentials,
   getSuperAdminProfile,
@@ -51,12 +49,12 @@ export const createAdminUserSchema = z
     (data) =>
       Boolean(
         (data.name && data.name.trim().length > 0) ||
-          (data.firstName && data.firstName.trim().length > 0) ||
-          (data.lastName && data.lastName.trim().length > 0)
+        (data.firstName && data.firstName.trim().length > 0) ||
+        (data.lastName && data.lastName.trim().length > 0),
       ),
     {
       message: "First name and last name, or full name, are required",
-    }
+    },
   );
 
 export const loginSchema = z.object({
@@ -132,12 +130,15 @@ export class AuthService {
       if (dbSuperAdmin) {
         return {
           id: dbSuperAdmin.id,
-          employeeId: dbSuperAdmin.employeeId || superAdminCredentials.employeeId,
+          employeeId:
+            dbSuperAdmin.employeeId || superAdminCredentials.employeeId,
           email: dbSuperAdmin.email,
           name: dbSuperAdmin.name,
           role: "SUPERADMIN" as const,
-          phoneNumber: dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
+          phoneNumber:
+            dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
           location: "Main HQ",
+          accountStatus: "ACTIVE",
           isActive: true,
           lastActiveAt: new Date(),
           createdAt: dbSuperAdmin.createdAt,
@@ -157,6 +158,7 @@ export class AuthService {
         name: true,
         role: true,
         phoneNumber: true,
+        accountStatus: true,
         isActive: true,
         lastActiveAt: true,
         createdAt: true,
@@ -172,11 +174,13 @@ export class AuthService {
     });
 
     if (!user) {
-      const isRep = await this.db.reviewCenterRepresentativeUser.findUnique({ where: { email } });
+      const isRep = await this.db.reviewCenterRepresentativeUser.findUnique({
+        where: { email },
+      });
       if (isRep) {
         throw new ApiError(
           403,
-          "External Review Center accounts cannot access the admin management portal. Please log in via the Review Center portal."
+          "External Review Center accounts cannot access the admin management portal. Please log in via the Review Center portal.",
         );
       }
       throw new ApiError(401, "Invalid email or password");
@@ -190,6 +194,14 @@ export class AuthService {
       throw new ApiError(401, "Invalid email or password");
     }
 
+    const accountStatus = user.accountStatus!;
+    if (accountStatus === "DEACTIVATED") {
+      throw new ApiError(
+        403,
+        "Your account has been deactivated. Please contact your administrator for assistance.",
+      );
+    }
+
     await this.db.adminUser.update({
       where: { id: user.id },
       data: {
@@ -198,7 +210,11 @@ export class AuthService {
       },
     });
     const { password: _password, ...sanitizeUser } = user;
-    return sanitizeUser;
+    return {
+      ...sanitizeUser,
+      accountStatus,
+      isActive: true,
+    };
   }
 
   async createNewAdminUser(data: addNewAdminUserInput) {

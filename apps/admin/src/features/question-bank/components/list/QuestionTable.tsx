@@ -10,8 +10,8 @@ import {
 import {
   Table,
   TableHeader,
-  TableBody,
   TableHead,
+  TableBody,
   TableRow,
   TableCell,
 } from '@/components/ui/table';
@@ -27,17 +27,9 @@ interface QuestionTableProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   canManageBulk: boolean;
-  onApprove?: () => void;
-  onFeedback: () => void;
-  onResubmitReview?: () => void;
   onBulkDelete: () => void;
   onClear: () => void;
-  isApprovePending?: boolean;
-  isFeedbackPending: boolean;
-  isResubmitPending?: boolean;
   isDeletePending: boolean;
-  isRevisionsView?: boolean;
-  isBankView?: boolean;
 }
 
 export default function QuestionTable({
@@ -49,17 +41,9 @@ export default function QuestionTable({
   itemsPerPage,
   onItemsPerPageChange,
   canManageBulk,
-  onApprove,
-  onFeedback,
-  onResubmitReview,
   onBulkDelete,
   onClear,
-  isApprovePending,
-  isFeedbackPending,
-  isResubmitPending,
   isDeletePending,
-  isRevisionsView = false,
-  isBankView = false,
 }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
@@ -73,9 +57,8 @@ export default function QuestionTable({
     currentUserRole,
     onView,
     onDelete,
-    onFeedback,
     navigate,
-  }), [currentUserId, currentUserRole, onView, onDelete, onFeedback, navigate]);
+  }), [currentUserId, currentUserRole, onView, onDelete, navigate]);
 
   const table = useReactTable({
     data: questions,
@@ -100,17 +83,9 @@ export default function QuestionTable({
           canManageBulk={canManageBulk}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
-          onApprove={onApprove}
-          onFeedback={onFeedback}
-          onResubmitReview={onResubmitReview}
           onDelete={onBulkDelete}
           onClear={onClear}
-          isApprovePending={isApprovePending}
-          isFeedbackPending={isFeedbackPending}
-          isResubmitPending={isResubmitPending}
           isDeletePending={isDeletePending}
-          isRevisionsView={isRevisionsView}
-          isBankView={isBankView}
         />
 
         <Table className="w-full table-fixed lg:table-auto">

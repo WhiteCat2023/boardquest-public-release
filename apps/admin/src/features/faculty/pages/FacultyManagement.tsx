@@ -128,7 +128,11 @@ export default function FacultyManagement() {
 
     const nextStatus = !currentStatus;
     toggleStatusMutation.mutate(
-      { id: memberId, isActive: nextStatus },
+      {
+        id: memberId,
+        accountStatus: nextStatus ? "ACTIVE" : "DEACTIVATED",
+        isActive: nextStatus,
+      },
       {
         onSuccess: () => {
           toast.success(

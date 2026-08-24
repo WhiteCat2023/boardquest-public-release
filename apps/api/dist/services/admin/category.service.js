@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { ensureSuperAdminExists } from "./bootstrap.service";
+import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
 // ============ Validation Schemas ============
 export const createNewCategorySchema = z.object({
     name: z.string().min(1, "Category name is required"),
@@ -16,7 +17,7 @@ export const updateCategorySchema = z.object({
 export const createModuleSchema = z.object({
     title: z.string().min(1, "Module title is required"),
     description: z.string().optional(),
-    fileUrl: z.string().optional(),
+    fileUrls: z.array(z.string()).optional().default([]),
     order: z.number().optional(),
     isPublished: z.boolean().optional(),
     authorId: z.string().optional(),
@@ -24,7 +25,7 @@ export const createModuleSchema = z.object({
 export const updateModuleSchema = z.object({
     title: z.string().min(1, "Module title is required").optional(),
     description: z.string().optional(),
-    fileUrl: z.string().optional(),
+    fileUrls: z.array(z.string()).optional(),
     order: z.number().optional(),
     isPublished: z.boolean().optional(),
 });
@@ -83,7 +84,7 @@ export class CategoryService {
         return newCategory;
     }
     async getAllCategories(options) {
-        const { isPublished, status, authorId, handledCategoryIds, userRole, userId } = options || {};
+        const { isPublished, status, authorId, handledCategoryIds, userRole, userId, search } = options || {};
         const questionWhere = {};
         if (isPublished !== undefined && isPublished !== "") {
             const isPublishedBool = typeof isPublished === "boolean"
@@ -96,12 +97,15 @@ export class CategoryService {
         }
         if (authorId) {
             let targetAuthorId = authorId;
-            if (targetAuthorId === "superadmin-env-id") {
-                targetAuthorId = "507f1f77bcf86cd799439011";
+            if (isSuperAdmin(targetAuthorId)) {
+                targetAuthorId = superAdminCredentials.id;
             }
             questionWhere.authorId = targetAuthorId;
         }
         const categoryWhere = {};
+        if (search && search.trim()) {
+            categoryWhere.name = { contains: search.trim(), mode: "insensitive" };
+        }
         if (userRole === "TEACHER") {
             categoryWhere.OR = [
                 { id: { in: handledCategoryIds || [] } },
@@ -235,12 +239,12 @@ export class CategoryService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { title, description, fileUrl, order, isPublished, authorId } = parsed.data;
+        const { title, description, fileUrls = [], order, isPublished, authorId } = parsed.data;
         const module = await this.db.learningModule.create({
             data: {
                 title: title.trim(),
                 description: description?.trim() || null,
-                fileUrl: fileUrl?.trim() || null,
+                fileUrls: fileUrls || [],
                 order: order ?? 0,
                 isPublished: isPublished ?? true,
                 categoryId,
@@ -261,12 +265,16 @@ export class CategoryService {
         if (!existing) {
             throw new ApiError(404, "Learning module not found");
         }
+        const updatePayload = {
+            ...parsed.data,
+            ...(parsed.data.title ? { title: parsed.data.title.trim() } : {}),
+        };
+        if (parsed.data.fileUrls !== undefined) {
+            updatePayload.fileUrls = parsed.data.fileUrls;
+        }
         const updated = await this.db.learningModule.update({
             where: { id: moduleId },
-            data: {
-                ...parsed.data,
-                ...(parsed.data.title ? { title: parsed.data.title.trim() } : {}),
-            },
+            data: updatePayload,
         });
         return updated;
     }

@@ -20,6 +20,8 @@ export interface FacultyMember {
   location?: string;
   handledCategories?: Category[];
   handledCategoryIds?: string[];
+  accountStatus?: "ACTIVE" | "DEACTIVATED" | string;
+  account_status?: "ACTIVE" | "DEACTIVATED" | string;
   isActive?: boolean;
   lastActiveAt?: string;
   createdAt: string;

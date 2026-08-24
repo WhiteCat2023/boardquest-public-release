@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { signJWT, verifyJWT } from "../../utils/jwt.utils";
 import prisma from "../../services/prisma";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
+import { isSuperAdmin } from "../../config/credentials";
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
 //   var accesstoken = "";
@@ -25,12 +26,12 @@ export const login = asyncHandler(async (req, res) => {
         user = await authService.login(req.body);
     }
     catch (err) {
-        const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+        const attemptedEmail = req.body?.email || "unknown";
         await logWarn("AUTH_LOGIN_FAILED", `Failed login attempt for account "${attemptedEmail}". ${err.message || "Invalid credentials"}.`, "AuthService", attemptedEmail, req.ip, { error: err.message });
         throw err;
     }
     if (!user) {
-        const attemptedEmail = req.body?.email || req.body?.username || "unknown";
+        const attemptedEmail = req.body?.email || "unknown";
         await logWarn("AUTH_LOGIN_FAILED", `Failed login attempt for account "${attemptedEmail}". Invalid credentials.`, "AuthService", attemptedEmail, req.ip);
         throw new ApiError(401, "Invalid credentials");
     }
@@ -64,7 +65,7 @@ export const logout = async (req, res) => {
         if (token) {
             const { payload } = verifyJWT(token);
             const userId = payload?.id;
-            if (userId && userId !== "superadmin-env-id") {
+            if (userId && !isSuperAdmin(userId)) {
                 await prisma.adminUser
                     .update({
                     where: { id: userId },

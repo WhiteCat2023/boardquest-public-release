@@ -20,8 +20,6 @@ export interface QuestionBankFilter {
   setSelectedDifficulty: (difficulty: string) => void;
   selectedType: string;
   setSelectedType: (type: string) => void;
-  selectedStatus: string;
-  setSelectedStatus: (status: string) => void;
 }
 
 export const useQuestionBankFilterStore = create<QuestionBankFilter>((set) => ({
@@ -29,13 +27,11 @@ export const useQuestionBankFilterStore = create<QuestionBankFilter>((set) => ({
   selectedCategory: "",
   selectedDifficulty: "",
   selectedType: "",
-  selectedStatus: "ALL",
   setSearch: (search: string) => set({ search }),
   setSelectedCategory: (selectedCategory: string) => set({ selectedCategory }),
   setSelectedDifficulty: (selectedDifficulty: string) =>
     set({ selectedDifficulty }),
   setSelectedType: (selectedType: string) => set({ selectedType }),
-  setSelectedStatus: (selectedStatus: string) => set({ selectedStatus }),
 }));
 
 export const useQuestionBankStore = create<QuestionBankStore>((set) => ({
@@ -58,9 +54,6 @@ interface QuestionFormStore {
 
   questionWording: string;
   setQuestionWording: (questionWording: string) => void;
-
-  status: string;
-  setStatus: (status: string) => void;
 }
 
 export const useQuestionFormStore = create<QuestionFormStore>((set) => ({
@@ -74,8 +67,6 @@ export const useQuestionFormStore = create<QuestionFormStore>((set) => ({
   setFormat: (format: string) => set({ format }),
   questionWording: "",
   setQuestionWording: (questionWording: string) => set({ questionWording }),
-  status: "",
-  setStatus: (status: string) => set({ status }),
 }));
 
 interface MCQFormStore {

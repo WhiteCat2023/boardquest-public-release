@@ -6,7 +6,9 @@ export async function getNotificationsHandler(req, res) {
         const role = req.user?.role;
         const unreadOnly = req.query.unreadOnly === "true";
         const limit = req.query.limit ? parseInt(req.query.limit, 10) : 50;
-        const notifications = await getUserNotifications({ userId, role, unreadOnly, limit });
+        const search = req.query.search ? String(req.query.search) : undefined;
+        const type = req.query.type ? String(req.query.type) : undefined;
+        const notifications = await getUserNotifications({ userId, role, unreadOnly, limit, search, type });
         const unreadCount = notifications.filter((n) => !n.isRead).length;
         return res.status(200).json({
             success: true,

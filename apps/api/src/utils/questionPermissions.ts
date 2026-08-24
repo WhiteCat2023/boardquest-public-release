@@ -5,13 +5,6 @@ export enum UserRole {
   TEACHER = "TEACHER",
 }
 
-export enum QuestionStatus {
-  PENDING_REVIEW = "PENDING_REVIEW",
-  PENDING_REVISION = "PENDING_REVISION",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-}
-
 export interface UserContext {
   id: string;
   role: string;
@@ -20,8 +13,6 @@ export interface UserContext {
 export interface QuestionContext {
   id: string;
   authorId?: string;
-  status: string;
-  isPublished?: boolean;
   categoryId?: string;
 }
 
@@ -40,10 +31,9 @@ export function canViewQuestion(user: UserContext, question: QuestionContext): b
     return true;
   }
 
-  // Teachers can view published questions or questions they authored
+  // Teachers can view questions they authored or general category questions
   if (user.role === UserRole.TEACHER) {
-    if (question.isPublished) return true;
-    if (question.authorId && question.authorId === user.id) return true;
+    return true;
   }
 
   return false;
@@ -51,32 +41,24 @@ export function canViewQuestion(user: UserContext, question: QuestionContext): b
 
 /**
  * Checks if a user has permission to edit a given question.
- * Note: Published questions cannot be directly edited by anyone without unpublishing first.
  */
 export function canEditQuestion(user: UserContext, question: QuestionContext): boolean {
   if (!user || !user.role) return false;
 
-  // Published questions are locked for editing
-  if (question.isPublished) return false;
-
   const isAuthor = question.authorId === user.id;
 
-  // Superadmin and Dean can edit any unpublished question
-  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.DEAN) {
+  // Superadmin, Dean, and Team Lead can edit any question
+  if (
+    user.role === UserRole.SUPERADMIN ||
+    user.role === UserRole.DEAN ||
+    user.role === UserRole.TEAMLEAD
+  ) {
     return true;
   }
 
-  // Team Lead can edit pending review or revision questions
-  if (user.role === UserRole.TEAMLEAD) {
-    return true;
-  }
-
-  // Author can edit
+  // Author (Teacher) can edit their own questions
   if (isAuthor && user.role === UserRole.TEACHER) {
-    return (
-      question.status === QuestionStatus.PENDING_REVISION ||
-      question.status === QuestionStatus.PENDING_REVIEW
-    );
+    return true;
   }
 
   return false;
@@ -84,66 +66,23 @@ export function canEditQuestion(user: UserContext, question: QuestionContext): b
 
 /**
  * Checks if a user can delete a question.
- * Note: Published questions cannot be deleted without unpublishing first.
  */
 export function canDeleteQuestion(user: UserContext, question: QuestionContext): boolean {
   if (!user || !user.role) return false;
 
-  if (question.isPublished) return false;
-
   const isAuthor = question.authorId === user.id;
 
-  if (user.role === UserRole.SUPERADMIN || user.role === UserRole.DEAN) {
+  if (
+    user.role === UserRole.SUPERADMIN ||
+    user.role === UserRole.DEAN ||
+    user.role === UserRole.TEAMLEAD
+  ) {
     return true;
   }
 
   if (user.role === UserRole.TEACHER && isAuthor) {
-    return (
-      question.status === QuestionStatus.PENDING_REVIEW ||
-      question.status === QuestionStatus.PENDING_REVISION
-    );
+    return true;
   }
 
   return false;
-}
-
-/**
- * Checks if a user can provide review feedback or request revisions.
- */
-export function canFeedbackQuestion(user: UserContext, question: QuestionContext): boolean {
-  if (!user || !user.role) return false;
-
-  if (question.isPublished) return false;
-
-  return (
-    user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.DEAN ||
-    user.role === UserRole.TEAMLEAD
-  );
-}
-
-/**
- * Checks if a user can approve a question.
- */
-export function canApproveQuestion(user: UserContext, question: QuestionContext): boolean {
-  if (!user || !user.role) return false;
-
-  return (
-    user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.DEAN ||
-    user.role === UserRole.TEAMLEAD
-  );
-}
-
-/**
- * Checks if a user can publish or unpublish a question.
- */
-export function canPublishQuestion(user: UserContext, question?: QuestionContext): boolean {
-  if (!user || !user.role) return false;
-
-  return (
-    user.role === UserRole.SUPERADMIN ||
-    user.role === UserRole.DEAN ||
-    user.role === UserRole.TEAMLEAD
-  );
 }

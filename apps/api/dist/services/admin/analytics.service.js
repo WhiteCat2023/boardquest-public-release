@@ -17,6 +17,17 @@ export class AnalyticsService {
                 lessonCompletions: true,
                 achievements: { orderBy: { timestamp: "desc" } },
                 studyPlans: { orderBy: { targetDate: "asc" } },
+                userBadges: {
+                    where: {
+                        badge: {
+                            isActive: true,
+                        },
+                    },
+                    include: {
+                        badge: true,
+                    },
+                    orderBy: { unlockedAt: "desc" },
+                },
             },
         }).catch(() => null);
         if (!student) {
@@ -190,100 +201,35 @@ export class AnalyticsService {
                 timestamp: "Level Milestone"
             });
         }
-        // 5. Construct Achievements & Badges List strictly based on real student data
-        const hasMastery75 = masteryData.some(m => m.proficiency >= 75);
-        const defaultBadges = [
-            {
-                id: "first_step",
-                title: "First Step",
-                description: "Enrolled & completed initial evaluation quest",
-                badge: "bronze",
-                category: "Progression",
-                xp: 100,
-                unlocked: true,
-                unlockedAt: "Enrolled",
-                progress: 100
-            },
-            {
-                id: "sharp_mind",
-                title: "Sharp Mind",
-                description: "Achieved high accuracy (>=80%) on diagnostic evaluations",
-                badge: "sparkles",
-                category: "Excellence",
-                xp: 200,
-                unlocked: avgAccuracy >= 80 || (student.level || 1) >= 2 || (student.xp || 0) >= 100,
-                unlockedAt: (avgAccuracy >= 80 || (student.level || 1) >= 2 || (student.xp || 0) >= 100) ? "Earned Recently" : undefined,
-                progress: Math.min(100, Math.round(((avgAccuracy || (student.level || 1) * 40) / 80) * 100))
-            },
-            {
-                id: "on_fire",
-                title: "On Fire",
-                description: "Maintained an active evaluation streak (>=3 days)",
-                badge: "flame",
-                category: "Consistency",
-                xp: 200,
-                unlocked: (student.streak || 0) >= 3 || (student.level || 1) >= 2,
-                unlockedAt: ((student.streak || 0) >= 3 || (student.level || 1) >= 2) ? "Earned Recently" : undefined,
-                progress: Math.min(100, Math.round(((student.streak || 0) / 3) * 100))
-            },
-            {
-                id: "perfectionist",
-                title: "Perfectionist",
-                description: "Scored top marks (>=90%) in board subject evaluations",
-                badge: "award",
-                category: "Precision",
-                xp: 300,
-                unlocked: avgScore >= 90 || (student.level || 1) >= 3 || (student.xp || 0) >= 250,
-                unlockedAt: (avgScore >= 90 || (student.level || 1) >= 3 || (student.xp || 0) >= 250) ? "Earned Recently" : undefined,
-                progress: Math.min(100, Math.round(((avgScore || (student.level || 1) * 30) / 90) * 100))
-            },
-            {
-                id: "subject_master",
-                title: "Subject Master",
-                description: "Achieved mastery proficiency (>=75%) in major board subject",
-                badge: "crown",
-                category: "Subject Mastery",
-                xp: 400,
-                unlocked: hasMastery75 || (student.level || 1) >= 4 || (student.xp || 0) >= 400,
-                unlockedAt: (hasMastery75 || (student.level || 1) >= 4 || (student.xp || 0) >= 400) ? "Level Milestone" : undefined,
-                progress: Math.min(100, Math.round(((student.level || 1) / 4) * 100))
-            },
-            {
-                id: "unstoppable",
-                title: "Unstoppable",
-                description: "Maintained an extended study streak (>=7 days) & accumulated XP",
-                badge: "zap",
-                category: "Dedication",
-                xp: 500,
-                unlocked: (student.streak || 0) >= 7 || (student.xp || 0) >= 500 || (student.level || 1) >= 5,
-                unlockedAt: ((student.streak || 0) >= 7 || (student.xp || 0) >= 500 || (student.level || 1) >= 5) ? "Earned Recently" : undefined,
-                progress: Math.min(100, Math.round(((student.streak || 0) / 7) * 100))
-            },
-            {
-                id: "decennial",
-                title: "Decennial Scholar",
-                description: "Reached elite academic level status (Level 10+ or XP >= 1000)",
-                badge: "diamond",
-                category: "Elite Status",
-                xp: 1000,
-                unlocked: (student.level || 1) >= 10 || (student.xp || 0) >= 1000,
-                unlockedAt: ((student.level || 1) >= 10 || (student.xp || 0) >= 1000) ? "Level Milestone" : undefined,
-                progress: Math.min(100, Math.round(((student.level || 1) / 10) * 100))
-            }
-        ];
-        // Merge any DB achievements
-        const achievements = defaultBadges.map((b) => {
-            const dbMatch = (student.achievements || []).find((a) => a.task?.toLowerCase().includes(b.title.toLowerCase()));
-            if (dbMatch) {
-                return {
-                    ...b,
-                    unlocked: true,
-                    unlockedAt: new Date(dbMatch.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                    xp: dbMatch.xp || b.xp
-                };
-            }
-            return b;
+        // 5. Construct Achievements & Badges List strictly based on active DB badges & student records
+        const activeDbBadges = await this.db.badge.findMany({
+            where: { isActive: true },
+            orderBy: { createdAt: "asc" },
         });
+        let achievements = [];
+        if (activeDbBadges.length > 0) {
+            const studentUserBadges = Array.isArray(student.userBadges) ? student.userBadges : [];
+            const studentAchievements = Array.isArray(student.achievements) ? student.achievements : [];
+            achievements = activeDbBadges.map((badge) => {
+                const matchedUserBadge = studentUserBadges.find((ub) => ub.badgeId === badge.id ||
+                    ub.badgeSlug?.toLowerCase() === badge.badgeId?.toLowerCase());
+                const matchedAchievement = studentAchievements.find((a) => a.badge?.toLowerCase() === badge.badgeId?.toLowerCase() ||
+                    (badge.name && a.task?.toLowerCase().includes(badge.name.toLowerCase())));
+                const isUnlocked = Boolean(matchedUserBadge || matchedAchievement);
+                const unlockedAtDate = matchedUserBadge?.unlockedAt || matchedAchievement?.timestamp;
+                return {
+                    id: badge.id || badge.badgeId,
+                    title: badge.title || badge.name,
+                    description: badge.description || badge.unlockCondition || "Earned through excellence",
+                    badge: badge.icon || "trophy",
+                    category: badge.category || "General",
+                    xp: badge.xpReward || 50,
+                    unlocked: isUnlocked,
+                    unlockedAt: isUnlocked && unlockedAtDate ? new Date(unlockedAtDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : undefined,
+                    progress: isUnlocked ? 100 : Math.min(90, Math.round(((student.level || 1) * 20))),
+                };
+            });
+        }
         // 6. Question Difficulty Breakdown strictly derived from actual student exam attempts
         let easyAttempted = 0, easyCorrect = 0;
         let mediumAttempted = 0, mediumCorrect = 0;

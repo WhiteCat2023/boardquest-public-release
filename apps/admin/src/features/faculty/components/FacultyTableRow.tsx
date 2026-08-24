@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { Eye, Shield, Power, Clock, Lock, Building2 } from "lucide-react";
 import type { FacultyMember } from "@/features/faculty";
-import { getRoleBadgeColor, isUserOnline } from "@/features/faculty/utils/facultyUtils";
+import {
+  getRoleBadgeColor,
+  isUserOnline,
+} from "@/features/faculty/utils/facultyUtils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -17,11 +20,10 @@ export default function FacultyTableRow({
   canManage,
   onToggleStatus,
 }: FacultyTableRowProps) {
-  const isAccountActive = member?.isActive !== false;
-  const isOnline = isUserOnline(member?.lastActiveAt, member?.isActive);
+  const isAccountActive = member?.accountStatus === "ACTIVE" || member?.accountStatus !== "DEACTIVATED";
+  const isOnline = isUserOnline(member?.lastActiveAt);
   const isSuperAdminAccount =
-    member?.role === "SUPERADMIN" ||
-    member?.employeeId === "SA-0001";
+    member?.role === "SUPERADMIN" || member?.employeeId === "SA-0001";
 
   const formatLastActive = (dateStr?: string) => {
     if (!dateStr) return "Never";
@@ -79,7 +81,7 @@ export default function FacultyTableRow({
         <Badge
           variant="outline"
           className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide uppercase ${getRoleBadgeColor(
-            member.role
+            member.role,
           )}`}
         >
           {member.role === "EXTERNAL" ? (
@@ -90,8 +92,8 @@ export default function FacultyTableRow({
           {member.role === "TEAMLEAD"
             ? "CO-ADMIN"
             : member.role === "EXTERNAL"
-            ? "EXTERNAL PARTNER"
-            : member.role}
+              ? "EXTERNAL PARTNER"
+              : member.role}
         </Badge>
       </TableCell>
 
@@ -147,13 +149,17 @@ export default function FacultyTableRow({
 
           {canManage && !isSuperAdminAccount && (
             <button
-              onClick={() => onToggleStatus(member.id, isAccountActive, member.name)}
+              onClick={() =>
+                onToggleStatus(member.id, isAccountActive, member.name)
+              }
               className={`size-7 p-1 rounded-md transition-all cursor-pointer flex items-center justify-center ${
                 isAccountActive
                   ? "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10"
                   : "text-amber-600 hover:text-emerald-600 hover:bg-emerald-500/10"
               }`}
-              title={isAccountActive ? "Deactivate Account" : "Activate Account"}
+              title={
+                isAccountActive ? "Deactivate Account" : "Activate Account"
+              }
             >
               <Power size={14} />
             </button>
@@ -169,7 +175,9 @@ export default function FacultyTableRow({
           )}
 
           {!canManage && (
-            <span className="text-[10px] text-muted-foreground/40 font-semibold italic ml-1">Locked</span>
+            <span className="text-[10px] text-muted-foreground/40 font-semibold italic ml-1">
+              Locked
+            </span>
           )}
         </div>
       </TableCell>

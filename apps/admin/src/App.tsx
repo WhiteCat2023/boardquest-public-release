@@ -6,6 +6,7 @@ import { PersistentSession } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
 import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalModalContainer } from "@/components/modal";
 
 // Lazy-loaded page components for optimal bundle splitting
 const LoginPage = lazy(() =>
@@ -76,11 +77,6 @@ const SubjectDetailsPage = lazy(() =>
 
 const MyQuestions = lazy(() =>
   import("@/features/question-bank").then((m) => ({ default: m.MyQuestions })),
-);
-const ReviewQuestions = lazy(() =>
-  import("@/features/question-bank").then((m) => ({
-    default: m.ReviewQuestions,
-  })),
 );
 const SharedLibrary = lazy(() =>
   import("@/features/question-bank").then((m) => ({
@@ -335,14 +331,6 @@ function App() {
                 <Route
                   element={<RequireAuth allowedRoles={["DEAN", "TEAMLEAD"]} />}
                 >
-                  <Route
-                    path="question-bank/review"
-                    element={<ReviewQuestions />}
-                  />
-                  <Route
-                    path="question-bank/review-questions"
-                    element={<ReviewQuestions />}
-                  />
                   <Route path="game-management" element={<GameManagementPage />} />
                   <Route path="leaderboards" element={<LeaderboardPage />} />
                 </Route>
@@ -373,6 +361,7 @@ function App() {
         </Routes>
       </Suspense>
       <Toaster />
+      <GlobalModalContainer />
     </>
   );
 }

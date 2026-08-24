@@ -143,7 +143,7 @@ export default function EnrollStudentPage() {
       
       let firstName = "";
       let lastName = "";
-      let name = "";
+      let name: string;
 
       if (firstNameIdx !== -1 && values[firstNameIdx]) {
         firstName = values[firstNameIdx];

@@ -1,5 +1,5 @@
 import React from "react";
-import { MessageSquare, Trash2, X, SlidersHorizontal, CheckCircle2, RotateCcw } from "lucide-react";
+import { Trash2, X, SlidersHorizontal } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/features/question-bank/components/QuestionFilter";
 
@@ -9,36 +9,19 @@ interface UnifiedToolbarProps {
   canManageBulk: boolean;
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
-  onApprove?: () => void;
-  onFeedback?: () => void;
-  onResubmitReview?: () => void;
   onDelete: () => void;
   onClear: () => void;
-  isApprovePending?: boolean;
-  isFeedbackPending?: boolean;
-  isResubmitPending?: boolean;
   isDeletePending: boolean;
-  isRevisionsView?: boolean;
-  isBankView?: boolean;
 }
 
 export default function BulkActionsToolbar({
   totalCount,
   selectedCount,
-  canManageBulk,
   itemsPerPage,
   onItemsPerPageChange,
-  onApprove,
-  onFeedback,
-  onResubmitReview,
   onDelete,
   onClear,
-  isApprovePending,
-  isFeedbackPending,
-  isResubmitPending,
   isDeletePending,
-  isRevisionsView = false,
-  isBankView = false,
 }: UnifiedToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between w-full border-b border-border bg-muted/40 px-4 py-3 gap-3 transition-all duration-200 font-sans">
@@ -75,41 +58,6 @@ export default function BulkActionsToolbar({
         {/* Bulk Action Buttons — ONLY SHOWN WHEN selectedCount > 0 */}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
-            {isRevisionsView ? (
-              <>
-                {onResubmitReview && (
-                  <button
-                    type="button"
-                    onClick={onResubmitReview}
-                    disabled={isResubmitPending}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <RotateCcw size={13} />
-                    Submit for Review
-                  </button>
-                )}
-              </>
-            ) : (
-              canManageBulk && (
-                <>
-                  {onApprove && !isBankView && (
-                    <button
-                      type="button"
-                      onClick={onApprove}
-                      disabled={isApprovePending}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <CheckCircle2 size={13} />
-                      Approve
-                    </button>
-                  )}
-
-
-                </>
-              )
-            )}
-
-            <div className="h-4 w-px bg-border" />
             <button
               type="button"
               onClick={onDelete}
@@ -117,7 +65,7 @@ export default function BulkActionsToolbar({
               className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50"
             >
               <Trash2 size={13} />
-              Delete
+              Delete Selected
             </button>
           </div>
         )}
