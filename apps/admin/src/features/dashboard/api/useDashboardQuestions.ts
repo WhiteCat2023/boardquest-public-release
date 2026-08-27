@@ -14,13 +14,16 @@ export function useDashboardQuestionStats() {
   });
 }
 
-export function useDashboardQuestions(limit = 20) {
+export function useDashboardQuestions(limit = 20, authorId?: string) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
-    queryKey: ["dashboard-questions", limit],
+    queryKey: ["dashboard-questions", limit, authorId],
     queryFn: async () => {
-      const response = await axiosPrivate.get(`/questions/get?limit=${limit}`);
+      const params = authorId
+        ? `?limit=${limit}&authorId=${authorId}`
+        : `?limit=${limit}`;
+      const response = await axiosPrivate.get(`/questions/get${params}`);
       return response.data?.data;
     },
     staleTime: 1000 * 60 * 3,

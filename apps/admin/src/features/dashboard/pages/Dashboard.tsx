@@ -25,7 +25,7 @@ export default function Dashboard() {
   const { data: categoriesTotalCount } = useSubjectsTotalCount();
   const { data: dbCategories = [] } = useSubjects();
   const { data: statsData } = useDashboardQuestionStats();
-  const { data: questionData } = useDashboardQuestions(20);
+  const { data: questionData } = useDashboardQuestions(20, isTeacher ? currentUser?.id : undefined);
 
   const totalFaculties =
     (facultyData as any)?.total ?? (Array.isArray(facultyData) ? facultyData.length : (facultyData as any)?.faculties?.length || 0);

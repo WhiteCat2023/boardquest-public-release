@@ -1,11 +1,8 @@
-import React from "react";
 import {
-  MessageSquare,
   Trash2,
   X,
   SlidersHorizontal,
   CheckCircle2,
-  RotateCcw,
 } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/features/question-bank/components/QuestionFilter";
@@ -17,15 +14,10 @@ interface UnifiedToolbarProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   onApprove?: () => void;
-  onFeedback?: () => void;
-  onResubmitReview?: () => void;
   onDelete: () => void;
   onClear: () => void;
   isApprovePending?: boolean;
-  isFeedbackPending?: boolean;
-  isResubmitPending?: boolean;
   isDeletePending: boolean;
-  isRevisionsView?: boolean;
   isBankView?: boolean;
 }
 
@@ -36,15 +28,10 @@ export default function BulkActionsToolbar({
   itemsPerPage,
   onItemsPerPageChange,
   onApprove,
-  onFeedback,
-  onResubmitReview,
   onDelete,
   onClear,
   isApprovePending,
-  isFeedbackPending,
-  isResubmitPending,
   isDeletePending,
-  isRevisionsView = false,
   isBankView = false,
 }: UnifiedToolbarProps) {
   return (
@@ -84,51 +71,18 @@ export default function BulkActionsToolbar({
         {/* Bulk Action Buttons — ONLY SHOWN WHEN selectedCount > 0 */}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
-            {isRevisionsView ? (
-              <>
-                {onResubmitReview && (
-                  <button
-                    type="button"
-                    onClick={onResubmitReview}
-                    disabled={isResubmitPending}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <RotateCcw size={13} />
-                    Submit for Review
-                  </button>
-                )}
-              </>
-            ) : (
-              canManageBulk && (
-                <>
-                  {onApprove && !isBankView && (
-                    <button
-                      type="button"
-                      onClick={onApprove}
-                      disabled={isApprovePending}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <CheckCircle2 size={13} />
-                      Approve
-                    </button>
-                  )}
-
-                  {onFeedback && (
-                    <button
-                      type="button"
-                      onClick={onFeedback}
-                      disabled={isFeedbackPending}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <MessageSquare size={13} />
-                      Request Revision
-                    </button>
-                  )}
-                </>
-              )
+            {canManageBulk && onApprove && !isBankView && (
+              <button
+                type="button"
+                onClick={onApprove}
+                disabled={isApprovePending}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <CheckCircle2 size={13} />
+                Approve
+              </button>
             )}
 
-            <div className="h-4 w-px bg-border" />
             <button
               type="button"
               onClick={onDelete}

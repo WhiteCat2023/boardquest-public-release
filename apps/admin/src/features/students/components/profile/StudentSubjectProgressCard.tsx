@@ -60,11 +60,29 @@ export const MAJOR_SUBJECTS = [
   },
 ];
 
+import { useSubjects } from "@/features/users";
+
 interface StudentSubjectProgressCardProps {
   student: Student;
 }
 
 export function StudentSubjectProgressCard({ student }: StudentSubjectProgressCardProps) {
+  const { data: dbCategories = [], isLoading } = useSubjects({ all: true });
+
+  const categoriesList = Array.isArray(dbCategories) && dbCategories.length > 0 ? dbCategories : MAJOR_SUBJECTS;
+
+  const subjectsToDisplay = categoriesList.map((cat: any, index: number) => {
+    const catName = (cat.name || "").toLowerCase();
+    const preset = MAJOR_SUBJECTS.find((m) => catName.includes(m.name.toLowerCase()) || m.name.toLowerCase().includes(catName)) || MAJOR_SUBJECTS[index % MAJOR_SUBJECTS.length];
+    return {
+      id: cat.id || preset.id,
+      name: cat.name || preset.name,
+      code: preset?.code || `SBJ-${index + 1}`,
+      icon: preset?.icon || FlaskConical,
+      color: preset?.color || "bg-primary/10 text-primary border-primary/20",
+      description: preset?.description || "Evaluation progress and mastery benchmark for this licensure subject.",
+    };
+  });
   const getSubjectProgress = (subjectName: string) => {
     if (student?.mastery && Array.isArray(student.mastery)) {
       const match = student.mastery.find((m: any) => {
@@ -127,7 +145,7 @@ export function StudentSubjectProgressCard({ student }: StudentSubjectProgressCa
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {MAJOR_SUBJECTS.map((subj) => {
+        {subjectsToDisplay.map((subj) => {
           const IconComp = subj.icon;
           const progress = getSubjectProgress(subj.name);
           const isPassing = progress.proficiency >= progress.minScore;

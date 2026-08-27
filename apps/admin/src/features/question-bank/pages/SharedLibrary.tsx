@@ -41,6 +41,7 @@ export default function SharedLibrary() {
   const { data: categories = [] } =
     useSubjects({
       search: categorySearch,
+      all: true,
     });
 
   useEffect(() => {
@@ -263,7 +264,7 @@ export default function SharedLibrary() {
             )}
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                Question Library
+                All Questions
                 <Badge
                   variant="outline"
                   className="gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary text-[11px] font-bold rounded-full border-primary/20 shadow-2xs"

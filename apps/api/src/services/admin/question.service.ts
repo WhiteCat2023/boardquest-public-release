@@ -295,7 +295,7 @@ export class QuestionService {
     const limitNum = limit || 20;
 
     try {
-      const questions = await this.db.question.findMany({
+      const rawQuestions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
         skip: cursor ? 1 : undefined,
@@ -306,6 +306,12 @@ export class QuestionService {
         },
         orderBy: { id: "asc" },
       });
+
+      const questions = rawQuestions.map((q: any) => ({
+        ...q,
+        category: q.subject,
+        categoryId: q.subjectId,
+      }));
 
       if (!limit) return questions;
 
@@ -320,7 +326,7 @@ export class QuestionService {
         "getAllQuestions relation include failed, falling back to safe query:",
         err?.message,
       );
-      const questions = await this.db.question.findMany({
+      const rawQuestions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
         skip: cursor ? 1 : undefined,
@@ -329,18 +335,20 @@ export class QuestionService {
         orderBy: { id: "asc" },
       });
 
-      const formatted = questions.map((q: any) => ({
+      const questions = rawQuestions.map((q: any) => ({
         ...q,
+        category: q.subject,
+        categoryId: q.subjectId,
         author: { name: "System Administrator" },
       }));
 
-      if (!limit) return formatted;
+      if (!limit) return questions;
 
-      const hasNextPage = formatted.length > limitNum;
-      if (hasNextPage) formatted.pop();
+      const hasNextPage = questions.length > limitNum;
+      if (hasNextPage) questions.pop();
 
       const nextCursor =
-        formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+        questions.length > 0 ? questions[questions.length - 1].id : null;
       return { questions, nextCursor, hasNextPage };
     }
   }
@@ -373,14 +381,19 @@ export class QuestionService {
     }
 
     let categoryFilter: any = category;
-    if (userRole === "TEACHER" && !category && handledCategoryIds?.length) {
+    if (
+      userRole === "TEACHER" &&
+      !category &&
+      handledCategoryIds?.length &&
+      String(status) !== "APPROVED"
+    ) {
       categoryFilter = { in: handledCategoryIds };
     }
 
     const whereClause: any = {
       question: search ? { contains: search } : undefined,
       difficulty,
-      categoryId: categoryFilter,
+      subjectId: categoryFilter,
       type,
       status: statusFilter,
       authorId,
@@ -391,16 +404,54 @@ export class QuestionService {
     const limitNum = limit || 20;
 
     try {
-      const questions = await this.db.question.findMany({
+      const rawQuestions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
         skip: cursor ? 1 : undefined,
         cursor: cursor ? { id: cursor } : undefined,
         include: {
-          category: true,
+          subject: true,
           author: { select: { name: true } },
+          _count: { select: { comments: true } },
         },
         orderBy: { id: "asc" },
+      });
+
+      // Auto-heal and sync questions that are in PENDING_REVISION status with 0 comments
+      const stalePendingRevisionIds = rawQuestions
+        .filter(
+          (q: any) =>
+            (q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION") &&
+            (q._count?.comments ?? 0) === 0,
+        )
+        .map((q: any) => q.id);
+
+      if (stalePendingRevisionIds.length > 0) {
+        this.db.question
+          .updateMany({
+            where: { id: { in: stalePendingRevisionIds } },
+            data: { status: QuestionStatus.PENDING_REVIEW },
+          })
+          .catch((err) => console.warn("Auto-sync stale revision status failed:", err));
+      }
+
+      const questions = rawQuestions.map((q: any) => {
+        const hasNoComments = (q._count?.comments ?? 0) === 0;
+        const normalizedStatus =
+          (q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION") && hasNoComments
+            ? QuestionStatus.PENDING_REVIEW
+            : q.status;
+
+        return {
+          ...q,
+          status: normalizedStatus,
+          category: q.subject,
+          categoryId: q.subjectId,
+          _count: {
+            ...q._count,
+            comments: q._count?.comments ?? 0,
+          },
+        };
       });
 
       if (!limit) return questions;
@@ -416,7 +467,7 @@ export class QuestionService {
         "getFilteredQuestions relation include failed, falling back to safe query:",
         err?.message,
       );
-      const questions = await this.db.question.findMany({
+      const rawQuestions = await this.db.question.findMany({
         where: whereClause,
         take: limit ? limitNum + 1 : undefined,
         skip: cursor ? 1 : undefined,
@@ -425,18 +476,20 @@ export class QuestionService {
         orderBy: { id: "asc" },
       });
 
-      const formatted = questions.map((q: any) => ({
+      const questions = rawQuestions.map((q: any) => ({
         ...q,
+        category: q.subject,
+        categoryId: q.subjectId,
         author: { name: "System Administrator" },
       }));
 
-      if (!limit) return formatted;
+      if (!limit) return questions;
 
-      const hasNextPage = formatted.length > limitNum;
-      if (hasNextPage) formatted.pop();
+      const hasNextPage = questions.length > limitNum;
+      if (hasNextPage) questions.pop();
 
       const nextCursor =
-        formatted.length > 0 ? formatted[formatted.length - 1].id : null;
+        questions.length > 0 ? questions[questions.length - 1].id : null;
       return { questions, nextCursor, hasNextPage };
     }
   }
@@ -499,21 +552,25 @@ export class QuestionService {
   async getQuestionById(questionId: string) {
     await this.syncQuestionRevisionStatus(questionId);
 
-    const question = await this.db.question.findUnique({
+    const rawQuestion = await this.db.question.findUnique({
       where: {
         id: questionId,
       },
       include: {
-        category: true,
+        subject: true,
         author: { select: { id: true, name: true, role: true } },
       },
     });
 
-    if (!question) {
+    if (!rawQuestion) {
       throw new ApiError(404, "Question not found");
     }
 
-    return question;
+    return {
+      ...rawQuestion,
+      category: rawQuestion.subject,
+      categoryId: rawQuestion.subjectId,
+    };
   }
 
   async deleteQuestion(questionId: string) {
@@ -707,18 +764,25 @@ export class QuestionService {
 
     const targetQuestions = await this.db.question.findMany({
       where: { id: { in: ids } },
+      include: {
+        comments: {
+          where: { isResolved: false },
+        },
+      },
     });
 
-    const pendingRevisionQuestions = targetQuestions.filter(
+    const pendingWithUnresolvedComments = targetQuestions.filter(
       (q: any) =>
-        q.status === QuestionStatus.PENDING_REVISION ||
-        (q.status as string) === "NEEDS_REVISION",
+        (q.status === QuestionStatus.PENDING_REVISION ||
+          (q.status as string) === "NEEDS_REVISION") &&
+        q.comments &&
+        q.comments.length > 0,
     );
 
-    if (pendingRevisionQuestions.length > 0) {
+    if (pendingWithUnresolvedComments.length > 0) {
       throw new ApiError(
         400,
-        `Cannot approve question(s). ${pendingRevisionQuestions.length} of the selected question(s) are in Pending Revision status and must be resubmitted for review first.`,
+        `Cannot approve question(s). ${pendingWithUnresolvedComments.length} question(s) have unresolved reviewer comments. Please resolve the comments before approving.`,
       );
     }
 
@@ -726,6 +790,26 @@ export class QuestionService {
       where: { id: { in: ids } },
       data: { status: QuestionStatus.APPROVED },
     });
+
+    // Notify author(s) individually
+    const uniqueAuthorIds = Array.from(
+      new Set(
+        targetQuestions
+          .map((q: any) => q.authorId)
+          .filter((id: any) => Boolean(id)),
+      ),
+    );
+
+    for (const authorId of uniqueAuthorIds) {
+      const count = targetQuestions.filter((q: any) => q.authorId === authorId).length;
+      createNotification({
+        recipientId: authorId as string,
+        title: "Question Approved",
+        message: `Your ${count === 1 ? "question has" : `${count} questions have`} been reviewed, approved, and added to the official Question Bank.`,
+        type: "SUCCESS",
+        link: "/question-bank/my-questions",
+      }).catch(() => {});
+    }
 
     createNotification({
       recipientRole: "ALL",

@@ -621,7 +621,7 @@ export class AnalyticsService {
         id: true,
         level: true,
         examResults: {
-          select: { score: true },
+          select: { score: true, subject: true, accuracy: true },
         },
         mastery: {
           select: { subject: true, proficiency: true },
@@ -754,14 +754,37 @@ export class AnalyticsService {
       },
     });
 
+    const matchSubjectName = (s1?: string | null, s2?: string | null) => {
+      if (!s1 || !s2) return false;
+      const a = s1.toLowerCase().trim();
+      const b = s2.toLowerCase().trim();
+      return (
+        a === b ||
+        a.includes(b) ||
+        b.includes(a) ||
+        (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4))
+      );
+    };
+
     const subjects = categories.map((cat: any) => {
       const catMastery = students.flatMap((s: any) =>
-        (s.mastery || []).filter((m: any) => m.subject.toLowerCase().includes(cat.name.toLowerCase()))
+        (s.mastery || []).filter((m: any) => matchSubjectName(m.subject, cat.name))
       );
-      const avgProficiency =
-        catMastery.length > 0
-          ? Math.round(catMastery.reduce((acc: any, curr: any) => acc + curr.proficiency, 0) / catMastery.length)
-          : 0;
+      let avgProficiency = 0;
+      if (catMastery.length > 0) {
+        avgProficiency = Math.round(
+          catMastery.reduce((acc: any, curr: any) => acc + (curr.proficiency || 0), 0) / catMastery.length
+        );
+      } else {
+        const catExams = students.flatMap((s: any) =>
+          (s.examResults || []).filter((e: any) => matchSubjectName(e.subject, cat.name))
+        );
+        if (catExams.length > 0) {
+          avgProficiency = Math.round(
+            catExams.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / catExams.length
+          );
+        }
+      }
 
       return {
         id: cat.id,

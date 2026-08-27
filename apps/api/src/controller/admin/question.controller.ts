@@ -151,12 +151,15 @@ export const getQuestions = asyncHandler(
       typeof id === "string" &&
       (/^[0-9a-fA-F]{24}$/.test(id) || isSuperAdmin(id));
 
-    // If teacher, they can only see their own questions unless browsing categories.
-    const rawAuthorId =
-      user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
-    let authorIdFilter = isValidObjectId(rawAuthorId) ? rawAuthorId : undefined;
-    if (authorIdFilter && isSuperAdmin(authorIdFilter)) {
-      authorIdFilter = superAdminCredentials.id;
+    // Only filter by authorId if explicitly requested (e.g., My Questions page),
+    // allowing teachers to view the shared repository of approved questions in All Questions.
+    let authorIdFilter: string | undefined = undefined;
+    if (authorId) {
+      const rawAuthorId = authorId as string;
+      authorIdFilter = isValidObjectId(rawAuthorId) ? rawAuthorId : undefined;
+      if (authorIdFilter && isSuperAdmin(authorIdFilter)) {
+        authorIdFilter = superAdminCredentials.id;
+      }
     }
 
     const hasFilter = !!(
@@ -166,8 +169,7 @@ export const getQuestions = asyncHandler(
       type ||
       status ||
       isPublishedBool !== undefined ||
-      authorIdFilter ||
-      user.role === "TEACHER"
+      authorIdFilter
     );
 
     let result;

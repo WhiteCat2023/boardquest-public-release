@@ -136,6 +136,7 @@ export class SubjectService {
     userRole?: string;
     userId?: string;
     search?: string;
+    all?: boolean | string;
   }) {
     const {
       isPublished,
@@ -146,6 +147,7 @@ export class SubjectService {
       userRole,
       userId,
       search,
+      all,
     } = options || {};
 
     const targetHandledIds = handledSubjectIds || handledCategoryIds || [];
@@ -176,7 +178,8 @@ export class SubjectService {
       subjectWhere.name = { contains: search.trim(), mode: "insensitive" };
     }
 
-    if (userRole === "TEACHER") {
+    const isAll = all === true || all === "true";
+    if (userRole === "TEACHER" && !isAll) {
       subjectWhere.OR = [
         { id: { in: targetHandledIds } },
         ...(userId ? [{ handlerIds: { has: userId } }] : []),

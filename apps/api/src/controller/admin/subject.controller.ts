@@ -22,13 +22,14 @@ export const createSubject = asyncHandler(async (req: AuthenticatedRequest | Req
 export const createCategory = createSubject;
 
 export const getSubjects = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { isPublished, status, authorId, search } = req.query;
+  const { isPublished, status, authorId, search, all } = req.query;
   const user = req.user;
   const subjects = await subjectServices.getAllSubjects({
     isPublished: isPublished as any,
     status: status as string,
     authorId: authorId as string,
     search: search ? String(search) : undefined,
+    all: String(all) === "true",
     handledCategoryIds: user?.handledCategoryIds,
     handledSubjectIds: (user as any)?.handledSubjectIds || user?.handledCategoryIds,
     userRole: user?.role,

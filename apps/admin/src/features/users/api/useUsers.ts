@@ -128,6 +128,7 @@ export function useSubjects(params?: {
   status?: string;
   authorId?: string;
   search?: string;
+  all?: boolean;
 }) {
   const axiosPrivate = useAxiosPrivate();
 

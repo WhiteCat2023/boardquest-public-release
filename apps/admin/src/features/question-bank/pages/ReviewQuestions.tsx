@@ -21,8 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePendingReviewAuthors } from "@/features/question-bank";
-import QuestionList from "../components/list/QuestionList";
+import { usePendingReviewAuthors, useQuestionBank, FastReviewWorkspace } from "@/features/question-bank";
 import ApproveAuthorQuestionsDialog from "../components/review/ApproveAuthorQuestionsDialog";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -126,7 +125,7 @@ export default function ReviewQuestions() {
     0,
   );
 
-  // Filters for QuestionList component
+  // Filters for Question fetching
   const filters: any = {
     status:
       selectedStatus === "ALL"
@@ -136,7 +135,16 @@ export default function ReviewQuestions() {
     difficulty: selectedDifficulty === "ALL" ? undefined : selectedDifficulty,
     type: selectedType === "ALL" ? undefined : selectedType,
     authorId: selectedAuthorId || undefined,
+    limit: 50,
   };
+
+  const {
+    data: questionsData,
+    isLoading: isQuestionsLoading,
+    refetch: refetchQuestions,
+  } = useQuestionBank(filters);
+
+  const questions = questionsData?.questions || [];
 
   const resetFilters = () => {
     setSearchTerm("");
@@ -436,9 +444,14 @@ export default function ReviewQuestions() {
           </div>
         </div>
 
-        {/* ── Question List Component ── */}
+        {/* ── Fast Review Split-Screen Workspace ── */}
         <div className="space-y-3 min-w-0">
-          <QuestionList filters={filters} />
+          <FastReviewWorkspace
+            questions={questions}
+            isLoading={isQuestionsLoading}
+            onRefresh={refetchQuestions}
+            selectedAuthor={selectedAuthor}
+          />
         </div>
       </main>
 

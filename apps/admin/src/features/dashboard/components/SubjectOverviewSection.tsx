@@ -11,15 +11,27 @@ import { SUBJECT_PRESETS } from "../constants/subjects";
 export function SubjectOverviewSection() {
   const navigate = useNavigate();
   const sectionContent = appContent.dashboard.subjectOverview;
-  const { data: dbCategories = [], isLoading } = useSubjects();
-  const { data: analytics } = useDashboardAnalyticsSummary();
+  const { data: dbCategories = [], isLoading: isSubjectsLoading } = useSubjects({ all: true });
+  const { data: analytics, isLoading: isAnalyticsLoading } = useDashboardAnalyticsSummary();
 
   const analyticsSubjects = analytics?.subjects || [];
+  const categoriesList = Array.isArray(dbCategories) ? dbCategories : [];
 
-  // Take up to 6 categories from DB and format with UI presets
-  const topSixCategories = (dbCategories as any[]).slice(0, 6);
+  // Merge subjects from analytics and DB categories
+  const sourceSubjects = (analyticsSubjects.length > 0
+    ? analyticsSubjects
+    : categoriesList
+  ).slice(0, 6);
 
-  const subjectsToDisplay = topSixCategories.map((cat: any, index: number) => {
+  // If DB hasn't returned subjects yet, use presets as baseline
+  const activeSubjects = sourceSubjects.length > 0 ? sourceSubjects : SUBJECT_PRESETS.map((p, idx) => ({
+    id: `subj-preset-${idx + 1}`,
+    name: p.keyword.charAt(0).toUpperCase() + p.keyword.slice(1),
+    questionCount: 0,
+    proficiency: 0,
+  }));
+
+  const subjectsToDisplay = activeSubjects.map((cat: any, index: number) => {
     const catName = (cat.name || "").toLowerCase();
 
     // Try matching preset by keyword or fallback to index position preset
@@ -27,25 +39,35 @@ export function SubjectOverviewSection() {
       SUBJECT_PRESETS.find((preset) => catName.includes(preset.keyword)) ||
       SUBJECT_PRESETS[index % SUBJECT_PRESETS.length];
 
+    const matchedDbCat = categoriesList.find(
+      (c: any) => c.id === cat.id || (c.name || "").toLowerCase() === catName
+    );
+
     const questionCount =
       typeof cat.questionCount === "number"
         ? cat.questionCount
-        : Array.isArray(cat.questions)
-          ? cat.questions.length
-          : 0;
+        : typeof matchedDbCat?.questionCount === "number"
+          ? matchedDbCat.questionCount
+          : Array.isArray(matchedDbCat?.questions)
+            ? matchedDbCat.questions.length
+            : 0;
 
     const matchedAnalytics = analyticsSubjects.find(
       (s: any) => s.id === cat.id || (s.name || "").toLowerCase() === catName
     );
 
     const proficiency =
-      typeof cat.proficiency === "number"
+      typeof cat.proficiency === "number" && cat.proficiency > 0
         ? cat.proficiency
-        : (matchedAnalytics?.proficiency ?? 0);
+        : typeof matchedAnalytics?.proficiency === "number"
+          ? matchedAnalytics.proficiency
+          : typeof matchedDbCat?.proficiency === "number"
+            ? matchedDbCat.proficiency
+            : 0;
 
     return {
-      id: cat.id,
-      name: cat.name,
+      id: cat.id || matchedDbCat?.id,
+      name: cat.name || matchedDbCat?.name || presetMatch?.keyword,
       code: presetMatch?.code || `SBJ-${index + 1}`,
       icon: presetMatch?.icon || BarChart3,
       color: presetMatch?.color || "bg-primary/10 text-primary border-primary/20",
@@ -54,6 +76,8 @@ export function SubjectOverviewSection() {
       questionCount,
     };
   });
+
+  const isLoading = isSubjectsLoading && isAnalyticsLoading && sourceSubjects.length === 0;
 
   return (
     <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">

@@ -8,7 +8,6 @@ interface GetColumnsProps {
   currentUserRole: string;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
-  onFeedback?: (id?: string) => void;
   navigate: (path: string) => void;
 }
 
@@ -17,7 +16,6 @@ export const getQuestionColumns = ({
   currentUserRole,
   onView,
   onDelete,
-  onFeedback: _onFeedback,
   navigate,
 }: GetColumnsProps): ColumnDef<Question>[] => [
   {

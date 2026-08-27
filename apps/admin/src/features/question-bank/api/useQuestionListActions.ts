@@ -16,8 +16,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     const queryClient = useQueryClient();
     const pendingDeletes = useRef<{ [id: string]: any }>({});
 
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-
     const {
         cursorsStack,
         setCursorsStack,
@@ -143,21 +141,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         },
     });
 
-    const bulkFeedbackMutation = useMutation({
-        mutationFn: async ({ ids, feedback }: { ids: string[]; feedback: string }) => {
-            await axiosPrivate.post("/questions/bulk/feedback", { ids, feedback });
-        },
-        onSuccess: (_, variables) => {
-            toast.success(`Sent revision feedback for ${variables.ids.length} questions.`);
-            clearRowSelection();
-            setIsFeedbackOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to bulk send feedback.");
-        },
-    });
-
     const bulkApproveMutation = useMutation({
         mutationFn: async (ids: string[]) => {
             await axiosPrivate.post("/questions/bulk/approve", { ids });
@@ -188,56 +171,11 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         },
     });
 
-    const bulkStatusMutation = useMutation({
-        mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
-            await axiosPrivate.post("/questions/bulk/status", { ids, status });
-        },
-        onSuccess: (_, variables) => {
-            toast.success(`Resubmitted ${variables.ids.length} question(s) for review.`);
-            clearRowSelection();
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to update review status.");
-        },
-    });
-
-    const handleBulkResubmitForReview = () => {
-        if (selectedIds.length === 0) return;
-        bulkStatusMutation.mutate({ ids: selectedIds, status: "PENDING_REVIEW" });
-    };
-
     // Bulk Action Handlers
     const handleBulkApprove = () => {
         if (!canManageBulk) {
             toast.error("Only administrators and team leads can approve questions.");
             return;
-        }
-
-        const pendingRevisionSelected = selectedQuestions.filter(
-            (q) => q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION"
-        );
-
-        if (pendingRevisionSelected.length > 0) {
-            if (pendingRevisionSelected.length === selectedQuestions.length) {
-                toast.error(
-                    `Cannot approve questions. All ${selectedQuestions.length} selected question(s) are in Pending Revision status and must be resubmitted by the author first.`
-                );
-                return;
-            } else {
-                const validIds = selectedQuestions
-                    .filter((q) => q.status !== "PENDING_REVISION" && (q.status as string) !== "NEEDS_REVISION")
-                    .map((q) => q.id);
-
-                toast.warning(
-                    `Warning: ${pendingRevisionSelected.length} selected question(s) are in Pending Revision status and cannot be approved. Approving ${validIds.length} question(s) in Pending Review.`
-                );
-
-                if (validIds.length > 0) {
-                    bulkApproveMutation.mutate(validIds);
-                }
-                return;
-            }
         }
 
         bulkApproveMutation.mutate(selectedIds);
@@ -253,22 +191,19 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                 currentUserRole === UserRole.SUPERADMIN ||
                 currentUserRole === UserRole.DEAN ||
                 currentUserRole === UserRole.TEAMLEAD ||
-                authorId === currentUserId
+                ((r === "TEACHER" || currentUserRole === UserRole.TEACHER) && authorId === currentUserId && q.status !== "APPROVED")
             );
         });
 
         if (!canDeleteAll) {
-            toast.error("You do not have permission to delete one or more of the selected questions.");
+            toast.error("You do not have permission to delete some of the selected questions.");
             return;
         }
 
+        const idsToDelete = [...selectedIds];
         const queryKey = ["questions", { ...filters, cursor: currentCursor, limit: itemsPerPage }];
         const previousData = queryClient.getQueryData<any>(queryKey);
-        const idsToDelete = [...selectedIds];
 
-        clearRowSelection();
-
-        // Optimistically remove deleted items from current cache view
         if (previousData) {
             const updatedQuestions = previousData.questions.filter((q: any) => !idsToDelete.includes(q.id));
             queryClient.setQueryData(queryKey, {
@@ -277,14 +212,16 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             });
         }
 
-        const batchKey = `bulk_${Date.now()}`;
+        clearRowSelection();
+
+        const batchKey = `batch_${Date.now()}`;
         const timeoutId = setTimeout(async () => {
             delete pendingDeletes.current[batchKey];
             try {
                 await axiosPrivate.post("/questions/bulk/delete", { ids: idsToDelete });
                 queryClient.invalidateQueries({ queryKey: ["questions"] });
             } catch (err: any) {
-                toast.error(err.response?.data?.message || "Failed to delete questions permanently.");
+                toast.error(err.response?.data?.message || "Failed to permanently delete questions.");
                 if (previousData) {
                     queryClient.setQueryData(queryKey, previousData);
                 }
@@ -295,7 +232,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
 
         showUndoToast({
             title: "Questions Deleted",
-            message: `${idsToDelete.length} question${idsToDelete.length !== 1 ? "s" : ""} deleted`,
+            message: `${idsToDelete.length} question(s) scheduled for deletion`,
             duration: 5000,
             onUndo: () => {
                 const tId = pendingDeletes.current[batchKey];
@@ -309,23 +246,6 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                 toast.success("Bulk delete action undone.");
             },
         });
-    };
-
-    const handleBulkFeedbackSubmit = async (feedback: string) => {
-        await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
-    };
-
-    const handleBulkFeedbackOpen = (id?: string) => {
-        if (!canManageBulk) {
-            toast.error("Only administrators can request question revisions.");
-            return;
-        }
-
-        if (id) {
-            setRowSelection({ [id]: true });
-        }
-
-        setIsFeedbackOpen(true);
     };
 
     // Pagination Navigation Handlers
@@ -367,24 +287,17 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         itemsPerPage,
         rowSelection,
         selectedIds,
-        isFeedbackOpen,
         canManageBulk,
         bulkApproveMutation,
-        bulkFeedbackMutation,
         bulkDeleteMutation,
-        bulkStatusMutation,
         handleView,
         handleDelete,
         handleItemsPerPageChange,
         handleBulkApprove,
         handleBulkDelete,
-        handleBulkFeedbackOpen,
-        handleBulkFeedbackSubmit,
-        handleBulkResubmitForReview,
         handleNext,
         handlePrevious,
         handlePageSelect,
         setRowSelection,
-        setIsFeedbackOpen,
     };
 }
