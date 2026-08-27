@@ -1,8 +1,8 @@
 import useRoleFlags from "@/hooks/useRoleFlags";
 import {
-  useFaculties,
-  useCategories,
-} from "@/features/faculty";
+  useUsers,
+  useSubjects,
+} from "@/features/users";
 import { useStudents } from "@/features/students";
 
 import { DashboardBanner } from "../components/DashboardBanner";
@@ -13,17 +13,17 @@ import { StudentRosterCard } from "../components/StudentRosterCard";
 import { StudentPassingRateAnalytics } from "../components/StudentPassingRateAnalytics";
 import { FacultyRosterCard } from "../components/FacultyRosterCard";
 import { SystemAuditLogsCard } from "../components/SystemAuditLogsCard";
-import { useCategoriesTotalCount } from "@/features/question-bank";
+import { useSubjectsTotalCount } from "@/features/question-bank";
 import { useDashboardQuestionStats, useDashboardQuestions } from "../api/useDashboardQuestions";
 
 export default function Dashboard() {
   const { currentUser, userRole, isSuperAdmin, isTeacher, isTeamLead } = useRoleFlags();
 
   // Data Queries
-  const { data: facultyData } = useFaculties({ limit: 10 });
+  const { data: facultyData } = useUsers({ limit: 10 });
   const { data: studentData } = useStudents({ skip: 0, take: 10 });
-  const { data: categoriesTotalCount } = useCategoriesTotalCount();
-  const { data: dbCategories = [] } = useCategories();
+  const { data: categoriesTotalCount } = useSubjectsTotalCount();
+  const { data: dbCategories = [] } = useSubjects();
   const { data: statsData } = useDashboardQuestionStats();
   const { data: questionData } = useDashboardQuestions(20);
 

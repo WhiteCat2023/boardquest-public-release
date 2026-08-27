@@ -7,7 +7,7 @@
   "roles": {
     "superadmin": "Super Administrator",
     "dean": "Dean",
-    "teamlead": "Team Lead / Co-Admin",
+    "teamlead": "Team Lead",
     "teacher": "Faculty Instructor"
   },
   "superadmin": {
@@ -82,19 +82,19 @@
       "instructorsAndDrafts": {
         "badges": {
           "teacher": "Draft Items",
-          "admin": "Instructors"
+          "admin": "Users"
         },
         "labels": {
           "teacher": "Questions Saved as Draft",
-          "admin": "Faculty & Educators"
+          "admin": "Users & Staff"
         },
         "subtitles": {
           "teacher": "Private to you",
-          "admin": "Faculty Roster"
+          "admin": "Users Directory"
         },
         "actions": {
           "teacher": "Manage Drafts",
-          "admin": "Faculty List"
+          "admin": "Users List"
         }
       }
     },
@@ -110,52 +110,52 @@
           "proficiency": 84
         },
         {
-          "code": "MB-302",
+          "code": "MIC-302",
           "name": "Microbiology & Parasitology",
-          "proficiency": 78
+          "proficiency": 68
         },
         {
-          "code": "HE-303",
-          "name": "Hematology & Coagulation",
-          "proficiency": 88
+          "code": "HEM-303",
+          "name": "Hematology",
+          "proficiency": 72
         },
         {
           "code": "CM-304",
           "name": "Clinical Microscopy",
-          "proficiency": 72
+          "proficiency": 91
         },
         {
           "code": "IS-305",
-          "name": "Immunology & Blood Bank",
-          "proficiency": 81
+          "name": "Immunology & Serology",
+          "proficiency": 62
         },
         {
-          "code": "HP-306",
-          "name": "Histopath & MT Laws",
-          "proficiency": 69
+          "code": "HT-306",
+          "name": "Histopathologic Techniques & MTLB",
+          "proficiency": 78
         }
       ]
     },
     "recentQuestions": {
       "titles": {
-        "teacher": "My Authored Questions",
+        "teacher": "My Recent Authored Questions",
         "admin": "Recent Question Submissions"
       },
       "actions": {
-        "teamlead": "Review Queue",
+        "teamlead": "Review All",
         "admin": "View All"
       },
       "emptyStates": {
-        "teacher": "You have not authored any question items yet.",
-        "admin": "No question submissions recorded yet.",
-        "createQuestionButton": "Create Your First Question"
+        "teacher": "You haven't authored any questions yet.",
+        "admin": "No recent questions found in repository.",
+        "createQuestionButton": "+ Create First Question"
       },
       "badges": {
         "published": "Published",
         "underReview": "Under Review"
       },
       "fallbackSubject": "General Subject",
-      "authorPrefix": "Author:"
+      "authorPrefix": "By"
     },
     "studentRoster": {
       "title": "Student Roster",
@@ -165,9 +165,10 @@
     }
   },
   "facultyManagement": {
-    "title": "Faculty & Educator Roster",
+    "title": "Users Directory",
     "badges": {
-      "coadmin": "CO-ADMIN",
+      "coadmin": "TEAM LEAD",
+      "teamlead": "TEAM LEAD",
       "online": "Online",
       "offline": "Offline",
       "active": "Active",
@@ -175,7 +176,7 @@
       "locked": "Locked"
     },
     "tooltips": {
-      "viewDetails": "View Faculty Details",
+      "viewDetails": "View User Details",
       "deactivate": "Deactivate Account",
       "activate": "Activate Account",
       "protectedSuperAdmin": "System Super Admin account is protected and cannot be deactivated or deleted."

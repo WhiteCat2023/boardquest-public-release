@@ -10,7 +10,7 @@ import "@aejkatappaja/phantom-ui";
 
 import { ThemeProvider } from 'next-themes';
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

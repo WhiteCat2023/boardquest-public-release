@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Search, UserCheck, ShieldCheck, Users, Loader2 } from "lucide-react";
-import { useFaculties } from "@/features/faculty";
+import { useUsers } from "@/features/users";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -30,8 +30,12 @@ export function AssignFacultyModal({
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
 
-  const { data: facultyData, isLoading } = useFaculties({ search: searchTerm });
-  const faculties = facultyData?.faculties || [];
+  const { data: facultyData, isLoading } = useUsers({ search: searchTerm });
+  const rawFaculties = facultyData?.faculties || [];
+  const faculties = rawFaculties.filter((f) => {
+    const roleStr = String(f.role || "").toUpperCase();
+    return roleStr !== "REVIEWCENTER" && roleStr !== "EXTERNAL";
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -131,10 +135,10 @@ export function AssignFacultyModal({
       <DialogContent className="max-w-md sm:max-w-lg p-5">
         <DialogHeader className="pb-2 border-b border-border">
           <DialogTitle className="text-base font-bold flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-primary" /> Assign Faculty Handlers
+            <ShieldCheck className="w-4 h-4 text-primary" /> Assign Subject Handlers
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Select teachers & faculty members authorized to manage questions and modules for <strong className="text-foreground">{categoryName}</strong>.
+            Select users authorized to manage questions and modules for <strong className="text-foreground">{categoryName}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -143,7 +147,7 @@ export function AssignFacultyModal({
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search faculty by name, email, or role..."
+              placeholder="Search users by name, email, or role..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8 h-8 text-xs"
@@ -152,20 +156,20 @@ export function AssignFacultyModal({
 
           {/* Selected count info */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span>Faculty Members</span>
+            <span>Users</span>
             <span className="font-semibold text-primary">{selectedIds.length} Selected</span>
           </div>
 
-          {/* Faculty list container */}
+          {/* User list container */}
           <div className="max-h-60 overflow-y-auto border border-border rounded-xl divide-y divide-border/60 bg-muted/20">
             {isLoading ? (
               <div className="p-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" /> Loading faculty roster...
+                <Loader2 className="w-4 h-4 animate-spin text-primary" /> Loading users roster...
               </div>
             ) : filteredFaculties.length === 0 ? (
               <div className="p-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-1">
                 <Users className="w-6 h-6 text-muted-foreground/40" />
-                <p>No faculty members found matching your search.</p>
+                <p>No users found matching your search.</p>
               </div>
             ) : (
               filteredFaculties.map((faculty) => {

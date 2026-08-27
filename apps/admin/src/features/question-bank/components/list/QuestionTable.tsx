@@ -27,9 +27,17 @@ interface QuestionTableProps {
   itemsPerPage: number;
   onItemsPerPageChange: (val: number) => void;
   canManageBulk: boolean;
+  onApprove?: () => void;
+  onFeedback?: (id?: string) => void;
+  onResubmitReview?: () => void;
   onBulkDelete: () => void;
   onClear: () => void;
+  isApprovePending?: boolean;
+  isFeedbackPending?: boolean;
+  isResubmitPending?: boolean;
   isDeletePending: boolean;
+  isRevisionsView?: boolean;
+  isBankView?: boolean;
 }
 
 export default function QuestionTable({
@@ -41,9 +49,17 @@ export default function QuestionTable({
   itemsPerPage,
   onItemsPerPageChange,
   canManageBulk,
+  onApprove,
+  onFeedback,
+  onResubmitReview,
   onBulkDelete,
   onClear,
+  isApprovePending,
+  isFeedbackPending,
+  isResubmitPending,
   isDeletePending,
+  isRevisionsView = false,
+  isBankView = false,
 }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
@@ -57,8 +73,9 @@ export default function QuestionTable({
     currentUserRole,
     onView,
     onDelete,
+    onFeedback,
     navigate,
-  }), [currentUserId, currentUserRole, onView, onDelete, navigate]);
+  }), [currentUserId, currentUserRole, onView, onDelete, onFeedback, navigate]);
 
   const table = useReactTable({
     data: questions,
@@ -83,12 +100,20 @@ export default function QuestionTable({
           canManageBulk={canManageBulk}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
+          onApprove={onApprove}
+          onFeedback={() => onFeedback?.()}
+          onResubmitReview={onResubmitReview}
           onDelete={onBulkDelete}
           onClear={onClear}
+          isApprovePending={isApprovePending}
+          isFeedbackPending={isFeedbackPending}
+          isResubmitPending={isResubmitPending}
           isDeletePending={isDeletePending}
+          isRevisionsView={isRevisionsView}
+          isBankView={isBankView}
         />
 
-        <Table className="w-full table-fixed lg:table-auto">
+        <Table className="w-full table-fixed">
           <TableHeader className="bg-muted/40 border-b border-border" data-shimmer-ignore>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="border-b border-border hover:bg-transparent">

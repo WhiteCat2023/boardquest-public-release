@@ -212,27 +212,27 @@ export function AddModuleModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6 bg-card border border-border shadow-2xl rounded-3xl text-foreground font-sans">
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <DialogHeader className="text-left space-y-2 pb-1 border-b border-border/60">
-              <div className="flex flex-row items-center gap-3">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6 bg-card border border-border shadow-2xl rounded-3xl text-foreground font-sans min-w-0">
+          <form onSubmit={handleFormSubmit} className="space-y-4 w-full min-w-0">
+            <DialogHeader className="text-left space-y-2 pb-1 border-b border-border/60 min-w-0">
+              <div className="flex flex-row items-center gap-3 min-w-0">
                 <div className="size-10 bg-primary/10 text-primary rounded-2xl border border-primary/15 flex items-center justify-center shrink-0">
                   <Plus size={20} className="stroke-[2.5]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-base font-bold text-foreground">
+                  <DialogTitle className="text-base font-bold text-foreground truncate">
                     Add Learning Module
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5 truncate">
                     Create curriculum material for <strong className="text-foreground">{categoryName}</strong>.
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
 
-            <div className="space-y-3.5 pt-1">
+            <div className="space-y-3.5 pt-1 min-w-0">
               {/* Module Title */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-foreground">
                   Module Title <span className="text-destructive">*</span>
                 </label>
@@ -242,23 +242,23 @@ export function AddModuleModal({
                   placeholder="e.g. Module 1: Clinical Chemistry Fundamentals"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-10 bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground"
+                  className="h-10 bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground w-full"
                 />
               </div>
 
               {/* Description */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-foreground">Description (Optional)</label>
                 <Textarea
                   placeholder="Brief summary of topics covered in this module..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[70px] resize-none bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground"
+                  className="min-h-[70px] resize-none bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground w-full"
                 />
               </div>
 
               {/* PDF Upload Drop Zone */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Paperclip size={13} className="text-primary" /> Module PDF Material(s)
@@ -307,7 +307,7 @@ export function AddModuleModal({
 
               {/* Uploaded / Queued PDF Files List with PREVIEW BUTTONS */}
               {files.length > 0 && (
-                <div className="space-y-2 pt-1">
+                <div className="space-y-2 pt-1 min-w-0">
                   <div className="flex items-center justify-between text-xs font-bold text-foreground px-1">
                     <span>Selected Documents ({files.length})</span>
                     <button
@@ -319,11 +319,11 @@ export function AddModuleModal({
                     </button>
                   </div>
 
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 min-w-0">
                     {files.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2 hover:border-primary/30 transition-all"
+                        className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2 hover:border-primary/30 transition-all min-w-0"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="size-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
@@ -335,7 +335,7 @@ export function AddModuleModal({
                             </p>
                             <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
                               <span>{formatFileSize(item.size)}</span>
-                              <span className="inline-block size-1 rounded-full bg-emerald-500" />
+                              <span className="inline-block size-1 rounded-full bg-emerald-500 shrink-0" />
                               <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ready</span>
                             </p>
                           </div>
@@ -380,7 +380,7 @@ export function AddModuleModal({
               )}
 
               {/* Optional Manual URL Toggle */}
-              <div className="pt-1">
+              <div className="pt-1 min-w-0">
                 {!showManualUrl ? (
                   <button
                     type="button"
@@ -390,7 +390,7 @@ export function AddModuleModal({
                     + Or attach an external PDF link
                   </button>
                 ) : (
-                  <div className="space-y-1.5 p-3 bg-muted/20 border border-border rounded-xl">
+                  <div className="space-y-1.5 p-3 bg-muted/20 border border-border rounded-xl min-w-0">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-semibold text-foreground">External PDF URL</label>
                       <button
@@ -409,27 +409,27 @@ export function AddModuleModal({
                       placeholder="https://example.com/curriculum-handbook.pdf"
                       value={manualUrl}
                       onChange={(e) => setManualUrl(e.target.value)}
-                      className="h-9 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground"
+                      className="h-9 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground w-full"
                     />
                   </div>
                 )}
               </div>
             </div>
 
-            <DialogFooter className="flex items-center justify-end gap-2.5 border-t border-border pt-4 -mx-6 -mb-6 px-6 pb-6 bg-muted/20">
+            <DialogFooter className="flex items-center justify-end gap-2.5 border-t border-border pt-4 -mx-6 -mb-6 px-6 pb-6 bg-muted/20 rounded-b-3xl">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 h-9 cursor-pointer"
+                className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 h-9 cursor-pointer shrink-0"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !title.trim()}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs gap-1.5"
+                className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs gap-1.5 shrink-0"
               >
                 {isSubmitting ? (
                   <>
@@ -584,27 +584,27 @@ export function EditModuleModal({
   return (
     <>
       <Dialog open={!!editingModule} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6 bg-card border border-border shadow-2xl rounded-3xl text-foreground font-sans">
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <DialogHeader className="text-left space-y-2 pb-1 border-b border-border/60">
-              <div className="flex flex-row items-center gap-3">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6 bg-card border border-border shadow-2xl rounded-3xl text-foreground font-sans min-w-0">
+          <form onSubmit={handleFormSubmit} className="space-y-4 w-full min-w-0">
+            <DialogHeader className="text-left space-y-2 pb-1 border-b border-border/60 min-w-0">
+              <div className="flex flex-row items-center gap-3 min-w-0">
                 <div className="size-10 bg-primary/10 text-primary rounded-2xl border border-primary/15 flex items-center justify-center shrink-0">
                   <Pencil size={20} className="stroke-[2.5]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-base font-bold text-foreground">
+                  <DialogTitle className="text-base font-bold text-foreground truncate">
                     Edit Learning Module
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5 truncate">
                     Update module details and attached PDF materials.
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
 
-            <div className="space-y-3.5 pt-1">
+            <div className="space-y-3.5 pt-1 min-w-0">
               {/* Module Title */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-foreground">
                   Module Title <span className="text-destructive">*</span>
                 </label>
@@ -614,35 +614,35 @@ export function EditModuleModal({
                   placeholder="Module Title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-10 bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground"
+                  className="h-10 bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground w-full"
                 />
               </div>
 
               {/* Description */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-foreground">Description (Optional)</label>
                 <Textarea
                   placeholder="Brief description of module content"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[70px] resize-none bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground"
+                  className="min-h-[70px] resize-none bg-muted/30 border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-ring/20 text-xs text-foreground placeholder:text-muted-foreground w-full"
                 />
               </div>
 
               {/* Existing Attached Materials with PREVIEW BUTTON */}
               {existingUrls.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Paperclip size={13} className="text-primary" /> Current Materials ({existingUrls.length})
                   </label>
 
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1 min-w-0">
                     {existingUrls.map((url, idx) => {
                       const docName = getFileNameFromUrl(url, `Material ${idx + 1}.pdf`);
                       return (
                         <div
                           key={url}
-                          className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2 hover:border-primary/30 transition-all"
+                          className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2 hover:border-primary/30 transition-all min-w-0"
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <div className="size-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
@@ -697,7 +697,7 @@ export function EditModuleModal({
               )}
 
               {/* Upload Additional PDFs */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span>Add More PDF Material(s)</span>
                   <span className="text-[10px] text-muted-foreground">Optional</span>
@@ -743,13 +743,13 @@ export function EditModuleModal({
 
               {/* Queued new files */}
               {newFiles.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <p className="text-xs font-bold text-foreground">New PDFs to upload ({newFiles.length})</p>
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1 min-w-0">
                     {newFiles.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2"
+                        className="flex items-center justify-between p-2.5 bg-muted/40 border border-border rounded-xl gap-2 min-w-0"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="size-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
@@ -791,20 +791,20 @@ export function EditModuleModal({
               )}
             </div>
 
-            <DialogFooter className="flex items-center justify-end gap-2.5 border-t border-border pt-4 -mx-6 -mb-6 px-6 pb-6 bg-muted/20">
+            <DialogFooter className="flex items-center justify-end gap-2.5 border-t border-border pt-4 -mx-6 -mb-6 px-6 pb-6 bg-muted/20 rounded-b-3xl">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 h-9 cursor-pointer"
+                className="rounded-xl bg-muted hover:bg-accent text-foreground border-border text-xs font-semibold px-4 h-9 cursor-pointer shrink-0"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !title.trim()}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs gap-1.5"
+                className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-5 h-9 cursor-pointer shadow-xs gap-1.5 shrink-0"
               >
                 {isSubmitting ? (
                   <>

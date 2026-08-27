@@ -2,14 +2,30 @@ import useAuth from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 import { Navigate, Outlet } from 'react-router-dom';
 
-const RequireAuth = ({ allowedRoles }: { allowedRoles: string[] }) => {
+const normalizeRole = (role?: any): string => {
+  if (!role) return '';
+  const s = String(role).toUpperCase().trim();
+  if (s === 'SUPERADMIN') return 'SUPERADMIN';
+  if (s === 'DEAN') return 'DEAN';
+  if (s === 'TEAMLEAD') return 'TEAMLEAD';
+  if (s === 'TEACHER') return 'TEACHER';
+  if (s === 'REVIEWCENTER' || s === 'EXTERNAL') return 'REVIEWCENTER';
+  return s;
+};
+
+const RequireAuth = ({ allowedRoles }: { allowedRoles: (string | number)[] }) => {
     const { auth } = useAuth();
     const location = useLocation();
     const currentUser = auth?.data?.user || auth?.user;
     const userRole = currentUser?.role;
 
+    const isAllowed = userRole && allowedRoles?.some((allowed) => {
+      if (allowed === userRole || String(allowed) === String(userRole)) return true;
+      return normalizeRole(allowed) === normalizeRole(userRole);
+    });
+
     return (
-      userRole && allowedRoles?.includes(userRole)
+      isAllowed
         ? <Outlet />
         : currentUser
           ? <Navigate to={"/unauthorized"} state={{ from: location }} replace />

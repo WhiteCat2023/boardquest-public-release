@@ -18,7 +18,7 @@ export const createGuidanceAssignment = asyncHandler(
     const assignment = await guidanceService.createGuidanceAssignment(
       creatorId,
       req.body,
-      creatorRole as Role,
+      creatorRole as unknown as Role,
     );
 
     return new ApiResponse(
@@ -60,7 +60,7 @@ export const updateGuidanceAssignment = asyncHandler(
     const updated = await guidanceService.updateGuidanceAssignment(
       id as string,
       userId,
-      userRole as Role,
+      userRole as unknown as Role,
       req.body,
     );
 

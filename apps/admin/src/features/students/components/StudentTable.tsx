@@ -2,7 +2,13 @@ import { GraduationCap } from "lucide-react";
 import type { Student } from "@/features/students";
 import StudentTableRow from "./StudentTableRow";
 import { Card } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableHead, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table";
 
 interface StudentTableProps {
   students: Student[];
@@ -26,10 +32,11 @@ export default function StudentTable({
       <phantom-ui loading={isLoading}>
         {!isLoading && students.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
-            <GraduationCap size={38} className="text-muted-foreground/40 stroke-[1.5]" />
-            <p className="font-bold text-foreground text-sm">
-              {emptyTitle}
-            </p>
+            <GraduationCap
+              size={38}
+              className="text-muted-foreground/40 stroke-[1.5]"
+            />
+            <p className="font-bold text-foreground text-sm">{emptyTitle}</p>
             <p className="text-xs max-w-xs text-muted-foreground">
               {emptyDescription}
             </p>

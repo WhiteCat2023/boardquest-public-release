@@ -144,7 +144,7 @@ export class AnalyticsService {
     const totalLessons = 35; // Standard total core modules
 
     // Subject mastery formatting strictly from real DB records with flexible matching
-    const categoriesFromDb = await this.db.category.findMany({
+    const categoriesFromDb = await ((this.db as any).subject || (this.db as any).category).findMany({
       select: {
         id: true,
         name: true,
@@ -746,7 +746,7 @@ export class AnalyticsService {
       return { month: m.month, rate: 0, avgScore: 0, students: 0 };
     });
 
-    const categories = await this.db.category.findMany({
+    const categories = await ((this.db as any).subject || (this.db as any).category).findMany({
       include: {
         _count: {
           select: { questions: true },
@@ -766,7 +766,7 @@ export class AnalyticsService {
       return {
         id: cat.id,
         name: cat.name,
-        questionCount: cat._count.questions,
+        questionCount: cat._count?.questions ?? 0,
         proficiency: avgProficiency,
       };
     });

@@ -34,29 +34,29 @@ export function StudentRosterCard({ students }: StudentRosterCardProps) {
           <p className="text-xs font-semibold">{content.emptyState}</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {displayStudents.map((s: any) => (
             <div
               key={s.id}
-              className="flex items-center justify-between p-2 bg-muted/30 rounded-xl border border-border"
+              className="flex items-center justify-between p-1.5 px-2 bg-muted/20 hover:bg-muted/50 rounded-lg border border-border/70 transition-colors"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Avatar className="h-7 w-7 border border-primary/20 bg-primary/10 text-primary shrink-0">
-                  <AvatarFallback className="font-bold text-[10px] bg-primary/10 text-primary uppercase">
+              <div className="flex items-center gap-2 min-w-0">
+                <Avatar className="h-6.5 w-6.5 border border-primary/20 bg-primary/10 text-primary shrink-0">
+                  <AvatarFallback className="font-bold text-[9.5px] bg-primary/10 text-primary uppercase">
                     {(s.name || "ST").slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground leading-snug truncate max-w-[130px]">
+                  <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[130px]">
                     {s.name}
                   </p>
-                  <p className="text-[9.5px] text-muted-foreground truncate max-w-[130px]">{s.email}</p>
+                  <p className="text-[10px] text-muted-foreground truncate max-w-[130px] leading-tight mt-0.5">{s.email}</p>
                 </div>
               </div>
 
               <Badge
                 variant="outline"
-                className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9.5px] font-bold px-1.5 py-0.5 rounded-md shrink-0"
               >
                 {content.levelPrefix} {s.level || 1}
               </Badge>

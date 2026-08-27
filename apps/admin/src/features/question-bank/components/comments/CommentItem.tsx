@@ -27,14 +27,15 @@ export default function CommentItem({
   const isMine = comment.authorId === currentUserId;
   const isResolved = Boolean(comment.isResolved);
 
+  const curRoleStr = String(currentUserRole || "").toUpperCase();
   const canDelete = Boolean(
     currentUserId &&
       (comment.authorId === currentUserId ||
-        ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(currentUserRole || ""))
+        ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(curRoleStr))
   );
 
-  const getRoleBadgeStyle = (role: string) => {
-    switch (role?.toUpperCase()) {
+  const getRoleBadgeStyle = (role: string | number) => {
+    switch (String(role)?.toUpperCase()) {
       case "SUPERADMIN":
       case "DEAN":
         return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";

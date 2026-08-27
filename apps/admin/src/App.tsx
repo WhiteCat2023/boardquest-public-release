@@ -7,6 +7,7 @@ import DashboardLayout from "./layout/DashboardLayout";
 import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalModalContainer } from "@/components/modal";
+import { UserRole } from "@/types/question";
 
 // Lazy-loaded page components for optimal bundle splitting
 const LoginPage = lazy(() =>
@@ -23,13 +24,13 @@ const Dashboard = lazy(() =>
 );
 
 const FacultyManagement = lazy(() =>
-  import("@/features/faculty").then((m) => ({ default: m.FacultyManagement })),
+  import("@/features/users").then((m) => ({ default: m.UserManagement })),
 );
 const AddFacultyMember = lazy(() =>
-  import("@/features/faculty").then((m) => ({ default: m.AddFacultyMember })),
+  import("@/features/users").then((m) => ({ default: m.AddUser })),
 );
 const ViewFacultyMember = lazy(() =>
-  import("@/features/faculty").then((m) => ({ default: m.ViewFacultyMember })),
+  import("@/features/users").then((m) => ({ default: m.ViewUser })),
 );
 
 const StudentManagement = lazy(() =>
@@ -77,6 +78,9 @@ const SubjectDetailsPage = lazy(() =>
 
 const MyQuestions = lazy(() =>
   import("@/features/question-bank").then((m) => ({ default: m.MyQuestions })),
+);
+const ReviewQuestions = lazy(() =>
+  import("@/features/question-bank").then((m) => ({ default: m.ReviewQuestions })),
 );
 const SharedLibrary = lazy(() =>
   import("@/features/question-bank").then((m) => ({
@@ -145,10 +149,10 @@ function App() {
                   element={
                     <RequireAuth
                       allowedRoles={[
-                        "SUPERADMIN",
-                        "DEAN",
-                        "TEAMLEAD",
-                        "TEACHER",
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
                       ]}
                     />
                   }
@@ -165,7 +169,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD"]}
+                      allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN, UserRole.TEAMLEAD]}
                     />
                   }
                 >
@@ -191,7 +195,12 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
+                      ]}
                     />
                   }
                 >
@@ -209,7 +218,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD"]}
+                      allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN, UserRole.TEAMLEAD]}
                     />
                   }
                 >
@@ -230,7 +239,7 @@ function App() {
                 */}
 
                 <Route
-                  element={<RequireAuth allowedRoles={["DEAN", "TEAMLEAD"]} />}
+                  element={<RequireAuth allowedRoles={[UserRole.DEAN, UserRole.TEAMLEAD]} />}
                 >
                   <Route
                     path="review-center"
@@ -250,7 +259,7 @@ function App() {
 
                 <Route
                   element={
-                    <RequireAuth allowedRoles={["SUPERADMIN", "DEAN"]} />
+                    <RequireAuth allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN]} />
                   }
                 >
                   <Route path="logs-management" element={<LogsManagement />} />
@@ -265,7 +274,7 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["DEAN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={[UserRole.DEAN, UserRole.TEAMLEAD, UserRole.TEACHER]}
                     />
                   }
                 >
@@ -286,6 +295,22 @@ function App() {
                     path="question-bank/my-questions"
                     element={<MyQuestions />}
                   />
+                  <Route
+                    element={
+                      <RequireAuth
+                        allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN, UserRole.TEAMLEAD]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="question-bank/review"
+                      element={<ReviewQuestions />}
+                    />
+                    <Route
+                      path="question-bank/review-questions"
+                      element={<ReviewQuestions />}
+                    />
+                  </Route>
                   <Route
                     path="question-bank/bank"
                     element={<SharedLibrary />}
@@ -320,7 +345,12 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
+                      ]}
                     />
                   }
                 >
@@ -329,7 +359,7 @@ function App() {
 
                 {/* Admin and Teamlead Only Routes */}
                 <Route
-                  element={<RequireAuth allowedRoles={["DEAN", "TEAMLEAD"]} />}
+                  element={<RequireAuth allowedRoles={[UserRole.DEAN, UserRole.TEAMLEAD]} />}
                 >
                   <Route path="game-management" element={<GameManagementPage />} />
                   <Route path="leaderboards" element={<LeaderboardPage />} />
@@ -340,7 +370,12 @@ function App() {
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]}
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
+                      ]}
                     />
                   }
                 >

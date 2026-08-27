@@ -42,7 +42,7 @@ export function SystemAuditLogsCard() {
   };
 
   return (
-    <Card className="bg-card border border-border rounded-2xl p-4 md:p-5 shadow-2xs flex flex-col gap-3 font-sans hover:border-primary/30 transition-all">
+    <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans hover:border-primary/30 transition-all">
       <div className="flex items-center justify-between border-b border-border pb-2.5">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <Activity className="text-primary size-4" />
@@ -66,25 +66,25 @@ export function SystemAuditLogsCard() {
           <p className="text-xs font-semibold">No audit logs recorded yet</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {displayLogs.map((log: LogItem) => (
             <div
               key={log.id}
-              className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl border border-border hover:bg-muted/50 transition-colors gap-2"
+              className="flex items-center justify-between p-2 bg-muted/20 hover:bg-muted/50 rounded-lg border border-border/70 transition-colors gap-2"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 {getLevelBadge(log.level)}
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground leading-snug truncate max-w-[170px] md:max-w-[220px]">
+                  <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[170px] md:max-w-[220px]">
                     {log.action || log.message || "System Action"}
                   </p>
-                  <p className="text-[10px] text-muted-foreground truncate max-w-[170px] md:max-w-[220px]">
+                  <p className="text-[10px] text-muted-foreground truncate max-w-[170px] md:max-w-[220px] leading-tight mt-0.5">
                     {log.userEmail || log.source || "System"}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground shrink-0">
+              <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground shrink-0">
                 <Clock size={11} />
                 {formatTime(log.createdAt)}
               </div>

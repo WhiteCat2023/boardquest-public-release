@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import boardQuestLogo from "@/assets/boardquest.png";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
@@ -34,17 +35,11 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-6">
-          <div className="relative flex items-center justify-center h-16 w-24 mb-1">
-            <span className="text-6xl font-black text-foreground absolute left-2 z-10 font-sans tracking-tighter">
-              B
-            </span>
-            <span className="text-6xl font-black text-primary absolute right-1 z-20 top-2 font-sans tracking-tighter">
-              Q
-            </span>
-          </div>
-          <h1 className="text-xl font-extrabold tracking-widest text-foreground">
-            BOARDQUEST
-          </h1>
+          <img
+            src={boardQuestLogo}
+            alt="BoardQuest Logo"
+            className="h-16 sm:h-20 w-auto object-contain mb-1"
+          />
         </div>
 
         {/* Success State */}
@@ -86,7 +81,7 @@ export default function ForgotPasswordPage() {
                 <FieldLegend className="text-lg font-extrabold text-foreground mb-1">
                   RESET <span className="text-primary">PASSWORD</span>
                 </FieldLegend>
-                <FieldDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[260px] mx-auto leading-snug">
+                <FieldDescription className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[260px] mx-auto leading-snug">
                   ENTER YOUR REGISTERED EMAIL TO RECEIVE A PASSWORD RESET LINK
                 </FieldDescription>
 

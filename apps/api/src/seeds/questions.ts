@@ -1,6 +1,7 @@
 import {
   QuestionDifficulty,
   QuestionType,
+  QuestionStatus,
 } from "../types/prisma.types";
 
 export const demoQuestions = [

@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
-import { useFaculties } from "@/features/faculty";
+import { useUsers } from "@/features/users";
 import { useStudents } from "@/features/students";
-import { useCategoriesTotalCount } from "@/features/question-bank";
+import { useSubjectsTotalCount } from "@/features/question-bank";
 
 export function useTeamLeadDashboard() {
   const axiosPrivate = useAxiosPrivate();
   const { auth } = useAuth();
   const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
 
-  const { data: facultyData, isLoading: isFacultyLoading } = useFaculties({ limit: 1 });
+  const { data: facultyData, isLoading: isFacultyLoading } = useUsers({ limit: 1 });
   const { data: studentData, isLoading: isStudentLoading } = useStudents({ skip: 0, take: 10 });
-  const { data: categoriesTotalCount, isLoading: isCategoriesTotalCountLoading } = useCategoriesTotalCount();
+  const { data: categoriesTotalCount, isLoading: isCategoriesTotalCountLoading } = useSubjectsTotalCount();
 
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
     queryKey: ["teamlead-dashboard-question-stats"],

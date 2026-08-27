@@ -56,13 +56,13 @@ export function RecentQuestionsCard({
           {displayQuestions.map((q: any) => (
             <div
               key={q.id}
-              className="py-2 flex items-start justify-between gap-3 hover:bg-accent/40 px-2 rounded-lg transition-colors"
+              className="py-1.5 flex items-start justify-between gap-3 hover:bg-accent/40 px-1.5 rounded-lg transition-colors"
             >
               <div className="space-y-0.5 min-w-0 flex-1">
-                <p className="text-xs font-bold text-foreground truncate">
+                <p className="text-xs font-semibold text-foreground truncate">
                   {q.question || q.text || "Sample Question Item"}
                 </p>
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                <div className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground font-medium">
                   <span className="font-semibold text-foreground/80 truncate max-w-[120px]">
                     {q.category?.name || content.fallbackSubject}
                   </span>
@@ -76,7 +76,7 @@ export function RecentQuestionsCard({
               <div className="flex items-center gap-1.5 shrink-0">
                 <Badge
                   variant="outline"
-                  className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${getDifficultyColor(q.difficulty)}`}
+                  className={`text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md ${getDifficultyColor(q.difficulty)}`}
                 >
                   {q.difficulty || "MEDIUM"}
                 </Badge>

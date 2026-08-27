@@ -35,10 +35,24 @@ export function useNotificationStream() {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
             queryClient.invalidateQueries({ queryKey: ["notifications-count"] });
             queryClient.invalidateQueries({ queryKey: ["questions"] });
+            queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
           }
         } catch (err) {
           console.warn("Error parsing notification SSE payload:", err);
+        }
+      });
+
+      eventSource.addEventListener("questions-updated", (_event: MessageEvent) => {
+        try {
+          // Instantly refresh all question list, review desk, and category stats
+          queryClient.invalidateQueries({ queryKey: ["questions"] });
+          queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+        } catch (err) {
+          console.warn("Error processing questions-updated SSE event:", err);
         }
       });
 

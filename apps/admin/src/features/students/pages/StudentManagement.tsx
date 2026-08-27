@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Search, RotateCcw, X, GraduationCap, UserCheck, Users } from "lucide-react";
+import {
+  Search,
+  RotateCcw,
+  X,
+  GraduationCap,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,11 +28,14 @@ const ITEMS_PER_PAGE = 10;
 
 export default function StudentManagement() {
   const { isTeacher, currentUser } = useRoleFlags();
-  const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">("DIRECTORY");
+  const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">(
+    "DIRECTORY",
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
-  const [selectedStudentForGuidance, setSelectedStudentForGuidance] = useState<any>(null);
+  const [selectedStudentForGuidance, setSelectedStudentForGuidance] =
+    useState<any>(null);
   const [isGuidanceModalOpen, setIsGuidanceModalOpen] = useState(false);
 
   // Pagination State (offset-based, mirrors FacultyManagement cursor-stack pattern)
@@ -73,18 +83,22 @@ export default function StudentManagement() {
   };
 
   const hasActiveFilters =
-    searchTerm.trim() !== "" || selectedLevel !== "ALL" || selectedLocation !== "ALL";
+    searchTerm.trim() !== "" ||
+    selectedLevel !== "ALL" ||
+    selectedLocation !== "ALL";
 
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <StudentHeader
           canAddStudent={!isTeacher}
-          title={isTeacher ? "My Handled Students" : "Student Directory & Enrollment"}
+          title={
+            isTeacher ? "My Students" : "Student Directory & Advising"
+          }
           description={
             isTeacher
               ? "View and monitor the students assigned to you for academic guidance and mentoring."
-              : "Manage enrolled students, academic programs, and evaluation eligibility."
+              : "Manage enrolled students, academic standing, and guidance advising."
           }
         />
 
@@ -103,7 +117,9 @@ export default function StudentManagement() {
             }`}
           >
             {isTeacher ? <Users size={14} /> : <GraduationCap size={14} />}
-            {isTeacher ? `My Assigned Students (${total})` : `Enrolled Students (${total})`}
+            {isTeacher
+              ? `My Students (${total})`
+              : `Student Roster (${total})`}
           </button>
 
           <button
@@ -124,9 +140,9 @@ export default function StudentManagement() {
       {activeTab === "DIRECTORY" ? (
         <>
           {/* Search & Filters Bar */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3 rounded-xl shadow-2xs w-full font-sans">
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 min-w-[200px] max-w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
               <Input
                 type="text"
@@ -136,11 +152,14 @@ export default function StudentManagement() {
                   setSearchTerm(e.target.value);
                   resetPagination();
                 }}
-                className="pl-9 pr-8 h-8 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground"
+                className="pl-9 pr-8 h-8.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"
               />
               {searchTerm && (
                 <button
-                  onClick={() => { setSearchTerm(""); resetPagination(); }}
+                  onClick={() => {
+                    setSearchTerm("");
+                    resetPagination();
+                  }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X size={13} />
@@ -149,9 +168,15 @@ export default function StudentManagement() {
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={selectedLevel} onValueChange={(v) => { setSelectedLevel(v); resetPagination(); }}>
-                <SelectTrigger className="h-8 w-[125px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Select
+                value={selectedLevel}
+                onValueChange={(v) => {
+                  setSelectedLevel(v);
+                  resetPagination();
+                }}
+              >
+                <SelectTrigger className="h-8.5 w-[125px] sm:w-[130px] bg-muted/30 border-border rounded-lg text-xs font-semibold text-foreground">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -163,7 +188,13 @@ export default function StudentManagement() {
                 </SelectContent>
               </Select>
 
-              <Select value={selectedLocation} onValueChange={(v) => { setSelectedLocation(v); resetPagination(); }}>
+              <Select
+                value={selectedLocation}
+                onValueChange={(v) => {
+                  setSelectedLocation(v);
+                  resetPagination();
+                }}
+              >
                 <SelectTrigger className="h-8 w-[135px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
@@ -195,7 +226,11 @@ export default function StudentManagement() {
             students={studentsList}
             isLoading={isLoading}
             onAssignGuidance={handleOpenAssignGuidance}
-            emptyTitle={isTeacher ? "No Assigned Students" : "No Enrolled Students Registered"}
+            emptyTitle={
+              isTeacher
+                ? "No Assigned Students"
+                : "No Enrolled Students Registered"
+            }
             emptyDescription={
               isTeacher
                 ? "You currently do not have any students assigned to you for academic guidance."

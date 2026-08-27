@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserCheck, Send } from "lucide-react";
 import { toast } from "sonner";
-import { useCategories } from "@/features/faculty";
+import { useSubjects } from "@/features/users";
 
 export interface AssignGuidanceModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ export function AssignGuidanceModal({
     },
   });
 
-  const { data: categories = [] } = useCategories();
+  const { data: categories = [] } = useSubjects();
 
   const assignMutation = useMutation({
     mutationFn: async () => {
@@ -94,14 +94,14 @@ export function AssignGuidanceModal({
           {/* Advisor Selector */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">
-              Select Faculty Advisor / Administrator <span className="text-destructive">*</span>
+              Select Advisor / Administrator <span className="text-destructive">*</span>
             </Label>
             <select
               value={selectedAdvisorId}
               onChange={(e) => setSelectedAdvisorId(e.target.value)}
               className="w-full h-9 text-xs px-3 rounded-xl border border-border bg-card text-foreground focus:ring-1 focus:ring-primary font-bold"
             >
-              <option value="">-- Select Faculty Advisor --</option>
+              <option value="">-- Select Advisor --</option>
               {advisors.map((adv: any) => (
                 <option key={adv.id} value={adv.id}>
                   {adv.name} ({adv.role}) • {adv.email}

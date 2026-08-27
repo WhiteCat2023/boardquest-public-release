@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  CheckCheck,
-  Trash2,
-  ExternalLink,
-  Inbox,
-} from "lucide-react";
+import { Bell, CheckCheck, Trash2, ExternalLink, Inbox } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,13 +81,20 @@ export default function NotificationDropdown() {
               <Bell size={15} />
             </div>
             <div>
-              <span className="text-xs font-bold text-foreground block">Notifications</span>
-              <span className="text-[10px] text-muted-foreground">Stay informed on system events & activities.</span>
+              <span className="text-xs font-bold text-foreground block">
+                Notifications
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Stay informed on system events & activities.
+              </span>
             </div>
           </div>
 
           {unreadCount > 0 && (
-            <Badge variant="outline" className="text-[10px] font-extrabold bg-primary/10 text-primary border-primary/20 px-2 py-0.5 rounded-full">
+            <Badge
+              variant="outline"
+              className="text-[10px] font-extrabold bg-primary/10 text-primary border-primary/20 px-2 py-0.5 rounded-full"
+            >
               {unreadCount} New
             </Badge>
           )}
@@ -167,7 +168,9 @@ export default function NotificationDropdown() {
               <div className="p-3 rounded-2xl bg-muted/60 text-muted-foreground border border-border">
                 <Inbox size={22} />
               </div>
-              <span className="text-xs font-bold text-foreground">No Notifications</span>
+              <span className="text-xs font-bold text-foreground">
+                No Notifications
+              </span>
               <span className="text-[11px] text-muted-foreground max-w-xs">
                 {filterTab === "UNREAD"
                   ? "You are all caught up! No unread notifications."
@@ -189,7 +192,8 @@ export default function NotificationDropdown() {
         {/* Footer Navigation Link */}
         <div className="p-2 px-3 border-t border-border bg-muted/20 text-center flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground font-mono">
-            {notifications.length} {notifications.length === 1 ? "entry" : "entries"}
+            {notifications.length}{" "}
+            {notifications.length === 1 ? "entry" : "entries"}
           </span>
 
           <button

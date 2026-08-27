@@ -19,9 +19,15 @@ export function ReviewCenterLoginPage() {
     try {
       await login({ email, password });
     } catch (err: unknown) {
-      const errorObj = err as any;
+      const errorObj = err as {
+        response?: { status?: number; data?: { message?: string } };
+        message?: string;
+      };
       const status = errorObj?.response?.status;
-      const message = errorObj?.response?.data?.message || (err instanceof Error ? err.message : "") || "";
+      const message =
+        errorObj?.response?.data?.message ||
+        (err instanceof Error ? err.message : "") ||
+        "";
       if (status === 403 || message.toLowerCase().includes("deactivated")) {
         if (message) setDeactivatedMsg(message);
         setIsDeactivatedDialogOpen(true);

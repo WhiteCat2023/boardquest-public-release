@@ -169,7 +169,7 @@ export default function SubjectOverviewTab({
         <Card className="lg:col-span-3 p-4 bg-card border border-border/80 rounded-xl space-y-3 shadow-2xs h-full">
           <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
             <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-primary" /> Assigned Faculty Handlers
+              <ShieldCheck size={14} className="text-primary" /> Assigned Handlers
             </h3>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
@@ -182,7 +182,7 @@ export default function SubjectOverviewTab({
                   onClick={() => setIsAssignModalOpen(true)}
                   className="h-7 text-xs font-semibold gap-1 px-2.5 border-primary/30 text-primary hover:bg-primary/10"
                 >
-                  <UserPlus size={13} /> Assign Faculty
+                  <UserPlus size={13} /> Assign Users
                 </Button>
               )}
             </div>
@@ -198,7 +198,7 @@ export default function SubjectOverviewTab({
                       .slice(0, 2)
                       .join("")
                       .toUpperCase()
-                  : "FC";
+                  : "US";
                 return (
                   <div
                     key={handler.id || handler._id}
@@ -213,7 +213,7 @@ export default function SubjectOverviewTab({
                           {handler.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                          {handler.email || "Faculty Member"}
+                          {handler.email || "User"}
                         </p>
                       </div>
                     </div>
@@ -227,9 +227,9 @@ export default function SubjectOverviewTab({
           ) : (
             <div className="py-6 px-4 text-center border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-1.5 bg-muted/20">
               <Users size={26} className="text-muted-foreground/40 stroke-[1.5]" />
-              <p className="text-xs font-bold text-foreground">No Faculty Handlers Assigned</p>
+              <p className="text-xs font-bold text-foreground">No Handlers Assigned</p>
               <p className="text-[10px] text-muted-foreground max-w-xs">
-                No specific faculty members are explicitly assigned to this subject category yet.
+                No specific users are explicitly assigned to this subject category yet.
               </p>
               {canAssignFaculty && (
                 <Button
@@ -237,7 +237,7 @@ export default function SubjectOverviewTab({
                   onClick={() => setIsAssignModalOpen(true)}
                   className="mt-2 text-xs font-semibold gap-1.5 shadow-2xs"
                 >
-                  <UserPlus size={13} /> Assign Teachers to Subject
+                  <UserPlus size={13} /> Assign Users to Subject
                 </Button>
               )}
             </div>

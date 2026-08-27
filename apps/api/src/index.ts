@@ -25,7 +25,7 @@ import apiRoutes from "./routes/index.js";
 import { apiLimiter } from "./middleware/rateLimit.middleware";
 import { ensureSuperAdminExists } from "./services/admin/bootstrap.service";
 import { startQueue, stopQueue } from "./services/queue.service";
-import { seedAdminUserDb } from "./services/prisma";
+// import { seedAdminUserDb } from "./services/prisma";
 
 const app = express();
 
@@ -64,7 +64,7 @@ app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(cookieParser());
 
-await seedAdminUserDb();
+// await seedAdminUserDb();
 await ensureSuperAdminExists();
 await startQueue();
 

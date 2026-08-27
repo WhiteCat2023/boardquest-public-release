@@ -1,19 +1,12 @@
 import { useState, useEffect } from "react";
 import QuestionList from "../components/list/QuestionList";
 import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
-import {
-  Search,
-  X,
-  BookOpen,
-  Grid,
-  ChevronRight,
-} from "lucide-react";
+import { Search, X, BookOpen, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import AddQuestionButton from "@/components/custom/button/AddQuestionButton";
 import { Input } from "@/components/ui/input";
 import { QuestionFilter } from "../components/QuestionFilter";
-import { useCategories } from "@/features/faculty";
+import { useSubjects } from "@/features/users";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -24,6 +17,7 @@ import {
 
 export default function SharedLibrary() {
   const [categorySearch, setCategorySearch] = useState("");
+  const [isSubjectSidebarOpen, setIsSubjectSidebarOpen] = useState(true);
 
   const {
     search,
@@ -41,10 +35,11 @@ export default function SharedLibrary() {
         : selectedCategory,
     difficulty: selectedDifficulty,
     type: selectedType,
+    status: "APPROVED",
   };
 
-  const { data: categories = [], isLoading: isCategoriesLoading } =
-    useCategories({
+  const { data: categories = [] } =
+    useSubjects({
       search: categorySearch,
     });
 
@@ -74,151 +69,141 @@ export default function SharedLibrary() {
   );
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden font-sans bg-background text-foreground">
+    <div className="flex flex-col lg:flex-row h-full flex-1 overflow-hidden font-sans bg-background text-foreground">
       {/* Left Sidebar: Compact Subject Navigation Menu (Desktop Only) */}
-      <aside className="hidden lg:flex w-72 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex-col h-full">
-        {/* Sidebar Header */}
-        <div className="p-3.5 px-4 border-b border-border bg-card">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                <BookOpen size={16} />
+      {isSubjectSidebarOpen && (
+        <aside className="hidden lg:flex w-64 xl:w-72 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex-col h-full animate-in slide-in-from-left-2 duration-200">
+          {/* Sidebar Header */}
+          <div className="p-3 px-3.5 border-b border-border bg-card">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded-md bg-primary/10 text-primary border border-primary/20">
+                  <BookOpen size={14} />
+                </div>
+                <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-foreground">
+                  Subjects ({categories.length})
+                </h2>
               </div>
-              <h2 className="text-xs font-extrabold uppercase tracking-wider text-foreground">
-                Subjects ({categories.length})
-              </h2>
+              <div className="flex items-center gap-1.5">
+                {selectedCategory && selectedCategory !== "ALL" && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory("ALL")}
+                    className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsSubjectSidebarOpen(false)}
+                  className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
+                  title="Hide subjects panel"
+                >
+                  <PanelLeftClose size={14} />
+                </button>
+              </div>
             </div>
-            {selectedCategory && selectedCategory !== "ALL" && (
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("ALL")}
-                className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
-              >
-                Reset
-              </button>
-            )}
+
+            {/* Compact Subject Search */}
+            <div className="relative mt-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
+              <Input
+                type="text"
+                placeholder="Filter subjects..."
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                className="pl-8 pr-7 h-7.5 text-xs bg-muted/40 border border-border rounded-lg focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+              />
+              {categorySearch && (
+                <button
+                  type="button"
+                  onClick={() => setCategorySearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Compact Subject Search */}
-          <div className="relative mt-2.5">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
-            <Input
-              type="text"
-              placeholder="Filter subjects..."
-              value={categorySearch}
-              onChange={(e) => setCategorySearch(e.target.value)}
-              className="pl-8 pr-7 h-7.5 text-xs bg-muted/40 border border-border rounded-lg focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
-            />
-            {categorySearch && (
-              <button
-                type="button"
-                onClick={() => setCategorySearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Compact List Menu */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {/* All Subjects Item */}
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("ALL")}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer border ${
-              selectedCategory === "ALL" || !selectedCategory
-                ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
-                : "bg-card border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/50 font-medium"
-            }`}
-          >
-            <div className="flex items-center gap-2 truncate">
-              <Grid size={14} className="shrink-0" />
-              <span className="truncate">All Subjects</span>
-            </div>
-            <Badge
-              variant="outline"
-              className={`text-[9.5px] font-mono font-bold px-1.5 py-0 rounded-md shrink-0 ${
+          {/* Compact List Menu */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+            {/* All Subjects Item */}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory("ALL")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                 selectedCategory === "ALL" || !selectedCategory
-                  ? "bg-primary-foreground/20 text-primary-foreground border-transparent"
-                  : "bg-muted text-muted-foreground border-border"
+                  ? "bg-primary/10 text-primary border-primary/25 font-semibold shadow-2xs"
+                  : "bg-transparent border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
               }`}
             >
-              {totalAllQuestionsCount}
-            </Badge>
-          </button>
+              <div className="flex items-center gap-2 truncate">
+                <BookOpen size={14} className="shrink-0" />
+                <span className="truncate">All Subjects</span>
+              </div>
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+                  selectedCategory === "ALL" || !selectedCategory
+                    ? "bg-primary/20 text-primary font-bold"
+                    : "bg-muted text-muted-foreground font-medium"
+                }`}
+              >
+                {totalAllQuestionsCount}
+              </span>
+            </button>
 
-          {/* Loading Skeletons */}
-          {isCategoriesLoading ? (
-            <div className="space-y-1 pt-1">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="h-8.5 w-full rounded-xl bg-muted"
-                />
-              ))}
-            </div>
-          ) : filteredCategories.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted-foreground italic">
-              No matching subjects found.
-            </div>
-          ) : (
-            filteredCategories.map((cat: any) => {
-              const isSelected = selectedCategory === cat.id;
-              const count = getCategoryQuestionCount(cat);
+            {/* Filtered Subject Items */}
+            {filteredCategories.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                No subjects found
+              </div>
+            ) : (
+              filteredCategories.map((cat: any) => {
+                const count = getCategoryQuestionCount(cat);
+                const isSelected = selectedCategory === cat.id;
 
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer border ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
-                      : "bg-card border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/50 font-medium"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate min-w-0 pr-1">
-                    <BookOpen
-                      size={13}
-                      className={`shrink-0 ${isSelected ? "text-primary-foreground" : "text-primary/70"}`}
-                    />
-                    <span className="truncate">{cat.name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Badge
-                      variant="outline"
-                      className={`text-[9.5px] font-mono font-bold px-1.5 py-0 rounded-md ${
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+                      isSelected
+                        ? "bg-primary/10 text-primary border-primary/25 font-semibold shadow-2xs"
+                        : "bg-transparent border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <BookOpen size={14} className="shrink-0" />
+                      <span className="truncate">{cat.name}</span>
+                    </div>
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full font-mono shrink-0 ml-1.5 ${
                         isSelected
-                          ? "bg-primary-foreground/20 text-primary-foreground border-transparent"
-                          : "bg-muted text-muted-foreground border-border"
+                          ? "bg-primary/20 text-primary font-bold"
+                          : "bg-muted text-muted-foreground font-medium"
                       }`}
                     >
                       {count}
-                    </Badge>
-                    {isSelected && (
-                      <ChevronRight
-                        size={12}
-                        className="text-primary-foreground shrink-0"
-                      />
-                    )}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </aside>
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </aside>
+      )}
 
-      {/* Main Panel: Shared Library Content */}
-      <main className="flex-1 overflow-y-auto flex flex-col p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+      {/* Main Panel: Question Library Content */}
+      <main className="flex-1 min-w-0 overflow-y-auto flex flex-col p-3.5 sm:p-5 md:p-6 space-y-3.5 sm:space-y-4">
         {/* Mobile & Tablet Subject Selector Dropdown */}
-        <div className="lg:hidden flex flex-col gap-1.5 p-3 rounded-2xl border border-border bg-card shadow-2xs">
+        <div className="lg:hidden flex flex-col gap-1.5 p-3 rounded-xl border border-border bg-card shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <BookOpen size={13} className="text-primary" /> Subject Filter ({categories.length})
+              <BookOpen size={13} className="text-primary" /> Subject Filter (
+              {categories.length})
             </span>
             {selectedCategory && selectedCategory !== "ALL" && (
               <button
@@ -234,14 +219,16 @@ export default function SharedLibrary() {
             value={selectedCategory || "ALL"}
             onValueChange={(val) => setSelectedCategory(val)}
           >
-            <SelectTrigger className="w-full h-9 text-xs font-semibold bg-background border-border rounded-xl">
+            <SelectTrigger className="w-full h-8.5 text-xs font-semibold bg-background border-border rounded-lg">
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent className="max-h-64">
               <SelectItem value="ALL">
                 <span className="font-bold flex items-center gap-2">
                   <span>All Subjects</span>
-                  <span className="text-[10px] font-mono font-normal text-muted-foreground">({totalAllQuestionsCount})</span>
+                  <span className="text-[10px] font-mono font-normal text-muted-foreground">
+                    ({totalAllQuestionsCount})
+                  </span>
                 </span>
               </SelectItem>
               {categories.map((cat: any) => {
@@ -250,7 +237,9 @@ export default function SharedLibrary() {
                   <SelectItem key={cat.id} value={cat.id}>
                     <span className="flex items-center gap-2">
                       <span className="font-medium">{cat.name}</span>
-                      <span className="text-[10px] font-mono text-muted-foreground">({count})</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        ({count})
+                      </span>
                     </span>
                   </SelectItem>
                 );
@@ -260,26 +249,38 @@ export default function SharedLibrary() {
         </div>
 
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-              All Questions
-              <Badge
-                variant="outline"
-                className="gap-1.5 px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border-primary/20 shadow-2xs"
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            {!isSubjectSidebarOpen && (
+              <button
+                type="button"
+                onClick={() => setIsSubjectSidebarOpen(true)}
+                className="hidden lg:flex p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted border border-border rounded-lg transition-colors cursor-pointer"
+                title="Show subjects panel"
               >
-                <BookOpen size={13} />
-                {selectedCategory === "ALL" || !selectedCategory
-                  ? "All Subjects"
-                  : activeCategoryObj?.name || "Subject Filter"}
-              </Badge>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Repository of approved evaluation questions ready for publication.
-            </p>
+                <PanelLeftOpen size={16} />
+              </button>
+            )}
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                Question Library
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary text-[11px] font-bold rounded-full border-primary/20 shadow-2xs"
+                >
+                  <BookOpen size={12} />
+                  {selectedCategory === "ALL" || !selectedCategory
+                    ? "All Subjects"
+                    : activeCategoryObj?.name || "Subject Filter"}
+                </Badge>
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Browse and manage approved evaluation questions across all subjects.
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <AddQuestionButton />
           </div>
         </div>
@@ -287,9 +288,7 @@ export default function SharedLibrary() {
         {/* Question Filter & Question List */}
         <div className="space-y-4 animate-in fade-in duration-150">
           <QuestionFilter view="bank" />
-          <QuestionList
-            filters={filters}
-          />
+          <QuestionList filters={filters} />
         </div>
       </main>
     </div>

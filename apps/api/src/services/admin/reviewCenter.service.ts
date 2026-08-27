@@ -111,7 +111,10 @@ export async function createReviewCenter(data: CreateReviewCenterInput) {
   });
 }
 
-export async function updateReviewCenter(id: string, data: UpdateReviewCenterInput) {
+export async function updateReviewCenter(
+  id: string,
+  data: UpdateReviewCenterInput,
+) {
   return await prisma.reviewCenterRepresentativeUser.update({
     where: { id },
     data: {

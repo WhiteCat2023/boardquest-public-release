@@ -32,6 +32,12 @@ enum QuestionType {
   SHORT_ANSWER
 }
 
+enum QuestionStatus {
+  APPROVED
+  PENDING_REVIEW
+  PENDING_REVISION
+}
+
 enum RequestStatus {
   PENDING
   APPROVED
@@ -71,9 +77,9 @@ model AdminUser {
   role      Role
   phoneNumber String
 
-  createdCategory Category[] @relation("CategoryAuthor")
-  handledCategories Category[] @relation("HandledCategories", fields: [handledCategoryIds], references: [id])
-  handledCategoryIds String[] @db.ObjectId
+  createdSubjects Subject[] @relation("SubjectAuthor")
+  handledSubjects Subject[] @relation("HandledSubjects", fields: [handledSubjectIds], references: [id])
+  handledSubjectIds String[] @db.ObjectId @map("handledCategoryIds")
   authoredModules LearningModule[] @relation("ModuleAuthor")
 
   questionPermissions Json?
@@ -98,12 +104,13 @@ model Question {
   choices       String[]
   choiceImages  String[] @default([])
   correctAnswer String
+  status        QuestionStatus @default(APPROVED)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId String @db.ObjectId
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId String @db.ObjectId @map("categoryId")
   topic String
 
   difficulty QuestionDifficulty
@@ -138,21 +145,23 @@ model SchoolYear {
   updatedAt DateTime @updatedAt
 }
 
-model Category {
+model Subject {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name String
   icon String
   questions Question[] 
   modules   LearningModule[]
 
-  handlers    AdminUser[] @relation("HandledCategories", fields: [handlerIds], references: [id])
+  handlers    AdminUser[] @relation("HandledSubjects", fields: [handlerIds], references: [id])
   handlerIds  String[]    @db.ObjectId
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  author   AdminUser @relation("CategoryAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  author   AdminUser @relation("SubjectAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   authorId String    @db.ObjectId
+
+  @@map("categories")
 }
 
 model LearningModule {
@@ -163,8 +172,8 @@ model LearningModule {
   order       Int      @default(0)
   isPublished Boolean  @default(true)
 
-  categoryId  String   @db.ObjectId
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subjectId   String   @db.ObjectId @map("categoryId")
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   authorId    String?  @db.ObjectId
   author      AdminUser? @relation("ModuleAuthor", fields: [authorId], references: [id])

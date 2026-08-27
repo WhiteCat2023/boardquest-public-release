@@ -19,10 +19,10 @@ export default function LogsHeader({
       <div>
         <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
           <ScrollText className="text-primary size-5" />
-          System Audit & Logs Management
+          Activity Logs
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-          Monitor application events across levels:
+          Monitor system events and user activity trail:
           <span className="inline-flex items-center gap-1 font-semibold text-foreground text-[11px]">
             <span className="size-1.5 rounded-full bg-blue-500" /> INFO
             <span className="size-1.5 rounded-full bg-amber-500 ml-1" /> WARN

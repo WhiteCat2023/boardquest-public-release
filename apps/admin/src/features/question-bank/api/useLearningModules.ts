@@ -71,6 +71,12 @@ export function useCreateLearningModule(categoryId: string | null) {
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["categoryDetail"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categories"],
+      });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to add module.");
@@ -101,6 +107,12 @@ export function useUpdateLearningModule(categoryId: string | null) {
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["categoryDetail"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categories"],
+      });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to update module.");
@@ -123,6 +135,12 @@ export function useDeleteLearningModule(categoryId: string | null) {
       toast.success("Module deleted successfully!");
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categoryDetail"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categories"],
       });
     },
     onError: (err: any) => {

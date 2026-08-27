@@ -65,16 +65,16 @@ export function LeaderboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-              <Trophy className="w-6 h-6" />
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+              <Trophy className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">
-              Aspirant Leaderboard & Gamification Rankings
+            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+              Leaderboards & Rankings
             </h1>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Real-time candidate rankings compiled strictly from live database performance metrics.
+          <p className="text-xs text-muted-foreground mt-1">
+            Real-time student rankings compiled from activity and quiz performance.
           </p>
         </div>
 

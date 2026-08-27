@@ -4,7 +4,10 @@ import { BarChart2, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StudentListItem, TabType } from "../types/types";
-import { useStudentsList, useStudentAnalyticsReport } from "../api/useStudentAnalytics";
+import {
+  useStudentsList,
+  useStudentAnalyticsReport,
+} from "../api/useStudentAnalytics";
 import { AspirantRosterSidebar } from "../components/AspirantRosterSidebar";
 import { StudentAnalyticsHeader } from "../components/StudentAnalyticsHeader";
 import { LLMOptimizationBar } from "../components/LLMOptimizationBar";
@@ -20,11 +23,15 @@ export default function AnalyticsPage() {
   const urlStudentId = searchParams.get("studentId");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(urlStudentId);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    urlStudentId,
+  );
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
   // Query: Get all students (search filtered on backend)
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudentsList({ search: searchQuery });
+  const { data: studentsData, isLoading: isStudentsLoading } = useStudentsList({
+    search: searchQuery,
+  });
   const studentsList = Array.isArray(studentsData) ? studentsData : [];
 
   const filteredStudents = studentsList;
@@ -37,7 +44,10 @@ export default function AnalyticsPage() {
         if (selectedStudentId !== urlStudentId) {
           setSelectedStudentId(urlStudentId);
         }
-      } else if (!selectedStudentId || !filteredStudents.some((s) => s.id === selectedStudentId)) {
+      } else if (
+        !selectedStudentId ||
+        !filteredStudents.some((s) => s.id === selectedStudentId)
+      ) {
         const firstId = filteredStudents[0].id;
         setSelectedStudentId(firstId);
         setSearchParams({ studentId: firstId }, { replace: true });
@@ -51,10 +61,14 @@ export default function AnalyticsPage() {
   };
 
   // Query: Get selected student's analytics report
-  const { data: report, isLoading: isReportLoading, isRefetching } = useStudentAnalyticsReport(selectedStudentId);
+  const {
+    data: report,
+    isLoading: isReportLoading,
+    isRefetching,
+  } = useStudentAnalyticsReport(selectedStudentId);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] overflow-hidden font-sans bg-background text-foreground">
+    <div className="flex flex-col lg:flex-row h-full flex-1 overflow-hidden font-sans bg-background text-foreground">
       {/* Left Sidebar: Aspirant Roster */}
       <AspirantRosterSidebar
         searchQuery={searchQuery}
@@ -86,33 +100,59 @@ export default function AnalyticsPage() {
           </div>
         ) : studentsList.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground py-24 text-center gap-2.5">
-            <Users size={42} className="text-muted-foreground/30 stroke-[1.5]" />
-            <p className="font-bold text-foreground text-sm">No Students Found</p>
-            <p className="text-xs max-w-xs">There are currently no students registered in the system.</p>
+            <Users
+              size={42}
+              className="text-muted-foreground/30 stroke-[1.5]"
+            />
+            <p className="font-bold text-foreground text-sm">
+              No Students Found
+            </p>
+            <p className="text-xs max-w-xs">
+              There are currently no students registered in the system.
+            </p>
           </div>
         ) : !report ? (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground py-24 text-center gap-2.5">
-            <BarChart2 size={42} className="text-muted-foreground/30 stroke-[1.5]" />
-            <p className="font-bold text-foreground text-sm">No Performance Data</p>
-            <p className="text-xs max-w-xs">Selected student has no recorded performance statistics yet.</p>
+            <BarChart2
+              size={42}
+              className="text-muted-foreground/30 stroke-[1.5]"
+            />
+            <p className="font-bold text-foreground text-sm">
+              No Performance Data
+            </p>
+            <p className="text-xs max-w-xs">
+              Selected student has no recorded performance statistics yet.
+            </p>
           </div>
         ) : (
           <div className="flex flex-col gap-4 animate-in fade-in duration-150">
             {/* Student Consolidated Header Banner */}
-            <StudentAnalyticsHeader report={report} isRefetching={isRefetching} />
+            <StudentAnalyticsHeader
+              report={report}
+              isRefetching={isRefetching}
+            />
 
             {/* Token-Saving LLM Optimization Engine Bar */}
             {/* <LLMOptimizationBar cacheStats={report.cacheStats} /> */}
 
             {/* Segmented Sub-Tabs Navigation */}
-            <AnalyticsNavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            <AnalyticsNavTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
 
             {/* TAB CONTENTS */}
             {activeTab === "overview" && <OverviewTab report={report} />}
             {activeTab === "graphs" && <PerformanceGraphsTab report={report} />}
-            {activeTab === "timeline" && <ActivityTimelineTab report={report} />}
-            {activeTab === "progress" && <SyllabusReadinessTab report={report} />}
-            {activeTab === "achievements" && <AchievementsTab report={report} />}
+            {activeTab === "timeline" && (
+              <ActivityTimelineTab report={report} />
+            )}
+            {activeTab === "progress" && (
+              <SyllabusReadinessTab report={report} />
+            )}
+            {activeTab === "achievements" && (
+              <AchievementsTab report={report} />
+            )}
           </div>
         )}
       </div>

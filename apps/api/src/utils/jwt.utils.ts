@@ -1,9 +1,5 @@
 import jwt, {SignOptions} from "jsonwebtoken";
 
-
-
-
-
 export function signJWT(payload: object, expiresIn: string | number) {
     const privateKey = process.env.PRIVATE_KEY;
     

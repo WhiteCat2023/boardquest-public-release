@@ -15,7 +15,7 @@ export const teamLeadNavItem: NavItemProps[] = [
     sideBarCategoryName: "LEARNING MANAGEMENT",
     content: [
       {
-        title: "Faculty ",
+        title: "Users",
         path: "/faculty-management",
         icon: "Users",
       },
@@ -50,6 +50,11 @@ export const teamLeadNavItem: NavItemProps[] = [
         icon: "FileText",
       },
       {
+        title: "Review Questions",
+        path: "/question-bank/review-questions",
+        icon: "CheckSquare",
+      },
+      {
         title: "All Questions",
         path: "/question-bank/shared-library",
         icon: "Library",
@@ -63,6 +68,26 @@ export const teamLeadNavItem: NavItemProps[] = [
         title: "Performance",
         path: "/analytics",
         icon: "BarChart2",
+      },
+      {
+        title: "Game Management",
+        path: "/game-management",
+        icon: "Gamepad2",
+      },
+      {
+        title: "Leaderboards",
+        path: "/leaderboards",
+        icon: "Trophy",
+      },
+    ],
+  },
+  {
+    sideBarCategoryName: "SYSTEM & USER",
+    content: [
+      {
+        title: "System Settings",
+        path: "/settings",
+        icon: "Settings",
       },
     ],
   },

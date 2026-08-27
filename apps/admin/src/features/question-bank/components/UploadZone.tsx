@@ -56,7 +56,7 @@ export default function UploadZone({ categories }: UploadZoneProps) {
           
           <div className="flex flex-col items-start md:items-end text-xs text-muted-foreground font-medium md:text-right border-l-2 md:border-l-0 md:border-r-2 border-primary/30 pl-3 md:pl-0 md:pr-3 py-0.5">
             <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Authoring profile</span>
-            <span className="text-foreground font-bold text-sm">{(auth as any)?.data?.user?.name || "Faculty Reviewer"}</span>
+            <span className="text-foreground font-bold text-sm">{(auth as any)?.data?.user?.name || "Author"}</span>
           </div>
         </div>
 

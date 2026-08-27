@@ -3,6 +3,7 @@ import { type LoginRequest } from "@/types/types";
 import { Link } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { Mail, Lock, EyeClosed, Eye, UserX, ShieldAlert } from "lucide-react";
+import boardQuestLogo from "@/assets/boardquest.png";
 import {
   Field,
   FieldDescription,
@@ -61,17 +62,11 @@ function LoginPage() {
       <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-6">
-          <div className="relative flex items-center justify-center h-16 w-24 mb-1">
-            <span className="text-6xl font-black text-foreground absolute left-2 z-10 font-sans tracking-tighter">
-              B
-            </span>
-            <span className="text-6xl font-black text-primary absolute right-1 z-20 top-2 font-sans tracking-tighter">
-              Q
-            </span>
-          </div>
-          <h1 className="text-xl font-extrabold tracking-widest text-foreground">
-            BOARDQUEST
-          </h1>
+          <img
+            src={boardQuestLogo}
+            alt="BoardQuest Logo"
+            className="h-16 sm:h-20 w-auto object-contain mb-1"
+          />
         </div>
 
         {/* Form Section */}
@@ -79,10 +74,10 @@ function LoginPage() {
           <FieldGroup>
             <FieldSet className="text-center mb-8">
               <FieldLegend className="text-lg font-extrabold text-foreground mb-1">
-                ASPIRANT <span className="text-primary">LOG IN</span>
+                ADMIN <span className="text-primary">LOG IN</span>
               </FieldLegend>
-              <FieldDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[250px] mx-auto leading-snug">
-                ENTER YOUR CREDENTIALS TO CONTINUE THE REVIEW
+              <FieldDescription className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[250px] mx-auto leading-snug">
+                ENTER YOUR CREDENTIALS TO ACCESS YOUR PORTAL
               </FieldDescription>
               <FieldGroup>
                 <Field data-invalid={isLoginInvalid || undefined}>
@@ -163,24 +158,24 @@ function LoginPage() {
                 >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
                 </Button>
-                {/* Footer */}
-                <div className="mt-8 text-center w-full">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                    NEW TO EXPEDITION?{" "}
-                    <Link
-                      to="/register"
-                      className="text-primary hover:underline"
-                    >
-                      ENROLL NOW
-                    </Link>
-                  </p>
-                </div>
 
                 {isLoginInvalid && (
                   <div className="mt-4 text-xs font-bold text-destructive text-center">
-                    {(loginMutation.error as any)?.response?.data?.message ||
-                      (loginMutation.error as any)?.message ||
-                      "Login failed"}
+                    {(() => {
+                      const msg =
+                        (loginMutation.error as any)?.response?.data?.message ||
+                        (loginMutation.error as any)?.message ||
+                        "";
+                      if (
+                        !msg ||
+                        msg.includes("invocation") ||
+                        msg.includes("Prisma") ||
+                        msg.includes("Internal Server")
+                      ) {
+                        return "Invalid email or password. Please check your credentials and try again.";
+                      }
+                      return msg;
+                    })()}
                   </div>
                 )}
               </FieldGroup>

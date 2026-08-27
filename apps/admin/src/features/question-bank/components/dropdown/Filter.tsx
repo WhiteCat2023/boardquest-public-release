@@ -8,11 +8,13 @@ function FilterDropdown() {
     const {
         selectedDifficulty,
         selectedType,
+        selectedStatus,
     } = useQuestionBankFilterStore();
 
     const activeFilterCount = [
         selectedDifficulty,
         selectedType,
+        selectedStatus && selectedStatus !== "ALL" ? selectedStatus : "",
     ].filter(Boolean).length;
     return (
         <DropdownMenu>

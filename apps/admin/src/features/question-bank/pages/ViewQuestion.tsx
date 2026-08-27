@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Edit,
@@ -13,12 +13,16 @@ import {
   AlertCircle,
   KeyRound,
   MessageSquare,
+  CheckCircle2,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showUndoToast } from "@/utils/toast";
-import { getDifficultyColor, getInitials } from "@/utils/style";
+import { QuestionStatus } from "@/types/question";
+import { getDifficultyColor, getInitials, getStatusColor } from "@/utils/style";
 import { useQuestionPermissions } from "@/features/question-bank";
+import QuestionLifecycleStepper from "../components/QuestionLifecycleStepper";
 import { useQuestionDetail } from "@/features/question-bank";
 import { Spinner } from "@/components/ui/spinner";
 import QuestionCommentsPanel from "../components/QuestionCommentsPanel";
@@ -48,8 +52,75 @@ export default function ViewQuestion() {
   const { data: comments = [] } = useQuestionComments(questionId);
   const commentsCount =
     comments.length || (question as any)?._count?.comments || 0;
+  const unresolvedCommentsCount = comments.filter((c) => !c.isResolved).length;
+  const hasUnresolvedComments = unresolvedCommentsCount > 0;
 
-  const { canEdit, canDelete } = useQuestionPermissions(question);
+  const { canEdit, canDelete, canApprove } = useQuestionPermissions(question);
+
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      await axiosPrivate.post("/questions/bulk/approve", { ids: [questionId] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["questionDetail", questionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      toast.success("Question approved successfully.");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to approve question.");
+    },
+  });
+
+  const submitRevisionMutation = useMutation({
+    mutationFn: async () => {
+      await axiosPrivate.post("/questions/bulk/status", {
+        ids: [questionId],
+        status: QuestionStatus.PENDING_REVIEW,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["questionDetail", questionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      showUndoToast({
+        title: "Revisions Submitted",
+        message: "Question status updated to Pending Review",
+        duration: 5000,
+        onUndo: async () => {
+          try {
+            await axiosPrivate.post("/questions/bulk/status", {
+              ids: [questionId],
+              status: QuestionStatus.PENDING_REVISION,
+            });
+            toast.info("Reverted revision submission.");
+            queryClient.invalidateQueries({
+              queryKey: ["questionDetail", questionId],
+            });
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+          } catch (err: any) {
+            toast.error("Failed to undo revision submission.");
+          }
+        },
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to submit revisions.");
+    },
+  });
+
+  const handleSubmitRevisions = () => {
+    if (hasUnresolvedComments) {
+      toast.error(
+        `Cannot resubmit question while there ${unresolvedCommentsCount === 1 ? "is 1 unresolved comment" : `are ${unresolvedCommentsCount} unresolved comments`}. Please resolve all comments first.`,
+      );
+      setShowComments(true);
+      return;
+    }
+    submitRevisionMutation.mutate();
+  };
 
   const handleDelete = () => {
     queryClient.setQueriesData<any>({ queryKey: ["questions"] }, (old: any) => {
@@ -140,8 +211,13 @@ export default function ViewQuestion() {
           className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
         >
           <ArrowLeft size={14} />
-          Back to Question Bank
+          {from?.includes("/review")
+            ? "Back to Review Questions Desk"
+            : "Back to Question Bank"}
         </button>
+
+        {/* Visual Question Lifecycle Stepper */}
+        <QuestionLifecycleStepper status={question.status} />
 
         {/* Main Question Card Container */}
         <div className="bg-card border border-border/80 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all duration-300">
@@ -158,244 +234,197 @@ export default function ViewQuestion() {
             </div>
 
             <div className="flex items-center gap-2">
+              <span
+                className={`rounded-full border px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-widest ${getStatusColor(question.status)}`}
+              >
+                {question.status}
+              </span>
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => setShowComments(!showComments)}
-                className={`rounded-full border px-3 py-1 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 h-7 ${
+                className={`cursor-pointer font-semibold px-3 py-1 rounded-lg h-7.5 text-xs flex items-center gap-1.5 transition-all ${
                   showComments
-                    ? "bg-primary text-primary-foreground border-primary shadow-xs ring-2 ring-primary/20"
-                    : "bg-background border-border text-foreground hover:bg-muted"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary shadow-xs"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <MessageSquare size={12} />
+                <MessageSquare size={13} />
                 <span>Comments</span>
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${
-                    showComments
-                      ? "bg-white/20 text-white"
-                      : "bg-primary/10 text-primary"
-                  }`}
-                >
-                  {commentsCount}
-                </span>
+                {commentsCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${
+                      showComments
+                        ? "bg-white/20 text-white"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {commentsCount}
+                  </span>
+                )}
               </Button>
             </div>
           </div>
 
-          {/* Question Details Section */}
-          <div className="p-5 md:p-6 flex flex-col gap-5">
-            {/* Question text prompt container */}
-            <div className="p-3.5 px-4.5 rounded-xl bg-muted/20 border border-border/70 flex flex-col gap-2 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Question Prompt
-                </span>
-                <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider border border-border px-1.5 py-0.2 rounded bg-card">
-                  {question.type}
-                </span>
-              </div>
-              <h2 className="text-base md:text-lg font-bold text-foreground leading-snug tracking-tight">
-                {question.question || question.text}
-              </h2>
-
-              {/* Question Image Attachment */}
-              {question.imageUrl && (
-                <div className="mt-1 rounded-xl overflow-hidden border border-border bg-black/10 flex items-center justify-center p-2 max-h-72">
-                  <img
-                    src={question.imageUrl}
-                    alt="Question Prompt Attachment"
-                    className="max-h-64 w-auto object-contain rounded-lg shadow-xs"
-                  />
-                </div>
-              )}
+          {/* Question Meta Strip */}
+          <div className="p-3 px-5 border-b border-border bg-card flex flex-wrap items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Format:
+              </span>
+              <span className="font-semibold text-foreground bg-muted/60 px-2 py-0.5 rounded text-[11px] border border-border">
+                {question.type}
+              </span>
             </div>
 
-            {/* Options & Answer Key Section */}
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                <KeyRound size={11} className="text-primary" />
-                {question.type === "MCQ"
-                  ? "Options & Answer Key"
-                  : question.type === "TRUE_FALSE"
-                    ? "True / False Key"
-                    : "Correct Answer Wording"}
-              </span>
+            <div className="h-3 w-px bg-border" />
 
-              <div className="flex flex-col gap-2">
-                {question.type === "MCQ" &&
-                  (question.choices || []).map(
-                    (choice: string, idx: number) => {
-                      const isCorrect =
-                        choice.toLowerCase().trim() ===
-                        question.correctAnswer.toLowerCase().trim();
-                      const choiceImg = question.choiceImages?.[idx];
-                      return (
-                        <div
-                          key={idx}
-                          className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-lg border transition-all ${
-                            isCorrect
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20"
-                              : "bg-card hover:bg-muted/30 border-border text-foreground/90"
-                          }`}
-                        >
-                          <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold transition-colors ${
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Difficulty:
+              </span>
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(question.difficulty)}`}
+              >
+                {question.difficulty}
+              </span>
+            </div>
+
+            <div className="h-3 w-px bg-border" />
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Topic:
+              </span>
+              <span className="font-semibold text-foreground flex items-center gap-1">
+                <Tag size={11} className="text-primary/70" />
+                {question.topic || "General"}
+              </span>
+            </div>
+          </div>
+
+          {/* Body Section */}
+          <div className="p-5 md:p-6 space-y-6">
+            {/* Question Wording */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Question Statement
+              </label>
+              <div className="p-4 rounded-xl bg-muted/30 border border-border text-foreground font-semibold text-sm leading-relaxed whitespace-pre-wrap">
+                {question.question || question.text}
+              </div>
+            </div>
+
+            {/* Question Image Attachment */}
+            {question.imageUrl && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Question Image Attachment
+                </label>
+                <div className="p-3 bg-muted/20 border border-border/80 rounded-xl flex items-center justify-center max-h-[320px] overflow-hidden">
+                  <img
+                    src={question.imageUrl}
+                    alt="Question visual"
+                    className="max-h-[300px] w-auto max-w-full rounded-lg object-contain border border-border"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Answer Choices (for MCQ) */}
+            {question.type === "MCQ" && question.choices && (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Answer Choices
+                </label>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {question.choices.map((choice: string, idx: number) => {
+                    const isCorrect =
+                      choice.toLowerCase().trim() ===
+                      question.correctAnswer.toLowerCase().trim();
+                    const choiceLetter = String.fromCharCode(65 + idx);
+                    const choiceImage = (question.choiceImages || [])[idx];
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 px-4 rounded-xl border transition-all gap-2 ${
+                          isCorrect
+                            ? "bg-emerald-500/10 border-emerald-500/30 shadow-2xs"
+                            : "bg-muted/20 border-border"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
                               isCorrect
-                                ? "bg-emerald-600 text-white shadow-2xs"
+                                ? "bg-emerald-600 text-white"
                                 : "bg-muted text-muted-foreground border border-border"
                             }`}
                           >
-                            {isCorrect ? (
-                              <Check size={13} className="stroke-[3]" />
-                            ) : (
-                              String.fromCharCode(65 + idx)
-                            )}
-                          </div>
-
-                          {/* Choice Image thumbnail if present */}
-                          {choiceImg && (
-                            <div className="h-9 w-12 rounded-md border border-border bg-black/20 overflow-hidden shrink-0 flex items-center justify-center">
-                              <img
-                                src={choiceImg}
-                                alt={`Option ${String.fromCharCode(65 + idx)}`}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          )}
-
-                          <span className="text-xs md:text-sm leading-normal flex-1">
+                            {choiceLetter}
+                          </span>
+                          <span
+                            className={`text-xs font-medium ${
+                              isCorrect
+                                ? "text-emerald-800 dark:text-emerald-300 font-bold"
+                                : "text-foreground"
+                            }`}
+                          >
                             {choice}
                           </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {choiceImage && (
+                            <img
+                              src={choiceImage}
+                              alt={`Choice ${choiceLetter}`}
+                              className="h-10 w-10 object-cover rounded-lg border border-border shrink-0"
+                            />
+                          )}
                           {isCorrect && (
-                            <span className="text-[9px] font-extrabold uppercase px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                              <Check size={11} className="stroke-[3]" />
                               Correct Answer
                             </span>
                           )}
                         </div>
-                      );
-                    },
-                  )}
-
-                {question.type === "TRUE_FALSE" &&
-                  ["True", "False"].map((choice, idx) => {
-                    const isCorrect =
-                      choice.toLowerCase().trim() ===
-                      question.correctAnswer.toLowerCase().trim();
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-lg border transition-all ${
-                          isCorrect
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20"
-                            : "bg-card hover:bg-muted/30 border-border text-foreground/90"
-                        }`}
-                      >
-                        <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold transition-colors ${
-                            isCorrect
-                              ? "bg-emerald-600 text-white shadow-2xs"
-                              : "bg-muted text-muted-foreground border border-border"
-                          }`}
-                        >
-                          {isCorrect ? (
-                            <Check size={13} className="stroke-[3]" />
-                          ) : idx === 0 ? (
-                            "T"
-                          ) : (
-                            "F"
-                          )}
-                        </div>
-                        <span className="text-xs md:text-sm leading-normal flex-1">
-                          {choice}
-                        </span>
-                        {isCorrect && (
-                          <span className="text-[9px] font-extrabold uppercase px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
-                            Correct Answer
-                          </span>
-                        )}
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
 
-                {question.type === "SHORT_ANSWER" && (
-                  <div className="flex items-center gap-2.5 p-3 px-3.5 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold shadow-2xs ring-1 ring-emerald-500/20">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white shadow-2xs">
-                      <Check size={14} className="stroke-[3]" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wide">
-                        Correct Wording:
-                      </span>
-                      <span className="text-xs md:text-sm leading-normal">
-                        {question.correctAnswer}
-                      </span>
-                    </div>
+            {/* Answer Display (for True/False or Short Answer) */}
+            {question.type !== "MCQ" && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Expected Correct Answer
+                </label>
+                <div className="p-3.5 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+                    <KeyRound size={14} className="text-emerald-600" />
+                    <span>{question.correctAnswer}</span>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Metadata Grid Tiles */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              {/* Topic */}
-              <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
-                <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
-                  <Tag size={14} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                    Topic Benchmark
-                  </span>
-                  <span className="text-xs font-bold text-foreground truncate">
-                    {question.topic || "General"}
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded">
+                    Key
                   </span>
                 </div>
               </div>
+            )}
 
-              {/* Difficulty */}
-              <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
-                <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
-                  <GraduationCap size={14} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                    Difficulty Level
-                  </span>
-                  <span
-                    className={`text-xs font-extrabold uppercase tracking-wider ${getDifficultyColor(question.difficulty)}`}
-                  >
-                    {question.difficulty}
-                  </span>
-                </div>
-              </div>
-
-              {/* Type */}
-              <div className="p-2.5 px-3 rounded-lg border border-border/80 bg-card hover:bg-muted/20 transition-all flex items-center gap-2.5 shadow-2xs">
-                <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
-                  <Calendar size={14} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                    Question Type
-                  </span>
-                  <span className="text-xs font-bold text-foreground truncate">
-                    {question.type}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Author Profile & Creation Timestamp */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 px-3.5 bg-muted/30 rounded-xl border border-border/80 gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-extrabold text-primary border border-primary/20 shrink-0">
+            {/* Author Profile and Metadata */}
+            <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-3 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary border border-primary/20 shrink-0">
                   {getInitials(authorName)}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-foreground">
-                    {authorName || "Faculty Member"}
+                    {authorName || "Author"}
                   </span>
                   <span className="text-[9px] font-medium text-muted-foreground">
                     Author Profile
@@ -466,6 +495,53 @@ export default function ViewQuestion() {
                 >
                   <Edit size={13} />
                   Edit
+                </Button>
+              )}
+
+              {question.status === QuestionStatus.PENDING_REVIEW &&
+                canApprove && (
+                  <Button
+                    type="button"
+                    onClick={() => approveMutation.mutate()}
+                    disabled={approveMutation.isPending}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs border border-emerald-600/20"
+                  >
+                    {approveMutation.isPending ? (
+                      <Spinner size="sm" variant="current" />
+                    ) : (
+                      <>
+                        <CheckCircle2 size={13} />
+                        Approve
+                      </>
+                    )}
+                  </Button>
+                )}
+
+              {(question.status === QuestionStatus.PENDING_REVISION ||
+                (question.status as string) === "NEEDS_REVISION") && (
+                <Button
+                  type="button"
+                  onClick={handleSubmitRevisions}
+                  disabled={submitRevisionMutation.isPending}
+                  className={`font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                    hasUnresolvedComments
+                      ? "bg-amber-600/80 hover:bg-amber-600 text-white opacity-90"
+                      : "bg-amber-600 hover:bg-amber-700 text-white"
+                  }`}
+                  title={
+                    hasUnresolvedComments
+                      ? `Cannot resubmit while there are ${unresolvedCommentsCount} unresolved comment(s)`
+                      : "Submit Revisions"
+                  }
+                >
+                  {submitRevisionMutation.isPending ? (
+                    <Spinner size="sm" variant="current" />
+                  ) : (
+                    <>
+                      <Send size={13} />
+                      Submit Revisions
+                    </>
+                  )}
                 </Button>
               )}
             </div>

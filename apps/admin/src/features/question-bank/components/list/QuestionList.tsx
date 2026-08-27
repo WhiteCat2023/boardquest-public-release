@@ -3,15 +3,20 @@ import { type QuestionFilters } from "@/features/question-bank";
 import QuestionTable from "./QuestionTable";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { useQuestionListActions } from "@/features/question-bank";
+import AuthorReviewFeedbackModal from "../dialog/AuthorReviewFeedbackModal";
 
 interface QuestionListProps {
   filters?: QuestionFilters;
+  isRevisionsView?: boolean;
+  isBankView?: boolean;
   overrideQuestions?: any[];
   isLoadingOverride?: boolean;
 }
 
 export default function QuestionList({
   filters,
+  isRevisionsView,
+  isBankView,
   overrideQuestions,
   isLoadingOverride,
 }: QuestionListProps) {
@@ -25,20 +30,33 @@ export default function QuestionList({
     cursorsStack,
     itemsPerPage,
     rowSelection,
+    selectedIds,
+    isFeedbackOpen,
     canManageBulk,
+    bulkApproveMutation,
+    bulkFeedbackMutation,
     bulkDeleteMutation,
+    bulkStatusMutation,
     handleView,
     handleDelete,
     handleItemsPerPageChange,
+    handleBulkApprove,
     handleBulkDelete,
+    handleBulkFeedbackOpen,
+    handleBulkFeedbackSubmit,
+    handleBulkResubmitForReview,
     handleNext,
     handlePrevious,
     handlePageSelect,
     setRowSelection,
+    setIsFeedbackOpen,
   } = useQuestionListActions(filters);
 
   const questions = overrideQuestions ?? hookQuestions;
   const loading = isLoadingOverride ?? hookLoading;
+
+  const isRevisions = isRevisionsView || filters?.status === "PENDING_REVISION" || filters?.status === "NEEDS_REVISION";
+  const isBank = isBankView || filters?.status === "APPROVED";
 
   return (
     <>
@@ -88,9 +106,17 @@ export default function QuestionList({
               itemsPerPage={itemsPerPage}
               onItemsPerPageChange={handleItemsPerPageChange}
               canManageBulk={canManageBulk}
+              onApprove={handleBulkApprove}
+              onFeedback={handleBulkFeedbackOpen}
+              onResubmitReview={handleBulkResubmitForReview}
               onBulkDelete={handleBulkDelete}
               onClear={() => setRowSelection({})}
+              isApprovePending={bulkApproveMutation.isPending}
+              isFeedbackPending={bulkFeedbackMutation.isPending}
+              isResubmitPending={bulkStatusMutation.isPending}
               isDeletePending={bulkDeleteMutation.isPending}
+              isRevisionsView={isRevisions}
+              isBankView={isBank}
             />
           )}
 
@@ -102,6 +128,15 @@ export default function QuestionList({
             onPrevious={handlePrevious}
             onPageSelect={handlePageSelect}
             maxPageReached={cursorsStack.length}
+          />
+
+          {/* Feedback Modal for Request Revision */}
+          <AuthorReviewFeedbackModal
+            open={isFeedbackOpen}
+            onOpenChange={setIsFeedbackOpen}
+            onSubmit={handleBulkFeedbackSubmit}
+            isPending={bulkFeedbackMutation.isPending}
+            selectedCount={selectedIds.length}
           />
         </div>
       </phantom-ui>

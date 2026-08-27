@@ -1,5 +1,7 @@
 import { useBulkUploadQuestionStore, useExtractedQuestionsStore } from "@/store/QuestionBankStore";
 import { toast } from "sonner";
+import { createProgressToast } from "@/utils/toast";
+import { queryClient } from "@/main";
 
 export const downloadSampleCSV = () => {
     const csvContent =
@@ -21,7 +23,6 @@ export const downloadSampleCSV = () => {
 export const extractQuestions = async (axiosPrivate: any) => {
   const { file, selectedCategoryId, setIsExtracting } = useBulkUploadQuestionStore.getState();
   const { setExtractedQuestions } = useExtractedQuestionsStore.getState();
-
 
   if (!file) {
     toast.error("Please select a file to parse.");
@@ -92,25 +93,82 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
   const { extractedQuestions, setExtractedQuestions } = useExtractedQuestionsStore.getState();
   const { selectedCategoryId, setIsUploading, setFile, setSelectedCategoryId } = useBulkUploadQuestionStore.getState();
 
-  if (extractedQuestions.length === 0) {
+  const totalCount = extractedQuestions.length;
+  if (totalCount === 0) {
     toast.error("No questions to upload.");
     return;
   }
   setIsUploading(true);
 
-  try {
-    const response = await axiosPrivate.post("/questions/bulk-upload", {
-      questions: extractedQuestions,
-      categoryId: selectedCategoryId,
-    });
+  const progressToast = createProgressToast({
+    id: "bulk-upload-progress",
+    title: "Queuing Bulk Questions",
+    totalCount,
+  });
 
-    toast.success(response.data?.message || "All questions uploaded successfully!");
+  // Upload in chunks of 10 to track real-time queueing progress
+  const CHUNK_SIZE = 10;
+  const chunks: any[][] = [];
+  for (let i = 0; i < totalCount; i += CHUNK_SIZE) {
+    chunks.push(extractedQuestions.slice(i, i + CHUNK_SIZE));
+  }
+
+  let processedCount = 0;
+  progressToast.update(0, totalCount, `Preparing ${totalCount} question(s) for queue...`);
+
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const isLastChunk = i === chunks.length - 1;
+      const startNum = processedCount + 1;
+      const endNum = Math.min(totalCount, processedCount + chunk.length);
+
+      progressToast.update(
+        processedCount,
+        totalCount,
+        `Queuing questions ${startNum}–${endNum} of ${totalCount}...`
+      );
+
+      await axiosPrivate.post("/questions/bulk-upload", {
+        questions: chunk,
+        categoryId: selectedCategoryId,
+        silentNotification: !isLastChunk,
+      });
+
+      processedCount += chunk.length;
+
+      progressToast.update(
+        processedCount,
+        totalCount,
+        `Queued ${processedCount} of ${totalCount} question(s)...`
+      );
+
+      // Brief delay between chunks for ultra-smooth UI feedback
+      if (!isLastChunk) {
+        await new Promise((res) => setTimeout(res, 200));
+      }
+    }
+
+    progressToast.success(
+      `All ${totalCount} question(s) successfully queued and processed!`,
+      "Upload Complete"
+    );
+
+    // Invalidate questions, review desk, and categories so question list updates automatically
+    queryClient.invalidateQueries({ queryKey: ["questions"] });
+    queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+
     setExtractedQuestions([]);
     setFile(null);
     setSelectedCategoryId("");
     navigate(from, { replace: true });
   } catch (err: any) {
-    toast.error(err.response?.data?.message || "Failed to upload questions.");
+    progressToast.error(
+      err.response?.data?.message || `Failed to queue questions at question #${processedCount + 1}.`,
+      "Upload Failed"
+    );
   } finally {
     setIsUploading(false);
   }

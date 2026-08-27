@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
@@ -16,6 +16,8 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     const queryClient = useQueryClient();
     const pendingDeletes = useRef<{ [id: string]: any }>({});
 
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
     const {
         cursorsStack,
         setCursorsStack,
@@ -31,7 +33,11 @@ export function useQuestionListActions(filters?: QuestionFilters) {
 
     const currentUserId = (auth as any)?.data?.user?.id;
     const currentUserRole = (auth as any)?.data?.user?.role;
+    const r = String(currentUserRole || "").toUpperCase();
     const canManageBulk =
+        r === "SUPERADMIN" ||
+        r === "DEAN" ||
+        r === "TEAMLEAD" ||
         currentUserRole === UserRole.SUPERADMIN ||
         currentUserRole === UserRole.DEAN ||
         currentUserRole === UserRole.TEAMLEAD;
@@ -52,7 +58,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     // Reset pagination and row selection when search filters change
     useEffect(() => {
         resetPagination();
-    }, [filters?.search, filters?.category, filters?.difficulty, filters?.type, resetPagination]);
+    }, [filters?.search, filters?.category, filters?.difficulty, filters?.type, filters?.status, resetPagination]);
 
     const currentCursor = cursorsStack[currentPageIndex];
 
@@ -137,10 +143,113 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         },
     });
 
+    const bulkFeedbackMutation = useMutation({
+        mutationFn: async ({ ids, feedback }: { ids: string[]; feedback: string }) => {
+            await axiosPrivate.post("/questions/bulk/feedback", { ids, feedback });
+        },
+        onSuccess: (_, variables) => {
+            toast.success(`Sent revision feedback for ${variables.ids.length} questions.`);
+            clearRowSelection();
+            setIsFeedbackOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to bulk send feedback.");
+        },
+    });
+
+    const bulkApproveMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axiosPrivate.post("/questions/bulk/approve", { ids });
+        },
+        onSuccess: (_, ids) => {
+            clearRowSelection();
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+            showUndoToast({
+                title: "Questions Approved",
+                message: `${ids.length} question${ids.length !== 1 ? "s" : ""} marked as Approved`,
+                duration: 5000,
+                onUndo: async () => {
+                    try {
+                        await axiosPrivate.post("/questions/bulk/status", {
+                            ids,
+                            status: "PENDING_REVIEW",
+                        });
+                        toast.info(`Reverted status for ${ids.length} question(s).`);
+                        queryClient.invalidateQueries({ queryKey: ["questions"] });
+                    } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Failed to undo question approval.");
+                    }
+                },
+            });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to bulk approve questions.");
+        },
+    });
+
+    const bulkStatusMutation = useMutation({
+        mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+            await axiosPrivate.post("/questions/bulk/status", { ids, status });
+        },
+        onSuccess: (_, variables) => {
+            toast.success(`Resubmitted ${variables.ids.length} question(s) for review.`);
+            clearRowSelection();
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to update review status.");
+        },
+    });
+
+    const handleBulkResubmitForReview = () => {
+        if (selectedIds.length === 0) return;
+        bulkStatusMutation.mutate({ ids: selectedIds, status: "PENDING_REVIEW" });
+    };
+
+    // Bulk Action Handlers
+    const handleBulkApprove = () => {
+        if (!canManageBulk) {
+            toast.error("Only administrators and team leads can approve questions.");
+            return;
+        }
+
+        const pendingRevisionSelected = selectedQuestions.filter(
+            (q) => q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION"
+        );
+
+        if (pendingRevisionSelected.length > 0) {
+            if (pendingRevisionSelected.length === selectedQuestions.length) {
+                toast.error(
+                    `Cannot approve questions. All ${selectedQuestions.length} selected question(s) are in Pending Revision status and must be resubmitted by the author first.`
+                );
+                return;
+            } else {
+                const validIds = selectedQuestions
+                    .filter((q) => q.status !== "PENDING_REVISION" && (q.status as string) !== "NEEDS_REVISION")
+                    .map((q) => q.id);
+
+                toast.warning(
+                    `Warning: ${pendingRevisionSelected.length} selected question(s) are in Pending Revision status and cannot be approved. Approving ${validIds.length} question(s) in Pending Review.`
+                );
+
+                if (validIds.length > 0) {
+                    bulkApproveMutation.mutate(validIds);
+                }
+                return;
+            }
+        }
+
+        bulkApproveMutation.mutate(selectedIds);
+    };
+
     const handleBulkDelete = () => {
         const canDeleteAll = selectedQuestions.every((q) => {
             const authorId = typeof q.author === "object" ? (q.author as any).id : q.authorId;
             return (
+                r === "SUPERADMIN" ||
+                r === "DEAN" ||
+                r === "TEAMLEAD" ||
                 currentUserRole === UserRole.SUPERADMIN ||
                 currentUserRole === UserRole.DEAN ||
                 currentUserRole === UserRole.TEAMLEAD ||
@@ -202,6 +311,23 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         });
     };
 
+    const handleBulkFeedbackSubmit = async (feedback: string) => {
+        await bulkFeedbackMutation.mutateAsync({ ids: selectedIds, feedback });
+    };
+
+    const handleBulkFeedbackOpen = (id?: string) => {
+        if (!canManageBulk) {
+            toast.error("Only administrators can request question revisions.");
+            return;
+        }
+
+        if (id) {
+            setRowSelection({ [id]: true });
+        }
+
+        setIsFeedbackOpen(true);
+    };
+
     // Pagination Navigation Handlers
     const handleNext = () => {
         if (hasNextPage && nextCursor) {
@@ -241,15 +367,24 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         itemsPerPage,
         rowSelection,
         selectedIds,
+        isFeedbackOpen,
         canManageBulk,
+        bulkApproveMutation,
+        bulkFeedbackMutation,
         bulkDeleteMutation,
+        bulkStatusMutation,
         handleView,
         handleDelete,
         handleItemsPerPageChange,
+        handleBulkApprove,
         handleBulkDelete,
+        handleBulkFeedbackOpen,
+        handleBulkFeedbackSubmit,
+        handleBulkResubmitForReview,
         handleNext,
         handlePrevious,
         handlePageSelect,
         setRowSelection,
+        setIsFeedbackOpen,
     };
 }

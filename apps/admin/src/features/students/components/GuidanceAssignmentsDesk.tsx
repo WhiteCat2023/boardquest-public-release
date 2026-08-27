@@ -94,7 +94,7 @@ export function GuidanceAssignmentsDesk() {
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="text-xs font-bold text-muted-foreground">Student Profile</TableHead>
-              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Assigned Faculty Advisor</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Assigned Advisor</TableHead>
               <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Subject Focus & Reason</TableHead>
               <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Status</TableHead>
               <TableHead className="hidden sm:table-cell text-xs font-bold text-muted-foreground">Assigned Date</TableHead>

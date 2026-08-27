@@ -1,11 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { User, Settings, LogOut, ChevronDown } from "lucide-react";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -38,7 +34,8 @@ export default function UserProfileWidget() {
     : "U";
 
   const getRoleBadgeStyle = (role: string) => {
-    switch (role.toUpperCase()) {
+    const r = (role || "").toUpperCase();
+    switch (r) {
       case "SUPERADMIN":
         return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
       case "DEAN":
@@ -47,9 +44,22 @@ export default function UserProfileWidget() {
         return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
       case "TEACHER":
         return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+      case "REVIEWCENTER":
+      case "EXTERNAL":
+        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
       default:
         return "bg-muted text-muted-foreground border-border";
     }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    const r = (role || "").toUpperCase();
+    if (r === "SUPERADMIN") return "SUPERADMIN";
+    if (r === "DEAN") return "DEAN";
+    if (r === "TEAMLEAD") return "TEAMLEAD";
+    if (r === "TEACHER") return "TEACHER";
+    if (r === "REVIEWCENTER" || r === "EXTERNAL") return "REVIEW CENTER";
+    return role;
   };
 
   return (
@@ -83,7 +93,10 @@ export default function UserProfileWidget() {
               />
             </div>
 
-            <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+            <ChevronDown
+              size={14}
+              className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
+            />
           </button>
         </DropdownMenuTrigger>
 
@@ -116,7 +129,7 @@ export default function UserProfileWidget() {
                 variant="outline"
                 className={`w-fit text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full ${getRoleBadgeStyle(userRole)}`}
               >
-                {userRole}
+                {getRoleDisplayName(userRole)}
               </Badge>
             </div>
           </DropdownMenuLabel>
@@ -129,11 +142,16 @@ export default function UserProfileWidget() {
               onClick={() => navigate("/profile-settings")}
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"
             >
-              <User size={15} className="text-muted-foreground group-hover:text-primary" />
+              <User
+                size={15}
+                className="text-muted-foreground group-hover:text-primary"
+              />
               <span>Profile Settings</span>
             </DropdownMenuItem>
 
-            {["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(userRole.toUpperCase()) && (
+            {["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
+              userRole.toUpperCase(),
+            ) && (
               <DropdownMenuItem
                 onClick={() => navigate("/settings")}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-foreground hover:text-primary hover:bg-accent transition-colors cursor-pointer"

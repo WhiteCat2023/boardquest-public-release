@@ -51,5 +51,14 @@ export const teacherNavItem: NavItemProps[] = [
       },
     ],
   },
+  {
+    sideBarCategoryName: "SYSTEM & USER",
+    content: [
+      {
+        title: "System Settings",
+        path: "/settings",
+        icon: "Settings",
+      },
+    ],
+  },
 ];
-

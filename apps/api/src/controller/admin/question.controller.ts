@@ -5,13 +5,14 @@ import { Response } from "express";
 import {
   QuestionDifficulty,
   QuestionType,
+  QuestionStatus,
 } from "../../types/prisma.types";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
 import { agenda } from "../../services/queue.service";
-import { logInfo } from "../../services/admin/logger.service";
+import { logInfo, logWarn } from "../../services/admin/logger.service";
 import { isSuperAdmin, superAdminCredentials } from "../../config/credentials";
 
 export const createQuestion = asyncHandler(
@@ -23,6 +24,16 @@ export const createQuestion = asyncHandler(
 
     if (!req.body.authorId) {
       req.body.authorId = user.id;
+    }
+
+    if (user.role === "TEACHER") {
+      req.body.authorId = user.id;
+      req.body.status = "PENDING_REVIEW";
+    } else if (!req.body.status) {
+      req.body.status =
+        user.role === "SUPERADMIN" || user.role === "DEAN"
+          ? "APPROVED"
+          : "PENDING_REVIEW";
     }
 
     const question = await QuestionService.createNewQuestion(req.body);
@@ -70,6 +81,24 @@ export const updateQuestion = asyncHandler(
       );
     }
 
+    if (user.role === "TEACHER") {
+      if (
+        existingQuestion.status === "APPROVED" &&
+        req.body.status === "APPROVED"
+      ) {
+        throw new ApiError(403, "Approved questions cannot be edited by teachers");
+      }
+      if (
+        req.body.status !== "PENDING_REVIEW" &&
+        req.body.status !== "PENDING_REVISION"
+      ) {
+        req.body.status = "PENDING_REVIEW";
+      }
+      req.body.authorId = user.id;
+    } else if (user.role === "TEAMLEAD") {
+      // Team leads can review/approve or provide feedback
+    }
+
     req.body.id = questionId;
 
     const question = await QuestionService.updateQuestion(
@@ -103,6 +132,7 @@ export const getQuestions = asyncHandler(
       difficulty,
       category,
       type,
+      status,
       cursor,
       limit,
       authorId,
@@ -134,6 +164,7 @@ export const getQuestions = asyncHandler(
       difficulty ||
       category ||
       type ||
+      status ||
       isPublishedBool !== undefined ||
       authorIdFilter ||
       user.role === "TEACHER"
@@ -146,6 +177,7 @@ export const getQuestions = asyncHandler(
         difficulty as QuestionDifficulty,
         category as string,
         type as QuestionType,
+        status as QuestionStatus,
         cursor as string,
         limitNum,
         authorIdFilter,
@@ -162,38 +194,27 @@ export const getQuestions = asyncHandler(
       );
     }
 
-    if (Array.isArray(result)) {
-      return new ApiResponse(
-        200,
-        { questions: result },
-        "Questions retrieved successfully",
-      ).send(res);
-    } else {
-      return new ApiResponse(
-        200,
-        result,
-        "Questions retrieved successfully",
-      ).send(res);
-    }
+    const responseData =
+      Array.isArray(result)
+        ? { questions: result, total: result.length }
+        : result;
+
+    return new ApiResponse(200, responseData, "Questions retrieved successfully").send(
+      res,
+    );
   },
 );
 
-export const getQuestionStats = asyncHandler(
+export const getQuestionsByCategory = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
-    if (!user) {
-      throw new ApiError(401, "Authentication required");
-    }
-
-    const { authorId } = req.query;
-    const rawAuthorId =
-      user.role === "TEACHER" ? user.id : (authorId as string) || undefined;
-
-    const stats = await QuestionService.getQuestionStats(rawAuthorId);
+    const { categoryId } = req.params;
+    const questions = await QuestionService.getQuestionsByCategory(
+      categoryId as string,
+    );
     return new ApiResponse(
       200,
-      { stats },
-      "Question statistics retrieved successfully",
+      { questions },
+      "Questions retrieved successfully",
     ).send(res);
   },
 );
@@ -218,20 +239,6 @@ export const getQuestionById = asyncHandler(
   },
 );
 
-export const getQuestionsByCategory = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { categoryId } = req.params;
-    const questions = await QuestionService.getQuestionsByCategory(
-      categoryId as string,
-    );
-    return new ApiResponse(
-      200,
-      { questions },
-      "Questions retrieved successfully",
-    ).send(res);
-  },
-);
-
 export const deleteQuestion = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { questionId } = req.params;
@@ -240,18 +247,53 @@ export const deleteQuestion = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const questionObj = await QuestionService.getQuestionById(
+    const existingQuestion = await QuestionService.getQuestionById(
       questionId as string,
     );
-    if (user.role === "TEACHER" && questionObj.authorId !== user.id) {
-      throw new ApiError(403, "You can only delete your own questions");
+    if (!existingQuestion) {
+      throw new ApiError(404, "Question not found");
     }
 
-    const question = await QuestionService.deleteQuestion(questionId as string);
+    const isAuthor =
+      existingQuestion.authorId && existingQuestion.authorId === user.id;
+    const isAdmin =
+      user.role === "SUPERADMIN" ||
+      user.role === "DEAN" ||
+      user.role === "TEAMLEAD";
+
+    if (!isAuthor && !isAdmin) {
+      throw new ApiError(
+        403,
+        "You do not have permission to delete this question",
+      );
+    }
+
+    const question = await QuestionService.deleteQuestion(
+      questionId as string,
+    );
+    await logInfo(
+      "DELETE_QUESTION",
+      `Deleted question ID: ${questionId}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
     return new ApiResponse(
       200,
       { question },
       "Question deleted successfully",
+    ).send(res);
+  },
+);
+
+export const getQuestionStats = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { authorId } = req.query;
+    const stats = await QuestionService.getQuestionStats(authorId as string);
+    return new ApiResponse(
+      200,
+      stats,
+      "Question stats retrieved successfully",
     ).send(res);
   },
 );
@@ -263,7 +305,7 @@ export const bulkUploadQuestions = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const { questions, categoryId } = req.body;
+    const { questions, categoryId, status } = req.body;
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new ApiError(400, "Questions list is required");
     }
@@ -271,32 +313,46 @@ export const bulkUploadQuestions = asyncHandler(
       throw new ApiError(400, "Category ID is required");
     }
 
-    // Dispatch the bulk upload task to Agenda background queue
-    await agenda.now("bulk-question-upload", {
+    let uploadStatus = status;
+    if (user.role === "TEACHER") {
+      uploadStatus = QuestionStatus.PENDING_REVIEW;
+    } else if (!uploadStatus) {
+      uploadStatus =
+        user.role === "SUPERADMIN" || user.role === "DEAN"
+          ? QuestionStatus.APPROVED
+          : QuestionStatus.PENDING_REVIEW;
+    }
+
+    const isSilent = Boolean(req.body.silentNotification);
+    const imported = await QuestionService.importQuestions(
       questions,
       categoryId,
-      authorId: user.id,
-    });
+      user.id,
+      uploadStatus,
+      isSilent,
+    );
 
-    return new ApiResponse(202, {
-      message: "Bulk question upload job has been queued in the background.",
+    await logInfo(
+      "BULK_UPLOAD_QUESTIONS",
+      `Uploaded and queued ${imported.length} question(s) into category ${categoryId} with status ${uploadStatus}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(201, {
+      message: `${imported.length} question(s) uploaded successfully`,
+      count: imported.length,
+      status: uploadStatus,
     }).send(res);
   },
 );
 
 export const extractQuestions = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
-    if (!user) {
-      throw new ApiError(401, "Authentication required");
-    }
-
     const { fileContent, fileType } = req.body;
     if (!fileContent) {
       throw new ApiError(400, "File content is required");
-    }
-    if (!fileType) {
-      throw new ApiError(400, "File type is required");
     }
 
     let questions: any[] = [];
@@ -339,6 +395,97 @@ export const bulkDeleteQuestions = asyncHandler(
       200,
       null,
       `${ids.length} questions deleted successfully`,
+    ).send(res);
+  },
+);
+
+export const bulkApproveQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    await QuestionService.bulkApproveQuestions(ids, user);
+    await logInfo(
+      "BULK_APPROVE_QUESTION",
+      `Approved ${ids.length} question(s) in bulk`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully approved ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
+export const bulkUpdateStatusQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, status } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    if (!status) {
+      throw new ApiError(400, "status is required");
+    }
+
+    await QuestionService.bulkUpdateStatusQuestions(ids, status, user);
+    await logInfo(
+      "BULK_UPDATE_STATUS_QUESTION",
+      `Updated status for ${ids.length} question(s) to ${status}`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully updated status for ${ids.length} questions`,
+    ).send(res);
+  },
+);
+
+export const bulkFeedbackQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { ids, feedback } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, "ids must be a non-empty array of strings");
+    }
+
+    await QuestionService.bulkFeedbackQuestions(ids, feedback || "", user);
+    await logInfo(
+      "BULK_FEEDBACK_QUESTION",
+      `Sent revision feedback for ${ids.length} question(s)`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+    return new ApiResponse(
+      200,
+      null,
+      `Successfully sent feedback for ${ids.length} questions`,
     ).send(res);
   },
 );
@@ -408,6 +555,7 @@ export const createSynthesizedQuestion = asyncHandler(
 
     if (user.role === "TEACHER") {
       req.body.authorId = user.id;
+      req.body.status = "PENDING_REVIEW";
     }
 
     const question = await QuestionService.createSynthesizedQuestion(req.body);
@@ -424,6 +572,18 @@ export const createSynthesizedQuestion = asyncHandler(
       201,
       { question },
       "Synthesized question created and saved successfully",
+    ).send(res);
+  },
+);
+
+export const getPendingReviewAuthors = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const search = req.query.search ? String(req.query.search) : undefined;
+    const authors = await QuestionService.getPendingReviewAuthors({ search });
+    return new ApiResponse(
+      200,
+      { authors },
+      "Pending review authors retrieved successfully",
     ).send(res);
   },
 );

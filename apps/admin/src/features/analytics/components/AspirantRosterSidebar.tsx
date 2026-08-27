@@ -41,11 +41,11 @@ export function AspirantRosterSidebar({
       <div className="p-3 border-b border-border/60 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-            <Search size={13} className="text-primary" />
-            Aspirant Roster
+            <Users size={13} className="text-primary" />
+            Students
           </h2>
           <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 rounded-md bg-muted/50 border-border">
-            {displayStudents.length} Students
+            {displayStudents.length} Total
           </Badge>
         </div>
 

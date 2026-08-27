@@ -4,6 +4,13 @@ export const QUESTION_DIFFICULTY = {
   HARD: 'HARD',
 } as const;
 
+export const QUESTION_STATUS = {
+  APPROVED: 'APPROVED',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  PENDING_REVISION: 'PENDING_REVISION',
+  DRAFT: 'DRAFT',
+} as const;
+
 export const QUESTION_TYPE = {
   MCQ: 'MCQ',
   TRUE_FALSE: 'TRUE_FALSE',

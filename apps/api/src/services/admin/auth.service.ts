@@ -163,8 +163,8 @@ export class AuthService {
         lastActiveAt: true,
         createdAt: true,
         updatedAt: true,
-        handledCategoryIds: true,
-        handledCategories: {
+        handledSubjectIds: true,
+        handledSubjects: {
           select: {
             id: true,
             name: true,

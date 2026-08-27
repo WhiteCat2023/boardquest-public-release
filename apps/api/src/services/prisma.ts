@@ -32,28 +32,29 @@ export async function seedAdminUserDb() {
     }
     console.log("Users seeded successfully!");
 
-    console.log("Seeding categories...");
+    console.log("Seeding subjects...");
     for (const category of demoCategories) {
-      await prisma.category
+      await ((prisma as any).subject || (prisma as any).category)
         .upsert({
           where: { id: category.id },
           update: {},
           create: { ...category },
         })
-        .catch((e) => console.warn(`Category seed note: ${e.message}`));
+        .catch((e: any) => console.warn(`Subject seed note: ${e.message}`));
     }
-    console.log("Categories seeded successfully!");
+    console.log("Subjects seeded successfully!");
 
     console.log("Seeding questions...");
     for (const question of demoQuestions) {
-      const { id, ...updateData } = question;
+      const { id, categoryId, ...rest } = question as any;
+      const targetSubjectId = (question as any).subjectId || categoryId;
       await prisma.question
         .upsert({
           where: { id },
-          update: { ...updateData },
-          create: { ...question },
+          update: { ...rest, subjectId: targetSubjectId },
+          create: { ...rest, id, subjectId: targetSubjectId },
         })
-        .catch((e) => console.warn(`Question seed note: ${e.message}`));
+        .catch((e: any) => console.warn(`Question seed note: ${e.message}`));
     }
     console.log("Questions seeded successfully!");
 

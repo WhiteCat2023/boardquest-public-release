@@ -10,7 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useFaculties } from "@/features/faculty";
+import { useUsers } from "@/features/users";
 import { useQuestionDetail } from "@/features/question-bank";
 import useAuth from "@/hooks/useAuth";
 import { Home } from "lucide-react";
@@ -21,6 +21,9 @@ const formatSegment = (segment: string) => {
   }
   if (segment.toLowerCase() === "shared-library") {
     return "All Questions";
+  }
+  if (segment.toLowerCase() === "faculty-management") {
+    return "Users";
   }
   return segment
     .split("-")
@@ -69,9 +72,9 @@ export default function HeaderBreadcrumb() {
       : pathSegments[1]
     : null;
 
-  // Faculty Directory Data
-  const { data: facultyResponse } = useFaculties();
-  const faculties = facultyResponse?.faculties ?? [];
+  // User Directory Data
+  const { data: userResponse } = useUsers();
+  const users = userResponse?.users || userResponse?.faculties || [];
 
   // Question Detail Hook
   const { data: questionData } = useQuestionDetail(questionId);
@@ -82,7 +85,7 @@ export default function HeaderBreadcrumb() {
     queryFn: async () => {
       if (!subjectCategoryId) return null;
       const response = await axiosPrivate.get(
-        `/questions/category/single/${subjectCategoryId}`
+        `/questions/category/single/${subjectCategoryId}`,
       );
       return response.data?.data?.category ?? response.data?.category ?? null;
     },
@@ -122,17 +125,18 @@ export default function HeaderBreadcrumb() {
 
           let displayLabel = formatSegment(segment);
 
-          // Customize Faculty View breadcrumb label
+          // Customize User View breadcrumb label
           if (isFacultyView && originalIndex === 2) {
-            const facultyMember = faculties.find((f) => f.id === segment);
-            if (facultyMember) {
-              displayLabel = facultyMember.name;
+            const userMember = users.find((f) => f.id === segment);
+            if (userMember) {
+              displayLabel = userMember.name;
             }
           }
 
           // Customize Question View/Edit breadcrumb label
           if (isQuestionViewOrEdit && originalIndex === 2 && questionData) {
-            const rawText = questionData.text || (questionData as any).question || "";
+            const rawText =
+              questionData.text || (questionData as any).question || "";
             const truncatedText =
               rawText.length > 40 ? `${rawText.slice(0, 40)}...` : rawText;
             displayLabel =
@@ -140,7 +144,11 @@ export default function HeaderBreadcrumb() {
           }
 
           // Customize Subject View breadcrumb label
-          if (isSubjectView && segment === subjectCategoryId && categoryData?.name) {
+          if (
+            isSubjectView &&
+            segment === subjectCategoryId &&
+            categoryData?.name
+          ) {
             displayLabel = categoryData.name;
           }
 

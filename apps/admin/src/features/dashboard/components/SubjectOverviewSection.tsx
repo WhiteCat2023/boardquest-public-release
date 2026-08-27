@@ -4,14 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import appContent from "@/constants/appContent";
-import { useCategories } from "@/features/faculty";
+import { useSubjects } from "@/features/users";
 import { useDashboardAnalyticsSummary } from "../api/useDashboardAnalytics";
 import { SUBJECT_PRESETS } from "../constants/subjects";
 
 export function SubjectOverviewSection() {
   const navigate = useNavigate();
   const sectionContent = appContent.dashboard.subjectOverview;
-  const { data: dbCategories = [], isLoading } = useCategories();
+  const { data: dbCategories = [], isLoading } = useSubjects();
   const { data: analytics } = useDashboardAnalyticsSummary();
 
   const analyticsSubjects = analytics?.subjects || [];
@@ -57,10 +57,10 @@ export function SubjectOverviewSection() {
 
   return (
     <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-            <BarChart3 className="text-primary size-5" />
+          <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
+            <BarChart3 className="text-primary size-4 sm:size-5" />
             {sectionContent.title}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -70,27 +70,27 @@ export function SubjectOverviewSection() {
 
         <Badge
           variant="outline"
-          className="bg-muted text-muted-foreground border-border text-[11px] font-bold px-2.5 py-0.5 rounded-full w-fit"
+          className="bg-muted text-muted-foreground border-border text-[10px] font-semibold px-2 py-0.5 rounded-md w-fit"
         >
           {sectionContent.benchmarkBadge}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {isLoading
           ? Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="p-3.5 bg-muted/20 border border-border/60 rounded-xl space-y-3"
+                className="p-3 bg-muted/20 border border-border/60 rounded-xl space-y-2.5"
               >
                 <div className="flex items-center gap-2.5">
-                  <Skeleton className="h-9 w-9 rounded-lg" />
-                  <div className="space-y-1.5 flex-1">
+                  <Skeleton className="size-8 rounded-lg" />
+                  <div className="space-y-1 flex-1">
                     <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-32 text-[10px]" />
+                    <Skeleton className="h-4 w-32" />
                   </div>
                 </div>
-                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-2 w-full" />
               </div>
             ))
           : subjectsToDisplay.map((subj, index) => {
@@ -104,50 +104,50 @@ export function SubjectOverviewSection() {
                       navigate(`/subject-management/${subj.id}`);
                     }
                   }}
-                  className="p-3.5 bg-muted/30 hover:bg-muted/60 border border-border rounded-xl flex flex-col justify-between gap-3 transition-all hover:shadow-2xs group cursor-pointer hover:border-primary/40"
+                  className="p-3 bg-muted/20 hover:bg-muted/50 border border-border rounded-xl flex flex-col justify-between gap-2.5 transition-all hover:shadow-2xs group cursor-pointer hover:border-primary/40"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div
-                        className={`p-2 rounded-lg border ${subj.color} shrink-0`}
+                        className={`p-1.5 rounded-lg border ${subj.color} shrink-0`}
                       >
-                        <IconComp size={16} className="stroke-[2.2]" />
+                        <IconComp size={15} className="stroke-[2.2]" />
                       </div>
                       <div className="min-w-0">
-                        <span className="text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                           {subj.code}
                         </span>
-                        <h3 className="text-xs font-bold text-foreground leading-snug group-hover:text-primary transition-colors truncate">
+                        <h3 className="text-xs font-semibold text-foreground leading-snug group-hover:text-primary transition-colors truncate">
                           {subj.name}
                         </h3>
                       </div>
                     </div>
                     <Badge
                       variant="secondary"
-                      className="text-[10px] font-semibold text-muted-foreground bg-muted border border-border/60 shrink-0 px-2 py-0.5"
+                      className="text-[10px] font-medium text-muted-foreground bg-muted border border-border/60 shrink-0 px-2 py-0.5"
                     >
                       {subj.questionCount}{" "}
                       {subj.questionCount === 1 ? "Question" : "Questions"}
                     </Badge>
                   </div>
 
-                  <div className="space-y-1.5 pt-1.5 border-t border-border">
-                    <div className="flex justify-between items-center text-[11px] font-bold">
-                      <span className="text-muted-foreground">
+                  <div className="space-y-1 pt-1 border-t border-border/60">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-muted-foreground text-[11px]">
                         {sectionContent.proficiencyLabel}
                       </span>
                       <span
                         className={
                           isPassing
-                            ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
-                            : "text-amber-600 dark:text-amber-400 font-extrabold"
+                            ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                            : "text-amber-600 dark:text-amber-400 font-bold"
                         }
                       >
                         {subj.proficiency}%
                       </span>
                     </div>
 
-                    <div className="w-full bg-muted/80 h-2 rounded-full overflow-hidden border border-border/50">
+                    <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden border border-border/40">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${subj.barColor}`}
                         style={{ width: `${subj.proficiency}%` }}

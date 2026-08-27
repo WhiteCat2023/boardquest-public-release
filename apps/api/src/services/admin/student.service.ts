@@ -5,10 +5,22 @@ import { hashedPassword } from "../../utils/hash";
 
 import { sendStudentCredentialsEmail } from "../mail.service";
 import { StudyPlanService, createStudyPlanSchema } from "./studyPlan.service";
-import { SubjectMasteryService, updateSubjectMasterySchema } from "./subjectMastery.service";
-import { ExamResultService, recordExamResultSchema } from "./examResult.service";
-import { AchievementService, awardAchievementSchema } from "./achievement.service";
-import { LessonCompletionService, recordLessonCompletionSchema } from "./lessonCompletion.service";
+import {
+  SubjectMasteryService,
+  updateSubjectMasterySchema,
+} from "./subjectMastery.service";
+import {
+  ExamResultService,
+  recordExamResultSchema,
+} from "./examResult.service";
+import {
+  AchievementService,
+  awardAchievementSchema,
+} from "./achievement.service";
+import {
+  LessonCompletionService,
+  recordLessonCompletionSchema,
+} from "./lessonCompletion.service";
 
 // ============ Validation Schemas ============
 
@@ -22,24 +34,21 @@ export const createStudentSchema = z
     lastName: z.string().optional(),
     location: z.string().optional(),
   })
-  .refine(
-    (data) => !data.password || data.password === data.confirmPassword,
-    {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    }
-  )
+  .refine((data) => !data.password || data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
   .refine(
     (data) =>
       Boolean(
         (data.name && data.name.trim().length > 0) ||
-          (data.firstName && data.firstName.trim().length > 0) ||
-          (data.lastName && data.lastName.trim().length > 0)
+        (data.firstName && data.firstName.trim().length > 0) ||
+        (data.lastName && data.lastName.trim().length > 0),
       ),
     {
       message: "First name and last name, or full name, are required",
       path: ["firstName"],
-    }
+    },
   );
 
 export const updateStudentSchema = z.object({
@@ -63,7 +72,11 @@ export class StudentService {
   /**
    * Helper to resolve firstName, lastName, and fullName
    */
-  private resolveNameParts(rawName?: string, rawFirst?: string, rawLast?: string) {
+  private resolveNameParts(
+    rawName?: string,
+    rawFirst?: string,
+    rawLast?: string,
+  ) {
     let firstName = rawFirst?.trim() || "";
     let lastName = rawLast?.trim() || "";
     let name = rawName?.trim() || "";
@@ -92,8 +105,19 @@ export class StudentService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { email, password, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
-    const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
+    const {
+      email,
+      password,
+      name: rawName,
+      firstName: rawFirst,
+      lastName: rawLast,
+      location,
+    } = parsed.data;
+    const { name, firstName, lastName } = this.resolveNameParts(
+      rawName,
+      rawFirst,
+      rawLast,
+    );
 
     const existingStudent = await this.db.user.findUnique({
       where: { email },
@@ -159,7 +183,14 @@ export class StudentService {
     skip?: number;
     take?: number;
   }) {
-    const { search, level, location, advisorId, skip = 0, take = 50 } = options || {};
+    const {
+      search,
+      level,
+      location,
+      advisorId,
+      skip = 0,
+      take = 50,
+    } = options || {};
 
     const where: any = {};
 
@@ -231,7 +262,7 @@ export class StudentService {
             subjectCategory: true,
             reason: true,
             advisor: {
-              select: { id: true, name: true, email: true }, 
+              select: { id: true, name: true, email: true },
             },
           },
         },
@@ -247,7 +278,7 @@ export class StudentService {
     const sanitizedStudents = students.map((s: any) => ({
       ...s,
       userBadges: (s.userBadges || []).filter(
-        (ub: any) => !ub.badge || ub.badge.isActive !== false
+        (ub: any) => !ub.badge || ub.badge.isActive !== false,
       ),
     }));
 
@@ -266,7 +297,11 @@ export class StudentService {
    * Get student profile by ID
    */
   async getStudentById(studentId: string) {
-    if (!studentId || typeof studentId !== "string" || !/^[0-9a-fA-F]{24}$/.test(studentId)) {
+    if (
+      !studentId ||
+      typeof studentId !== "string" ||
+      !/^[0-9a-fA-F]{24}$/.test(studentId)
+    ) {
       throw new ApiError(404, "Student not found");
     }
 
@@ -310,12 +345,15 @@ export class StudentService {
       const { password: _password, ...sanitizedStudent } = student;
 
       // Filter out any deactivated badges on the backend level
-      if (sanitizedStudent.userBadges && Array.isArray(sanitizedStudent.userBadges)) {
+      if (
+        sanitizedStudent.userBadges &&
+        Array.isArray(sanitizedStudent.userBadges)
+      ) {
         sanitizedStudent.userBadges = sanitizedStudent.userBadges.filter(
-          (ub: any) => !ub.badge || ub.badge.isActive !== false
+          (ub: any) => !ub.badge || ub.badge.isActive !== false,
         );
       }
-      
+
       return sanitizedStudent;
     } catch (err: any) {
       if (err instanceof ApiError) throw err;
@@ -334,7 +372,13 @@ export class StudentService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { studentId, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
+    const {
+      studentId,
+      name: rawName,
+      firstName: rawFirst,
+      lastName: rawLast,
+      location,
+    } = parsed.data;
 
     const existingStudent = await this.db.user.findUnique({
       where: { id: studentId },
@@ -351,9 +395,18 @@ export class StudentService {
     if (rawName !== undefined && rawName.trim().length > 0) {
       updateData.name = rawName.trim();
     } else if (rawFirst !== undefined || rawLast !== undefined) {
-      const effectiveFirst = rawFirst !== undefined ? rawFirst.trim() : (existingStudent as any).firstName || "";
-      const effectiveLast = rawLast !== undefined ? rawLast.trim() : (existingStudent as any).lastName || "";
-      const combined = [effectiveFirst, effectiveLast].filter(Boolean).join(" ").trim();
+      const effectiveFirst =
+        rawFirst !== undefined
+          ? rawFirst.trim()
+          : (existingStudent as any).firstName || "";
+      const effectiveLast =
+        rawLast !== undefined
+          ? rawLast.trim()
+          : (existingStudent as any).lastName || "";
+      const combined = [effectiveFirst, effectiveLast]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
       if (combined) {
         updateData.name = combined;
       }
@@ -442,15 +495,17 @@ export class StudentService {
   /**
    * Bulk create / enroll students from CSV
    */
-  async bulkCreateStudents(students: Array<{
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    location?: string;
-    program?: string;
-    yearLevel?: string;
-  }>) {
+  async bulkCreateStudents(
+    students: Array<{
+      name?: string;
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      location?: string;
+      program?: string;
+      yearLevel?: string;
+    }>,
+  ) {
     if (!Array.isArray(students) || students.length === 0) {
       throw new ApiError(400, "No student entries provided for import.");
     }
@@ -460,11 +515,19 @@ export class StudentService {
 
     for (let i = 0; i < students.length; i++) {
       const item = students[i];
-      const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
+      const { name, firstName, lastName } = this.resolveNameParts(
+        item.name,
+        item.firstName,
+        item.lastName,
+      );
       const email = item.email?.trim().toLowerCase();
 
       if (!name || !email) {
-        errors.push({ email: email || "unknown", name: name || "unknown", error: "Name and Email are required fields." });
+        errors.push({
+          email: email || "unknown",
+          name: name || "unknown",
+          error: "Name and Email are required fields.",
+        });
         continue;
       }
 
@@ -477,7 +540,9 @@ export class StudentService {
         continue;
       }
 
-      const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+      const randomChars =
+        Math.random().toString(36).substring(2, 6).toUpperCase() +
+        Math.random().toString(36).substring(2, 6).toUpperCase();
       const tempPassword = `BQ-STU-${randomChars}`;
 
       try {
@@ -501,12 +566,18 @@ export class StudentService {
           name,
           password: tempPassword,
           studentId: newStudent.id,
-        }).catch((err) => console.error("[BulkStudentImport] Email send error:", err));
+        }).catch((err) =>
+          console.error("[BulkStudentImport] Email send error:", err),
+        );
 
         const { password, ...sanitized } = newStudent;
         createdStudents.push(sanitized);
       } catch (err: any) {
-        errors.push({ email, name, error: err.message || "Failed to enroll student" });
+        errors.push({
+          email,
+          name,
+          error: err.message || "Failed to enroll student",
+        });
       }
     }
 
@@ -532,47 +603,63 @@ export const lessonCompletionService = new LessonCompletionService();
 // ============ Re-exports for Backward Compatibility ============
 
 export const createStudent = studentService.createStudent.bind(studentService);
-export const getAllStudents = studentService.getAllStudents.bind(studentService);
-export const getStudentById = studentService.getStudentById.bind(studentService);
+export const getAllStudents =
+  studentService.getAllStudents.bind(studentService);
+export const getStudentById =
+  studentService.getStudentById.bind(studentService);
 export const updateStudent = studentService.updateStudent.bind(studentService);
 export const deleteStudent = studentService.deleteStudent.bind(studentService);
-export const getStudentStats = studentService.getStudentStats.bind(studentService);
-export const bulkCreateStudents = studentService.bulkCreateStudents.bind(studentService);
+export const getStudentStats =
+  studentService.getStudentStats.bind(studentService);
+export const bulkCreateStudents =
+  studentService.bulkCreateStudents.bind(studentService);
 
-export const createStudyPlan = studyPlanService.createStudyPlan.bind(studyPlanService);
-export const getStudyPlans = studyPlanService.getStudyPlans.bind(studyPlanService);
-export const deleteStudyPlan = studyPlanService.deleteStudyPlan.bind(studyPlanService);
+export const createStudyPlan =
+  studyPlanService.createStudyPlan.bind(studyPlanService);
+export const getStudyPlans =
+  studyPlanService.getStudyPlans.bind(studyPlanService);
+export const deleteStudyPlan =
+  studyPlanService.deleteStudyPlan.bind(studyPlanService);
 
-export const updateSubjectMastery = subjectMasteryService.updateSubjectMastery.bind(subjectMasteryService);
-export const getSubjectMastery = subjectMasteryService.getSubjectMastery.bind(subjectMasteryService);
+export const updateSubjectMastery =
+  subjectMasteryService.updateSubjectMastery.bind(subjectMasteryService);
+export const getSubjectMastery = subjectMasteryService.getSubjectMastery.bind(
+  subjectMasteryService,
+);
 
-export const recordExamResult = examResultService.recordExamResult.bind(examResultService);
-export const getExamResults = examResultService.getExamResults.bind(examResultService);
-export const getExamResultStats = examResultService.getExamResultStats.bind(examResultService);
+export const recordExamResult =
+  examResultService.recordExamResult.bind(examResultService);
+export const getExamResults =
+  examResultService.getExamResults.bind(examResultService);
+export const getExamResultStats =
+  examResultService.getExamResultStats.bind(examResultService);
 
-export const awardAchievement = achievementService.awardAchievement.bind(achievementService);
-export const getAchievements = achievementService.getAchievements.bind(achievementService);
+export const awardAchievement =
+  achievementService.awardAchievement.bind(achievementService);
+export const getAchievements =
+  achievementService.getAchievements.bind(achievementService);
 
-export const recordLessonCompletion = lessonCompletionService.recordLessonCompletion.bind(lessonCompletionService);
-export const getLessonCompletions = lessonCompletionService.getLessonCompletions.bind(lessonCompletionService);
-export const getLessonCompletionProgress = lessonCompletionService.getLessonCompletionProgress.bind(lessonCompletionService);
+export const recordLessonCompletion =
+  lessonCompletionService.recordLessonCompletion.bind(lessonCompletionService);
+export const getLessonCompletions =
+  lessonCompletionService.getLessonCompletions.bind(lessonCompletionService);
+export const getLessonCompletionProgress =
+  lessonCompletionService.getLessonCompletionProgress.bind(
+    lessonCompletionService,
+  );
 
 // ============ Re-exports of Schemas and Types ============
 export {
   createStudyPlanSchema,
   StudyPlanService,
-  
   updateSubjectMasterySchema,
   SubjectMasteryService,
-  
   recordExamResultSchema,
   ExamResultService,
-  
   awardAchievementSchema,
   AchievementService,
-  
   recordLessonCompletionSchema,
-  LessonCompletionService
+  LessonCompletionService,
 };
 
 export type { CreateStudyPlanInput } from "./studyPlan.service";

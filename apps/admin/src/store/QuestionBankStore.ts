@@ -16,22 +16,30 @@ export interface QuestionBankFilter {
   setSearch: (search: string) => void;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
+  selectedSubject?: string;
+  setSelectedSubject?: (subject: string) => void;
   selectedDifficulty: string;
   setSelectedDifficulty: (difficulty: string) => void;
   selectedType: string;
   setSelectedType: (type: string) => void;
+  selectedStatus: string;
+  setSelectedStatus: (status: string) => void;
 }
 
 export const useQuestionBankFilterStore = create<QuestionBankFilter>((set) => ({
   search: "",
   selectedCategory: "",
+  selectedSubject: "",
   selectedDifficulty: "",
   selectedType: "",
+  selectedStatus: "ALL",
   setSearch: (search: string) => set({ search }),
-  setSelectedCategory: (selectedCategory: string) => set({ selectedCategory }),
+  setSelectedCategory: (selectedCategory: string) => set({ selectedCategory, selectedSubject: selectedCategory }),
+  setSelectedSubject: (selectedSubject: string) => set({ selectedCategory: selectedSubject, selectedSubject }),
   setSelectedDifficulty: (selectedDifficulty: string) =>
     set({ selectedDifficulty }),
   setSelectedType: (selectedType: string) => set({ selectedType }),
+  setSelectedStatus: (selectedStatus: string) => set({ selectedStatus }),
 }));
 
 export const useQuestionBankStore = create<QuestionBankStore>((set) => ({
@@ -42,6 +50,8 @@ export const useQuestionBankStore = create<QuestionBankStore>((set) => ({
 interface QuestionFormStore {
   categoryId: string;
   setCategoryId: (categoryId: string) => void;
+  subjectId?: string;
+  setSubjectId?: (subjectId: string) => void;
 
   topic: string;
   setTopic: (topic: string) => void;
@@ -54,11 +64,16 @@ interface QuestionFormStore {
 
   questionWording: string;
   setQuestionWording: (questionWording: string) => void;
+
+  status: string;
+  setStatus: (status: string) => void;
 }
 
 export const useQuestionFormStore = create<QuestionFormStore>((set) => ({
   categoryId: "",
-  setCategoryId: (categoryId: string) => set({ categoryId }),
+  subjectId: "",
+  setCategoryId: (categoryId: string) => set({ categoryId, subjectId: categoryId }),
+  setSubjectId: (subjectId: string) => set({ categoryId: subjectId, subjectId }),
   topic: "",
   setTopic: (topic: string) => set({ topic }),
   difficulty: "",
@@ -67,6 +82,8 @@ export const useQuestionFormStore = create<QuestionFormStore>((set) => ({
   setFormat: (format: string) => set({ format }),
   questionWording: "",
   setQuestionWording: (questionWording: string) => set({ questionWording }),
+  status: "",
+  setStatus: (status: string) => set({ status }),
 }));
 
 interface MCQFormStore {

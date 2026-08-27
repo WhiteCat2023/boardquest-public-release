@@ -10,6 +10,7 @@ export enum Role {
   DEAN = "DEAN",
   TEAMLEAD = "TEAMLEAD",
   TEACHER = "TEACHER",
+  REVIEWCENTER = "REVIEWCENTER",
   EXTERNAL = "EXTERNAL",
 }
 
@@ -23,6 +24,12 @@ export enum QuestionType {
   MCQ = "MCQ",
   TRUE_FALSE = "TRUE_FALSE",
   SHORT_ANSWER = "SHORT_ANSWER",
+}
+
+export enum QuestionStatus {
+  APPROVED = "APPROVED",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  PENDING_REVISION = "PENDING_REVISION",
 }
 
 export enum RequestStatus {
@@ -56,6 +63,7 @@ export interface AdminUser {
   companyName?: string;
   location?: string;
   handledCategoryIds?: string[];
+  handledSubjectIds?: string[];
   accountStatus?: AccountStatus | string;
   isActive?: boolean;
   lastActiveAt?: Date;
@@ -97,10 +105,11 @@ export interface ReviewCenterRepresentativeUser {
   updatedAt?: Date;
 }
 
-export interface Category {
+export interface Subject {
   id: string;
   name: string;
-  code: string;
+  icon?: string;
+  code?: string;
   description?: string;
   authorId?: string;
   handlerIds?: string[];
@@ -108,16 +117,20 @@ export interface Category {
   updatedAt?: Date;
 }
 
+export type Category = Subject;
+
 export interface Question {
   id: string;
   question: string;
   choices: string[];
   correctAnswer: string;
-  categoryId: string;
+  categoryId?: string;
+  subjectId?: string;
   authorId?: string;
   topic: string;
   difficulty: QuestionDifficulty;
   type: QuestionType;
+  status: QuestionStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -150,6 +163,7 @@ export interface GuidanceAssignment {
   studentId: string;
   advisorId: string;
   subjectCategory?: string;
+  subject?: string;
   reason: string;
   status: GuidanceStatus;
   createdAt?: Date;

@@ -6,17 +6,19 @@ export interface RoleFlags {
   isAdmin: boolean;
   isTeacher: boolean;
   isTeamLead: boolean;
+  isReviewCenter: boolean;
   isDeanOrSuperAdmin: boolean;
   isAdminOrSuperAdmin: boolean;
   isStaff: boolean;
 }
 
-export function getRoleFlags(role?: string): RoleFlags {
+export function getRoleFlags(role?: string | number): RoleFlags {
   const isSuperAdmin = role === "SUPERADMIN";
   const isDean = role === "DEAN";
   const isAdmin = isDean; // backward compatibility
   const isTeacher = role === "TEACHER";
   const isTeamLead = role === "TEAMLEAD";
+  const isReviewCenter = role === "REVIEWCENTER" || role === "EXTERNAL";
   const isDeanOrSuperAdmin = isSuperAdmin || isDean;
 
   return {
@@ -25,6 +27,7 @@ export function getRoleFlags(role?: string): RoleFlags {
     isAdmin,
     isTeacher,
     isTeamLead,
+    isReviewCenter,
     isDeanOrSuperAdmin,
     isAdminOrSuperAdmin: isDeanOrSuperAdmin,
     isStaff: isSuperAdmin || isDean || isTeamLead,

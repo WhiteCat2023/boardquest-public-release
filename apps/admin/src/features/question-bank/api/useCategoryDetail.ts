@@ -5,15 +5,17 @@ export function useCategoryDetail(categoryId?: string | null) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
-    queryKey: ["categoryDetail", categoryId],
+    queryKey: ["categoryDetail", "subjectDetail", categoryId],
     queryFn: async () => {
       if (!categoryId) return null;
       const response = await axiosPrivate.get(
         `/questions/category/single/${categoryId}`
       );
-      return response.data?.data?.category ?? response.data?.category ?? null;
+      return response.data?.data?.category ?? response.data?.data?.subject ?? response.data?.category ?? null;
     },
     enabled: Boolean(categoryId),
     staleTime: 1000 * 60 * 2,
   });
 }
+
+export const useSubjectDetail = useCategoryDetail;

@@ -79,20 +79,20 @@ export function GameManagementPage() {
         <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/10 via-primary/5 to-transparent pointer-events-none" />
 
         <div className="flex items-center gap-3 relative">
-          <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/25 shadow-sm">
-            <Gamepad2 className="w-6 h-6" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+            <Gamepad2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-                Game Content Management
+              <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+                Study Games & Quizzes
               </h1>
-              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase bg-primary/15 text-primary px-2 py-0.5 rounded-full border border-primary/25">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
                 <Sparkles className="w-3 h-3" /> Gamified
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Configure gamification badges, artwork, XP engine rules, and scoring thresholds.
+              Configure study game badges, XP point rules, and scoring thresholds.
             </p>
           </div>
         </div>

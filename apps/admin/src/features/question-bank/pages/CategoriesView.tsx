@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCategories } from "@/features/faculty";
+import { useSubjects } from "@/features/users";
 import {
   Tag,
   Plus,
@@ -14,11 +14,21 @@ import {
   Users,
   User,
   X,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +51,10 @@ export default function CategoriesView() {
   const navigate = useNavigate();
   const { auth } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const { data: categories = [], isLoading } = useCategories({ search: searchTerm });
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { data: categories = [], isLoading } = useSubjects({
+    search: searchTerm,
+  });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("BookOpen");
@@ -56,7 +69,13 @@ export default function CategoriesView() {
   const { confirm } = useConfirm();
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
-  const { currentUser, isTeacher, isStaff: canManage, handledCategoryIds, isSubjectAssigned } = useRoleFlags();
+  const {
+    currentUser,
+    isTeacher,
+    isStaff: canManage,
+    handledCategoryIds,
+    isSubjectAssigned,
+  } = useRoleFlags();
 
   const filteredCategories = categories;
 
@@ -106,7 +125,7 @@ export default function CategoriesView() {
           categoryId: editingCategory.id,
           name: editCategoryName.trim(),
           icon: editCategoryIcon,
-        }
+        },
       );
       toast.success(`Category updated successfully!`);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -124,7 +143,8 @@ export default function CategoriesView() {
       description: (
         <>
           Are you sure you want to delete{" "}
-          <strong className="text-foreground">{cat?.name}</strong>? This action cannot be undone.
+          <strong className="text-foreground">{cat?.name}</strong>? This action
+          cannot be undone.
         </>
       ),
       variant: "destructive",
@@ -145,16 +165,16 @@ export default function CategoriesView() {
   return (
     <div className="flex flex-col gap-4 w-full animate-in fade-in duration-200 font-sans">
       {/* Compact Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3 rounded-xl shadow-2xs font-sans w-full">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 min-w-[200px] max-w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
           <Input
             type="text"
             placeholder="Search subject or keywords..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-8 h-8 bg-muted/30 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
+            className="pl-9 pr-8 h-8.5 bg-muted/30 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground w-full"
           />
           {searchTerm && (
             <button
@@ -167,15 +187,46 @@ export default function CategoriesView() {
         </div>
 
         {/* Action Controls & Stats */}
-        <div className="flex items-center gap-2.5 shrink-0 justify-between md:justify-end">
-          <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
-            Total Subjects: {filteredCategories.length}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-border rounded-lg p-0.5 bg-muted/40 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === "grid"
+                  ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Cards View"
+              aria-label="Cards View"
+            >
+              <LayoutGrid size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="List View"
+              aria-label="List View"
+            >
+              <List size={14} />
+            </button>
+          </div>
+
+          <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-lg border border-border">
+            {isTeacher ? "Handled Subjects" : "Total Subjects"}:{" "}
+            {filteredCategories.length}
           </span>
 
           {canManage && (
             <Button
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3 h-8.5 rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Plus size={14} /> Add Subject
             </Button>
@@ -183,26 +234,55 @@ export default function CategoriesView() {
         </div>
       </div>
 
-      {/* Grid of Subject Categories */}
+      {/* Content Rendering: Grid vs List */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border rounded-xl p-3.5 space-y-3 min-h-[140px]"
-            >
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-28 bg-muted rounded-md" />
-                <Skeleton className="h-5 w-14 bg-muted rounded-full" />
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-card border border-border rounded-xl p-4 space-y-4"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-10 rounded-xl bg-muted" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-32 bg-muted rounded-md" />
+                    <Skeleton className="h-3 w-20 bg-muted rounded-md" />
+                  </div>
+                </div>
+                <div className="pt-2.5 flex justify-between items-center border-t border-border/50">
+                  <Skeleton className="h-6 w-20 bg-muted rounded-md" />
+                  <div className="flex items-center gap-1">
+                    <Skeleton className="size-7 bg-muted rounded-md" />
+                    <Skeleton className="size-7 bg-muted rounded-md" />
+                  </div>
+                </div>
               </div>
-              <Skeleton className="h-3.5 w-40 bg-muted rounded-md" />
-              <div className="pt-3 flex justify-between items-center border-t border-border/50">
-                <Skeleton className="h-4 w-20 bg-muted rounded-md" />
-                <Skeleton className="h-4 w-12 bg-muted rounded-md" />
+            ))}
+          </div>
+        ) : (
+          <div className="border border-border rounded-xl bg-card overflow-hidden shadow-2xs divide-y divide-border/40">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 pl-4 pr-4"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-8 rounded-lg bg-muted" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-44 bg-muted" />
+                    <Skeleton className="h-3 w-24 bg-muted" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-7 w-20 bg-muted rounded-md" />
+                  <Skeleton className="size-7 bg-muted rounded-lg" />
+                  <Skeleton className="size-7 bg-muted rounded-lg" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       ) : filteredCategories.length === 0 ? (
         <Card className="py-14 text-center flex flex-col items-center justify-center gap-2.5 bg-card border border-border rounded-xl p-6 shadow-2xs">
           <Tag size={36} className="text-muted-foreground/40 stroke-[1.5]" />
@@ -213,14 +293,11 @@ export default function CategoriesView() {
               : "No subject categories created yet."}
           </p>
         </Card>
-      ) : (
+      ) : viewMode === "grid" ? (
+        /* Cards / Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredCategories.map((cat: any) => {
             const IconComp = getCategoryIcon(cat.icon, cat.name);
-            const questionCount =
-              typeof cat.questionCount === "number"
-                ? cat.questionCount
-                : cat.questions?.length ?? 0;
             const targetId = cat.id || cat._id;
 
             return (
@@ -231,71 +308,31 @@ export default function CategoriesView() {
                     navigate(`/subject-management/${targetId}`);
                   }
                 }}
-                className="bg-card border border-border hover:border-primary/30 rounded-xl p-3.5 shadow-2xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between group relative overflow-hidden font-sans cursor-pointer"
+                className="bg-card border border-border hover:border-primary/40 rounded-xl p-4 shadow-2xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between group relative overflow-hidden font-sans cursor-pointer gap-4"
               >
                 {/* Decorative Top Accent Bar */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/80 to-emerald-500 opacity-80 group-hover:opacity-100 transition-opacity" />
 
-                {/* Card Header & Badges */}
-                <div className="space-y-3 pt-0.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="size-9 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
-                        <IconComp size={18} className="stroke-[2.2]" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3
-                          className="text-xs font-bold text-foreground tracking-tight truncate group-hover:text-primary transition-colors"
-                          title={cat.name}
-                        >
-                          {cat.name}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                      <CheckCircle2 size={10} className="text-emerald-500" />{" "}
-                      Active
-                    </span>
+                {/* Card Header */}
+                <div className="flex items-center gap-3 min-w-0 pt-0.5">
+                  <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-sm shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                    <IconComp size={20} className="stroke-[2.2]" />
                   </div>
-
-                  {/* Summary Metric Rows (11px text) */}
-                  <div className="pt-2.5 border-t border-border space-y-1.5 text-[11px]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium flex items-center gap-1">
-                        <HelpCircle size={12} /> Questions
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        {questionCount}{" "}
-                        {questionCount === 1 ? "Question" : "Questions"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium flex items-center gap-1">
-                        <Users size={12} /> Faculty Handlers
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        {cat.handlers?.length || 0} Assigned
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium flex items-center gap-1">
-                        <User size={12} /> Author
-                      </span>
-                      <span
-                        className="font-semibold text-foreground truncate max-w-[120px]"
-                        title={cat.author?.name || "System Admin"}
-                      >
-                        {cat.author?.name || "System Admin"}
-                      </span>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate group-hover:text-primary transition-colors"
+                      title={cat.name}
+                    >
+                      {cat.name}
+                    </h3>
+                    <p className="text-[10.5px] text-muted-foreground font-medium truncate mt-0.5">
+                      {cat.code || "Academic Subject Category"}
+                    </p>
                   </div>
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className="pt-2.5 border-t border-border mt-3 flex items-center justify-between">
+                <div className="pt-2.5 border-t border-border flex items-center justify-between">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -341,6 +378,97 @@ export default function CategoriesView() {
             );
           })}
         </div>
+      ) : (
+        /* List / Table View */
+        <div className="border border-border rounded-xl bg-card overflow-hidden shadow-2xs">
+          <Table>
+            <TableHeader className="bg-muted/40">
+              <TableRow className="border-b border-border/80 hover:bg-transparent">
+                <TableHead className="text-xs font-bold text-muted-foreground py-3 pl-4">
+                  Subject
+                </TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3 pr-4 text-right">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/60">
+              {filteredCategories.map((cat: any) => {
+                const IconComp = getCategoryIcon(cat.icon, cat.name);
+                const targetId = cat.id || cat._id;
+
+                return (
+                  <TableRow
+                    key={targetId}
+                    onClick={() => {
+                      if (targetId) navigate(`/subject-management/${targetId}`);
+                    }}
+                    className="cursor-pointer hover:bg-muted/40 transition-colors group"
+                  >
+                    <TableCell className="py-3 pl-4">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                          <IconComp size={16} className="stroke-[2.2]" />
+                        </div>
+                        <div className="min-w-0">
+                          <span
+                            className="text-xs font-bold text-foreground group-hover:text-primary transition-colors block truncate"
+                            title={cat.name}
+                          >
+                            {cat.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground truncate block">
+                            {cat.code || "Academic Subject Category"}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 pr-4 text-right">
+                      <div
+                        className="flex items-center justify-end gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (targetId)
+                              navigate(`/subject-management/${targetId}`);
+                          }}
+                          className="text-xs font-semibold text-primary hover:bg-primary/10 hover:text-primary h-7 rounded-md px-2.5 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye size={12} /> View Details
+                        </Button>
+                        {canManage && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenEditModal(cat)}
+                              className="size-7 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                              title="Edit Subject"
+                            >
+                              <Pencil size={13} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteCategory(cat)}
+                              className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Subject"
+                            >
+                              <Trash2 size={13} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Create Subject Category Modal */}
@@ -354,11 +482,11 @@ export default function CategoriesView() {
                     <Plus size={20} className="stroke-[2.5]" />
                   </div>
                   <AlertDialogTitle className="text-base font-bold text-foreground">
-                    Create Subject Category
+                    Create Subject
                   </AlertDialogTitle>
                 </div>
                 <AlertDialogDescription className="text-xs text-muted-foreground">
-                  Add a new evaluation subject category to the curriculum library.
+                  Add a new evaluation subject to the curriculum library.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -404,7 +532,7 @@ export default function CategoriesView() {
         </AlertDialog>
       )}
 
-      {/* Edit Subject Category Modal */}
+      {/* Edit Subject Modal */}
       {canManage && (
         <AlertDialog
           open={!!editingCategory}
@@ -418,7 +546,7 @@ export default function CategoriesView() {
                     <Pencil size={20} className="stroke-[2.5]" />
                   </div>
                   <AlertDialogTitle className="text-base font-bold text-foreground">
-                    Edit Subject Category
+                    Edit Subject
                   </AlertDialogTitle>
                 </div>
                 <AlertDialogDescription className="text-xs text-muted-foreground">

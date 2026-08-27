@@ -93,6 +93,8 @@ export default function AddQuestion() {
     setFormat,
     questionWording,
     setQuestionWording,
+    status,
+    setStatus,
   } = useQuestionFormStore();
 
   // MCQ States
@@ -165,6 +167,7 @@ export default function AddQuestion() {
       setFormat(existingQuestion.type || "MCQ");
       setQuestionWording(existingQuestion.question || "");
       setImageUrl(existingQuestion.imageUrl || "");
+      setStatus(existingQuestion.status || "");
 
       if (existingQuestion.type === "MCQ") {
         setMcqChoices(
@@ -619,7 +622,7 @@ export default function AddQuestion() {
                 Authoring profile
               </span>
               <span className="text-foreground font-bold text-xs">
-                {(auth as any)?.data?.user?.name || "Faculty Reviewer"}
+                {(auth as any)?.data?.user?.name || "Author"}
               </span>
             </div>
           </div>

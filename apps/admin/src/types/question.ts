@@ -3,6 +3,7 @@ export enum UserRole {
   DEAN = "DEAN",
   TEAMLEAD = "TEAMLEAD",
   TEACHER = "TEACHER",
+  REVIEWCENTER = "REVIEWCENTER",
   EXTERNAL = "EXTERNAL",
 }
 
@@ -18,6 +19,24 @@ export enum QuestionType {
   SHORT_ANSWER = "SHORT_ANSWER",
 }
 
+export enum QuestionStatus {
+  APPROVED = "APPROVED",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  PENDING_REVISION = "PENDING_REVISION",
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  icon?: string;
+  code?: string;
+  authorId?: string;
+  authorName?: string;
+  createdAt?: string;
+}
+
+export type Category = Subject;
+
 export interface Question {
   id: string;
   text?: string;
@@ -25,20 +44,16 @@ export interface Question {
   imageUrl?: string;
   type: QuestionType;
   difficulty: QuestionDifficulty;
-  category: Category;
+  subject?: Subject;
+  category?: Category;
+  subjectId?: string;
+  categoryId?: string;
   topic: string;
   authorId: string;
   author: { name: string } | string;
   choices?: string[];
   choiceImages?: string[];
   correctAnswer: string;
-  createdAt: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  authorId: string;
-  authorName: string;
+  status: QuestionStatus;
   createdAt: string;
 }

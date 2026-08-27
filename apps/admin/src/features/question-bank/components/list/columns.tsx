@@ -1,7 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { UserRole, type Question } from "@/types/question";
+import { UserRole, QuestionStatus, type Question } from "@/types/question";
 import { Eye, Trash2, Edit, Tag } from "lucide-react";
-import { getDifficultyColor, getInitials } from "@/utils/style";
+import { getDifficultyColor, getStatusColor } from "@/utils/style";
 
 interface GetColumnsProps {
   currentUserId: string;
@@ -17,12 +17,13 @@ export const getQuestionColumns = ({
   currentUserRole,
   onView,
   onDelete,
+  onFeedback: _onFeedback,
   navigate,
 }: GetColumnsProps): ColumnDef<Question>[] => [
   {
     id: "select",
     meta: {
-      className: "w-10 sm:w-12 pl-2 sm:pl-3 pr-1 text-center shrink-0",
+      className: "w-10 sm:w-12 px-2 text-center shrink-0",
     },
     header: ({ table }) => (
       <div className="flex items-center justify-center">
@@ -47,107 +48,73 @@ export const getQuestionColumns = ({
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: () => <div className="text-center">ID</div>,
     meta: {
-      className: "hidden lg:table-cell",
+      className: "w-20 sm:w-24 px-2 text-center shrink-0",
     },
     cell: ({ row }) => (
-      <span className="rounded bg-muted px-2 py-1 text-[10px] font-bold tracking-wide text-muted-foreground border border-border">
-        Q-{row.original.id.slice(-4).toUpperCase()}
-      </span>
+      <div className="flex items-center justify-center">
+        <span className="rounded-md bg-muted/60 px-2 py-1 text-[11px] font-semibold font-mono tracking-wide text-muted-foreground border border-border">
+          Q-{row.original.id.slice(-4).toUpperCase()}
+        </span>
+      </div>
     ),
   },
   {
     accessorKey: "question",
     header: "Question",
     meta: {
-      className: "min-w-0 max-w-0 w-full overflow-hidden",
+      className: "w-full min-w-0 max-w-0 px-3 overflow-hidden",
     },
     cell: ({ row }) => {
       const questionContent =
         (row.original as any).question || row.original.text || "";
+      const subjectName = row.original.category?.name;
+      const topicName = row.original.topic;
+      const questionType = row.original.type;
+      const difficulty = row.original.difficulty;
+      const status = row.original.status;
+
       return (
-        <div className="flex flex-col gap-1 min-w-0 w-full overflow-hidden">
+        <div className="flex flex-col gap-1.5 min-w-0 w-full overflow-hidden py-1">
           <p
-            className="text-xs sm:text-sm font-semibold text-foreground truncate block w-full"
+            className="text-xs sm:text-sm font-semibold text-foreground truncate block w-full leading-normal"
             title={questionContent}
           >
             {questionContent}
           </p>
-          <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
-            <span className="rounded bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wide truncate max-w-[120px] shrink-0">
-              {row.original.category?.name || "Subject"}
-            </span>
-            <span className="lg:hidden rounded bg-muted border border-border px-1.5 py-0.5 text-[8.5px] font-semibold text-muted-foreground shrink-0">
-              {row.original.difficulty}
-            </span>
+          <div className="flex items-center gap-1.5 flex-wrap overflow-hidden pt-0.5">
+            {subjectName && (
+              <span className="rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-primary tracking-tight truncate max-w-[150px] shrink-0">
+                {subjectName}
+              </span>
+            )}
+            {topicName && (
+              <span className="rounded-md bg-muted border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground flex items-center gap-1 truncate max-w-[150px] shrink-0">
+                <Tag size={10} className="text-muted-foreground/60 shrink-0" />
+                <span className="truncate">{topicName}</span>
+              </span>
+            )}
+            {questionType && (
+              <span className="rounded-md bg-muted/70 border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                {questionType}
+              </span>
+            )}
+            {difficulty && (
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold shrink-0 ${getDifficultyColor(difficulty)}`}
+              >
+                {difficulty}
+              </span>
+            )}
+            {status && (
+              <span
+                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0 ${getStatusColor(status)}`}
+              >
+                {status}
+              </span>
+            )}
           </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "topic",
-    header: "Topic",
-    meta: {
-      className: "hidden lg:table-cell",
-    },
-    cell: ({ row }) => (
-      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-        <Tag size={10} className="text-muted-foreground/60" />
-        {row.original.topic || "Topic"}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    meta: {
-      className: "hidden lg:table-cell",
-    },
-    cell: ({ row }) => (
-      <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-        {row.original.type}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "difficulty",
-    header: "Difficulty",
-    meta: {
-      className: "hidden lg:table-cell",
-    },
-    cell: ({ row }) => (
-      <span
-        className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(row.original.difficulty)}`}
-      >
-        {row.original.difficulty}
-      </span>
-    ),
-  },
-  {
-    id: "author",
-    header: "Author",
-    meta: {
-      className: "hidden lg:table-cell",
-    },
-    cell: ({ row }) => {
-      const authorName =
-        typeof row.original.author === "object"
-          ? row.original.author?.name
-          : row.original.author;
-
-      return (
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary border border-primary/20 shrink-0">
-            {getInitials(authorName)}
-          </div>
-          <span
-            className="text-xs font-semibold text-foreground truncate max-w-[130px]"
-            title={authorName}
-          >
-            {authorName || "Unknown"}
-          </span>
         </div>
       );
     },
@@ -155,9 +122,9 @@ export const getQuestionColumns = ({
   {
     id: "actions",
     meta: {
-      className: "w-24 sm:w-28 lg:w-36 text-right pr-2 lg:pr-6 shrink-0",
+      className: "w-24 sm:w-28 text-right pr-2.5 sm:pr-4 shrink-0",
     },
-    header: () => <div className="text-right pr-1 lg:pr-4">Actions</div>,
+    header: () => <div className="text-right pr-1 sm:pr-2">Actions</div>,
     cell: ({ row }) => {
       const item = row.original;
       const authorId =
@@ -165,19 +132,25 @@ export const getQuestionColumns = ({
           ? (item.author as any).id
           : item.authorId;
       const isAuthor = authorId === currentUserId;
+      const r = String(currentUserRole || "").toUpperCase();
+      const isLeadOrAdmin =
+        r === "SUPERADMIN" ||
+        r === "DEAN" ||
+        r === "TEAMLEAD" ||
+        currentUserRole === UserRole.SUPERADMIN ||
+        currentUserRole === UserRole.DEAN ||
+        currentUserRole === UserRole.TEAMLEAD;
+      const isTeacher = r === "TEACHER" || currentUserRole === UserRole.TEACHER;
+
       const canEdit =
-        currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.DEAN ||
-        currentUserRole === UserRole.TEAMLEAD ||
-        (currentUserRole === UserRole.TEACHER && isAuthor);
+        isLeadOrAdmin ||
+        (isTeacher && isAuthor && item.status !== QuestionStatus.APPROVED);
       const canDelete =
-        currentUserRole === UserRole.SUPERADMIN ||
-        currentUserRole === UserRole.DEAN ||
-        currentUserRole === UserRole.TEAMLEAD ||
-        (currentUserRole === UserRole.TEACHER && isAuthor);
+        isLeadOrAdmin ||
+        (isTeacher && isAuthor && item.status !== QuestionStatus.APPROVED);
 
       return (
-        <div className="flex items-center justify-end gap-1 pr-1 lg:pr-4 shrink-0">
+        <div className="flex items-center justify-end gap-1 pr-1 sm:pr-2 shrink-0">
           <button
             onClick={() => onView?.(item.id)}
             className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground focus:outline-none cursor-pointer shrink-0"

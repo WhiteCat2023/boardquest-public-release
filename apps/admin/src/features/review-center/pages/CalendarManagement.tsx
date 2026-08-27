@@ -51,10 +51,10 @@ export default function CalendarManagement() {
         <div>
           <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <CalendarIcon className="text-primary size-4.5 sm:size-5 shrink-0" />
-            Calendar & Review Schedule Management
+            Academic Calendar
           </h1>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Set and manage start/end dates for intensive board reviews, mock exams, and institutional timelines.
+            Set and manage review periods, mock exams, and institutional timelines.
           </p>
         </div>
 

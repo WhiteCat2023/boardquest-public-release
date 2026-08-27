@@ -35,8 +35,8 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
       name: true,
       email: true,
       role: true,
-      handledCategoryIds: true,
-      handledCategories: {
+      handledSubjectIds: true,
+      handledSubjects: {
         select: {
           id: true,
           name: true,
@@ -49,12 +49,20 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
     return new ApiResponse(404, null, "User not found").send(res);
   }
 
-  return new ApiResponse(200, { user }, "User retrieved successfully").send(
+  const formattedUser = {
+    ...user,
+    handledCategoryIds: user.handledSubjectIds || [],
+    handledCategories: user.handledSubjects || [],
+    handledSubjectIds: user.handledSubjectIds || [],
+    handledSubjects: user.handledSubjects || [],
+  };
+
+  return new ApiResponse(200, { user: formattedUser }, "User retrieved successfully").send(
     res,
   );
 });
 
-export const getFaculties = asyncHandler(
+export const getUsers = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { search, role, status, cursor, limit } = req.query;
     const requesterRole = req.user?.role;
@@ -63,16 +71,17 @@ export const getFaculties = asyncHandler(
       return new ApiResponse(
         200,
         {
+          users: [],
           faculties: [],
           nextCursor: null,
           hasNextPage: false,
           total: 0,
         },
-        "Faculty list not accessible for teacher role",
+        "User list not accessible for teacher role",
       ).send(res);
     }
 
-    const result = await userService.getAllFaculty({
+    const result = await userService.getAllUsers({
       search: search as string,
       role: role as string,
       status: status as string,
@@ -81,80 +90,87 @@ export const getFaculties = asyncHandler(
       requesterRole,
     });
 
-    if (result && typeof result === "object" && "faculties" in result) {
-      const sanitized = result.faculties.map((f: any) => {
-        const { password, ...rest } = f;
+    if (result && typeof result === "object" && ("users" in result || "faculties" in result)) {
+      const userList = (result as any).users ?? (result as any).faculties ?? [];
+      const sanitized = userList.map((u: any) => {
+        const { password, ...rest } = u;
         return rest;
       });
 
       return new ApiResponse(
         200,
         {
+          users: sanitized,
           faculties: sanitized,
           nextCursor: result.nextCursor,
           hasNextPage: result.hasNextPage,
+          total: (result as any).total ?? sanitized.length,
         },
-        "Faculty members retrieved successfully",
+        "Users retrieved successfully",
       ).send(res);
     }
 
-    const sanitized = (result as any[]).map((f: any) => {
-      const { password, ...rest } = f;
+    const sanitized = (result as any[]).map((u: any) => {
+      const { password, ...rest } = u;
       return rest;
     });
 
     return new ApiResponse(
       200,
-      { faculties: sanitized },
-      "Faculty members retrieved successfully",
+      { users: sanitized, faculties: sanitized },
+      "Users retrieved successfully",
     ).send(res);
   },
 );
+export const getFaculties = getUsers;
 
-export const createFaculty = asyncHandler(
+export const createUser = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;
     if (!creatorRole) {
       throw new ApiError(401, "Unauthorized");
     }
 
-    const created = await userService.createFaculty(req.body, creatorRole);
+    const created = await userService.createUser(req.body, creatorRole);
 
     // Strip password before returning
-    const { password, ...faculty } = created as any;
+    const { password, ...user } = created as any;
 
     return new ApiResponse(
       201,
-      { faculty },
-      "Faculty member created successfully",
+      { user, faculty: user },
+      "User created successfully",
     ).send(res);
   },
 );
+export const createFaculty = createUser;
 
-export const bulkCreateFaculty = asyncHandler(
+export const bulkCreateUsers = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;
     if (!creatorRole) {
       throw new ApiError(401, "Unauthorized");
     }
 
-    const created = await userService.bulkCreateFaculty(
+    const created = await userService.bulkCreateUsers(
       req.body.members,
       creatorRole,
     );
 
     // Strip password before returning
-    const { password, ...faculty } = created as any;
+    const { password, ...users } = created as any;
 
     return new ApiResponse(
       201,
-      { faculty },
-      "Faculty members created successfully",
+      { users, faculty: users, faculties: users },
+      "Users created successfully",
     ).send(res);
   },
 );
+export const bulkCreateFaculty = bulkCreateUsers;
+export const bulkCreateUser = bulkCreateUsers;
 
-export const toggleFacultyStatus = asyncHandler(
+export const toggleUserStatus = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;
     if (!creatorRole) {
@@ -167,10 +183,10 @@ export const toggleFacultyStatus = asyncHandler(
       accountStatus !== undefined
         ? accountStatus
         : account_status !== undefined
-        ? account_status
-        : Boolean(isActive);
+          ? account_status
+          : Boolean(isActive);
 
-    const faculty = await userService.toggleFacultyStatus(
+    const user = await userService.toggleUserStatus(
       id as string,
       nextStatus,
       creatorRole,
@@ -178,13 +194,14 @@ export const toggleFacultyStatus = asyncHandler(
 
     return new ApiResponse(
       200,
-      { faculty },
-      "Faculty status updated successfully",
+      { user, faculty: user },
+      "User status updated successfully",
     ).send(res);
   },
 );
+export const toggleFacultyStatus = toggleUserStatus;
 
-export const updateFacultyCategories = asyncHandler(
+export const updateUserSubjects = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;
     if (!creatorRole) {
@@ -192,29 +209,26 @@ export const updateFacultyCategories = asyncHandler(
     }
 
     const { id } = req.params;
-    const { categoryIds } = req.body;
+    const { categoryIds, subjectIds } = req.body;
+    const ids = subjectIds || categoryIds;
 
-    if (!Array.isArray(categoryIds)) {
-      throw new ApiError(400, "categoryIds must be an array of category IDs.");
+    if (!Array.isArray(ids)) {
+      throw new ApiError(400, "subjectIds or categoryIds must be an array of IDs.");
     }
 
-    const faculty = await userService.updateFacultyCategories(
+    const user = await userService.updateUserCategories(
       id as string,
-      categoryIds,
+      ids,
       creatorRole,
     );
 
     return new ApiResponse(
       200,
-      { faculty },
-      "Handled categories updated successfully",
+      { user, faculty: user },
+      "Handled subjects updated successfully",
     ).send(res);
   },
 );
-
-// Aliases for clean user naming
-export const getUsers = getFaculties;
-export const createUser = createFaculty;
-export const bulkCreateUsers = bulkCreateFaculty;
-export const toggleUserStatus = toggleFacultyStatus;
-export const updateUserCategories = updateFacultyCategories;
+export const updateUserCategories = updateUserSubjects;
+export const updateFacultyCategories = updateUserSubjects;
+export const updateFacultySubjects = updateUserSubjects;

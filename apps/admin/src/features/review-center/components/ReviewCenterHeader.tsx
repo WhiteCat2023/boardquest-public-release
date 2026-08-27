@@ -6,10 +6,10 @@ export default function ReviewCenterHeader() {
       <div>
         <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
           <Building2 className="text-primary size-5" />
-          Review Center Directory & Management
+          Review Centers
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Manage affiliated review centers, representative accounts, and institutional partner details.
+          Manage affiliated review centers, representative accounts, and partner details.
         </p>
       </div>
     </div>
