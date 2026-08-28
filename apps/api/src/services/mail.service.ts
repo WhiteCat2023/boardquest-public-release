@@ -11,7 +11,8 @@ let testTransporter: nodemailer.Transporter | null = null;
 async function getTransporter() {
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST!,
+      service: "gmail",
       port: Number(process.env.SMTP_PORT) || 587,
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: {
@@ -21,21 +22,6 @@ async function getTransporter() {
     });
   }
 
-  // Fallback to Ethereal Email for instant development testing
-  if (!testTransporter) {
-    console.log("[MailService] No SMTP_USER/SMTP_PASS found in .env. Creating Ethereal test mailer...");
-    const testAccount = await nodemailer.createTestAccount();
-    console.log(`[MailService] Ethereal account created: ${testAccount.user}`);
-    testTransporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-  }
   return testTransporter;
 }
 
@@ -130,7 +116,7 @@ export async function sendPasswordResetEmail({
   try {
     const transporter = await getTransporter();
     const info = await transporter.sendMail(mailOptions);
-    
+
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       console.log(`\n==================================================`);
@@ -138,11 +124,16 @@ export async function sendPasswordResetEmail({
       console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
       console.log(`==================================================\n`);
     } else {
-      console.log(`[MailService] Email sent successfully to ${toEmail} (Message ID: ${info.messageId})`);
+      console.log(
+        `[MailService] Email sent successfully to ${toEmail} (Message ID: ${info.messageId})`,
+      );
     }
     return info;
   } catch (error) {
-    console.error(`[MailService Error] Failed to send email to ${toEmail}:`, error);
+    console.error(
+      `[MailService Error] Failed to send email to ${toEmail}:`,
+      error,
+    );
     console.log(`[MailService Direct Reset Link for testing]: ${resetUrl}`);
     return null;
   }
@@ -207,11 +198,15 @@ export async function sendFacultyCredentialsEmail({
               <!-- Credentials Box -->
               <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px; color: #374151;">
-                  ${employeeId ? `
+                  ${
+                    employeeId
+                      ? `
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600; width: 120px;">Employee ID:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #111827;">${employeeId}</td>
-                  </tr>` : ""}
+                  </tr>`
+                      : ""
+                  }
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Assigned Role:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #a60b0b;">${role}</td>
@@ -262,7 +257,8 @@ export async function sendFacultyCredentialsEmail({
   `;
 
   const mailOptions = {
-    from: process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
+    from:
+      process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
     to: toEmail,
     subject: "Your BoardQuest User Account Credentials",
     html: htmlContent,
@@ -271,7 +267,7 @@ export async function sendFacultyCredentialsEmail({
   try {
     const transporter = await getTransporter();
     const info = await transporter.sendMail(mailOptions);
-    
+
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       console.log(`\n==================================================`);
@@ -280,12 +276,19 @@ export async function sendFacultyCredentialsEmail({
       console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
       console.log(`==================================================\n`);
     } else {
-      console.log(`[MailService] User credentials email sent to ${toEmail} (Message ID: ${info.messageId})`);
+      console.log(
+        `[MailService] User credentials email sent to ${toEmail} (Message ID: ${info.messageId})`,
+      );
     }
     return info;
   } catch (error) {
-    console.error(`[MailService Error] Failed to send credentials email to ${toEmail}:`, error);
-    console.log(`[MailService Credentials Log]: Email=${toEmail}, Password=${password}`);
+    console.error(
+      `[MailService Error] Failed to send credentials email to ${toEmail}:`,
+      error,
+    );
+    console.log(
+      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`,
+    );
     return null;
   }
 }
@@ -347,11 +350,15 @@ export async function sendStudentCredentialsEmail({
               <!-- Credentials Box -->
               <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px; color: #374151;">
-                  ${studentId ? `
+                  ${
+                    studentId
+                      ? `
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600; width: 120px;">Student ID:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #111827;">${studentId}</td>
-                  </tr>` : ""}
+                  </tr>`
+                      : ""
+                  }
                   <tr>
                     <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Email / Login:</td>
                     <td style="padding: 6px 0; font-weight: 700; color: #111827;">${toEmail}</td>
@@ -398,7 +405,8 @@ export async function sendStudentCredentialsEmail({
   `;
 
   const mailOptions = {
-    from: process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
+    from:
+      process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
     to: toEmail,
     subject: "Your BoardQuest Student Account Credentials",
     html: htmlContent,
@@ -407,7 +415,7 @@ export async function sendStudentCredentialsEmail({
   try {
     const transporter = await getTransporter();
     const info = await transporter.sendMail(mailOptions);
-    
+
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       console.log(`\n==================================================`);
@@ -416,12 +424,19 @@ export async function sendStudentCredentialsEmail({
       console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
       console.log(`==================================================\n`);
     } else {
-      console.log(`[MailService] Student credentials email sent to ${toEmail} (Message ID: ${info.messageId})`);
+      console.log(
+        `[MailService] Student credentials email sent to ${toEmail} (Message ID: ${info.messageId})`,
+      );
     }
     return info;
   } catch (error) {
-    console.error(`[MailService Error] Failed to send credentials email to ${toEmail}:`, error);
-    console.log(`[MailService Credentials Log]: Email=${toEmail}, Password=${password}`);
+    console.error(
+      `[MailService Error] Failed to send credentials email to ${toEmail}:`,
+      error,
+    );
+    console.log(
+      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`,
+    );
     return null;
   }
 }
