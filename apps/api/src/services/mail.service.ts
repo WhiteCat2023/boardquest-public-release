@@ -107,7 +107,7 @@ export async function sendPasswordResetEmail({
   `;
 
   const mailOptions = {
-    from: process.env.SMTP_FROM || '"BoardQuest" <noreply@boardquest.com>',
+    from: process.env.SMTP_FROM,
     to: toEmail,
     subject: "Reset your BoardQuest password",
     html: htmlContent,
@@ -115,7 +115,7 @@ export async function sendPasswordResetEmail({
 
   try {
     const transporter = await getTransporter();
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter!.sendMail(mailOptions);
 
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
@@ -266,7 +266,7 @@ export async function sendFacultyCredentialsEmail({
 
   try {
     const transporter = await getTransporter();
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter!.sendMail(mailOptions);
 
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
@@ -414,7 +414,7 @@ export async function sendStudentCredentialsEmail({
 
   try {
     const transporter = await getTransporter();
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter!.sendMail(mailOptions);
 
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
