@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { UserRole, QuestionStatus, type Question } from "@/types/question";
-import { Eye, Trash2, Edit, Tag } from "lucide-react";
+import { Eye, Trash2, Edit, Tag, Image as ImageIcon } from "lucide-react";
 import { getDifficultyColor, getStatusColor } from "@/utils/style";
 
 interface GetColumnsProps {
@@ -72,6 +72,10 @@ export const getQuestionColumns = ({
       const questionType = row.original.type;
       const difficulty = row.original.difficulty;
       const status = row.original.status;
+      const hasPromptImage = Boolean(row.original.imageUrl);
+      const hasChoiceImages = Boolean(
+        row.original.choiceImages?.some((img: string) => img && img.trim())
+      );
 
       return (
         <div className="flex flex-col gap-1.5 min-w-0 w-full overflow-hidden py-1">
@@ -96,6 +100,12 @@ export const getQuestionColumns = ({
             {questionType && (
               <span className="rounded-md bg-muted/70 border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
                 {questionType}
+              </span>
+            )}
+            {(hasPromptImage || hasChoiceImages) && (
+              <span className="rounded-md bg-purple-500/10 border border-purple-500/20 px-1.5 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 shrink-0" title={hasPromptImage && hasChoiceImages ? "Question & choice images attached" : hasPromptImage ? "Question prompt image attached" : "Choice images attached"}>
+                <ImageIcon size={10} />
+                <span>Image</span>
               </span>
             )}
             {difficulty && (

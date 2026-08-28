@@ -12,6 +12,8 @@ interface AspirantRosterSidebarProps {
   filteredStudents: StudentListItem[];
   selectedStudentId: string | null;
   setSelectedStudentId: (id: string) => void;
+  onStudentSelected?: () => void;
+  className?: string;
 }
 
 export function AspirantRosterSidebar({
@@ -19,7 +21,9 @@ export function AspirantRosterSidebar({
   setSearchQuery,
   filteredStudents,
   selectedStudentId,
-  setSelectedStudentId
+  setSelectedStudentId,
+  onStudentSelected,
+  className = "",
 }: AspirantRosterSidebarProps) {
   const { isTeacher, currentUser } = useRoleFlags();
   const [filterMode, setFilterMode] = useState<"HANDLED" | "ALL">(isTeacher ? "HANDLED" : "ALL");
@@ -35,14 +39,19 @@ export function AspirantRosterSidebar({
     s.guidanceAssignments?.some((g) => g.advisorId === currentTeacherId)
   ).length;
 
+  const handleSelect = (id: string) => {
+    setSelectedStudentId(id);
+    onStudentSelected?.();
+  };
+
   return (
-    <div className="w-full lg:w-72 shrink-0 border-r border-border/80 bg-card/60 backdrop-blur-sm flex flex-col h-full">
+    <div className={`flex flex-col h-full bg-card/60 backdrop-blur-sm min-w-0 ${className}`}>
       {/* Search Header */}
-      <div className="p-3 border-b border-border/60 flex flex-col gap-2">
+      <div className="p-3 border-b border-border/60 flex flex-col gap-2 shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
             <Users size={13} className="text-primary" />
-            Students
+            Students Roster
           </h2>
           <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 rounded-md bg-muted/50 border-border">
             {displayStudents.length} Total
@@ -101,7 +110,7 @@ export function AspirantRosterSidebar({
       </div>
 
       {/* Student List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-border/30 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto divide-y divide-border/30 scrollbar-thin min-h-0">
         {displayStudents.length === 0 ? (
           <div className="p-6 text-center flex flex-col items-center gap-2">
             <p className="text-xs text-muted-foreground font-medium italic">
@@ -127,7 +136,7 @@ export function AspirantRosterSidebar({
             return (
               <div
                 key={s.id}
-                onClick={() => setSelectedStudentId(s.id)}
+                onClick={() => handleSelect(s.id)}
                 className={`p-2.5 cursor-pointer transition-all flex items-center justify-between gap-2.5 ${
                   isSelected 
                     ? "bg-primary/10 border-l-3 border-primary text-primary font-semibold shadow-2xs" 
@@ -141,10 +150,10 @@ export function AspirantRosterSidebar({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-xs font-bold text-foreground truncate leading-tight">{s.name}</span>
                       {isHandledByMe && (
-                        <Badge variant="outline" className="text-[8px] px-1 py-0 rounded font-bold bg-primary/10 text-primary border-primary/20">
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 rounded font-bold bg-primary/10 text-primary border-primary/20 shrink-0">
                           Handled
                         </Badge>
                       )}
@@ -166,3 +175,4 @@ export function AspirantRosterSidebar({
     </div>
   );
 }
+

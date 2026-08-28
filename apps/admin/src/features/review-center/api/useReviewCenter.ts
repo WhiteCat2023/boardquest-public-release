@@ -4,7 +4,7 @@ import type {
   ReviewCenterRepresentative, 
   CreateReviewCenterPayload, 
   UpdateReviewCenterPayload
-} from "@/features/review-center";
+} from "../types/types";
 
 export function useReviewCenters(params?: {
   search?: string;
@@ -26,6 +26,22 @@ export function useReviewCenters(params?: {
       return [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useReviewCenter(id?: string) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<ReviewCenterRepresentative>({
+    queryKey: ["reviewCenter", id],
+    queryFn: async () => {
+      if (!id) throw new Error("Review center ID is required");
+      const response = await axiosPrivate.get(`/review-center/${id}`);
+      return response.data?.data?.reviewCenter ?? response.data?.reviewCenter;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 }

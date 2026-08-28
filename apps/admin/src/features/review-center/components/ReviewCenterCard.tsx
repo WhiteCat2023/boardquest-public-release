@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { ReviewCenterRepresentative } from "@/features/review-center";
+import type { ReviewCenterRepresentative } from "../types/types";
 
 interface ReviewCenterCardProps {
   reviewCenter: ReviewCenterRepresentative;
@@ -62,7 +62,7 @@ export default function ReviewCenterCard({
       <div className="space-y-3 pt-0.5">
         {/* Company Header & Badge */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={() => onView(reviewCenter)}>
             {/* Center Logo/Avatar */}
             <div className="size-9 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
               {getInitials(reviewCenter.companyName)}

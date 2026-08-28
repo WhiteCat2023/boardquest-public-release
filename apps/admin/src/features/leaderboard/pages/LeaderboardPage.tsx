@@ -1,9 +1,34 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Crown, Flame, Sparkles, Search, TrendingUp, Award, Medal, ShieldCheck, ArrowUpRight, ArrowDownRight, Minus, UserX, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Trophy,
+  Crown,
+  Flame,
+  Sparkles,
+  Search,
+  TrendingUp,
+  Award,
+  Medal,
+  ShieldCheck,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  UserX,
+  Loader2,
+  X,
+  RotateCcw,
+  Zap,
+} from "lucide-react";
 import { useStudents } from "@/features/students";
 import type { LeaderboardStudent, LeaderboardCategory } from "../types/types";
 
@@ -18,17 +43,30 @@ export function LeaderboardPage() {
   // Transform database students into leaderboard metrics
   const processedStudents: LeaderboardStudent[] = rawStudents.map((s: any) => {
     const exams = Array.isArray(s.examResults) ? s.examResults : [];
-    const avgAccuracy = exams.length > 0
-      ? Math.round(exams.reduce((acc: number, curr: any) => acc + (curr.accuracy || curr.score || 0), 0) / exams.length)
-      : 0;
+    const avgAccuracy =
+      exams.length > 0
+        ? Math.round(
+            exams.reduce(
+              (acc: number, curr: any) =>
+                acc + (curr.accuracy || curr.score || 0),
+              0
+            ) / exams.length
+          )
+        : 0;
 
     const masteryList = Array.isArray(s.mastery) ? s.mastery : [];
-    const masteredCount = masteryList.filter((m: any) => (m.proficiency || 0) >= 75).length;
-    
-    const sortedMastery = [...masteryList].sort((a: any, b: any) => (b.proficiency || 0) - (a.proficiency || 0));
+    const masteredCount = masteryList.filter(
+      (m: any) => (m.proficiency || 0) >= 75
+    ).length;
+
+    const sortedMastery = [...masteryList].sort(
+      (a: any, b: any) => (b.proficiency || 0) - (a.proficiency || 0)
+    );
     const topSubject = sortedMastery[0]?.subject || "General Review";
 
-    const badgesCount = Array.isArray(s.achievements) ? s.achievements.length : 0;
+    const badgesCount = Array.isArray(s.achievements)
+      ? s.achievements.length
+      : 0;
 
     return {
       id: s.id,
@@ -51,7 +89,8 @@ export function LeaderboardPage() {
     .sort((a, b) => {
       if (category === "accuracy") return b.accuracy - a.accuracy;
       if (category === "streak") return b.streak - a.streak;
-      if (category === "mastery") return b.masteredSubjectsCount - a.masteredSubjectsCount;
+      if (category === "mastery")
+        return b.masteredSubjectsCount - a.masteredSubjectsCount;
       return b.totalXP - a.totalXP;
     })
     .map((s, index) => ({ ...s, rank: index + 1 }));
@@ -61,119 +100,151 @@ export function LeaderboardPage() {
   const top3 = filteredStudents[2];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground max-w-7xl mx-auto">
+      {/* ── Page Header ── */}
+      <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-4 -mx-4 md:-mt-6 md:-mx-6 px-4 md:px-6 border-b border-border z-10 font-sans">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-2xs shrink-0">
+            <Trophy className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
               Leaderboards & Rankings
             </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Real-time student rankings compiled from activity and quiz performance.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Real-time student rankings compiled from activity and quiz performance.
-          </p>
         </div>
-
-        <Select value={timeHorizon} onValueChange={setTimeHorizon}>
-          <SelectTrigger className="w-40 font-semibold">
-            <SelectValue placeholder="Timeframe" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-time">All-Time</SelectItem>
-            <SelectItem value="monthly">This Month</SelectItem>
-            <SelectItem value="weekly">This Week</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {isLoading ? (
-        <Card className="border-border p-12 flex flex-col items-center justify-center text-center gap-3">
+        <Card className="border-border p-16 flex flex-col items-center justify-center text-center gap-3 bg-card rounded-2xl">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground font-medium">Fetching real student leaderboard data from database...</p>
+          <p className="text-xs text-muted-foreground font-medium">
+            Fetching candidate standings from database...
+          </p>
         </Card>
       ) : filteredStudents.length === 0 ? (
-        <Card className="border-border p-12 flex flex-col items-center justify-center text-center gap-3 bg-card/50">
-          <div className="p-3 rounded-2xl bg-muted text-muted-foreground">
+        <Card className="border-border p-16 flex flex-col items-center justify-center text-center gap-3 bg-card rounded-2xl">
+          <div className="p-3.5 rounded-3xl bg-muted/60 text-muted-foreground/60 border border-border">
             <UserX className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-bold text-foreground">No Candidate Rankings Available</h3>
-          <p className="text-sm text-muted-foreground max-w-md">
+          <h3 className="text-sm font-bold text-foreground">
+            No Candidate Rankings Available
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
             {searchTerm
               ? `No student matching "${searchTerm}" was found.`
               : "Enrolled student candidates will automatically appear on the live leaderboard as they complete evaluation quests."}
           </p>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="mt-2 text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw size={12} />
+              Reset Search
+            </button>
+          )}
         </Card>
       ) : (
         <>
-          {/* Top 3 Podium Showcase */}
-          {filteredStudents.length >= 3 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          {/* ── Top 3 Podium Showcase (Only if 3+ candidates) ── */}
+          {filteredStudents.length >= 3 && !searchTerm && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
               {/* 2nd Place */}
-              <Card className="border-slate-500/30 bg-slate-500/10 shadow-sm relative overflow-hidden flex flex-col justify-between order-2 md:order-1">
-                <div className="absolute top-0 right-0 p-3 opacity-20">
+              <Card className="border-slate-500/30 bg-slate-500/10 shadow-xs relative overflow-hidden flex flex-col justify-between order-2 md:order-1 rounded-2xl">
+                <div className="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
                   <Medal className="w-20 h-20 text-slate-400" />
                 </div>
-                <CardContent className="p-5 space-y-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-500/30 font-bold px-2.5 py-1">
-                      2ND PLACE
+                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-500/30 font-bold px-2 py-0.5 text-[10px]">
+                      🥈 2ND PLACE
                     </Badge>
-                    <span className="text-xs font-semibold text-muted-foreground">Lvl {top2?.level} Candidate</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">
+                      Lvl {top2?.level} Candidate
+                    </span>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-black text-foreground">{top2?.name}</h3>
-                    <p className="text-xs text-muted-foreground">{top2?.email}</p>
+                    <h3 className="text-base font-bold text-foreground truncate">
+                      {top2?.name}
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {top2?.email}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40 text-xs">
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Total XP</span>
-                      <span className="text-base font-extrabold text-slate-300">{top2?.totalXP.toLocaleString()} XP</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Total XP
+                      </span>
+                      <span className="text-sm font-extrabold text-slate-300">
+                        {top2?.totalXP.toLocaleString()} XP
+                      </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Accuracy</span>
-                      <span className="text-base font-extrabold text-emerald-400">{top2?.accuracy}%</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Accuracy
+                      </span>
+                      <span className="text-sm font-extrabold text-emerald-400">
+                        {top2?.accuracy}%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* 1st Place Champion */}
-              <Card className="border-amber-500/40 bg-amber-500/15 shadow-md relative overflow-hidden flex flex-col justify-between order-1 md:order-2 ring-2 ring-amber-500/30">
-                <div className="absolute top-0 right-0 p-3 opacity-25">
-                  <Crown className="w-24 h-24 text-amber-400 animate-pulse" />
+              <Card className="border-amber-500/40 bg-amber-500/15 shadow-sm relative overflow-hidden flex flex-col justify-between order-1 md:order-2 ring-1 ring-amber-500/30 rounded-2xl">
+                <div className="absolute top-0 right-0 p-3 opacity-25 pointer-events-none">
+                  <Crown className="w-22 h-22 text-amber-400 animate-pulse" />
                 </div>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-4.5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-amber-500 text-amber-950 font-black px-3 py-1 text-xs gap-1">
-                      <Crown className="w-3.5 h-3.5 fill-amber-950" /> 1ST PLACE CHAMPION
+                    <Badge className="bg-amber-500 text-amber-950 font-black px-2.5 py-0.5 text-[10.5px] gap-1 shadow-2xs">
+                      <Crown className="w-3 h-3 fill-amber-950" /> 1ST PLACE CHAMPION
                     </Badge>
-                    <span className="text-xs font-bold text-amber-500">Lvl {top1?.level} Master</span>
+                    <span className="text-xs font-bold text-amber-500">
+                      Lvl {top1?.level} Master
+                    </span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-foreground">{top1?.name}</h3>
-                    <p className="text-xs text-muted-foreground">{top1?.email}</p>
+                    <h3 className="text-lg font-black text-foreground truncate">
+                      {top1?.name}
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {top1?.email}
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-amber-500/20 text-xs">
+                  <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-amber-500/20 text-xs">
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Total XP</span>
-                      <span className="text-lg font-black text-amber-400">{top1?.totalXP.toLocaleString()}</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Total XP
+                      </span>
+                      <span className="text-sm font-black text-amber-400">
+                        {top1?.totalXP.toLocaleString()}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Accuracy</span>
-                      <span className="text-lg font-black text-emerald-400">{top1?.accuracy}%</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Accuracy
+                      </span>
+                      <span className="text-sm font-black text-emerald-400">
+                        {top1?.accuracy}%
+                      </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Streak</span>
-                      <span className="text-lg font-black text-orange-400 flex items-center gap-0.5">
-                        <Flame className="w-4 h-4 fill-orange-400" /> {top1?.streak}d
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Streak
+                      </span>
+                      <span className="text-sm font-black text-orange-400 flex items-center gap-0.5">
+                        <Flame className="w-3.5 h-3.5 fill-orange-400" /> {top1?.streak}d
                       </span>
                     </div>
                   </div>
@@ -181,31 +252,45 @@ export function LeaderboardPage() {
               </Card>
 
               {/* 3rd Place */}
-              <Card className="border-orange-500/30 bg-orange-500/10 shadow-sm relative overflow-hidden flex flex-col justify-between order-3">
-                <div className="absolute top-0 right-0 p-3 opacity-20">
+              <Card className="border-orange-500/30 bg-orange-500/10 shadow-xs relative overflow-hidden flex flex-col justify-between order-3 rounded-2xl">
+                <div className="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
                   <Award className="w-20 h-20 text-orange-400" />
                 </div>
-                <CardContent className="p-5 space-y-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 font-bold px-2.5 py-1">
-                      3RD PLACE
+                    <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 font-bold px-2 py-0.5 text-[10px]">
+                      🥉 3RD PLACE
                     </Badge>
-                    <span className="text-xs font-semibold text-muted-foreground">Lvl {top3?.level} Candidate</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">
+                      Lvl {top3?.level} Candidate
+                    </span>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-black text-foreground">{top3?.name}</h3>
-                    <p className="text-xs text-muted-foreground">{top3?.email}</p>
+                    <h3 className="text-base font-bold text-foreground truncate">
+                      {top3?.name}
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {top3?.email}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40 text-xs">
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Total XP</span>
-                      <span className="text-base font-extrabold text-orange-400">{top3?.totalXP.toLocaleString()} XP</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Total XP
+                      </span>
+                      <span className="text-sm font-extrabold text-orange-400">
+                        {top3?.totalXP.toLocaleString()} XP
+                      </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Accuracy</span>
-                      <span className="text-base font-extrabold text-emerald-400">{top3?.accuracy}%</span>
+                      <span className="text-muted-foreground block text-[9.5px] uppercase font-bold">
+                        Accuracy
+                      </span>
+                      <span className="text-sm font-extrabold text-emerald-400">
+                        {top3?.accuracy}%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -213,93 +298,122 @@ export function LeaderboardPage() {
             </div>
           )}
 
-          {/* Category Tabs & Search Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border border-border bg-card shadow-2xs">
-            <div className="flex flex-wrap items-center gap-2">
+          {/* ── Unified Redesigned Toolbar ── */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-2.5 px-3 bg-card border border-border/80 rounded-2xl shadow-2xs">
+            {/* Category Segmented Tabs */}
+            <div className="flex items-center gap-1.5 bg-muted/50 p-1 border border-border/80 rounded-xl overflow-x-auto w-full lg:w-auto scrollbar-none">
               <button
                 type="button"
                 onClick={() => setCategory("overall")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   category === "overall"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-accent/40 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Trophy className="w-3.5 h-3.5" /> Overall XP Leaders
+                <Trophy size={13} className="text-amber-500" />
+                <span>Overall XP</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setCategory("accuracy")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   category === "accuracy"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-accent/40 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" /> Accuracy Champions
+                <Sparkles size={13} className="text-emerald-500" />
+                <span>Accuracy</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setCategory("streak")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   category === "streak"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-accent/40 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Flame className="w-3.5 h-3.5" /> Streak Warriors
+                <Flame size={13} className="text-orange-500" />
+                <span>Streaks</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setCategory("mastery")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   category === "mastery"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-accent/40 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? "bg-card text-foreground shadow-2xs border border-border/80"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5" /> Subject Mastery
+                <ShieldCheck size={13} className="text-blue-500" />
+                <span>Subject Mastery</span>
               </button>
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search candidate by name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            {/* Right Side: Search Input + Time Horizon Selector */}
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              <div className="relative flex-1 lg:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
+                <Input
+                  type="text"
+                  placeholder="Search candidate by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-8 h-9 bg-muted/30 border border-border/80 rounded-xl text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              <Select value={timeHorizon} onValueChange={setTimeHorizon}>
+                <SelectTrigger className="h-9 w-[125px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground shrink-0">
+                  <SelectValue placeholder="Timeframe" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="all-time">All-Time</SelectItem>
+                  <SelectItem value="monthly">This Month</SelectItem>
+                  <SelectItem value="weekly">This Week</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Main Rankings Table */}
-          <Card className="border-border shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-border bg-accent/30 py-4">
-              <CardTitle className="text-base font-bold flex items-center justify-between">
+          {/* ── Main Rankings Table ── */}
+          <Card className="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden w-full p-0">
+            <CardHeader className="border-b border-border bg-muted/40 py-3 px-4">
+              <CardTitle className="text-xs sm:text-sm font-bold flex items-center justify-between">
                 <span className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" /> Live Candidate Rankings Roster
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <span>Live Candidate Rankings Roster</span>
                 </span>
                 <span className="text-xs text-muted-foreground font-normal">
-                  Showing {filteredStudents.length} candidates
+                  Showing <strong className="text-foreground">{filteredStudents.length}</strong> candidate(s)
                 </span>
               </CardTitle>
             </CardHeader>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-accent/40 text-muted-foreground text-xs uppercase font-semibold">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase font-bold text-[10px] tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-4 w-16 text-center">Rank</th>
-                    <th className="py-3.5 px-4">Candidate</th>
-                    <th className="py-3.5 px-4">Level</th>
-                    <th className="py-3.5 px-4">Total XP</th>
-                    <th className="py-3.5 px-4">Accuracy</th>
-                    <th className="py-3.5 px-4">Streak</th>
-                    <th className="py-3.5 px-4">Top Subject</th>
-                    <th className="py-3.5 px-4 text-right">Trend</th>
+                    <th className="py-3 px-4 w-16 text-center">Rank</th>
+                    <th className="py-3 px-4">Candidate</th>
+                    <th className="py-3 px-4">Level</th>
+                    <th className="py-3 px-4">Total XP</th>
+                    <th className="py-3 px-4">Accuracy</th>
+                    <th className="py-3 px-4">Streak</th>
+                    <th className="py-3 px-4">Top Subject</th>
+                    <th className="py-3 px-4 text-right">Trend</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -309,60 +423,102 @@ export function LeaderboardPage() {
                     return (
                       <tr
                         key={student.id}
-                        className={`hover:bg-accent/20 transition-colors ${
-                          isTop3 ? "bg-accent/10 font-medium" : ""
+                        className={`hover:bg-accent/30 transition-colors ${
+                          isTop3 ? "bg-accent/10" : ""
                         }`}
                       >
-                        <td className="py-3.5 px-4 text-center">
-                          {student.rank === 1 && <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 font-extrabold text-xs">🥇 1</span>}
-                          {student.rank === 2 && <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-500/20 text-slate-300 font-extrabold text-xs">🥈 2</span>}
-                          {student.rank === 3 && <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 font-extrabold text-xs">🥉 3</span>}
-                          {student.rank > 3 && <span className="font-extrabold text-muted-foreground">#{student.rank}</span>}
+                        <td className="py-3 px-4 text-center">
+                          {student.rank === 1 && (
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 font-extrabold text-[11px]">
+                              🥇 1
+                            </span>
+                          )}
+                          {student.rank === 2 && (
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-600 dark:text-slate-300 border border-slate-500/30 font-extrabold text-[11px]">
+                              🥈 2
+                            </span>
+                          )}
+                          {student.rank === 3 && (
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 font-extrabold text-[11px]">
+                              🥉 3
+                            </span>
+                          )}
+                          {student.rank > 3 && (
+                            <span className="font-extrabold text-muted-foreground text-xs">
+                              #{student.rank}
+                            </span>
+                          )}
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-foreground">{student.name}</div>
-                          <div className="text-xs text-muted-foreground">{student.email}</div>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-7 w-7 border border-primary/20 bg-primary/10 text-primary shrink-0">
+                              <AvatarFallback className="font-bold text-[10px] bg-primary/10 text-primary uppercase">
+                                {student.name.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-foreground text-xs truncate max-w-[150px]">
+                                {student.name}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                                {student.email}
+                              </span>
+                            </div>
+                          </div>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold">
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant="outline"
+                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9px] font-bold gap-1 px-2 py-0.5 rounded-full"
+                          >
+                            <Zap size={10} className="fill-amber-500 text-amber-500" />
                             Lvl {student.level}
                           </Badge>
                         </td>
 
-                        <td className="py-3.5 px-4 font-extrabold text-primary">
+                        <td className="py-3 px-4 font-extrabold text-primary text-xs">
                           {student.totalXP.toLocaleString()} XP
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className={`font-bold ${student.accuracy >= 85 ? "text-emerald-500" : "text-foreground"}`}>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`font-bold text-xs ${
+                              student.accuracy >= 85
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : student.accuracy >= 60
+                                ? "text-foreground"
+                                : "text-destructive"
+                            }`}
+                          >
                             {student.accuracy}%
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 font-bold text-orange-500">
-                            <Flame className="w-3.5 h-3.5 fill-orange-500/20" /> {student.streak} Days
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 font-bold text-xs text-orange-600 dark:text-orange-400">
+                            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+                            {student.streak} Days
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-4 text-xs font-semibold text-muted-foreground">
+                        <td className="py-3 px-4 text-xs font-semibold text-muted-foreground">
                           {student.topSubject}
                         </td>
 
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3 px-4 text-right">
                           {student.rankChange > 0 ? (
-                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-500">
-                              <ArrowUpRight className="w-4 h-4" /> +{student.rankChange}
+                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                              <ArrowUpRight className="w-3.5 h-3.5" /> +{student.rankChange}
                             </span>
                           ) : student.rankChange < 0 ? (
-                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-rose-500">
-                              <ArrowDownRight className="w-4 h-4" /> {student.rankChange}
+                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-destructive">
+                              <ArrowDownRight className="w-3.5 h-3.5" /> {student.rankChange}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-0.5 text-xs font-bold text-muted-foreground">
-                              <Minus className="w-3.5 h-3.5" /> 0
+                              <Minus className="w-3 h-3" /> 0
                             </span>
                           )}
                         </td>
@@ -380,3 +536,4 @@ export function LeaderboardPage() {
 }
 
 export default LeaderboardPage;
+

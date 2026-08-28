@@ -76,11 +76,16 @@ export function useBulkCreateUser() {
   return useMutation({
     mutationFn: async (
       members: Array<{
-        name: string;
+        name?: string;
+        firstName?: string;
+        middleName?: string;
+        lastName?: string;
         email: string;
         role?: string;
         employeeId?: string;
         phoneNumber?: string;
+        companyName?: string;
+        location?: string;
       }>,
     ) => {
       return await axiosPrivate.post("/faculty/bulk", { members });

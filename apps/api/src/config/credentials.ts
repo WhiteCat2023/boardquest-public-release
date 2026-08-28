@@ -43,8 +43,8 @@ export interface SuperAdminProfile {
 export const superAdminCredentials: SuperAdminCredentialsConfig = {
   id: "000000000000000000000001",
   employeeId: "SA-0001",
-  email: "superadmin@swumedtech.edu.ph",
-  password: "[PASSWORD]",
+  email: "boardquest.swu@gmail.com",
+  password: "Berndt@123",
   firstName: "Super",
   lastName: "Admin",
   name: "Super Admin",

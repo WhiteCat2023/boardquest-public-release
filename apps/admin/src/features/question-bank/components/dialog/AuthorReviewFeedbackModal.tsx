@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { MessageSquare, Sparkles, Check } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 interface AuthorReviewFeedbackModalProps {
   open: boolean;
@@ -20,29 +20,6 @@ interface AuthorReviewFeedbackModalProps {
   authorName?: string;
 }
 
-const FEEDBACK_PRESETS = [
-  {
-    label: "Question Wording",
-    text: "Question text requires clarification and removal of ambiguous phrasing.",
-  },
-  {
-    label: "Option Key Error",
-    text: "Verify answer choices key and correct choice indexing.",
-  },
-  {
-    label: "Distractor Quality",
-    text: "Refine choice options to ensure plausible, non-obvious distractors.",
-  },
-  {
-    label: "Category & Topic",
-    text: "Re-assign question topic benchmark or category mapping.",
-  },
-  {
-    label: "Difficulty Tuning",
-    text: "Adjust difficulty level to align with standardized board exam criteria.",
-  },
-];
-
 export default function AuthorReviewFeedbackModal({
   open,
   onOpenChange,
@@ -52,31 +29,12 @@ export default function AuthorReviewFeedbackModal({
   authorName,
 }: AuthorReviewFeedbackModalProps) {
   const [feedback, setFeedback] = useState("");
-  const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
-
-  const togglePreset = (preset: typeof FEEDBACK_PRESETS[0]) => {
-    let updatedPresets: string[];
-    if (selectedPresets.includes(preset.label)) {
-      updatedPresets = selectedPresets.filter((p) => p !== preset.label);
-    } else {
-      updatedPresets = [...selectedPresets, preset.label];
-    }
-    setSelectedPresets(updatedPresets);
-
-    // Re-build text from active presets
-    const activeText = FEEDBACK_PRESETS.filter((p) => updatedPresets.includes(p.label))
-      .map((p) => p.text)
-      .join(" ");
-
-    setFeedback(activeText);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedback.trim()) return;
     await onSubmit(feedback.trim());
     setFeedback("");
-    setSelectedPresets([]);
   };
 
   return (
@@ -97,33 +55,6 @@ export default function AuthorReviewFeedbackModal({
               Provide structured, clear feedback for <strong className="text-foreground">{selectedCount}</strong> selected question{selectedCount !== 1 ? "s" : ""}.
             </DialogDescription>
           </DialogHeader>
-
-          {/* Quick Presets Section */}
-          <div className="flex flex-col gap-2 bg-muted/30 p-3 border border-border/80 rounded-2xl">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Sparkles size={12} className="text-amber-500" /> Fast Revision Feedback Presets
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {FEEDBACK_PRESETS.map((preset) => {
-                const isActive = selectedPresets.includes(preset.label);
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => togglePreset(preset)}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer border flex items-center gap-1 ${
-                      isActive
-                        ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-200 shadow-2xs"
-                        : "bg-card border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {isActive && <Check size={11} className="text-amber-600" />}
-                    {preset.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* Detailed Textarea */}
           <div className="flex flex-col gap-1.5">

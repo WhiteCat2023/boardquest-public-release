@@ -26,14 +26,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { ReviewSchedule, ReviewCenterRepresentative } from "@/features/review-center";
-import { useCreateReviewSchedule, useUpdateReviewSchedule } from "@/features/review-center";
+import type { ReviewSchedule, ReviewCenterRepresentative } from "../types/types";
+import { useCreateReviewSchedule, useUpdateReviewSchedule } from "../api/useCalendar";
 
 interface SetReviewScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: ReviewSchedule | null;
   reviewCenters?: ReviewCenterRepresentative[];
+  prefilledCompany?: string;
 }
 
 export default function SetReviewScheduleModal({
@@ -41,6 +42,7 @@ export default function SetReviewScheduleModal({
   onClose,
   initialData,
   reviewCenters = [],
+  prefilledCompany,
 }: SetReviewScheduleModalProps) {
   const isEditing = !!initialData;
 
@@ -67,7 +69,7 @@ export default function SetReviewScheduleModal({
       setDescription(initialData.description || "");
     } else {
       setTitle("");
-      setCompanyName(reviewCenters[0]?.companyName || "Apex MedTech Review Center");
+      setCompanyName(prefilledCompany || reviewCenters[0]?.companyName || "Apex MedTech Review Center");
       const today = new Date().toISOString().split("T")[0];
       const twoWeeksLater = new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
       setStartDate(today);
@@ -76,7 +78,7 @@ export default function SetReviewScheduleModal({
       setStatus("UPCOMING");
       setDescription("");
     }
-  }, [initialData, isOpen, reviewCenters]);
+  }, [initialData, isOpen, reviewCenters, prefilledCompany]);
 
   // Calculate duration in days
   const calculateDays = () => {

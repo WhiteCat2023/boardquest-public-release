@@ -88,22 +88,21 @@ export default function StudentManagement() {
     selectedLocation !== "ALL";
 
   return (
-    <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <StudentHeader
-          canAddStudent={!isTeacher}
-          title={
-            isTeacher ? "My Students" : "Student Directory & Advising"
-          }
-          description={
-            isTeacher
-              ? "View and monitor the students assigned to you for academic guidance and mentoring."
-              : "Manage enrolled students, academic standing, and guidance advising."
-          }
-        />
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
+      {/* 1. Header Bar */}
+      <StudentHeader
+        canAddStudent={!isTeacher}
+        title={isTeacher ? "My Students" : "Student Directory & Advising"}
+        description={
+          isTeacher
+            ? "View and monitor the students assigned to you for academic guidance and mentoring."
+            : "Manage enrolled students, academic standing, and guidance advising."
+        }
+      />
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-muted/40 p-1 border border-border rounded-xl w-fit flex-wrap">
+      {/* 2. Top Tabs: Student Roster vs Academic Guidance Desk */}
+      <div className="flex items-center justify-between border-b border-border/80 pb-1">
+        <div className="flex items-center gap-2 bg-muted/50 p-1 border border-border/80 rounded-xl">
           <button
             type="button"
             onClick={() => {
@@ -112,14 +111,15 @@ export default function StudentManagement() {
             }}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "DIRECTORY"
-                ? "bg-card text-foreground shadow-xs border border-border"
+                ? "bg-card text-foreground shadow-2xs border border-border/80"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {isTeacher ? <Users size={14} /> : <GraduationCap size={14} />}
-            {isTeacher
-              ? `My Students (${total})`
-              : `Student Roster (${total})`}
+            <span>{isTeacher ? "My Students" : "Student Roster"}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-bold border border-primary/20">
+              {total}
+            </span>
           </button>
 
           <button
@@ -127,22 +127,27 @@ export default function StudentManagement() {
             onClick={() => setActiveTab("GUIDANCE")}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "GUIDANCE"
-                ? "bg-card text-foreground shadow-xs border border-border"
+                ? "bg-card text-foreground shadow-2xs border border-border/80"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <UserCheck size={14} />
-            Academic Guidance Desk
+            <span>Academic Guidance Desk</span>
           </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <span>Total Registered:</span>
+          <span className="text-foreground font-bold">{total}</span>
         </div>
       </div>
 
       {activeTab === "DIRECTORY" ? (
         <>
-          {/* Search & Filters Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3 rounded-xl shadow-2xs w-full font-sans">
+          {/* 3. Search & Filters Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border/80 p-2.5 px-3 rounded-2xl shadow-2xs w-full">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px] max-w-full sm:max-w-md">
+            <div className="relative flex-1 min-w-[220px] max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
               <Input
                 type="text"
@@ -152,7 +157,7 @@ export default function StudentManagement() {
                   setSearchTerm(e.target.value);
                   resetPagination();
                 }}
-                className="pl-9 pr-8 h-8.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"
+                className="pl-9 pr-8 h-9 bg-muted/30 border border-border/80 rounded-xl text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"
               />
               {searchTerm && (
                 <button
@@ -176,7 +181,7 @@ export default function StudentManagement() {
                   resetPagination();
                 }}
               >
-                <SelectTrigger className="h-8.5 w-[125px] sm:w-[130px] bg-muted/30 border-border rounded-lg text-xs font-semibold text-foreground">
+                <SelectTrigger className="h-9 w-[125px] sm:w-[130px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -195,7 +200,7 @@ export default function StudentManagement() {
                   resetPagination();
                 }}
               >
-                <SelectTrigger className="h-8 w-[135px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
+                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -212,7 +217,7 @@ export default function StudentManagement() {
                   variant="ghost"
                   size="sm"
                   onClick={resetFilters}
-                  className="h-8 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer px-2.5"
+                  className="h-9 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1 cursor-pointer px-2.5"
                 >
                   <RotateCcw size={12} />
                   Reset
@@ -221,7 +226,7 @@ export default function StudentManagement() {
             </div>
           </div>
 
-          {/* Student Directory Table */}
+          {/* 4. Student Directory Table */}
           <StudentTable
             students={studentsList}
             isLoading={isLoading}
@@ -238,8 +243,8 @@ export default function StudentManagement() {
             }
           />
 
-          {/* Pagination Bar */}
-          {!isLoading && (
+          {/* 5. Pagination Bar */}
+          {!isLoading && totalPages > 1 && (
             <QuestionListPagination
               currentPage={currentPage}
               hasNextPage={hasNextPage}

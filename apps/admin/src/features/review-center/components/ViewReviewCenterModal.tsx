@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { ReviewCenterRepresentative } from "@/features/review-center";
+import type { ReviewCenterRepresentative } from "../types/types";
 
 interface ViewReviewCenterModalProps {
   isOpen: boolean;

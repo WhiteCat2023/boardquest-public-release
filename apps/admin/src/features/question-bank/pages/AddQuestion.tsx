@@ -247,6 +247,7 @@ export default function AddQuestion() {
       questionWording,
       format,
       mcqChoices,
+      mcqChoiceImages,
       mcqCorrectIndex,
       tfCorrect,
       saCorrectAnswer,
@@ -259,8 +260,15 @@ export default function AddQuestion() {
     let finalChoices: string[] = [];
 
     if (format === "MCQ") {
-      computedCorrectAnswer = mcqChoices[mcqCorrectIndex];
-      finalChoices = mcqChoices;
+      finalChoices = mcqChoices.map((c, i) => {
+        const text = c.trim();
+        if (!text && mcqChoiceImages[i]) {
+          return `Option ${String.fromCharCode(65 + i)}`;
+        }
+        return text;
+      });
+      computedCorrectAnswer =
+        finalChoices[mcqCorrectIndex] || mcqChoices[mcqCorrectIndex] || "";
     } else if (format === "TRUE_FALSE") {
       computedCorrectAnswer = tfCorrect;
       finalChoices = ["True", "False"];
@@ -323,9 +331,15 @@ export default function AddQuestion() {
     let finalChoices: string[] = [];
 
     if (format === "MCQ") {
+      finalChoices = mcqChoices.map((c, i) => {
+        const text = c.trim();
+        if (!text && mcqChoiceImages[i]) {
+          return `Option ${String.fromCharCode(65 + i)}`;
+        }
+        return text;
+      });
       computedCorrectAnswer =
-        mcqChoices[mcqCorrectIndex] || mcqChoices[0] || "";
-      finalChoices = mcqChoices;
+        finalChoices[mcqCorrectIndex] || finalChoices[0] || "";
     } else if (format === "TRUE_FALSE") {
       computedCorrectAnswer = tfCorrect;
       finalChoices = ["True", "False"];
@@ -573,7 +587,7 @@ export default function AddQuestion() {
                 }`}
               >
                 <PlusCircle size={13} />
-                Add Question
+                Individual
               </button>
 
               <button
@@ -586,7 +600,7 @@ export default function AddQuestion() {
                 }`}
               >
                 <FileSpreadsheet size={13} />
-                Add Questions
+                Bulk
               </button>
             </div>
           )}
@@ -634,7 +648,7 @@ export default function AddQuestion() {
               {/* Category selection */}
               <div className="flex flex-col gap-1">
                 <CustomSelectWithLabel
-                  label="Academic Subject"
+                  label="Subject"
                   value={categoryId}
                   onValueChange={setCategoryId}
                 >
@@ -654,7 +668,7 @@ export default function AddQuestion() {
               {/* Benchmark Topic */}
               <div className="flex flex-col gap-1">
                 <Label className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                  Benchmark Topic
+                  Topic
                 </Label>
                 <Input
                   type="text"
@@ -668,7 +682,7 @@ export default function AddQuestion() {
               {/* Difficulty Level */}
               <div className="flex flex-col gap-1">
                 <CustomSelectWithLabel
-                  label="Curriculum Difficulty"
+                  label="Difficulty"
                   value={difficulty}
                   onValueChange={setDifficulty}
                 >
@@ -697,7 +711,7 @@ export default function AddQuestion() {
               </div>
             </div>
 
-            {/* Section 3: Question Wording / Prompt */}
+            {/* Section 3: Question  */}
             <div className="flex flex-col gap-1">
               {isNotOriginalQuestion && (
                 <div className="flex items-center justify-between pb-1 animate-in fade-in duration-200">
@@ -730,7 +744,7 @@ export default function AddQuestion() {
                 <div className="flex items-center gap-1.5">
                   <HelpCircle size={13} className="text-primary" />
                   <span className="text-[11px] font-extrabold text-foreground uppercase tracking-wider">
-                    Option Specifications & Correct Key Designation
+                    Options & Correct Key 
                   </span>
                 </div>
                 <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide">

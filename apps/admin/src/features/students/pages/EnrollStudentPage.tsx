@@ -314,7 +314,7 @@ export default function EnrollStudentPage() {
               }`}
             >
               <UserPlus size={13} />
-              Add User(individual)
+              Individual
             </button>
 
             <button
@@ -327,7 +327,7 @@ export default function EnrollStudentPage() {
               }`}
             >
               <Users size={13} />
-              Add Users(bulk)
+              Bulk
             </button>
           </div>
         </div>

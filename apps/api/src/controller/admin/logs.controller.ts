@@ -27,7 +27,7 @@ export const getLogStatsController = asyncHandler(async (_req: Request, res: Res
 });
 
 export const clearLogsController = asyncHandler(async (req: any, res: Response) => {
-  const userEmail = req.user?.email || "admin@boardquest.edu";
+  const userEmail = req.user?.email || "System";
   await clearSystemLogs();
 
   // Log the clear action

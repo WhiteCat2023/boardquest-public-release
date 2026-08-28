@@ -30,4 +30,7 @@ router.post("/schedules/create", authenticateToken, requireRoles(allowedRoles), 
 router.put("/schedules/update/:id", authenticateToken, requireRoles(allowedRoles), updateReviewSchedule);
 router.delete("/schedules/delete/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewSchedule);
 
+// Generic ID lookup fallback
+router.get("/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);
+
 export default router;

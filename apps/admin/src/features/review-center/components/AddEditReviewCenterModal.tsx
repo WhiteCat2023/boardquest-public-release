@@ -21,8 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import type { ReviewCenterRepresentative } from "@/features/review-center";
-import { useCreateReviewCenter, useUpdateReviewCenter } from "@/features/review-center";
+import type { ReviewCenterRepresentative } from "../types/types";
+import { useCreateReviewCenter, useUpdateReviewCenter } from "../api/useReviewCenter";
 
 interface AddEditReviewCenterModalProps {
   isOpen: boolean;

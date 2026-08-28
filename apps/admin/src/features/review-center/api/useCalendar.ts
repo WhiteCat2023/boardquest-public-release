@@ -4,25 +4,36 @@ import type {
   ReviewSchedule,
   CreateReviewSchedulePayload,
   UpdateReviewSchedulePayload
-} from "@/features/review-center";
+} from "../types/types";
 
-export function useReviewSchedules() {
+export function useReviewSchedules(params?: { company?: string }) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<ReviewSchedule[]>({
-    queryKey: ["reviewSchedules"],
+    queryKey: ["reviewSchedules", params],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/calendar/schedules/get");
+      const response = await axiosPrivate.get("/calendar/schedules/get", {
+        params,
+      });
       const resData = response.data?.data;
-      if (Array.isArray(resData)) return resData;
-      if (Array.isArray(resData?.schedules)) return resData.schedules;
-      if (Array.isArray(response.data?.schedules)) return response.data.schedules;
-      return [];
+      let list: ReviewSchedule[] = [];
+      if (Array.isArray(resData)) list = resData;
+      else if (Array.isArray(resData?.schedules)) list = resData.schedules;
+      else if (Array.isArray(response.data?.schedules)) list = response.data.schedules;
+
+      if (params?.company && params.company !== "ALL") {
+        return list.filter(
+          (s) => s.companyName?.toLowerCase() === params.company?.toLowerCase()
+        );
+      }
+      return list;
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 }
+
+export const useCalendar = useReviewSchedules;
 
 export function useCreateReviewSchedule() {
   const axiosPrivate = useAxiosPrivate();
@@ -68,3 +79,6 @@ export function useDeleteReviewSchedule() {
     },
   });
 }
+
+export const useDeleteCalendarEvent = useDeleteReviewSchedule;
+

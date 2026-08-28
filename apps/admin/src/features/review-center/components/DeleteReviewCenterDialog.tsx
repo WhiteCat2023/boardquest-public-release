@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { ReviewCenterRepresentative } from "@/features/review-center";
+import type { ReviewCenterRepresentative } from "../types/types";
 
 interface DeleteReviewCenterDialogProps {
   isOpen: boolean;

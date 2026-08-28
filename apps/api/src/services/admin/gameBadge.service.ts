@@ -1,7 +1,6 @@
 import prisma from "../prisma";
 import { BadgeCategory } from "@prisma/client";
 import { ApiError } from "../../utils/apiError";
-import { initialBadges } from "../../seeds/game";
 
 export const ALLOWED_BADGE_CATEGORIES: BadgeCategory[] = [
   "QUEST",
@@ -83,26 +82,6 @@ export class GameBadgeService {
       },
       orderBy: { createdAt: "asc" },
     });
-
-    // Auto-seed if database is completely empty
-    if (badges.length === 0 && !options?.activeOnly) {
-      for (const b of initialBadges) {
-        await prisma.badge
-          .create({
-            data: { ...b },
-          })
-          .catch(() => null);
-      }
-      badges = await prisma.badge.findMany({
-        where,
-        include: {
-          _count: {
-            select: { userBadges: true },
-          },
-        },
-        orderBy: { createdAt: "asc" },
-      });
-    }
 
     return badges.map((badge: any) => ({
       ...badge,

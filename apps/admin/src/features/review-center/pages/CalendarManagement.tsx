@@ -5,9 +5,9 @@ import { toast } from "sonner";
 import {
   useReviewSchedules,
   useDeleteReviewSchedule,
-} from "@/features/review-center";
-import { useReviewCenters } from "@/features/review-center";
-import type { ReviewSchedule } from "@/features/review-center";
+} from "../api/useCalendar";
+import { useReviewCenters } from "../api/useReviewCenter";
+import type { ReviewSchedule } from "../types/types";
 import ReviewCalendarView from "../components/ReviewCalendarView";
 import SetReviewScheduleModal from "../components/SetReviewScheduleModal";
 

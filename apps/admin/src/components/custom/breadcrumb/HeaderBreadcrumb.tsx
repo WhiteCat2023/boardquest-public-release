@@ -25,6 +25,15 @@ const formatSegment = (segment: string) => {
   if (segment.toLowerCase() === "faculty-management") {
     return "Users";
   }
+  if (segment.toLowerCase() === "review-center-management") {
+    return "Review Center";
+  }
+  if (segment.toLowerCase() === "subject-management") {
+    return "Subject";
+  }
+  if (segment.toLowerCase() === "student-management") {
+    return "Students";
+  }
   return segment
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -37,22 +46,6 @@ export default function HeaderBreadcrumb() {
   const axiosPrivate = useAxiosPrivate();
   const currentUserRole = auth?.data?.user?.role || auth?.user?.role;
 
-  const getPortalTitle = (role?: string) => {
-    switch (role?.toUpperCase()) {
-      case "SUPERADMIN":
-        return "Super Admin Portal";
-      case "DEAN":
-        return "Dean Portal";
-      case "TEAMLEAD":
-        return "Team Lead Portal";
-      case "TEACHER":
-      default:
-        return "Faculty Portal";
-    }
-  };
-
-  const portalTitle = getPortalTitle(currentUserRole);
-
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   const isFacultyView =
@@ -62,6 +55,17 @@ export default function HeaderBreadcrumb() {
     (pathSegments[1] === "view" || pathSegments[1] === "edit");
   const isSubjectView =
     pathSegments[0] === "subject-management" && pathSegments.length >= 2;
+  const isReviewCenterView =
+    (pathSegments[0] === "review-center" ||
+      pathSegments[0] === "review-center-management") &&
+    pathSegments.length >= 2 &&
+    pathSegments[1] !== "create" &&
+    pathSegments[1] !== "import";
+  const isStudentView =
+    pathSegments[0] === "student-management" &&
+    pathSegments.length >= 2 &&
+    pathSegments[1] !== "create" &&
+    pathSegments[1] !== "import";
 
   const questionId =
     isQuestionViewOrEdit && pathSegments[2] ? pathSegments[2] : null;
@@ -71,6 +75,9 @@ export default function HeaderBreadcrumb() {
       ? pathSegments[2]
       : pathSegments[1]
     : null;
+
+  const reviewCenterId = isReviewCenterView ? pathSegments[1] : null;
+  const studentId = isStudentView ? pathSegments[1] : null;
 
   // User Directory Data
   const { data: userResponse } = useUsers();
@@ -90,6 +97,36 @@ export default function HeaderBreadcrumb() {
       return response.data?.data?.category ?? response.data?.category ?? null;
     },
     enabled: !!subjectCategoryId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Review Center Detail Hook
+  const { data: reviewCenterData } = useQuery({
+    queryKey: ["reviewCenterBreadcrumb", reviewCenterId],
+    queryFn: async () => {
+      if (!reviewCenterId) return null;
+      const response = await axiosPrivate.get(
+        `/review-center/${reviewCenterId}`,
+      );
+      return (
+        response.data?.data?.reviewCenter ??
+        response.data?.reviewCenter ??
+        null
+      );
+    },
+    enabled: !!reviewCenterId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Student Detail Hook
+  const { data: studentData } = useQuery({
+    queryKey: ["studentBreadcrumb", studentId],
+    queryFn: async () => {
+      if (!studentId) return null;
+      const response = await axiosPrivate.get(`/students/get/${studentId}`);
+      return response.data?.data?.student ?? response.data?.data ?? null;
+    },
+    enabled: !!studentId,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -150,6 +187,25 @@ export default function HeaderBreadcrumb() {
             categoryData?.name
           ) {
             displayLabel = categoryData.name;
+          }
+
+          // Customize Review Center View breadcrumb label
+          if (
+            isReviewCenterView &&
+            segment === reviewCenterId &&
+            reviewCenterData
+          ) {
+            displayLabel =
+              reviewCenterData.companyName || reviewCenterData.name || segment;
+          }
+
+          // Customize Student View breadcrumb label
+          if (isStudentView && segment === studentId && studentData) {
+            displayLabel =
+              studentData.name ||
+              `${studentData.firstName || ""} ${studentData.lastName || ""}`.trim() ||
+              studentData.email ||
+              segment;
           }
 
           return (

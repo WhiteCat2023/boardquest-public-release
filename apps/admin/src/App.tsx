@@ -53,6 +53,11 @@ const ReviewCenterManagement = lazy(() =>
     default: m.ReviewCenterManagement,
   })),
 );
+const ReviewCenterDetailsPage = lazy(() =>
+  import("@/features/review-center").then((m) => ({
+    default: m.ReviewCenterDetailsPage,
+  })),
+);
 const CalendarManagement = lazy(() =>
   import("@/features/review-center").then((m) => ({
     default: m.CalendarManagement,
@@ -239,11 +244,23 @@ function App() {
                 */}
 
                 <Route
-                  element={<RequireAuth allowedRoles={[UserRole.DEAN, UserRole.TEAMLEAD]} />}
+                  element={<RequireAuth allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN, UserRole.TEAMLEAD]} />}
                 >
                   <Route
                     path="review-center"
                     element={<ReviewCenterManagement />}
+                  />
+                  <Route
+                    path="review-center/:reviewCenterId"
+                    element={<ReviewCenterDetailsPage />}
+                  />
+                  <Route
+                    path="review-center-management"
+                    element={<ReviewCenterManagement />}
+                  />
+                  <Route
+                    path="review-center-management/:reviewCenterId"
+                    element={<ReviewCenterDetailsPage />}
                   />
                   <Route
                     path="calendar-management"

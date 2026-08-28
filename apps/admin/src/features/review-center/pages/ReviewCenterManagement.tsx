@@ -5,13 +5,12 @@ import { toast } from "sonner";
 import {
   useReviewCenters,
   useDeleteReviewCenter,
-} from "@/features/review-center";
+} from "../api/useReviewCenter";
 
 import ReviewCenterHeader from "../components/ReviewCenterHeader";
 import ReviewCenterFilters from "../components/ReviewCenterFilters";
 import ReviewCenterGrid from "../components/ReviewCenterGrid";
 import AddEditReviewCenterModal from "../components/AddEditReviewCenterModal";
-import ViewReviewCenterModal from "../components/ViewReviewCenterModal";
 import { useConfirm } from "@/components/modal";
 
 export default function ReviewCenterManagement() {
@@ -36,9 +35,6 @@ export default function ReviewCenterManagement() {
   // Modals & Dialogs State
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ReviewCenterRepresentative | null>(null);
-
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [viewingItem, setViewingItem] = useState<ReviewCenterRepresentative | null>(null);
 
   // Dynamic filter option dropdown lists
   const uniqueLocations = Array.from(
@@ -66,8 +62,7 @@ export default function ReviewCenterManagement() {
   };
 
   const handleOpenView = (item: ReviewCenterRepresentative) => {
-    setViewingItem(item);
-    setIsViewOpen(true);
+    navigate(`/review-center/${item.id}`);
   };
 
   const handleOpenDelete = async (item: ReviewCenterRepresentative) => {
@@ -132,16 +127,6 @@ export default function ReviewCenterManagement() {
           setEditingItem(null);
         }}
         initialData={editingItem}
-      />
-
-      <ViewReviewCenterModal
-        isOpen={isViewOpen}
-        onClose={() => {
-          setIsViewOpen(false);
-          setViewingItem(null);
-        }}
-        reviewCenter={viewingItem}
-        onEditClick={handleOpenEdit}
       />
     </div>
   );

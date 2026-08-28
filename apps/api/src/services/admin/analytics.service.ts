@@ -144,7 +144,7 @@ export class AnalyticsService {
     const totalLessons = 35; // Standard total core modules
 
     // Subject mastery formatting strictly from real DB records with flexible matching
-    const categoriesFromDb = await ((this.db as any).subject || (this.db as any).category).findMany({
+    const subjectsFromDb = await this.db.subject.findMany({
       select: {
         id: true,
         name: true,
@@ -161,35 +161,38 @@ export class AnalyticsService {
       return a === b || a.includes(b) || b.includes(a) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4));
     };
 
-    // Gather all unique category names (from DB Categories + any extra in student.mastery or student.examResults)
-    const categoryMap = new Map<string, { name: string; modulesCount: number }>();
-    categoriesFromDb.forEach((cat: any) => {
-      categoryMap.set(cat.name.toLowerCase().trim(), {
-        name: cat.name,
-        modulesCount: cat.modules ? cat.modules.filter((m: any) => m.isPublished !== false).length : 0,
+    // Gather subjects strictly from DB Subject records when available
+    const subjectMap = new Map<string, { name: string; modulesCount: number }>();
+    subjectsFromDb.forEach((sub: any) => {
+      subjectMap.set(sub.name.toLowerCase().trim(), {
+        name: sub.name,
+        modulesCount: sub.modules ? sub.modules.filter((m: any) => m.isPublished !== false).length : 0,
       });
     });
 
-    (student.mastery || []).forEach((m: any) => {
-      if (m?.subject) {
-        const key = m.subject.toLowerCase().trim();
-        if (!categoryMap.has(key)) {
-          categoryMap.set(key, { name: m.subject, modulesCount: 0 });
+    // Only fallback to student records if no subjects are defined in the DB at all
+    if (subjectsFromDb.length === 0) {
+      (student.mastery || []).forEach((m: any) => {
+        if (m?.subject) {
+          const key = m.subject.toLowerCase().trim();
+          if (!subjectMap.has(key)) {
+            subjectMap.set(key, { name: m.subject, modulesCount: 0 });
+          }
         }
-      }
-    });
+      });
 
-    (student.examResults || []).forEach((e: any) => {
-      if (e?.subject) {
-        const key = e.subject.toLowerCase().trim();
-        if (!categoryMap.has(key)) {
-          categoryMap.set(key, { name: e.subject, modulesCount: 0 });
+      (student.examResults || []).forEach((e: any) => {
+        if (e?.subject) {
+          const key = e.subject.toLowerCase().trim();
+          if (!subjectMap.has(key)) {
+            subjectMap.set(key, { name: e.subject, modulesCount: 0 });
+          }
         }
-      }
-    });
+      });
+    }
 
-    const masteryData = Array.from(categoryMap.values()).map((catInfo) => {
-      const sub = catInfo.name;
+    const masteryData = Array.from(subjectMap.values()).map((subInfo) => {
+      const sub = subInfo.name;
 
       // 1. Find existing explicit SubjectMastery row from DB
       const existing: any = (student.mastery || []).find((m: any) => matchSubject(m?.subject, sub));
@@ -201,7 +204,7 @@ export class AnalyticsService {
       const actualLessonsDone = subjectCompletions.length;
 
       // 3. Total modules count for this subject (default to min 5 for UI module target)
-      const totalLessons = Math.max(catInfo.modulesCount, 5);
+      const totalLessons = Math.max(subInfo.modulesCount, 5);
 
       // 4. Look at subject-specific exam results
       const subjectExams = (student.examResults || []).filter((e: any) => matchSubject(e?.subject, sub));
@@ -391,13 +394,18 @@ export class AnalyticsService {
       studyHoursCompleted: Math.min(10, Math.round((student.streak || 0) * 1.5))
     };
 
-    // 8. Map Real Database Study Plans
-    const studyPlans = (student.studyPlans || []).map((sp: any) => ({
-      id: sp.id,
-      subject: sp.subject,
-      targetDate: sp.targetDate,
-      updatedAt: sp.updatedAt
-    }));
+    // 8. Map Real Database Study Plans (filter by active DB subjects if defined)
+    const studyPlans = (student.studyPlans || [])
+      .filter((sp: any) => {
+        if (subjectsFromDb.length === 0) return true;
+        return subjectsFromDb.some((sub: any) => matchSubject(sub.name, sp.subject));
+      })
+      .map((sp: any) => ({
+        id: sp.id,
+        subject: sp.subject,
+        targetDate: sp.targetDate,
+        updatedAt: sp.updatedAt
+      }));
 
     // 9. Construct state string for caching
     const stateString = `id:${student.id}|level:${student.level}|xp:${student.xp}|streak:${student.streak}|exams:${examsCount}|avg:${avgScore}|acc:${avgAccuracy}|lessons:${lessonsCompleted}|mastery:${masteryData.map(m => `${m.subject}:${m.proficiency}`).join(",")}|plans:${studyPlans.length}`;
@@ -746,7 +754,7 @@ export class AnalyticsService {
       return { month: m.month, rate: 0, avgScore: 0, students: 0 };
     });
 
-    const categories = await ((this.db as any).subject || (this.db as any).category).findMany({
+    const categories = await this.db.subject.findMany({
       include: {
         _count: {
           select: { questions: true },

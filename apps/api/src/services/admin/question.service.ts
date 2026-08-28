@@ -12,6 +12,7 @@ import {
 } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 import { sseService } from "./sse.service";
+import { superAdminCredentials } from "../../config/credentials";
 
 // ============ Validation Schemas ============
 
@@ -107,7 +108,7 @@ export class QuestionService {
       Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
     if (!isValidObjectId(finalAuthorId)) {
       const existingAdmin = await this.db.adminUser.findFirst();
-      finalAuthorId = existingAdmin?.id || "507f1f77bcf86cd799439011";
+      finalAuthorId = existingAdmin?.id || superAdminCredentials.id;
     }
 
     // Automatically assign review status based on author role
@@ -187,8 +188,10 @@ export class QuestionService {
       sseService.broadcastEvent("questions-updated", {
         type: "QUESTION_CREATED",
         questionId: newQuestion.id,
-        subjectId: (newQuestion as any).subjectId || (newQuestion as any).categoryId,
-        categoryId: (newQuestion as any).subjectId || (newQuestion as any).categoryId,
+        subjectId:
+          (newQuestion as any).subjectId || (newQuestion as any).categoryId,
+        categoryId:
+          (newQuestion as any).subjectId || (newQuestion as any).categoryId,
         status: newQuestion.status,
         authorId: newQuestion.authorId,
       });
@@ -421,7 +424,8 @@ export class QuestionService {
       const stalePendingRevisionIds = rawQuestions
         .filter(
           (q: any) =>
-            (q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION") &&
+            (q.status === "PENDING_REVISION" ||
+              (q.status as string) === "NEEDS_REVISION") &&
             (q._count?.comments ?? 0) === 0,
         )
         .map((q: any) => q.id);
@@ -432,13 +436,17 @@ export class QuestionService {
             where: { id: { in: stalePendingRevisionIds } },
             data: { status: QuestionStatus.PENDING_REVIEW },
           })
-          .catch((err) => console.warn("Auto-sync stale revision status failed:", err));
+          .catch((err) =>
+            console.warn("Auto-sync stale revision status failed:", err),
+          );
       }
 
       const questions = rawQuestions.map((q: any) => {
         const hasNoComments = (q._count?.comments ?? 0) === 0;
         const normalizedStatus =
-          (q.status === "PENDING_REVISION" || (q.status as string) === "NEEDS_REVISION") && hasNoComments
+          (q.status === "PENDING_REVISION" ||
+            (q.status as string) === "NEEDS_REVISION") &&
+          hasNoComments
             ? QuestionStatus.PENDING_REVIEW
             : q.status;
 
@@ -683,7 +691,10 @@ export class QuestionService {
     const createdQuestions = await this.db.$transaction(queries);
 
     if (!silentNotification) {
-      if (authorUser?.role === "TEACHER" || resolvedStatus === QuestionStatus.PENDING_REVIEW) {
+      if (
+        authorUser?.role === "TEACHER" ||
+        resolvedStatus === QuestionStatus.PENDING_REVIEW
+      ) {
         const authorName = authorUser?.name || "User";
         createNotification({
           recipientRole: "DEAN",
@@ -801,7 +812,9 @@ export class QuestionService {
     );
 
     for (const authorId of uniqueAuthorIds) {
-      const count = targetQuestions.filter((q: any) => q.authorId === authorId).length;
+      const count = targetQuestions.filter(
+        (q: any) => q.authorId === authorId,
+      ).length;
       createNotification({
         recipientId: authorId as string,
         title: "Question Approved",

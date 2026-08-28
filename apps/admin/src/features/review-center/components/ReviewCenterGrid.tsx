@@ -1,4 +1,4 @@
-import type { ReviewCenterRepresentative } from "@/features/review-center";
+import type { ReviewCenterRepresentative } from "../types/types";
 import ReviewCenterCard from "./ReviewCenterCard";
 import ReviewCenterCardSkeleton from "./ReviewCenterCardSkeleton";
 import ReviewCenterEmptyState from "./ReviewCenterEmptyState";

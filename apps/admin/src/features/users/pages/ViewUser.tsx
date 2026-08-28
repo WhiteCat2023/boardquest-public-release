@@ -456,6 +456,38 @@ export default function ViewUser() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <User size={12} /> First Name
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
+                    {activeMember.firstName || activeMember.name.split(" ")[0] || "N/A"}
+                  </span>
+                </div>
+
+                {!isExternal && (
+                  <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <User size={12} /> Middle Name
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
+                      {activeMember.middleName || "—"}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <User size={12} /> Last Name
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
+                    {activeMember.lastName ||
+                      (activeMember.name.split(" ").length > 1
+                        ? activeMember.name.split(" ").slice(1).join(" ")
+                        : "N/A")}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1 p-3.5 bg-muted/40 rounded-2xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <IdCard size={12} />{" "}
                     {isExternal ? "Partner / Representative ID" : "Employee ID"}
                   </span>

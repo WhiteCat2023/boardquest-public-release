@@ -13,7 +13,7 @@ import {
   AlertCircle 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ReviewSchedule } from "@/features/review-center";
+import type { ReviewSchedule } from "../types/types";
 
 interface ReviewCalendarViewProps {
   schedules: ReviewSchedule[];

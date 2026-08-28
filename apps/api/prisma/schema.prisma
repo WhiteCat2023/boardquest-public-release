@@ -160,8 +160,6 @@ model Subject {
 
   author   AdminUser @relation("SubjectAuthor", fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   authorId String    @db.ObjectId
-
-  @@map("categories")
 }
 
 model LearningModule {

@@ -16,6 +16,7 @@ export interface UserMember {
   employeeId: string;
   name: string;
   firstName?: string;
+  middleName?: string;
   lastName?: string;
   email: string;
   role: RoleType;
@@ -39,6 +40,7 @@ export interface CreateUserPayload {
   employeeId: string;
   name: string;
   firstName?: string;
+  middleName?: string;
   lastName?: string;
   email: string;
   password?: string;
@@ -61,6 +63,7 @@ export interface RoleOption {
 export interface ParsedUserRow {
   name: string;
   firstName?: string;
+  middleName?: string;
   lastName?: string;
   email: string;
   role: string;

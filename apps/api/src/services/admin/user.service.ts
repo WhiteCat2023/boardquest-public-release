@@ -425,19 +425,28 @@ export class UserService {
     rawName?: string,
     rawFirst?: string,
     rawLast?: string,
+    rawMiddle?: string,
   ) {
     let firstName = rawFirst?.trim() || "";
+    const middleName = rawMiddle?.trim() || "";
     let lastName = rawLast?.trim() || "";
     let name = rawName?.trim() || "";
 
     if (!name && (firstName || lastName)) {
-      name = [firstName, lastName].filter(Boolean).join(" ").trim();
+      name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
     } else if (name && !firstName && !lastName) {
-      const parts = name.split(" ");
-      firstName = parts[0] || "";
-      lastName = parts.slice(1).join(" ") || "";
+      const parts = name.split(/\s+/);
+      if (parts.length === 1) {
+        firstName = parts[0] || "";
+      } else if (parts.length === 2) {
+        firstName = parts[0] || "";
+        lastName = parts[1] || "";
+      } else {
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      }
     } else if (firstName && lastName && !name) {
-      name = `${firstName} ${lastName}`.trim();
+      name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
     }
 
     return { name, firstName, lastName };
@@ -869,11 +878,14 @@ export class UserService {
     members: Array<{
       name?: string;
       firstName?: string;
+      middleName?: string;
       lastName?: string;
       email: string;
       role?: string;
       employeeId?: string;
       phoneNumber?: string;
+      companyName?: string;
+      location?: string;
     }>,
     creatorRole: string,
   ) {
@@ -890,10 +902,17 @@ export class UserService {
         item.name,
         item.firstName,
         item.lastName,
+        item.middleName,
       );
       const email = item.email?.trim().toLowerCase();
-      const targetRole = (item.role?.trim().toUpperCase() ||
-        "TEACHER") as string;
+      const rawRole = item.role?.trim().toUpperCase();
+      const isExternal =
+        rawRole === "REVIEWCENTER" ||
+        rawRole === "EXTERNAL" ||
+        Boolean(item.companyName && item.companyName.trim().length > 0);
+      const targetRole = isExternal
+        ? Role.REVIEWCENTER
+        : (rawRole || Role.TEACHER);
 
       if (!name || !email) {
         errors.push({
@@ -913,62 +932,157 @@ export class UserService {
         continue;
       }
 
-      const empId =
-        item.employeeId?.trim() ||
-        `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+      if (isExternal) {
+        const compName = item.companyName?.trim() || `${name}'s Review Center`;
+        const partnerId =
+          item.employeeId?.trim() ||
+          `RC-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
 
-      const existing = await this.db.adminUser.findFirst({
-        where: {
-          OR: [{ email }, { employeeId: empId }],
-        },
-      });
+        const existingRep =
+          await this.db.reviewCenterRepresentativeUser.findFirst({
+            where: {
+              OR: [{ email }, { employeeId: partnerId }],
+            },
+          });
 
-      if (existing) {
-        errors.push({
-          email,
-          name,
-          error: "Account already exists (email or employee ID collision).",
-        });
-        continue;
-      }
-
-      const randomChars =
-        Math.random().toString(36).substring(2, 6).toUpperCase() +
-        Math.random().toString(36).substring(2, 6).toUpperCase();
-      const tempPassword = `BQ-${randomChars}`;
-
-      try {
-        const hash = await hashedPassword(tempPassword);
-        const newUser = await this.db.adminUser.create({
-          data: {
-            employeeId: empId,
-            name,
-            firstName: firstName || undefined,
-            lastName: lastName || undefined,
+        if (existingRep) {
+          errors.push({
             email,
-            role: targetRole as any,
-            phoneNumber: item.phoneNumber?.trim() || "N/A",
-            password: hash,
-            handledSubjectIds: [],
+            name,
+            error: "Review center account already exists (email or partner ID collision).",
+          });
+          continue;
+        }
+
+        try {
+          let reviewCenter = await this.db.reviewCenter.findFirst({
+            where: { name: { equals: compName, mode: "insensitive" } },
+          });
+
+          if (!reviewCenter) {
+            const centerCode = `RC-${compName
+              .replace(/[^a-zA-Z0-9]/g, "")
+              .slice(0, 6)
+              .toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+            reviewCenter = await this.db.reviewCenter.create({
+              data: {
+                name: compName,
+                code: centerCode,
+                location: item.location?.trim() || "Philippines",
+                contactEmail: email,
+                contactPhone: item.phoneNumber?.trim() || "N/A",
+                isActive: true,
+              },
+            });
+          }
+
+          const randomChars =
+            Math.random().toString(36).substring(2, 6).toUpperCase() +
+            Math.random().toString(36).substring(2, 6).toUpperCase();
+          const tempPassword = `BQ-RC-${randomChars}`;
+          const hash = await hashedPassword(tempPassword);
+
+          const newRep = await this.db.reviewCenterRepresentativeUser.create({
+            data: {
+              employeeId: partnerId,
+              name: name || `${compName} Representative`,
+              firstName: firstName || undefined,
+              lastName: lastName || undefined,
+              email,
+              companyName: compName,
+              phonenumber: item.phoneNumber?.trim() || "N/A",
+              password: hash,
+              location: item.location?.trim() || "Philippines",
+              accountStatus: "ACTIVE",
+              isActive: true,
+              reviewCenterId: reviewCenter.id,
+            },
+          });
+
+          sendFacultyCredentialsEmail({
+            toEmail: email,
+            name: newRep.name,
+            password: tempPassword,
+            role: "EXTERNAL",
+            employeeId: partnerId,
+          }).catch((err) =>
+            console.error("[BulkImport EXTERNAL] Email send error:", err),
+          );
+
+          const { password, ...sanitized } = newRep as any;
+          createdMembers.push({
+            ...sanitized,
+            role: Role.REVIEWCENTER,
+          });
+        } catch (err: any) {
+          errors.push({
+            email,
+            name,
+            error: err.message || "Failed to create review center account",
+          });
+        }
+      } else {
+        const empId =
+          item.employeeId?.trim() ||
+          `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+
+        const existing = await this.db.adminUser.findFirst({
+          where: {
+            OR: [{ email }, { employeeId: empId }],
           },
         });
 
-        sendFacultyCredentialsEmail({
-          toEmail: email,
-          name,
-          password: tempPassword,
-          role: targetRole,
-          employeeId: empId,
-        }).catch((err) => console.error("[BulkImport] Email send error:", err));
+        if (existing) {
+          errors.push({
+            email,
+            name,
+            error: "Account already exists (email or employee ID collision).",
+          });
+          continue;
+        }
 
-        const { password, ...sanitized } = newUser;
-        createdMembers.push(sanitized);
-      } catch (err: any) {
-        errors.push({
-          email,
-          name,
-          error: err.message || "Failed to create account",
-        });
+        const randomChars =
+          Math.random().toString(36).substring(2, 6).toUpperCase() +
+          Math.random().toString(36).substring(2, 6).toUpperCase();
+        const tempPassword = `BQ-${randomChars}`;
+
+        try {
+          const hash = await hashedPassword(tempPassword);
+          const newUser = await this.db.adminUser.create({
+            data: {
+              employeeId: empId,
+              name,
+              firstName: firstName || undefined,
+              lastName: lastName || undefined,
+              email,
+              role: targetRole as any,
+              phoneNumber: item.phoneNumber?.trim() || "N/A",
+              password: hash,
+              handledSubjectIds: [],
+              accountStatus: "ACTIVE",
+              isActive: true,
+            },
+          });
+
+          sendFacultyCredentialsEmail({
+            toEmail: email,
+            name,
+            password: tempPassword,
+            role: String(targetRole),
+            employeeId: empId,
+          }).catch((err) =>
+            console.error("[BulkImport] Email send error:", err),
+          );
+
+          const { password, ...sanitized } = newUser;
+          createdMembers.push(sanitized);
+        } catch (err: any) {
+          errors.push({
+            email,
+            name,
+            error: err.message || "Failed to create account",
+          });
+        }
       }
     }
 

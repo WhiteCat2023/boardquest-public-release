@@ -4,6 +4,7 @@ interface QualityCheckInput {
   questionWording: string;
   format: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | string;
   mcqChoices: string[];
+  mcqChoiceImages?: string[];
   mcqCorrectIndex: number;
   tfCorrect: string;
   saCorrectAnswer: string;
@@ -16,15 +17,16 @@ export function useQuestionQualityCheck() {
       questionWording,
       format,
       mcqChoices,
+      mcqChoiceImages = [],
       mcqCorrectIndex,
       tfCorrect,
       saCorrectAnswer,
       categoryId,
     } = input;
 
-    if (!questionWording || questionWording.trim().length < 10) {
+    if (!questionWording || questionWording.trim().length < 5) {
       toast.error(
-        "Quality Check: Question wording must be at least 10 characters long.",
+        "Quality Check: Question wording must be at least 5 characters long.",
       );
       return false;
     }
@@ -41,21 +43,31 @@ export function useQuestionQualityCheck() {
         );
         return false;
       }
-      const trimmedChoices = mcqChoices.map((c) => c.trim());
-      if (trimmedChoices.some((c) => !c)) {
-        toast.error(
-          "Quality Check: Please fill in all multiple choice options.",
-        );
-        return false;
+      
+      // Each option must have either text OR an image
+      for (let i = 0; i < mcqChoices.length; i++) {
+        const text = (mcqChoices[i] || "").trim();
+        const img = (mcqChoiceImages[i] || "").trim();
+        if (!text && !img) {
+          toast.error(
+            `Quality Check: Option ${String.fromCharCode(65 + i)} requires wording or an attached image.`,
+          );
+          return false;
+        }
       }
-      const lowerChoices = trimmedChoices.map((c) => c.toLowerCase());
-      const hasDuplicates = new Set(lowerChoices).size !== lowerChoices.length;
+
+      // Check duplicate text wording only for options that have non-empty text
+      const textChoices = mcqChoices
+        .map((c) => c.trim().toLowerCase())
+        .filter((c) => c.length > 0);
+      const hasDuplicates = new Set(textChoices).size !== textChoices.length;
       if (hasDuplicates) {
         toast.error(
-          "Quality Check: Multiple choice options cannot contain duplicate wording.",
+          "Quality Check: Multiple choice options cannot contain duplicate text wording.",
         );
         return false;
       }
+
       if (mcqCorrectIndex < 0 || mcqCorrectIndex >= mcqChoices.length) {
         toast.error(
           "Quality Check: Please designate a valid correct answer key option.",

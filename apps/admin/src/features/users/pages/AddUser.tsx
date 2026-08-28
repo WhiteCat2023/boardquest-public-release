@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { UserPlus, Users, ArrowLeft, Building2, Shield } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import { UserRole } from "@/types/question";
 import type { RoleType, CreateUserPayload, ParsedUserRow } from "@/features/users";
 import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
@@ -21,24 +22,29 @@ export default function AddUser() {
   const currentUserRole = userRole as RoleType;
 
   // Account Category: "internal" | "external"
+  const typeParam = searchParams.get("type");
+  const tabParam = searchParams.get("tab");
   const initialCategory =
-    searchParams.get("tab") === "external" || searchParams.get("type") === "external"
+    tabParam === "external" || typeParam === "external"
       ? "external"
       : "internal";
   const [accountCategory, setAccountCategory] = useState<"internal" | "external">(initialCategory);
 
-  // Internal Sub-tab: "individual" | "bulk"
-  const initialTab = searchParams.get("tab") === "bulk" ? "bulk" : "individual";
+  // Sub-tab: "individual" | "bulk"
+  const initialTab = tabParam === "bulk" ? "bulk" : "individual";
   const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
 
   const handleCategoryChange = (cat: "internal" | "external") => {
     setAccountCategory(cat);
-    setSearchParams({ tab: cat === "external" ? "external" : activeTab });
+    // Reset any pending uploaded file when switching category
+    setFile(null);
+    setParsedRows([]);
+    setSearchParams({ type: cat, tab: activeTab });
   };
 
   const handleTabChange = (tab: "individual" | "bulk") => {
     setActiveTab(tab);
-    setSearchParams({ tab });
+    setSearchParams({ type: accountCategory, tab });
   };
 
   // ----------------------------------------------------
@@ -125,7 +131,7 @@ export default function AddUser() {
   };
 
   // ----------------------------------------------------
-  // BULK CSV FORM STATE & HANDLERS
+  // BULK SPREADSHEET (CSV / XLSX) STATE & HANDLERS
   // ----------------------------------------------------
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedUserRow[]>([]);
@@ -133,74 +139,330 @@ export default function AddUser() {
   const [dragActive, setDragActive] = useState(false);
   const bulkCreateMutation = useBulkCreateUser();
 
-  const handleDownloadTemplate = () => {
-    const csvContent =
-      "name,email,employeeId,department,role\n" +
-      "Dr. Maria Santos,maria.santos@boardquest.edu,EMP-001,Department of Medical Technology,TEACHER\n" +
-      "Prof. Juan Dela Cruz,juan.delacruz@boardquest.edu,EMP-002,Department of Medical Technology,TEAMLEAD\n" +
-      "Dr. Elena Reyes,elena.reyes@boardquest.edu,EMP-003,Department of Medical Technology,DEAN";
+  const handleDownloadSampleCSV = () => {
+    if (accountCategory === "external") {
+      const csvContent =
+        "CompanyName,FirstName,LastName,PartnerID,Email,PhoneNumber,Location\n" +
+        'TopRank Review Academy,Roberto,Cruz,RC-1001,roberto.cruz@toprankreview.edu.ph,09171234567,"Sampaloc, Manila"\n' +
+        'St. Jude Review Center,Maria,Santos,RC-1002,maria.santos@stjudereview.edu.ph,09187654321,"Cebu City"\n' +
+        'Apex Review Services,Jonathan,Reyes,RC-1003,jreyes@apexreview.com,09191234567,"Davao City"';
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "BoardQuest_Users_Template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.info("Sample Users CSV template downloaded.");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "BoardQuest_External_Users_Template.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.info("Sample External Partners template (.csv) downloaded.");
+    } else {
+      const csvContent =
+        "FirstName,MiddleName,LastName,EmployeeID,Email,PhoneNumber,Role\n" +
+        "Jane,Smith,Doe,EMP-001,jane.doe@boardquest.edu,09171234567,TEACHER\n" +
+        "Juan,,Dela Cruz,EMP-002,juan.delacruz@boardquest.edu,09187654321,TEAMLEAD\n" +
+        "Elena,,Reyes,EMP-003,elena.reyes@boardquest.edu,09191234567,DEAN";
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "BoardQuest_Internal_Users_Template.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.info("Sample Internal Users template (.csv) downloaded.");
+    }
   };
 
-  const parseCSVText = (text: string) => {
-    const lines = text.split(/\r\n|\n/).filter((line) => line.trim().length > 0);
-    if (lines.length <= 1) {
-      toast.error("CSV file contains no records or header only.");
+  const handleDownloadSampleXLSX = () => {
+    if (accountCategory === "external") {
+      const data = [
+        ["CompanyName", "FirstName", "LastName", "PartnerID", "Email", "PhoneNumber", "Location"],
+        ["TopRank Review Academy", "Roberto", "Cruz", "RC-1001", "roberto.cruz@toprankreview.edu.ph", "09171234567", "Sampaloc, Manila"],
+        ["St. Jude Review Center", "Maria", "Santos", "RC-1002", "maria.santos@stjudereview.edu.ph", "09187654321", "Cebu City"],
+        ["Apex Review Services", "Jonathan", "Reyes", "RC-1003", "jreyes@apexreview.com", "09191234567", "Davao City"],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "External Partners");
+      XLSX.writeFile(wb, "BoardQuest_External_Users_Template.xlsx");
+      toast.info("Sample External Partners template (.xlsx) downloaded.");
+    } else {
+      const data = [
+        ["FirstName", "MiddleName", "LastName", "EmployeeID", "Email", "PhoneNumber", "Role"],
+        ["Jane", "Smith", "Doe", "EMP-001", "jane.doe@boardquest.edu", "09171234567", "TEACHER"],
+        ["Juan", "", "Dela Cruz", "EMP-002", "juan.delacruz@boardquest.edu", "09187654321", "TEAMLEAD"],
+        ["Elena", "", "Reyes", "EMP-003", "elena.reyes@boardquest.edu", "09191234567", "DEAN"],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Internal Users");
+      XLSX.writeFile(wb, "BoardQuest_Internal_Users_Template.xlsx");
+      toast.info("Sample Internal Users template (.xlsx) downloaded.");
+    }
+  };
+
+  const parseSpreadsheetData = (
+    sheetData: (string | number)[][],
+    category: "internal" | "external"
+  ): ParsedUserRow[] => {
+    if (!sheetData || sheetData.length <= 1) {
+      toast.error("Spreadsheet contains no records or header only.");
       return [];
     }
 
-    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ""));
-    const firstNameIdx = headers.findIndex((h) => h.includes("first") || h === "fname");
-    const lastNameIdx = headers.findIndex((h) => h.includes("last") || h === "lname");
-    const nameIdx = headers.findIndex((h) => h.includes("name") && !h.includes("first") && !h.includes("last"));
-    const emailIdx = headers.findIndex((h) => h.includes("email"));
-    const roleIdx = headers.findIndex((h) => h.includes("role"));
-    const empIdIdx = headers.findIndex((h) => h.includes("employee") || h.includes("empid") || h.includes("id"));
-    const phoneIdx = headers.findIndex((h) => h.includes("phone") || h.includes("number"));
+    const rawHeaders = sheetData[0] || [];
+    const headers = rawHeaders.map((h) =>
+      String(h ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+    );
+
+    const isExternal = category === "external";
+
+    if (isExternal) {
+      const companyIdx = headers.findIndex(
+        (h) =>
+          h.includes("company") ||
+          h.includes("org") ||
+          h.includes("review") ||
+          h.includes("center") ||
+          h.includes("institution") ||
+          h.includes("agency")
+      );
+      const firstNameIdx = headers.findIndex(
+        (h) => h.includes("first") || h === "fname" || h === "firstname"
+      );
+      const lastNameIdx = headers.findIndex(
+        (h) => h.includes("last") || h === "lname" || h === "lastname" || h.includes("surname")
+      );
+      const nameIdx = headers.findIndex(
+        (h) =>
+          (h === "name" || h === "fullname" || h.includes("representative") || h === "repname") &&
+          !h.includes("company") &&
+          !h.includes("first") &&
+          !h.includes("last")
+      );
+      const partnerIdIdx = headers.findIndex(
+        (h) =>
+          h.includes("partner") ||
+          h.includes("employee") ||
+          h === "partnerid" ||
+          h === "empid" ||
+          h === "id" ||
+          h === "code" ||
+          (h.endsWith("id") && !h.includes("middle"))
+      );
+      const emailIdx = headers.findIndex((h) => h.includes("email") || h === "mail");
+      const phoneIdx = headers.findIndex(
+        (h) =>
+          h.includes("phone") ||
+          h.includes("contact") ||
+          h.includes("mobile") ||
+          h.includes("cell") ||
+          (h.includes("number") && !h.includes("id"))
+      );
+      const locationIdx = headers.findIndex(
+        (h) =>
+          h.includes("location") ||
+          h.includes("address") ||
+          h.includes("branch") ||
+          h.includes("campus") ||
+          h.includes("city")
+      );
+
+      const rows: ParsedUserRow[] = [];
+
+      for (let i = 1; i < sheetData.length; i++) {
+        const row = sheetData[i];
+        if (!row || !Array.isArray(row)) continue;
+
+        const hasAnyValue = row.some((cell) => String(cell ?? "").trim().length > 0);
+        if (!hasAnyValue) continue;
+
+        const companyName =
+          companyIdx !== -1 && row[companyIdx] !== undefined
+            ? String(row[companyIdx]).trim()
+            : String(row[0] ?? "").trim();
+        let firstName =
+          firstNameIdx !== -1 && row[firstNameIdx] !== undefined
+            ? String(row[firstNameIdx]).trim()
+            : "";
+        let lastName =
+          lastNameIdx !== -1 && row[lastNameIdx] !== undefined
+            ? String(row[lastNameIdx]).trim()
+            : "";
+        let name = "";
+
+        if (firstName || lastName) {
+          name = [firstName, lastName].filter(Boolean).join(" ").trim();
+        } else if (nameIdx !== -1 && row[nameIdx] !== undefined) {
+          name = String(row[nameIdx]).trim();
+          const parts = name.split(/\s+/);
+          firstName = parts[0] || "";
+          lastName = parts.slice(1).join(" ") || "";
+        } else {
+          name = String(row[1] ?? "").trim();
+        }
+
+        const employeeId =
+          partnerIdIdx !== -1 && row[partnerIdIdx] !== undefined
+            ? String(row[partnerIdIdx]).trim()
+            : String(row[2] ?? "").trim();
+        const email =
+          emailIdx !== -1 && row[emailIdx] !== undefined
+            ? String(row[emailIdx]).trim().toLowerCase()
+            : String(row[3] ?? "").trim().toLowerCase();
+        const phoneNumber =
+          phoneIdx !== -1 && row[phoneIdx] !== undefined
+            ? String(row[phoneIdx]).trim()
+            : String(row[4] ?? "").trim();
+        const location =
+          locationIdx !== -1 && row[locationIdx] !== undefined
+            ? String(row[locationIdx]).trim()
+            : String(row[5] ?? "").trim() || "Philippines";
+
+        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        let isValid = true;
+        let validationError = "";
+
+        if (!companyName) {
+          isValid = false;
+          validationError = "Missing Organization Name";
+        } else if (!name && !firstName) {
+          isValid = false;
+          validationError = "Missing Representative Name";
+        } else if (!email || !isValidEmail) {
+          isValid = false;
+          validationError = "Invalid Email";
+        } else if (!phoneNumber) {
+          isValid = false;
+          validationError = "Missing Phone Number";
+        } else if (!employeeId) {
+          isValid = false;
+          validationError = "Missing Partner ID";
+        }
+
+        rows.push({
+          name: name || `${firstName} ${lastName}`.trim(),
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          email,
+          role: "EXTERNAL",
+          companyName,
+          employeeId: employeeId || undefined,
+          phoneNumber: phoneNumber || undefined,
+          location: location || "Philippines",
+          isValid,
+          validationError,
+        });
+      }
+
+      return rows;
+    }
+
+    // Internal Users parsing
+    const firstNameIdx = headers.findIndex(
+      (h) => h.includes("first") || h === "fname" || h === "firstname"
+    );
+    const middleNameIdx = headers.findIndex(
+      (h) => h.includes("middle") || h === "mname" || h === "mi" || h === "middlename"
+    );
+    const lastNameIdx = headers.findIndex(
+      (h) => h.includes("last") || h === "lname" || h === "lastname" || h.includes("surname")
+    );
+    const nameIdx = headers.findIndex(
+      (h) =>
+        (h === "name" || h === "fullname") &&
+        !h.includes("first") &&
+        !h.includes("middle") &&
+        !h.includes("last")
+    );
+    const empIdIdx = headers.findIndex(
+      (h) =>
+        h.includes("employee") ||
+        h === "empid" ||
+        h === "employeeid" ||
+        h === "id" ||
+        h === "idnumber" ||
+        h === "idno" ||
+        (h.endsWith("id") && !h.includes("middle"))
+    );
+    const emailIdx = headers.findIndex((h) => h.includes("email") || h === "mail");
+    const phoneIdx = headers.findIndex(
+      (h) =>
+        h.includes("phone") ||
+        h.includes("contact") ||
+        h.includes("mobile") ||
+        h.includes("cell") ||
+        (h.includes("number") && !h.includes("id"))
+    );
+    const roleIdx = headers.findIndex((h) => h.includes("role") || h.includes("position") || h.includes("designation"));
 
     const rows: ParsedUserRow[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const currentLine = lines[i].trim();
-      if (!currentLine) continue;
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      if (!row || !Array.isArray(row)) continue;
 
-      const values = currentLine.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
-      
-      let firstName = "";
-      let lastName = "";
-      let name: string;
+      const hasAnyValue = row.some((cell) => String(cell ?? "").trim().length > 0);
+      if (!hasAnyValue) continue;
 
-      if (firstNameIdx !== -1 && values[firstNameIdx]) {
-        firstName = values[firstNameIdx];
-      }
-      if (lastNameIdx !== -1 && values[lastNameIdx]) {
-        lastName = values[lastNameIdx];
-      }
+      let firstName =
+        firstNameIdx !== -1 && row[firstNameIdx] !== undefined
+          ? String(row[firstNameIdx]).trim()
+          : "";
+      let middleName =
+        middleNameIdx !== -1 && row[middleNameIdx] !== undefined
+          ? String(row[middleNameIdx]).trim()
+          : "";
+      let lastName =
+        lastNameIdx !== -1 && row[lastNameIdx] !== undefined
+          ? String(row[lastNameIdx]).trim()
+          : "";
+      let name = "";
 
       if (firstName || lastName) {
-        name = [firstName, lastName].filter(Boolean).join(" ").trim();
-      } else if (nameIdx !== -1 && values[nameIdx]) {
-        name = values[nameIdx];
-        const parts = name.split(" ");
-        firstName = parts[0] || "";
-        lastName = parts.slice(1).join(" ") || "";
+        name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+      } else if (nameIdx !== -1 && row[nameIdx] !== undefined) {
+        name = String(row[nameIdx]).trim();
+        const parts = name.split(/\s+/);
+        if (parts.length === 1) {
+          firstName = parts[0] || "";
+        } else if (parts.length === 2) {
+          firstName = parts[0] || "";
+          lastName = parts[1] || "";
+        } else {
+          firstName = parts[0] || "";
+          middleName = parts[1] || "";
+          lastName = parts.slice(2).join(" ") || "";
+        }
       } else {
-        name = values[0] || "";
+        name = String(row[0] ?? "").trim();
       }
 
-      const email = emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : (values[1] || "");
-      const role = roleIdx !== -1 && values[roleIdx] ? values[roleIdx].toUpperCase() : (values[2] ? values[2].toUpperCase() : "TEACHER");
-      const employeeId = empIdIdx !== -1 && values[empIdIdx] ? values[empIdIdx] : (values[3] || "");
-      const phoneNumber = phoneIdx !== -1 && values[phoneIdx] ? values[phoneIdx] : (values[4] || "");
+      const employeeId =
+        empIdIdx !== -1 && row[empIdIdx] !== undefined
+          ? String(row[empIdIdx]).trim()
+          : String(row[3] ?? "").trim();
+      const email =
+        emailIdx !== -1 && row[emailIdx] !== undefined
+          ? String(row[emailIdx]).trim().toLowerCase()
+          : String(row[4] ?? "").trim().toLowerCase();
+      const phoneNumber =
+        phoneIdx !== -1 && row[phoneIdx] !== undefined
+          ? String(row[phoneIdx]).trim()
+          : String(row[5] ?? "").trim();
+
+      let rawRole =
+        roleIdx !== -1 && row[roleIdx] !== undefined
+          ? String(row[roleIdx]).trim().toUpperCase()
+          : String(row[6] ?? "").trim().toUpperCase() || "TEACHER";
+      if (rawRole === "ADMIN" || rawRole === "DEAN") rawRole = "DEAN";
+      else if (rawRole === "TEAMLEAD" || rawRole === "CO-ADMIN") rawRole = "TEAMLEAD";
+      else rawRole = "TEACHER";
 
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       let isValid = true;
@@ -209,17 +471,24 @@ export default function AddUser() {
       if (!name && !firstName) {
         isValid = false;
         validationError = "Missing Name";
+      } else if (!employeeId) {
+        isValid = false;
+        validationError = "Missing Employee ID";
       } else if (!email || !isValidEmail) {
         isValid = false;
         validationError = "Invalid Email";
+      } else if (!phoneNumber) {
+        isValid = false;
+        validationError = "Missing Phone Number";
       }
 
       rows.push({
-        name,
-        firstName,
-        lastName,
+        name: name || [firstName, middleName, lastName].filter(Boolean).join(" ").trim(),
+        firstName: firstName || undefined,
+        middleName: middleName || undefined,
+        lastName: lastName || undefined,
         email,
-        role: ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"].includes(role) ? role : "TEACHER",
+        role: rawRole,
         employeeId: employeeId || undefined,
         phoneNumber: phoneNumber || undefined,
         isValid,
@@ -230,27 +499,44 @@ export default function AddUser() {
     return rows;
   };
 
-  const processFile = (selectedFile: File) => {
-    if (!selectedFile.name.endsWith(".csv")) {
-      toast.error("Please upload a valid .csv file");
+  const processFile = async (selectedFile: File) => {
+    const fileName = selectedFile.name.toLowerCase();
+    const isCSV = fileName.endsWith(".csv");
+    const isXLSX = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+
+    if (!isCSV && !isXLSX) {
+      toast.error("Please upload a valid .csv or .xlsx file");
       return;
     }
 
     setFile(selectedFile);
     setIsParsing(true);
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      const parsed = parseCSVText(text);
+    try {
+      const buffer = await selectedFile.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) {
+        toast.error("Spreadsheet file contains no sheets.");
+        setParsedRows([]);
+        setIsParsing(false);
+        return;
+      }
+      const worksheet = workbook.Sheets[firstSheetName];
+      const sheetData = XLSX.utils.sheet_to_json<(string | number)[]>(worksheet, {
+        header: 1,
+        defval: "",
+        blankrows: false,
+      });
+
+      const parsed = parseSpreadsheetData(sheetData, accountCategory);
       setParsedRows(parsed);
+    } catch (err) {
+      console.error("Error parsing spreadsheet:", err);
+      toast.error("Failed to read spreadsheet file. Please check file format.");
+    } finally {
       setIsParsing(false);
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read CSV file.");
-      setIsParsing(false);
-    };
-    reader.readAsText(selectedFile);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,6 +558,15 @@ export default function AddUser() {
     setParsedRows((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleUpdateRow = (index: number, updatedRow: ParsedUserRow) => {
+    setParsedRows((prev) => {
+      const next = [...prev];
+      next[index] = updatedRow;
+      return next;
+    });
+    toast.success(`Entry #${index + 1} updated successfully.`);
+  };
+
   const validCount = parsedRows.filter((r) => r.isValid).length;
 
   const handleBulkSubmit = () => {
@@ -285,20 +580,27 @@ export default function AddUser() {
       validMembers.map((m) => ({
         name: m.name,
         firstName: m.firstName,
+        middleName: m.middleName,
         lastName: m.lastName,
         email: m.email,
         role: String(m.role),
         employeeId: m.employeeId,
         phoneNumber: m.phoneNumber,
+        companyName: m.companyName,
+        location: m.location,
       })),
       {
         onSuccess: (res: any) => {
-          const createdCount = res?.createdCount || validMembers.length;
-          toast.success(`Successfully registered ${createdCount} user(s)!`);
+          const createdCount = res?.data?.data?.users?.createdCount || res?.createdCount || validMembers.length;
+          toast.success(
+            accountCategory === "external"
+              ? `Successfully registered ${createdCount} external review center account(s)!`
+              : `Successfully registered ${createdCount} internal user account(s)!`
+          );
           navigate("/faculty-management");
         },
         onError: (err: any) => {
-          const msg = err.response?.data?.message || "Failed to process bulk user import.";
+          const msg = err.response?.data?.message || "Failed to process bulk import.";
           toast.error(msg);
         },
       }
@@ -322,13 +624,19 @@ export default function AddUser() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-              <div className={`p-1.5 rounded-xl border ${
-                accountCategory === "external"
-                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                  : "bg-primary/10 text-primary border-primary/20"
-              }`}>
+              <div
+                className={`p-1.5 rounded-xl border ${
+                  accountCategory === "external"
+                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                    : "bg-primary/10 text-primary border-primary/20"
+                }`}
+              >
                 {accountCategory === "external" ? (
-                  <Building2 size={18} className="stroke-[2.5]" />
+                  activeTab === "individual" ? (
+                    <Building2 size={18} className="stroke-[2.5]" />
+                  ) : (
+                    <Users size={18} className="stroke-[2.5]" />
+                  )
                 ) : activeTab === "individual" ? (
                   <UserPlus size={18} className="stroke-[2.5]" />
                 ) : (
@@ -336,50 +644,56 @@ export default function AddUser() {
                 )}
               </div>
               {accountCategory === "external"
-                ? "Register Review Center Account"
+                ? activeTab === "individual"
+                  ? "Register Review Center Account"
+                  : "Bulk Import Review Centers"
                 : activeTab === "individual"
                 ? "Add New User"
                 : "Bulk Import Users"}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               {accountCategory === "external"
-                ? "Create a dedicated external partner account for review center representatives."
+                ? activeTab === "individual"
+                  ? "Create a dedicated external partner account for review center representatives."
+                  : "Batch upload multiple review center partner accounts via CSV/Excel spreadsheet."
                 : activeTab === "individual"
                 ? "Register an individual user account for academic access and management."
-                : "Batch upload multiple user accounts via CSV spreadsheet."}
+                : "Batch upload multiple user accounts via CSV/Excel spreadsheet."}
             </p>
           </div>
 
-          {/* ── Sub-tabs for Internal accounts: Individual vs Bulk ── */}
-          {accountCategory === "internal" && (
-            <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
-              <button
-                type="button"
-                onClick={() => handleTabChange("individual")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "individual"
-                    ? "bg-card text-foreground shadow-2xs border border-border/80"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
+          {/* ── Sub-tabs: Individual vs Bulk ── */}
+          <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
+            <button
+              type="button"
+              onClick={() => handleTabChange("individual")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "individual"
+                  ? "bg-card text-foreground shadow-2xs border border-border/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {accountCategory === "external" ? (
+                <Building2 size={13} />
+              ) : (
                 <UserPlus size={13} />
-                Individual
-              </button>
+              )}
+              Individual
+            </button>
 
-              <button
-                type="button"
-                onClick={() => handleTabChange("bulk")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "bulk"
-                    ? "bg-card text-foreground shadow-2xs border border-border/80"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Users size={13} />
-                Bulk
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => handleTabChange("bulk")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "bulk"
+                  ? "bg-card text-foreground shadow-2xs border border-border/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={13} />
+              Bulk
+            </button>
+          </div>
         </div>
 
         {/* ── Top-Level Account Type Category Switcher ── */}
@@ -412,12 +726,43 @@ export default function AddUser() {
         </div>
       </div>
 
-      {/* ── EXTERNAL ACCOUNT TAB ── */}
-      {accountCategory === "external" && (
+      {/* ── EXTERNAL: TAB 1 (Individual) ── */}
+      {accountCategory === "external" && activeTab === "individual" && (
         <AddExternalUserTab
           errorMsg={errorMsg}
           isPending={createMutation.isPending}
           onSubmitExternal={handleExternalSubmit}
+          onCancel={() => navigate("/faculty-management")}
+        />
+      )}
+
+      {/* ── EXTERNAL: TAB 2 (Bulk) ── */}
+      {accountCategory === "external" && activeTab === "bulk" && (
+        <AddBulkUserTab
+          accountCategory="external"
+          file={file}
+          parsedRows={parsedRows}
+          validCount={validCount}
+          isParsing={isParsing}
+          dragActive={dragActive}
+          currentUserRole={currentUserRole}
+          isPending={bulkCreateMutation.isPending}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+          onFileChange={handleFileChange}
+          onRemoveFile={() => {
+            setFile(null);
+            setParsedRows([]);
+          }}
+          onRemoveRow={handleRemoveRow}
+          onUpdateRow={handleUpdateRow}
+          onDownloadSampleCSV={handleDownloadSampleCSV}
+          onDownloadSampleXLSX={handleDownloadSampleXLSX}
+          onSubmit={handleBulkSubmit}
           onCancel={() => navigate("/faculty-management")}
         />
       )}
@@ -447,6 +792,7 @@ export default function AddUser() {
       {/* ── INTERNAL: TAB 2 (Bulk) ── */}
       {accountCategory === "internal" && activeTab === "bulk" && (
         <AddBulkUserTab
+          accountCategory="internal"
           file={file}
           parsedRows={parsedRows}
           validCount={validCount}
@@ -466,7 +812,9 @@ export default function AddUser() {
             setParsedRows([]);
           }}
           onRemoveRow={handleRemoveRow}
-          onDownloadSampleCSV={handleDownloadTemplate}
+          onUpdateRow={handleUpdateRow}
+          onDownloadSampleCSV={handleDownloadSampleCSV}
+          onDownloadSampleXLSX={handleDownloadSampleXLSX}
           onSubmit={handleBulkSubmit}
           onCancel={() => navigate("/faculty-management")}
         />
@@ -476,3 +824,4 @@ export default function AddUser() {
 }
 
 export const AddFacultyMember = AddUser;
+
