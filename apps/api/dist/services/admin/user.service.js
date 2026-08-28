@@ -5,6 +5,22 @@ import { hashedPassword } from "../../utils/hash";
 import { Role } from "../../types/prisma.types";
 import { sendFacultyCredentialsEmail } from "../mail.service";
 // ============ Validation Schemas ============
+export const normalizeRole = (r) => {
+    const s = String(r || "")
+        .toUpperCase()
+        .trim();
+    if (s === "SUPERADMIN")
+        return Role.SUPERADMIN;
+    if (s === "DEAN")
+        return Role.DEAN;
+    if (s === "TEAMLEAD")
+        return Role.TEAMLEAD;
+    if (s === "TEACHER")
+        return Role.TEACHER;
+    if (s === "REVIEWCENTER" || s === "EXTERNAL")
+        return Role.REVIEWCENTER;
+    return Role.TEACHER;
+};
 export const createUserSchema = z
     .object({
     employeeId: z.string().min(1, "Employee ID is required"),
@@ -12,17 +28,21 @@ export const createUserSchema = z
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     email: z.string().email("Invalid email address"),
-    role: z.nativeEnum(Role),
+    role: z
+        .union([z.nativeEnum(Role), z.string()])
+        .transform((val) => normalizeRole(val)),
     phoneNumber: z.string().min(7, "Phone number is required"),
     companyName: z.string().optional(),
     location: z.string().optional(),
     password: z.string().optional().default(""),
     handledCategoryIds: z.array(z.string()).optional().default([]),
+    handledSubjectIds: z.array(z.string()).optional().default([]),
 })
     .refine((data) => Boolean((data.name && data.name.trim().length > 0) ||
     (data.firstName && data.firstName.trim().length > 0) ||
     (data.lastName && data.lastName.trim().length > 0) ||
-    (data.role === Role.EXTERNAL &&
+    ((data.role === Role.EXTERNAL ||
+        data.role === Role.REVIEWCENTER) &&
         data.companyName &&
         data.companyName.trim().length > 0)), {
     message: "First name and last name, or full name, are required",
@@ -33,7 +53,10 @@ export const updateUserSchema = z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     email: z.string().email("Invalid email address").optional(),
-    role: z.nativeEnum(Role).optional(),
+    role: z
+        .union([z.nativeEnum(Role), z.string()])
+        .transform((val) => normalizeRole(val))
+        .optional(),
     companyName: z.string().optional(),
     location: z.string().optional(),
     phoneNumber: z.string().min(7, "Phone number is required").optional(),
@@ -54,14 +77,14 @@ const userSelect = {
     email: true,
     role: true,
     phoneNumber: true,
-    handledCategoryIds: true,
+    handledSubjectIds: true,
     questionPermissions: true,
     accountStatus: true,
     isActive: true,
     lastActiveAt: true,
     createdAt: true,
     updatedAt: true,
-    handledCategories: {
+    handledSubjects: {
         select: {
             id: true,
             name: true,
@@ -75,17 +98,18 @@ export class UserService {
         this.db = db;
     }
     isAllowedToManageRole(creatorRole, targetRole) {
-        if (creatorRole === "SUPERADMIN")
+        const cRole = normalizeRole(creatorRole);
+        const tRole = normalizeRole(targetRole);
+        if (cRole === Role.SUPERADMIN)
             return true;
-        if (creatorRole === "DEAN") {
-            // DEAN can add new CO-ADMIN(TEAMLEAD), TEACHER, and EXTERNAL
-            return (targetRole === "TEAMLEAD" ||
-                targetRole === "TEACHER" ||
-                targetRole === "EXTERNAL");
+        if (cRole === Role.DEAN) {
+            return (tRole === Role.TEAMLEAD ||
+                tRole === Role.TEACHER ||
+                tRole === Role.EXTERNAL ||
+                tRole === Role.REVIEWCENTER);
         }
-        if (creatorRole === "TEAMLEAD") {
-            // CO-ADMIN(TEAMLEAD) can add TEACHERS
-            return targetRole === "TEACHER";
+        if (cRole === Role.TEAMLEAD) {
+            return tRole === Role.TEACHER;
         }
         return false;
     }
@@ -138,7 +162,7 @@ export class UserService {
             hasNextPage,
         };
     }
-    async getAllFaculty(filters) {
+    async getAllUsers(filters) {
         const { search, role, status, cursor, limit, requesterRole } = filters || {};
         const limitNum = limit || 10;
         // 1. If role is explicitly "EXTERNAL", query exclusively from ReviewCenterRepresentativeUser collection
@@ -198,27 +222,35 @@ export class UserService {
         // 1. SUPERADMIN -> Returns DEAN, TEAMLEAD, and TEACHER accounts
         // 2. DEAN -> Returns both TEAMLEAD and TEACHER accounts
         // 3. TEAMLEAD -> Only returns TEACHER accounts
-        if (requesterRole === "SUPERADMIN") {
-            if (role && role !== "ALL") {
-                where.role = role;
+        const normReq = requesterRole
+            ? String(requesterRole).toUpperCase().trim()
+            : "";
+        const normRole = role && role !== "ALL" ? normalizeRole(role) : undefined;
+        if (normReq === "SUPERADMIN") {
+            if (normRole &&
+                normRole !== Role.REVIEWCENTER &&
+                normRole !== Role.EXTERNAL) {
+                where.role = normRole;
             }
             else {
-                where.role = { in: ["DEAN", "TEAMLEAD", "TEACHER"] };
+                where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
             }
         }
-        else if (requesterRole === "DEAN") {
-            if (role && role !== "ALL" && ["TEAMLEAD", "TEACHER"].includes(role)) {
-                where.role = role;
+        else if (normReq === "DEAN") {
+            if (normRole && [Role.TEAMLEAD, Role.TEACHER].includes(normRole)) {
+                where.role = normRole;
             }
             else {
-                where.role = { in: ["TEAMLEAD", "TEACHER"] };
+                where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
             }
         }
-        else if (requesterRole === "TEAMLEAD") {
-            where.role = "TEACHER";
+        else if (normReq === "TEAMLEAD") {
+            where.role = Role.TEACHER;
         }
-        else if (role && role !== "ALL") {
-            where.role = role;
+        else if (normRole &&
+            normRole !== Role.REVIEWCENTER &&
+            normRole !== Role.EXTERNAL) {
+            where.role = normRole;
         }
         if (status && status !== "ALL") {
             if (status === "ACTIVE") {
@@ -228,25 +260,32 @@ export class UserService {
                 where.accountStatus = "DEACTIVATED";
             }
         }
-        const allFaculties = await this.db.adminUser.findMany({
+        const allUsers = await this.db.adminUser.findMany({
             where,
             select: userSelect,
             orderBy: {
                 createdAt: "desc",
             },
         });
-        let combinedList = allFaculties.map((f) => ({
-            ...f,
-            accountStatus: f.accountStatus || "ACTIVE",
-            isActive: f.isActive !== false,
-            lastActiveAt: f.lastActiveAt ? f.lastActiveAt.toISOString() : undefined,
-            createdAt: f.createdAt
-                ? f.createdAt.toISOString()
+        let combinedList = allUsers.map((u) => ({
+            ...u,
+            handledCategoryIds: u.handledSubjectIds,
+            handledCategories: u.handledSubjects,
+            accountStatus: u.accountStatus || "ACTIVE",
+            isActive: u.isActive !== false,
+            lastActiveAt: u.lastActiveAt ? u.lastActiveAt.toISOString() : undefined,
+            createdAt: u.createdAt
+                ? u.createdAt.toISOString()
                 : new Date().toISOString(),
         }));
-        // If role is "ALL" and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
-        if ((role === "ALL" || !role) &&
-            (requesterRole === "SUPERADMIN" || requesterRole === "DEAN")) {
+        // If role is "ALL" or REVIEWCENTER/EXTERNAL and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
+        if ((role === "ALL" ||
+            !role ||
+            normRole === Role.REVIEWCENTER ||
+            normRole === Role.EXTERNAL ||
+            role === "EXTERNAL" ||
+            role === "REVIEWCENTER") &&
+            (normReq === "SUPERADMIN" || normReq === "DEAN")) {
             const repWhere = {};
             if (search && search.trim()) {
                 const q = search.trim();
@@ -276,7 +315,7 @@ export class UserService {
                 firstName: r.firstName,
                 lastName: r.lastName,
                 email: r.email,
-                role: "EXTERNAL",
+                role: Role.REVIEWCENTER,
                 phoneNumber: r.phonenumber,
                 companyName: r.companyName,
                 location: r.location || "Philippines",
@@ -289,6 +328,9 @@ export class UserService {
             combinedList = [...combinedList, ...formattedReps].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
         return this.paginateResults(combinedList, limitNum, cursor);
+    }
+    async getAllFaculty(filters) {
+        return this.getAllUsers(filters);
     }
     paginateResults(items, limitNum, cursor) {
         let startIndex = 0;
@@ -305,42 +347,53 @@ export class UserService {
         const nextCursor = hasNextPage && sliced.length > 0 ? sliced[sliced.length - 1].id : null;
         return {
             total: items.length,
+            users: sliced,
             faculties: sliced,
             nextCursor,
             hasNextPage,
         };
     }
-    resolveNameParts(rawName, rawFirst, rawLast) {
+    resolveNameParts(rawName, rawFirst, rawLast, rawMiddle) {
         let firstName = rawFirst?.trim() || "";
+        const middleName = rawMiddle?.trim() || "";
         let lastName = rawLast?.trim() || "";
         let name = rawName?.trim() || "";
         if (!name && (firstName || lastName)) {
-            name = [firstName, lastName].filter(Boolean).join(" ").trim();
+            name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
         }
         else if (name && !firstName && !lastName) {
-            const parts = name.split(" ");
-            firstName = parts[0] || "";
-            lastName = parts.slice(1).join(" ") || "";
+            const parts = name.split(/\s+/);
+            if (parts.length === 1) {
+                firstName = parts[0] || "";
+            }
+            else if (parts.length === 2) {
+                firstName = parts[0] || "";
+                lastName = parts[1] || "";
+            }
+            else {
+                firstName = parts[0] || "";
+                lastName = parts.slice(1).join(" ") || "";
+            }
         }
         else if (firstName && lastName && !name) {
-            name = `${firstName} ${lastName}`.trim();
+            name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
         }
         return { name, firstName, lastName };
     }
-    async createFaculty(data, creatorRole) {
+    async createUser(data, creatorRole) {
         const parsed = createUserSchema.safeParse(data);
         if (!parsed.success) {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { employeeId, name: rawName, firstName: rawFirst, lastName: rawLast, email, role, phoneNumber, companyName, location, password, handledCategoryIds, } = parsed.data;
+        const { employeeId, name: rawName, firstName: rawFirst, lastName: rawLast, email, role, phoneNumber, companyName, location, password, handledCategoryIds, handledSubjectIds, } = parsed.data;
         const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
         // Role hierarchy validation
         if (!this.isAllowedToManageRole(creatorRole, role)) {
             throw new ApiError(403, `You are not authorized to create a user with the role of ${role}`);
         }
-        // If role is EXTERNAL, save into ReviewCenterRepresentativeUser collection
-        if (role === Role.EXTERNAL) {
+        // If role is EXTERNAL / REVIEWCENTER, save into ReviewCenterRepresentativeUser collection
+        if (role === Role.EXTERNAL || role === Role.REVIEWCENTER) {
             if (!companyName || !companyName.trim()) {
                 throw new ApiError(400, "Review Center / Company name is required for external accounts.");
             }
@@ -403,7 +456,7 @@ export class UserService {
                 password: tempPassword,
                 role: "EXTERNAL",
                 employeeId,
-            }).catch((err) => console.error("[createFaculty EXTERNAL] Email send error:", err));
+            }).catch((err) => console.error("[createUser EXTERNAL] Email send error:", err));
             return {
                 id: newRep.id,
                 employeeId: newRep.employeeId,
@@ -415,7 +468,9 @@ export class UserService {
                 phoneNumber: newRep.phonenumber,
                 companyName: newRep.companyName,
                 location: newRep.location,
-                accountStatus: newRep.accountStatus || newRep.account_status || "ACTIVE",
+                accountStatus: newRep.accountStatus ||
+                    newRep.account_status ||
+                    "ACTIVE",
                 isActive: newRep.isActive !== false,
                 createdAt: newRep.createdAt,
                 updatedAt: newRep.updatedAt,
@@ -438,19 +493,22 @@ export class UserService {
             ? password.trim()
             : `BQ-${Math.random().toString(36).slice(-6).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`;
         const hash = await hashedPassword(tempPassword);
-        const newFaculty = await this.db.adminUser.create({
+        const newUser = await this.db.adminUser.create({
             data: {
                 employeeId,
-                name: name || "Faculty Member",
+                name: name || "User",
                 firstName: firstName || undefined,
                 lastName: lastName || undefined,
                 email,
-                role,
+                role: role,
                 phoneNumber,
                 password: hash,
                 accountStatus: "ACTIVE",
                 isActive: true,
-                handledCategoryIds: handledCategoryIds || [],
+                handledSubjectIds: String(role).toUpperCase() === "REVIEWCENTER" ||
+                    String(role).toUpperCase() === "EXTERNAL"
+                    ? []
+                    : handledSubjectIds || handledCategoryIds || [],
             },
             select: userSelect,
         });
@@ -459,12 +517,15 @@ export class UserService {
             toEmail: email,
             name,
             password: tempPassword,
-            role,
+            role: String(role),
             employeeId,
-        }).catch((err) => console.error("[createFaculty] Email send error:", err));
-        return newFaculty;
+        }).catch((err) => console.error("[createUser] Email send error:", err));
+        return newUser;
     }
-    async toggleFacultyStatus(id, nextStatusInput, creatorRole) {
+    async createFaculty(data, creatorRole) {
+        return this.createUser(data, creatorRole);
+    }
+    async toggleUserStatus(id, nextStatusInput, creatorRole) {
         const isActivating = typeof nextStatusInput === "boolean"
             ? nextStatusInput
             : nextStatusInput === "ACTIVE" || nextStatusInput !== "DEACTIVATED";
@@ -516,7 +577,9 @@ export class UserService {
                 phoneNumber: updatedRep.phonenumber,
                 companyName: updatedRep.companyName,
                 location: updatedRep.location,
-                accountStatus: updatedRep.accountStatus || updatedRep.account_status || nextAccountStatus,
+                accountStatus: updatedRep.accountStatus ||
+                    updatedRep.account_status ||
+                    nextAccountStatus,
                 isActive: updatedRep.isActive !== false,
                 createdAt: updatedRep.createdAt,
                 updatedAt: updatedRep.updatedAt,
@@ -535,7 +598,10 @@ export class UserService {
             accountStatus: updatedAdmin.accountStatus || nextAccountStatus,
         };
     }
-    async updateFacultyCategories(id, categoryIds, creatorRole) {
+    async toggleFacultyStatus(id, nextStatusInput, creatorRole) {
+        return this.toggleUserStatus(id, nextStatusInput, creatorRole);
+    }
+    async updateUserCategories(id, categoryIds, creatorRole) {
         // Strictly restrict updating handled categories to DEAN and SUPERADMIN
         if (creatorRole !== "DEAN" && creatorRole !== "SUPERADMIN") {
             throw new ApiError(403, "Only Deans and Super Administrators can manage handled categories.");
@@ -544,33 +610,46 @@ export class UserService {
             where: { id },
         });
         if (!userToUpdate) {
-            throw new ApiError(404, "Faculty member not found");
+            const rep = await this.db.reviewCenterRepresentativeUser.findUnique({
+                where: { id },
+            });
+            if (rep) {
+                throw new ApiError(400, "External accounts (Review Center) cannot be assigned to handle subjects.");
+            }
+            throw new ApiError(404, "User not found");
         }
-        const previousCategoryIds = userToUpdate.handledCategoryIds || [];
+        if (userToUpdate.role === "REVIEWCENTER" ||
+            userToUpdate.role === "EXTERNAL") {
+            throw new ApiError(400, "External accounts (Review Center) cannot be assigned to handle subjects.");
+        }
+        const subjectModel = this.db.subject || this.db.category;
+        const previousCategoryIds = userToUpdate.handledSubjectIds ||
+            userToUpdate.handledCategoryIds ||
+            [];
         const removedCategoryIds = previousCategoryIds.filter((cid) => !categoryIds.includes(cid));
         const addedCategoryIds = categoryIds.filter((cid) => !previousCategoryIds.includes(cid));
         for (const cid of removedCategoryIds) {
-            const cat = await this.db.category.findUnique({
+            const cat = await subjectModel.findUnique({
                 where: { id: cid },
                 select: { handlerIds: true },
             });
             if (cat) {
                 const nextHandlers = (cat.handlerIds || []).filter((uid) => uid !== id);
-                await this.db.category.update({
+                await subjectModel.update({
                     where: { id: cid },
                     data: { handlerIds: nextHandlers },
                 });
             }
         }
         for (const cid of addedCategoryIds) {
-            const cat = await this.db.category.findUnique({
+            const cat = await subjectModel.findUnique({
                 where: { id: cid },
                 select: { handlerIds: true },
             });
             if (cat) {
                 const currentHandlers = cat.handlerIds || [];
                 if (!currentHandlers.includes(id)) {
-                    await this.db.category.update({
+                    await subjectModel.update({
                         where: { id: cid },
                         data: { handlerIds: [...currentHandlers, id] },
                     });
@@ -580,23 +659,37 @@ export class UserService {
         return await this.db.adminUser.update({
             where: { id },
             data: {
-                handledCategoryIds: categoryIds,
+                handledSubjectIds: categoryIds,
             },
             select: userSelect,
         });
     }
-    async bulkCreateFaculty(members, creatorRole) {
+    async updateUserSubjects(id, subjectIds, creatorRole) {
+        return this.updateUserCategories(id, subjectIds, creatorRole);
+    }
+    async updateFacultyCategories(id, categoryIds, creatorRole) {
+        return this.updateUserCategories(id, categoryIds, creatorRole);
+    }
+    async updateFacultySubjects(id, subjectIds, creatorRole) {
+        return this.updateUserCategories(id, subjectIds, creatorRole);
+    }
+    async bulkCreateUsers(members, creatorRole) {
         if (!Array.isArray(members) || members.length === 0) {
-            throw new ApiError(400, "No faculty entries provided for import.");
+            throw new ApiError(400, "No user entries provided for import.");
         }
         const createdMembers = [];
         const errors = [];
         for (let i = 0; i < members.length; i++) {
             const item = members[i];
-            const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
+            const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName, item.middleName);
             const email = item.email?.trim().toLowerCase();
-            const targetRole = (item.role?.trim().toUpperCase() ||
-                "TEACHER");
+            const rawRole = item.role?.trim().toUpperCase();
+            const isExternal = rawRole === "REVIEWCENTER" ||
+                rawRole === "EXTERNAL" ||
+                Boolean(item.companyName && item.companyName.trim().length > 0);
+            const targetRole = isExternal
+                ? Role.REVIEWCENTER
+                : (rawRole || Role.TEACHER);
             if (!name || !email) {
                 errors.push({
                     email: email || "unknown",
@@ -613,55 +706,137 @@ export class UserService {
                 });
                 continue;
             }
-            const empId = item.employeeId?.trim() ||
-                `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
-            const existing = await this.db.adminUser.findFirst({
-                where: {
-                    OR: [{ email }, { employeeId: empId }],
-                },
-            });
-            if (existing) {
-                errors.push({
-                    email,
-                    name,
-                    error: "Account already exists (email or employee ID collision).",
-                });
-                continue;
-            }
-            const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() +
-                Math.random().toString(36).substring(2, 6).toUpperCase();
-            const tempPassword = `BQ-${randomChars}`;
-            try {
-                const hash = await hashedPassword(tempPassword);
-                const newUser = await this.db.adminUser.create({
-                    data: {
-                        employeeId: empId,
-                        name,
-                        firstName: firstName || undefined,
-                        lastName: lastName || undefined,
-                        email,
-                        role: targetRole,
-                        phoneNumber: item.phoneNumber?.trim() || "N/A",
-                        password: hash,
-                        handledCategoryIds: [],
+            if (isExternal) {
+                const compName = item.companyName?.trim() || `${name}'s Review Center`;
+                const partnerId = item.employeeId?.trim() ||
+                    `RC-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+                const existingRep = await this.db.reviewCenterRepresentativeUser.findFirst({
+                    where: {
+                        OR: [{ email }, { employeeId: partnerId }],
                     },
                 });
-                sendFacultyCredentialsEmail({
-                    toEmail: email,
-                    name,
-                    password: tempPassword,
-                    role: targetRole,
-                    employeeId: empId,
-                }).catch((err) => console.error("[BulkImport] Email send error:", err));
-                const { password, ...sanitized } = newUser;
-                createdMembers.push(sanitized);
+                if (existingRep) {
+                    errors.push({
+                        email,
+                        name,
+                        error: "Review center account already exists (email or partner ID collision).",
+                    });
+                    continue;
+                }
+                try {
+                    let reviewCenter = await this.db.reviewCenter.findFirst({
+                        where: { name: { equals: compName, mode: "insensitive" } },
+                    });
+                    if (!reviewCenter) {
+                        const centerCode = `RC-${compName
+                            .replace(/[^a-zA-Z0-9]/g, "")
+                            .slice(0, 6)
+                            .toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+                        reviewCenter = await this.db.reviewCenter.create({
+                            data: {
+                                name: compName,
+                                code: centerCode,
+                                location: item.location?.trim() || "Philippines",
+                                contactEmail: email,
+                                contactPhone: item.phoneNumber?.trim() || "N/A",
+                                isActive: true,
+                            },
+                        });
+                    }
+                    const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                        Math.random().toString(36).substring(2, 6).toUpperCase();
+                    const tempPassword = `BQ-RC-${randomChars}`;
+                    const hash = await hashedPassword(tempPassword);
+                    const newRep = await this.db.reviewCenterRepresentativeUser.create({
+                        data: {
+                            employeeId: partnerId,
+                            name: name || `${compName} Representative`,
+                            firstName: firstName || undefined,
+                            lastName: lastName || undefined,
+                            email,
+                            companyName: compName,
+                            phonenumber: item.phoneNumber?.trim() || "N/A",
+                            password: hash,
+                            location: item.location?.trim() || "Philippines",
+                            accountStatus: "ACTIVE",
+                            isActive: true,
+                            reviewCenterId: reviewCenter.id,
+                        },
+                    });
+                    sendFacultyCredentialsEmail({
+                        toEmail: email,
+                        name: newRep.name,
+                        password: tempPassword,
+                        role: "EXTERNAL",
+                        employeeId: partnerId,
+                    }).catch((err) => console.error("[BulkImport EXTERNAL] Email send error:", err));
+                    const { password, ...sanitized } = newRep;
+                    createdMembers.push({
+                        ...sanitized,
+                        role: Role.REVIEWCENTER,
+                    });
+                }
+                catch (err) {
+                    errors.push({
+                        email,
+                        name,
+                        error: err.message || "Failed to create review center account",
+                    });
+                }
             }
-            catch (err) {
-                errors.push({
-                    email,
-                    name,
-                    error: err.message || "Failed to create account",
+            else {
+                const empId = item.employeeId?.trim() ||
+                    `EMP-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+                const existing = await this.db.adminUser.findFirst({
+                    where: {
+                        OR: [{ email }, { employeeId: empId }],
+                    },
                 });
+                if (existing) {
+                    errors.push({
+                        email,
+                        name,
+                        error: "Account already exists (email or employee ID collision).",
+                    });
+                    continue;
+                }
+                const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                    Math.random().toString(36).substring(2, 6).toUpperCase();
+                const tempPassword = `BQ-${randomChars}`;
+                try {
+                    const hash = await hashedPassword(tempPassword);
+                    const newUser = await this.db.adminUser.create({
+                        data: {
+                            employeeId: empId,
+                            name,
+                            firstName: firstName || undefined,
+                            lastName: lastName || undefined,
+                            email,
+                            role: targetRole,
+                            phoneNumber: item.phoneNumber?.trim() || "N/A",
+                            password: hash,
+                            handledSubjectIds: [],
+                            accountStatus: "ACTIVE",
+                            isActive: true,
+                        },
+                    });
+                    sendFacultyCredentialsEmail({
+                        toEmail: email,
+                        name,
+                        password: tempPassword,
+                        role: String(targetRole),
+                        employeeId: empId,
+                    }).catch((err) => console.error("[BulkImport] Email send error:", err));
+                    const { password, ...sanitized } = newUser;
+                    createdMembers.push(sanitized);
+                }
+                catch (err) {
+                    errors.push({
+                        email,
+                        name,
+                        error: err.message || "Failed to create account",
+                    });
+                }
             }
         }
         return {
@@ -669,21 +844,27 @@ export class UserService {
             createdCount: createdMembers.length,
             skippedCount: errors.length,
             createdMembers,
+            createdUsers: createdMembers,
             errors,
         };
+    }
+    async bulkCreateFaculty(members, creatorRole) {
+        return this.bulkCreateUsers(members, creatorRole);
     }
 }
 export const userService = new UserService();
 export const facultyService = userService;
 export const FacultyService = UserService;
 export const isAllowedToManageRole = userService.isAllowedToManageRole.bind(userService);
-export const getAllFaculty = userService.getAllFaculty.bind(userService);
-export const getAllUsers = getAllFaculty;
-export const createFaculty = userService.createFaculty.bind(userService);
-export const createUser = createFaculty;
-export const bulkCreateFaculty = userService.bulkCreateFaculty.bind(userService);
-export const bulkCreateUsers = bulkCreateFaculty;
-export const toggleFacultyStatus = userService.toggleFacultyStatus.bind(userService);
-export const toggleUserStatus = toggleFacultyStatus;
-export const updateFacultyCategories = userService.updateFacultyCategories.bind(userService);
-export const updateUserCategories = updateFacultyCategories;
+export const getAllUsers = userService.getAllUsers.bind(userService);
+export const getAllFaculty = getAllUsers;
+export const createUser = userService.createUser.bind(userService);
+export const createFaculty = createUser;
+export const bulkCreateUsers = userService.bulkCreateUsers.bind(userService);
+export const bulkCreateFaculty = bulkCreateUsers;
+export const toggleUserStatus = userService.toggleUserStatus.bind(userService);
+export const toggleFacultyStatus = toggleUserStatus;
+export const updateUserCategories = userService.updateUserCategories.bind(userService);
+export const updateUserSubjects = userService.updateUserSubjects.bind(userService);
+export const updateFacultyCategories = updateUserCategories;
+export const updateFacultySubjects = updateUserSubjects;

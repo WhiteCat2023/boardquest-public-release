@@ -3,12 +3,12 @@ import request from 'supertest';
 import express from 'express';
 import questionRouter from '../routes/admin/question.routes';
 import * as questionService from '../services/admin/question.service';
-import * as categoryService from '../services/admin/category.service';
+import * as categoryService from '../services/admin/subject.service';
 import { ApiError } from '../utils/apiError';
 // Mock question services
 jest.mock('../services/admin/question.service');
-// Mock category services
-jest.mock('../services/admin/category.service');
+// Mock subject / category services
+jest.mock('../services/admin/subject.service');
 // Mock background queue service to avoid DB connection leaks during tests
 jest.mock('../services/queue.service', () => ({
     agenda: {
@@ -329,6 +329,55 @@ describe('Question Routes', () => {
             expect(response.body.data.category).toBeDefined();
             expect(response.body.data.category.id).toBe('category-1');
             expect(response.body.message).toContain('deleted successfully');
+        });
+    });
+    describe('Subject Routes (/api/questions/subject/...)', () => {
+        it('should create a new subject and return 201', async () => {
+            const mockNewSubject = {
+                id: 'subject-1',
+                name: 'Microbiology',
+                authorId: 'author-1',
+                icon: 'Folder',
+            };
+            categoryService.createNewSubject.mockResolvedValue(mockNewSubject);
+            const response = await request(app)
+                .post('/api/questions/subject/create')
+                .send({
+                name: 'Microbiology',
+                authorId: 'author-1',
+            });
+            expect(response.status).toBe(201);
+            expect(response.body.data.subject).toBeDefined();
+            expect(response.body.data.subject.id).toBe('subject-1');
+            expect(response.body.message).toContain('created successfully');
+        });
+        it('should return all subjects and 200', async () => {
+            const mockSubjectsList = [
+                {
+                    id: 'subject-1',
+                    name: 'Microbiology',
+                    authorId: 'author-1',
+                },
+            ];
+            categoryService.getAllSubjects.mockResolvedValue(mockSubjectsList);
+            const response = await request(app).get('/api/questions/subject/get');
+            expect(response.status).toBe(200);
+            expect(response.body.data.subjects).toBeDefined();
+            expect(response.body.data.subjects.length).toBe(1);
+        });
+        it('should assign subject handlers and return 200', async () => {
+            const mockAssigned = {
+                id: 'subject-1',
+                name: 'Microbiology',
+                handlerIds: ['user-1', 'user-2'],
+            };
+            categoryService.assignSubjectHandlers.mockResolvedValue(mockAssigned);
+            const response = await request(app)
+                .put('/api/questions/subject/single/subject-1/handlers')
+                .send({ handlerIds: ['user-1', 'user-2'] });
+            expect(response.status).toBe(200);
+            expect(response.body.data.subject).toBeDefined();
+            expect(response.body.message).toContain('assigned successfully');
         });
     });
 });

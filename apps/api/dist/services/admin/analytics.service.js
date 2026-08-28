@@ -46,7 +46,7 @@ export class AnalyticsService {
             : 0;
         const totalLessons = 35; // Standard total core modules
         // Subject mastery formatting strictly from real DB records with flexible matching
-        const categoriesFromDb = await this.db.category.findMany({
+        const subjectsFromDb = await this.db.subject.findMany({
             select: {
                 id: true,
                 name: true,
@@ -62,39 +62,42 @@ export class AnalyticsService {
             const b = s2.toLowerCase().trim();
             return a === b || a.includes(b) || b.includes(a) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4));
         };
-        // Gather all unique category names (from DB Categories + any extra in student.mastery or student.examResults)
-        const categoryMap = new Map();
-        categoriesFromDb.forEach((cat) => {
-            categoryMap.set(cat.name.toLowerCase().trim(), {
-                name: cat.name,
-                modulesCount: cat.modules ? cat.modules.filter((m) => m.isPublished !== false).length : 0,
+        // Gather subjects strictly from DB Subject records when available
+        const subjectMap = new Map();
+        subjectsFromDb.forEach((sub) => {
+            subjectMap.set(sub.name.toLowerCase().trim(), {
+                name: sub.name,
+                modulesCount: sub.modules ? sub.modules.filter((m) => m.isPublished !== false).length : 0,
             });
         });
-        (student.mastery || []).forEach((m) => {
-            if (m?.subject) {
-                const key = m.subject.toLowerCase().trim();
-                if (!categoryMap.has(key)) {
-                    categoryMap.set(key, { name: m.subject, modulesCount: 0 });
+        // Only fallback to student records if no subjects are defined in the DB at all
+        if (subjectsFromDb.length === 0) {
+            (student.mastery || []).forEach((m) => {
+                if (m?.subject) {
+                    const key = m.subject.toLowerCase().trim();
+                    if (!subjectMap.has(key)) {
+                        subjectMap.set(key, { name: m.subject, modulesCount: 0 });
+                    }
                 }
-            }
-        });
-        (student.examResults || []).forEach((e) => {
-            if (e?.subject) {
-                const key = e.subject.toLowerCase().trim();
-                if (!categoryMap.has(key)) {
-                    categoryMap.set(key, { name: e.subject, modulesCount: 0 });
+            });
+            (student.examResults || []).forEach((e) => {
+                if (e?.subject) {
+                    const key = e.subject.toLowerCase().trim();
+                    if (!subjectMap.has(key)) {
+                        subjectMap.set(key, { name: e.subject, modulesCount: 0 });
+                    }
                 }
-            }
-        });
-        const masteryData = Array.from(categoryMap.values()).map((catInfo) => {
-            const sub = catInfo.name;
+            });
+        }
+        const masteryData = Array.from(subjectMap.values()).map((subInfo) => {
+            const sub = subInfo.name;
             // 1. Find existing explicit SubjectMastery row from DB
             const existing = (student.mastery || []).find((m) => matchSubject(m?.subject, sub));
             // 2. Count actual completed lessons for this subject
             const subjectCompletions = (student.lessonCompletions || []).filter((c) => matchSubject(c?.subject, sub) && (c?.status === "completed" || c?.status === "COMPLETED"));
             const actualLessonsDone = subjectCompletions.length;
             // 3. Total modules count for this subject (default to min 5 for UI module target)
-            const totalLessons = Math.max(catInfo.modulesCount, 5);
+            const totalLessons = Math.max(subInfo.modulesCount, 5);
             // 4. Look at subject-specific exam results
             const subjectExams = (student.examResults || []).filter((e) => matchSubject(e?.subject, sub));
             const examAvgScore = subjectExams.length > 0
@@ -258,8 +261,14 @@ export class AnalyticsService {
             studyHoursTarget: 10,
             studyHoursCompleted: Math.min(10, Math.round((student.streak || 0) * 1.5))
         };
-        // 8. Map Real Database Study Plans
-        const studyPlans = (student.studyPlans || []).map((sp) => ({
+        // 8. Map Real Database Study Plans (filter by active DB subjects if defined)
+        const studyPlans = (student.studyPlans || [])
+            .filter((sp) => {
+            if (subjectsFromDb.length === 0)
+                return true;
+            return subjectsFromDb.some((sub) => matchSubject(sub.name, sp.subject));
+        })
+            .map((sp) => ({
             id: sp.id,
             subject: sp.subject,
             targetDate: sp.targetDate,
@@ -454,7 +463,7 @@ export class AnalyticsService {
                 id: true,
                 level: true,
                 examResults: {
-                    select: { score: true },
+                    select: { score: true, subject: true, accuracy: true },
                 },
                 mastery: {
                     select: { subject: true, proficiency: true },
@@ -572,22 +581,39 @@ export class AnalyticsService {
             }
             return { month: m.month, rate: 0, avgScore: 0, students: 0 };
         });
-        const categories = await this.db.category.findMany({
+        const categories = await this.db.subject.findMany({
             include: {
                 _count: {
                     select: { questions: true },
                 },
             },
         });
+        const matchSubjectName = (s1, s2) => {
+            if (!s1 || !s2)
+                return false;
+            const a = s1.toLowerCase().trim();
+            const b = s2.toLowerCase().trim();
+            return (a === b ||
+                a.includes(b) ||
+                b.includes(a) ||
+                (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4)));
+        };
         const subjects = categories.map((cat) => {
-            const catMastery = students.flatMap((s) => (s.mastery || []).filter((m) => m.subject.toLowerCase().includes(cat.name.toLowerCase())));
-            const avgProficiency = catMastery.length > 0
-                ? Math.round(catMastery.reduce((acc, curr) => acc + curr.proficiency, 0) / catMastery.length)
-                : 0;
+            const catMastery = students.flatMap((s) => (s.mastery || []).filter((m) => matchSubjectName(m.subject, cat.name)));
+            let avgProficiency = 0;
+            if (catMastery.length > 0) {
+                avgProficiency = Math.round(catMastery.reduce((acc, curr) => acc + (curr.proficiency || 0), 0) / catMastery.length);
+            }
+            else {
+                const catExams = students.flatMap((s) => (s.examResults || []).filter((e) => matchSubjectName(e.subject, cat.name)));
+                if (catExams.length > 0) {
+                    avgProficiency = Math.round(catExams.reduce((acc, curr) => acc + (curr.score || 0), 0) / catExams.length);
+                }
+            }
             return {
                 id: cat.id,
                 name: cat.name,
-                questionCount: cat._count.questions,
+                questionCount: cat._count?.questions ?? 0,
                 proficiency: avgProficiency,
             };
         });

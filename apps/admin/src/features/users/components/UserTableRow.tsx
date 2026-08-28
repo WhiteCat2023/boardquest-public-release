@@ -24,7 +24,7 @@ export default function UserTableRow({
   const isAccountActive = member?.accountStatus === "ACTIVE" || member?.accountStatus !== "DEACTIVATED";
   const isOnline = isUserOnline(member?.lastActiveAt);
   const isSuperAdminAccount =
-    member?.role === "SUPERADMIN" || member?.employeeId === "SA-0001" || member?.role === UserRole.SUPERADMIN;
+    (member?.role as string) === "SUPERADMIN" || member?.employeeId === "SA-0001";
 
   const formatLastActive = (dateStr?: string) => {
     if (!dateStr) return "Never";

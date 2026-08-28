@@ -24,6 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import EditParsedUserDialog from "./EditParsedUserDialog";
+import type { ParsedUserRow } from "../types/types";
 
 const userRowSchema = z
   .object({
@@ -34,6 +35,7 @@ const userRowSchema = z
     email: z.string().min(1, "Missing Email").email("Invalid Email"),
     role: z
       .union([z.string(), z.number()])
+      .transform((val) => String(val))
       .default("TEACHER"),
     employeeId: z.string().optional(),
     phoneNumber: z.string().optional(),
@@ -47,19 +49,6 @@ const userRowSchema = z
       ),
     { message: "Missing Name" }
   );
-
-interface ParsedUserRow {
-  name: string;
-  firstName?: string;
-  middleName?: string;
-  lastName?: string;
-  email: string;
-  role: string | number;
-  employeeId?: string;
-  phoneNumber?: string;
-  isValid: boolean;
-  validationError?: string;
-}
 
 interface BulkImportUserModalProps {
   isOpen: boolean;

@@ -283,17 +283,13 @@ export default function ViewUser() {
     activeMember.id !== currentUserId &&
     isAllowedToManageRole(currentUserRole, activeMember.role);
   const canManageCategories =
-    currentUserRole === "DEAN" ||
-    currentUserRole === "SUPERADMIN" ||
-    currentUserRole === UserRole.DEAN ||
-    currentUserRole === UserRole.SUPERADMIN;
+    String(currentUserRole) === "DEAN" ||
+    String(currentUserRole) === "SUPERADMIN";
 
   const handledCategories = activeMember.handledSubjects || activeMember.handledCategories || [];
   const isExternal =
-    activeMember.role === "EXTERNAL" ||
-    activeMember.role === "REVIEWCENTER" ||
-    activeMember.role === UserRole.REVIEWCENTER ||
-    activeMember.role === UserRole.EXTERNAL;
+    String(activeMember.role) === "EXTERNAL" ||
+    String(activeMember.role) === "REVIEWCENTER";
 
   return (
     <phantom-ui loading={isLoading}>

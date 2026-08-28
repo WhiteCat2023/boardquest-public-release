@@ -202,10 +202,11 @@ export default function FastReviewWorkspace({
     (activeQuestion as any).rationale ||
     "";
 
+  const qAny = activeQuestion as any;
   const commentsCount =
-    activeQuestion._count?.comments ??
-    activeQuestion._count?.questionComments ??
-    (Array.isArray(activeQuestion.comments) ? activeQuestion.comments.length : 0);
+    qAny?._count?.comments ??
+    qAny?._count?.questionComments ??
+    (Array.isArray(qAny?.comments) ? qAny.comments.length : 0);
 
   const displayStatus =
     (activeQuestion.status === "PENDING_REVISION" ||

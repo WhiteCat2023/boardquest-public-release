@@ -9,14 +9,28 @@ export const agenda = new Agenda({
         collection: "agendaJobs",
     }),
 });
+import { sseService } from "./admin/sse.service";
 // Define the bulk-question-upload job
 agenda.define("bulk-question-upload", async (job) => {
-    const { questions, categoryId, authorId } = job.attrs
+    const { questions, categoryId, authorId, status } = job.attrs
         .data;
-    console.log(`[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions...`);
+    console.log(`[Queue] Starting background bulk question upload for category: ${categoryId}. Importing ${questions.length} questions with status: ${status || "default"}...`);
     try {
-        const imported = await importQuestions(questions, categoryId, authorId);
+        const imported = await importQuestions(questions, categoryId, authorId, status);
         console.log(`[Queue] Background bulk upload completed successfully. Imported ${imported.length} questions.`);
+        // Broadcast SSE update event so all connected clients reflect new questions immediately
+        try {
+            sseService.broadcastEvent("questions-updated", {
+                type: "BULK_UPLOAD_COMPLETED",
+                categoryId,
+                count: imported.length,
+                authorId,
+                status,
+            });
+        }
+        catch (err) {
+            console.warn("Error broadcasting questions-updated SSE event:", err);
+        }
     }
     catch (error) {
         console.error(`[Queue] Background bulk upload failed:`, error);

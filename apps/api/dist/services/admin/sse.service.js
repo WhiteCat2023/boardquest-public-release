@@ -81,6 +81,19 @@ class SseService {
             }
         });
     }
+    broadcastEvent(event, data) {
+        if (!event)
+            return;
+        this.clients.forEach((client) => {
+            try {
+                client.res.write(`event: ${event}\n`);
+                client.res.write(`data: ${JSON.stringify(data)}\n\n`);
+            }
+            catch (err) {
+                this.removeClient(client.res);
+            }
+        });
+    }
 }
 export const sseService = new SseService();
 export default sseService;

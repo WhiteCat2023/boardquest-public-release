@@ -54,8 +54,8 @@ export const authenticateToken = async (req, res, next) => {
                     role: true,
                     accountStatus: true,
                     isActive: true,
-                    handledCategoryIds: true,
-                    handledCategories: { select: { id: true, name: true } },
+                    handledSubjectIds: true,
+                    handledSubjects: { select: { id: true, name: true } },
                 },
             });
             if (!user) {
@@ -65,6 +65,9 @@ export const authenticateToken = async (req, res, next) => {
                 });
                 return;
             }
+            // Map handledSubjects and handledSubjectIds for backward compatibility
+            user.handledCategoryIds = user.handledSubjectIds || [];
+            user.handledCategories = user.handledSubjects || [];
             const accountStatus = user.accountStatus;
             if (accountStatus === "DEACTIVATED") {
                 res.status(403).json({
@@ -104,7 +107,9 @@ export const requireAdmin = (req, res, next) => {
         });
         return;
     }
-    if (req.user.role !== "DEAN" && req.user.role !== "SUPERADMIN") {
+    const userRole = String(req.user.role || "").toUpperCase();
+    if (userRole !== "DEAN" &&
+        userRole !== "SUPERADMIN") {
         res.status(403).json({
             message: "Dean or Superadmin privileges required",
             error: "INSUFFICIENT_PRIVILEGES",
@@ -112,6 +117,22 @@ export const requireAdmin = (req, res, next) => {
         return;
     }
     next();
+};
+export const normalizeRole = (role) => {
+    if (!role)
+        return "";
+    const s = String(role).toUpperCase().trim();
+    if (s === "SUPERADMIN")
+        return "SUPERADMIN";
+    if (s === "DEAN")
+        return "DEAN";
+    if (s === "TEAMLEAD")
+        return "TEAMLEAD";
+    if (s === "TEACHER")
+        return "TEACHER";
+    if (s === "REVIEWCENTER" || s === "EXTERNAL")
+        return "REVIEWCENTER";
+    return s;
 };
 export const requireRoles = (roles) => {
     return (req, res, next) => {
@@ -122,7 +143,14 @@ export const requireRoles = (roles) => {
             });
             return;
         }
-        if (!req.user.role || !roles.includes(req.user.role)) {
+        const userRole = req.user.role;
+        const isAllowed = userRole &&
+            roles.some((r) => {
+                if (r === userRole || String(r) === String(userRole))
+                    return true;
+                return normalizeRole(r) === normalizeRole(userRole);
+            });
+        if (!isAllowed) {
             res.status(403).json({
                 message: "Insufficient privileges",
                 error: "INSUFFICIENT_PRIVILEGES",

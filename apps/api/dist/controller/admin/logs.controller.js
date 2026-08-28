@@ -16,7 +16,7 @@ export const getLogStatsController = asyncHandler(async (_req, res) => {
     return new ApiResponse(200, { stats }, "Log stats fetched successfully").send(res);
 });
 export const clearLogsController = asyncHandler(async (req, res) => {
-    const userEmail = req.user?.email || "admin@boardquest.edu";
+    const userEmail = req.user?.email || "System";
     await clearSystemLogs();
     // Log the clear action
     await logInfo("CLEAR_SYSTEM_LOGS", `System logs cleared by administrator (${userEmail}).`, "LogsManagement", userEmail, req.ip);

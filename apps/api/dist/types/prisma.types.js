@@ -8,6 +8,7 @@ export var Role;
     Role["DEAN"] = "DEAN";
     Role["TEAMLEAD"] = "TEAMLEAD";
     Role["TEACHER"] = "TEACHER";
+    Role["REVIEWCENTER"] = "REVIEWCENTER";
     Role["EXTERNAL"] = "EXTERNAL";
 })(Role || (Role = {}));
 export var QuestionDifficulty;
@@ -22,6 +23,12 @@ export var QuestionType;
     QuestionType["TRUE_FALSE"] = "TRUE_FALSE";
     QuestionType["SHORT_ANSWER"] = "SHORT_ANSWER";
 })(QuestionType || (QuestionType = {}));
+export var QuestionStatus;
+(function (QuestionStatus) {
+    QuestionStatus["APPROVED"] = "APPROVED";
+    QuestionStatus["PENDING_REVIEW"] = "PENDING_REVIEW";
+    QuestionStatus["PENDING_REVISION"] = "PENDING_REVISION";
+})(QuestionStatus || (QuestionStatus = {}));
 export var RequestStatus;
 (function (RequestStatus) {
     RequestStatus["PENDING"] = "PENDING";

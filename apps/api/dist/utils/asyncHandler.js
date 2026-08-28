@@ -1,17 +1,30 @@
+import { ApiError } from "./apiError";
 const asyncHandler = (fn) => async (req, res, next) => {
     try {
         await fn(req, res, next);
     }
     catch (error) {
         const err = error;
-        const statusCode = err.statusCode ?? 500;
+        const isApiError = error instanceof ApiError;
+        const statusCode = err?.statusCode ?? 500;
+        const rawMessage = err?.message || "Internal Server Error";
+        // Mask raw database errors from leaking to the client
+        const isInternalDatabaseError = statusCode >= 500 ||
+            !isApiError ||
+            rawMessage.includes("invocation") ||
+            rawMessage.includes("PrismaClient") ||
+            rawMessage.includes("Unknown field");
+        const clientMessage = isInternalDatabaseError
+            ? "An internal server error occurred. Please try again."
+            : rawMessage;
+        if (process.env.NODE_ENV !== "test") {
+            console.error("[API Error]", error);
+        }
         res.status(statusCode).json({
-            success: err.success || false,
-            message: err.message || "Internal Server Error",
-            errors: err.errors || [],
-            data: err.data || null,
-            name: err.name || "No Name",
-            stack: err.stack || "Empty Stack",
+            success: false,
+            message: clientMessage,
+            errors: err?.errors || [],
+            data: err?.data || null,
         });
     }
 };

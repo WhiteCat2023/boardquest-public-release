@@ -164,10 +164,10 @@ export async function sendFacultyCredentialsEmail({ toEmail, name, password, rol
           <tr>
             <td style="padding: 36px 32px; text-align: left;">
               <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 800; color: #111827; letter-spacing: 0.5px; text-transform: uppercase; text-align: center;">
-                Faculty Account <span style="color: #a60b0b;">Created</span>
+                User Account <span style="color: #a60b0b;">Created</span>
               </h2>
               <p style="margin: 0 0 24px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
-                Hello <strong>${name}</strong>, your faculty account has been registered on the BoardQuest Evaluation Platform. Below are your login credentials:
+                Hello <strong>${name}</strong>, your user account has been registered on the BoardQuest Evaluation Platform. Below are your login credentials:
               </p>
 
               <!-- Credentials Box -->
@@ -229,7 +229,7 @@ export async function sendFacultyCredentialsEmail({ toEmail, name, password, rol
     const mailOptions = {
         from: process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
         to: toEmail,
-        subject: "Your BoardQuest Faculty Account Credentials",
+        subject: "Your BoardQuest User Account Credentials",
         html: htmlContent,
     };
     try {
@@ -238,13 +238,13 @@ export async function sendFacultyCredentialsEmail({ toEmail, name, password, rol
         const previewUrl = nodemailer.getTestMessageUrl(info);
         if (previewUrl) {
             console.log(`\n==================================================`);
-            console.log(`📧 [FACULTY CREDENTIALS EMAIL SENT TO: ${toEmail}]`);
+            console.log(`📧 [USER CREDENTIALS EMAIL SENT TO: ${toEmail}]`);
             console.log(`🔑 Temp Password: ${password}`);
             console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
             console.log(`==================================================\n`);
         }
         else {
-            console.log(`[MailService] Faculty credentials email sent to ${toEmail} (Message ID: ${info.messageId})`);
+            console.log(`[MailService] User credentials email sent to ${toEmail} (Message ID: ${info.messageId})`);
         }
         return info;
     }
@@ -254,6 +254,7 @@ export async function sendFacultyCredentialsEmail({ toEmail, name, password, rol
         return null;
     }
 }
+export const sendUserCredentialsEmail = sendFacultyCredentialsEmail;
 export async function sendStudentCredentialsEmail({ toEmail, name, password, studentId, }) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const loginUrl = `${frontendUrl}/login`;

@@ -4,10 +4,10 @@ import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
 import { sendStudentCredentialsEmail } from "../mail.service";
 import { StudyPlanService, createStudyPlanSchema } from "./studyPlan.service";
-import { SubjectMasteryService, updateSubjectMasterySchema } from "./subjectMastery.service";
-import { ExamResultService, recordExamResultSchema } from "./examResult.service";
-import { AchievementService, awardAchievementSchema } from "./achievement.service";
-import { LessonCompletionService, recordLessonCompletionSchema } from "./lessonCompletion.service";
+import { SubjectMasteryService, updateSubjectMasterySchema, } from "./subjectMastery.service";
+import { ExamResultService, recordExamResultSchema, } from "./examResult.service";
+import { AchievementService, awardAchievementSchema, } from "./achievement.service";
+import { LessonCompletionService, recordLessonCompletionSchema, } from "./lessonCompletion.service";
 // ============ Validation Schemas ============
 export const createStudentSchema = z
     .object({
@@ -71,7 +71,7 @@ export class StudentService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { email, password, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
+        const { email, password, name: rawName, firstName: rawFirst, lastName: rawLast, location, } = parsed.data;
         const { name, firstName, lastName } = this.resolveNameParts(rawName, rawFirst, rawLast);
         const existingStudent = await this.db.user.findUnique({
             where: { email },
@@ -121,7 +121,7 @@ export class StudentService {
      * Get all students with optional filters
      */
     async getAllStudents(options) {
-        const { search, level, location, advisorId, skip = 0, take = 50 } = options || {};
+        const { search, level, location, advisorId, skip = 0, take = 50, } = options || {};
         const where = {};
         if (search && search.trim()) {
             const q = search.trim();
@@ -220,7 +220,9 @@ export class StudentService {
      * Get student profile by ID
      */
     async getStudentById(studentId) {
-        if (!studentId || typeof studentId !== "string" || !/^[0-9a-fA-F]{24}$/.test(studentId)) {
+        if (!studentId ||
+            typeof studentId !== "string" ||
+            !/^[0-9a-fA-F]{24}$/.test(studentId)) {
             throw new ApiError(404, "Student not found");
         }
         try {
@@ -261,7 +263,8 @@ export class StudentService {
             }
             const { password: _password, ...sanitizedStudent } = student;
             // Filter out any deactivated badges on the backend level
-            if (sanitizedStudent.userBadges && Array.isArray(sanitizedStudent.userBadges)) {
+            if (sanitizedStudent.userBadges &&
+                Array.isArray(sanitizedStudent.userBadges)) {
                 sanitizedStudent.userBadges = sanitizedStudent.userBadges.filter((ub) => !ub.badge || ub.badge.isActive !== false);
             }
             return sanitizedStudent;
@@ -281,7 +284,7 @@ export class StudentService {
             const errors = parsed.error.flatten().fieldErrors;
             throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
         }
-        const { studentId, name: rawName, firstName: rawFirst, lastName: rawLast, location } = parsed.data;
+        const { studentId, name: rawName, firstName: rawFirst, lastName: rawLast, location, } = parsed.data;
         const existingStudent = await this.db.user.findUnique({
             where: { id: studentId },
         });
@@ -297,9 +300,16 @@ export class StudentService {
             updateData.name = rawName.trim();
         }
         else if (rawFirst !== undefined || rawLast !== undefined) {
-            const effectiveFirst = rawFirst !== undefined ? rawFirst.trim() : existingStudent.firstName || "";
-            const effectiveLast = rawLast !== undefined ? rawLast.trim() : existingStudent.lastName || "";
-            const combined = [effectiveFirst, effectiveLast].filter(Boolean).join(" ").trim();
+            const effectiveFirst = rawFirst !== undefined
+                ? rawFirst.trim()
+                : existingStudent.firstName || "";
+            const effectiveLast = rawLast !== undefined
+                ? rawLast.trim()
+                : existingStudent.lastName || "";
+            const combined = [effectiveFirst, effectiveLast]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
             if (combined) {
                 updateData.name = combined;
             }
@@ -387,7 +397,11 @@ export class StudentService {
             const { name, firstName, lastName } = this.resolveNameParts(item.name, item.firstName, item.lastName);
             const email = item.email?.trim().toLowerCase();
             if (!name || !email) {
-                errors.push({ email: email || "unknown", name: name || "unknown", error: "Name and Email are required fields." });
+                errors.push({
+                    email: email || "unknown",
+                    name: name || "unknown",
+                    error: "Name and Email are required fields.",
+                });
                 continue;
             }
             const existing = await this.db.user.findUnique({
@@ -397,7 +411,8 @@ export class StudentService {
                 errors.push({ email, name, error: "Email already registered." });
                 continue;
             }
-            const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+            const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                Math.random().toString(36).substring(2, 6).toUpperCase();
             const tempPassword = `BQ-STU-${randomChars}`;
             try {
                 const hash = await hashedPassword(tempPassword);
@@ -424,7 +439,11 @@ export class StudentService {
                 createdStudents.push(sanitized);
             }
             catch (err) {
-                errors.push({ email, name, error: err.message || "Failed to enroll student" });
+                errors.push({
+                    email,
+                    name,
+                    error: err.message || "Failed to enroll student",
+                });
             }
         }
         return {
@@ -465,4 +484,4 @@ export const recordLessonCompletion = lessonCompletionService.recordLessonComple
 export const getLessonCompletions = lessonCompletionService.getLessonCompletions.bind(lessonCompletionService);
 export const getLessonCompletionProgress = lessonCompletionService.getLessonCompletionProgress.bind(lessonCompletionService);
 // ============ Re-exports of Schemas and Types ============
-export { createStudyPlanSchema, StudyPlanService, updateSubjectMasterySchema, SubjectMasteryService, recordExamResultSchema, ExamResultService, awardAchievementSchema, AchievementService, recordLessonCompletionSchema, LessonCompletionService };
+export { createStudyPlanSchema, StudyPlanService, updateSubjectMasterySchema, SubjectMasteryService, recordExamResultSchema, ExamResultService, awardAchievementSchema, AchievementService, recordLessonCompletionSchema, LessonCompletionService, };
