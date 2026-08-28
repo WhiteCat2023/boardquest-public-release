@@ -37,9 +37,13 @@ ENV NODE_ENV=production
 # Install runtime libraries for Prisma
 RUN apk add --no-cache openssl libc6-compat
 
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/api/prisma ./apps/api/prisma
+COPY apps/api/src ./apps/api/src
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/node_modules ./node_modules
@@ -48,4 +52,4 @@ WORKDIR /app/apps/api
 
 EXPOSE 5000
 
-CMD ["node", "dist/index.js"]
+CMD ["npx", "tsx", "src/index.ts"]
