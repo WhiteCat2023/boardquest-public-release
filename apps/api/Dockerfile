@@ -24,6 +24,7 @@ COPY apps/api ./apps/api
 
 # Generate Prisma Client and compile TypeScript
 WORKDIR /app/apps/api
+ENV DATABASE_URL="mongodb://localhost:27017/placeholder"
 RUN npx prisma generate
 RUN pnpm build
 
