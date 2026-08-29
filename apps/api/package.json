@@ -36,8 +36,8 @@
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.1",
     "mongodb": "^7.2.0",
-    "nodemailer": "^9.0.3",
     "rate-limit-redis": "^6.0.1",
+    "resend": "^6.24.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",
     "zod": "^4.4.3"
   },
@@ -50,7 +50,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/jszip": "^3.4.1",
     "@types/node": "^25.6.0",
-    "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^7.2.0",
     "jest": "^30.4.2",
     "prisma": "^6.19.3",

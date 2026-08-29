@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 interface SendPasswordResetMailOptions {
   toEmail: string;
@@ -6,23 +6,20 @@ interface SendPasswordResetMailOptions {
   userName?: string;
 }
 
-let testTransporter: nodemailer.Transporter | null = null;
-
-async function getTransporter() {
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST!,
-      service: "gmail",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.trim() === "") {
+    return null;
   }
+  return new Resend(apiKey);
+}
 
-  return testTransporter;
+function getFromAddress(): string {
+  return (
+    process.env.RESEND_FROM ||
+    process.env.SMTP_FROM ||
+    "BoardQuest <onboarding@resend.dev>"
+  );
 }
 
 export async function sendPasswordResetEmail({
@@ -106,33 +103,44 @@ export async function sendPasswordResetEmail({
 </html>
   `;
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM,
-    to: toEmail,
-    subject: "Reset your BoardQuest password",
-    html: htmlContent,
-  };
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`
+    );
+    console.log(`\n==================================================`);
+    console.log(`📧 [BOARDQUEST PASSWORD RESET SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`🔗 Direct Reset Link: ${resetUrl}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
 
   try {
-    const transporter = await getTransporter();
-    const info = await transporter!.sendMail(mailOptions);
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: "Reset your BoardQuest password",
+      html: htmlContent,
+    });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      console.log(`\n==================================================`);
-      console.log(`📧 [BOARDQUEST MAIL SENT TO: ${toEmail}]`);
-      console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
-      console.log(`==================================================\n`);
-    } else {
-      console.log(
-        `[MailService] Email sent successfully to ${toEmail} (Message ID: ${info.messageId})`,
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send password reset email to ${toEmail}:`,
+        error
       );
+      console.log(`[MailService Direct Reset Link for testing]: ${resetUrl}`);
+      return null;
     }
-    return info;
+
+    console.log(
+      `[MailService] Password reset email sent successfully to ${toEmail} (ID: ${data?.id})`
+    );
+    return data;
   } catch (error) {
     console.error(
-      `[MailService Error] Failed to send email to ${toEmail}:`,
-      error,
+      `[MailService Error] Exception sending email to ${toEmail}:`,
+      error
     );
     console.log(`[MailService Direct Reset Link for testing]: ${resetUrl}`);
     return null;
@@ -256,38 +264,50 @@ export async function sendFacultyCredentialsEmail({
 </html>
   `;
 
-  const mailOptions = {
-    from:
-      process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
-    to: toEmail,
-    subject: "Your BoardQuest User Account Credentials",
-    html: htmlContent,
-  };
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`
+    );
+    console.log(`\n==================================================`);
+    console.log(`📧 [USER CREDENTIALS EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`🔑 Temp Password: ${password}`);
+    console.log(`🔗 Login Link: ${loginUrl}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
 
   try {
-    const transporter = await getTransporter();
-    const info = await transporter!.sendMail(mailOptions);
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: "Your BoardQuest User Account Credentials",
+      html: htmlContent,
+    });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      console.log(`\n==================================================`);
-      console.log(`📧 [USER CREDENTIALS EMAIL SENT TO: ${toEmail}]`);
-      console.log(`🔑 Temp Password: ${password}`);
-      console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
-      console.log(`==================================================\n`);
-    } else {
-      console.log(
-        `[MailService] User credentials email sent to ${toEmail} (Message ID: ${info.messageId})`,
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send credentials email to ${toEmail}:`,
+        error
       );
+      console.log(
+        `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`
+      );
+      return null;
     }
-    return info;
+
+    console.log(
+      `[MailService] User credentials email sent to ${toEmail} (ID: ${data?.id})`
+    );
+    return data;
   } catch (error) {
     console.error(
-      `[MailService Error] Failed to send credentials email to ${toEmail}:`,
-      error,
+      `[MailService Error] Exception sending credentials email to ${toEmail}:`,
+      error
     );
     console.log(
-      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`,
+      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`
     );
     return null;
   }
@@ -404,38 +424,50 @@ export async function sendStudentCredentialsEmail({
 </html>
   `;
 
-  const mailOptions = {
-    from:
-      process.env.SMTP_FROM || '"BoardQuest Admin" <noreply@boardquest.com>',
-    to: toEmail,
-    subject: "Your BoardQuest Student Account Credentials",
-    html: htmlContent,
-  };
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`
+    );
+    console.log(`\n==================================================`);
+    console.log(`📧 [STUDENT CREDENTIALS EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`🔑 Temp Password: ${password}`);
+    console.log(`🔗 Login Link: ${loginUrl}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
 
   try {
-    const transporter = await getTransporter();
-    const info = await transporter!.sendMail(mailOptions);
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: "Your BoardQuest Student Account Credentials",
+      html: htmlContent,
+    });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      console.log(`\n==================================================`);
-      console.log(`📧 [STUDENT CREDENTIALS EMAIL SENT TO: ${toEmail}]`);
-      console.log(`🔑 Temp Password: ${password}`);
-      console.log(`🔗 PREVIEW EMAIL LINK: ${previewUrl}`);
-      console.log(`==================================================\n`);
-    } else {
-      console.log(
-        `[MailService] Student credentials email sent to ${toEmail} (Message ID: ${info.messageId})`,
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send credentials email to ${toEmail}:`,
+        error
       );
+      console.log(
+        `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`
+      );
+      return null;
     }
-    return info;
+
+    console.log(
+      `[MailService] Student credentials email sent to ${toEmail} (ID: ${data?.id})`
+    );
+    return data;
   } catch (error) {
     console.error(
-      `[MailService Error] Failed to send credentials email to ${toEmail}:`,
-      error,
+      `[MailService Error] Exception sending student credentials email to ${toEmail}:`,
+      error
     );
     console.log(
-      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`,
+      `[MailService Credentials Log]: Email=${toEmail}, Password=${password}`
     );
     return null;
   }
