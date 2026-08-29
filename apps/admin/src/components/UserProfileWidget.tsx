@@ -64,7 +64,7 @@ export default function UserProfileWidget() {
 
   return (
     <div className="flex items-center gap-2 font-sans">
-      {/* Notification Dropdown Feature */}
+      {/* Real-time Notification Dropdown Feature */}
       <NotificationDropdown />
 
       {/* User Profile Widget Dropdown */}

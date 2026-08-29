@@ -13,10 +13,10 @@ const possiblePaths = [
 
 for (const p of possiblePaths) {
   if (fs.existsSync(p)) {
-    dotenv.config({ path: p });
+    dotenv.config({ path: p, override: true });
   }
 }
-dotenv.config();
+dotenv.config({ override: true });
 
 import express from "express";
 import cookieParser from "cookie-parser";

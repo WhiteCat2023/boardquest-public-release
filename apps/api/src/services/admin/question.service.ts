@@ -12,6 +12,7 @@ import {
 } from "./questionSynthesizer.service";
 import { createNotification } from "./notification.service";
 import { sseService } from "./sse.service";
+import pusherService from "./pusher.service";
 import { superAdminCredentials } from "../../config/credentials";
 
 // ============ Validation Schemas ============
@@ -157,18 +158,11 @@ export class QuestionService {
       },
     });
 
-    if (computedStatus === QuestionStatus.PENDING_REVIEW) {
-      const authorName = authorUser?.name || "User";
-      createNotification({
-        recipientRole: "DEAN",
-        title: "Question Submitted for Review",
-        message: `${authorName} submitted a new question for topic "${topic}" awaiting review.`,
-        type: "INFO",
-        link: "/question-bank/review-questions",
-      }).catch((err) => console.warn("Notification error:", err?.message));
+    const authorName = authorUser?.name || "User";
 
+    if (computedStatus === QuestionStatus.PENDING_REVIEW) {
       createNotification({
-        recipientRole: "TEAMLEAD",
+        recipientRole: "REVIEWER",
         title: "Question Submitted for Review",
         message: `${authorName} submitted a new question for topic "${topic}" awaiting review.`,
         type: "INFO",
@@ -185,7 +179,7 @@ export class QuestionService {
     }
 
     try {
-      sseService.broadcastEvent("questions-updated", {
+      const eventPayload = {
         type: "QUESTION_CREATED",
         questionId: newQuestion.id,
         subjectId:
@@ -194,9 +188,11 @@ export class QuestionService {
           (newQuestion as any).subjectId || (newQuestion as any).categoryId,
         status: newQuestion.status,
         authorId: newQuestion.authorId,
-      });
+      };
+      sseService.broadcastEvent("questions-updated", eventPayload);
+      pusherService.broadcastEvent("admin-events", "questions-updated", eventPayload);
     } catch (err) {
-      console.warn("SSE broadcast error:", err);
+      console.warn("Broadcast error:", err);
     }
 
     return newQuestion;
@@ -691,46 +687,43 @@ export class QuestionService {
     const createdQuestions = await this.db.$transaction(queries);
 
     if (!silentNotification) {
+      const authorName = authorUser?.name || "User";
+      const count = createdQuestions.length;
+
       if (
         authorUser?.role === "TEACHER" ||
         resolvedStatus === QuestionStatus.PENDING_REVIEW
       ) {
-        const authorName = authorUser?.name || "User";
         createNotification({
-          recipientRole: "DEAN",
+          recipientRole: "REVIEWER",
           title: "Bulk Questions Pending Review",
-          message: `${authorName} uploaded ${createdQuestions.length} question(s) awaiting review.`,
+          message: `${authorName} uploaded ${count} question(s) awaiting review.`,
           type: "INFO",
           link: "/question-bank/review-questions",
         }).catch((err) => console.warn("Notification error:", err?.message));
-
-        createNotification({
-          recipientRole: "TEAMLEAD",
-          title: "Bulk Questions Pending Review",
-          message: `${authorName} uploaded ${createdQuestions.length} question(s) awaiting review.`,
-          type: "INFO",
-          link: "/question-bank/review-questions",
-        }).catch((err) => console.warn("Notification error:", err?.message));
+      } else {
         createNotification({
           recipientRole: "ALL",
           title: "Bulk Questions Uploaded",
-          message: `${createdQuestions.length} new question(s) were added to the question bank.`,
+          message: `${authorName} uploaded ${count} new question(s) to the question bank.`,
           type: "INFO",
-          link: "/question-bank",
+          link: categoryId ? `/subject-management/${categoryId}` : "/question-bank",
         }).catch((err) => console.warn("Notification error:", err?.message));
       }
     }
 
     try {
-      sseService.broadcastEvent("questions-updated", {
+      const eventPayload = {
         type: "QUESTIONS_IMPORTED",
         categoryId,
         count: createdQuestions.length,
         authorId,
         status: resolvedStatus,
-      });
+      };
+      sseService.broadcastEvent("questions-updated", eventPayload);
+      pusherService.broadcastEvent("admin-events", "questions-updated", eventPayload);
     } catch (err) {
-      console.warn("SSE broadcast error:", err);
+      console.warn("Broadcast error:", err);
     }
 
     return createdQuestions;

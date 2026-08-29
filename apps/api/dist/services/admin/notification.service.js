@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import sseService from "./sse.service";
+import pusherService from "./pusher.service";
 function getOrConditions(userId, role) {
     const OR_conditions = [{ recipientRole: "ALL" }];
     if (userId) {
@@ -16,8 +17,12 @@ function getOrConditions(userId, role) {
     return OR_conditions;
 }
 export async function createNotification(input) {
-    const { recipientId, recipientRole = "ALL", title, message, type = "INFO", link, metadata } = input;
-    const metadataStr = metadata ? (typeof metadata === "string" ? metadata : JSON.stringify(metadata)) : null;
+    const { recipientId, recipientRole = "ALL", title, message, type = "INFO", link, metadata, } = input;
+    const metadataStr = metadata
+        ? typeof metadata === "string"
+            ? metadata
+            : JSON.stringify(metadata)
+        : null;
     const notif = await prisma.notification.create({
         data: {
             recipientId: recipientId || null,
@@ -36,6 +41,12 @@ export async function createNotification(input) {
     }
     catch (err) {
         console.warn("SSE broadcast error:", err);
+    }
+    try {
+        pusherService.broadcastNotification(notif);
+    }
+    catch (err) {
+        console.warn("Pusher broadcast error:", err);
     }
     return notif;
 }
@@ -64,10 +75,7 @@ export async function getUserNotifications(input) {
         });
     }
     const whereClause = {
-        AND: [
-            { OR: getOrConditions(userId, role) },
-            ...andConditions,
-        ],
+        AND: [{ OR: getOrConditions(userId, role) }, ...andConditions],
     };
     const rawNotifications = await prisma.notification.findMany({
         where: whereClause,
@@ -77,7 +85,9 @@ export async function getUserNotifications(input) {
     const processed = rawNotifications
         .map((n) => {
         const isReadForUser = n.isRead ||
-            (userId ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId) : false);
+            (userId
+                ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId)
+                : false);
         return {
             ...n,
             isRead: isReadForUser,
@@ -90,7 +100,9 @@ export async function markNotificationAsRead(id, userId, role) {
     if (!id)
         return { success: false };
     try {
-        const existing = await prisma.notification.findUnique({ where: { id } });
+        const existing = await prisma.notification.findUnique({
+            where: { id },
+        });
         if (!existing)
             return { success: false };
         if (userId && existing.recipientId === userId) {
@@ -152,7 +164,9 @@ export async function deleteNotification(id, userId, role) {
     if (!id)
         return { success: false };
     try {
-        const existing = await prisma.notification.findUnique({ where: { id } });
+        const existing = await prisma.notification.findUnique({
+            where: { id },
+        });
         if (!existing)
             return { success: false };
         if (userId && existing.recipientId === userId) {

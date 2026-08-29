@@ -3,6 +3,8 @@ import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { ensureSuperAdminExists } from "./bootstrap.service";
 import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
+import { createNotification } from "./notification.service";
+import pusherService from "./pusher.service";
 // ============ Validation Schemas ============
 export const createNewSubjectSchema = z.object({
     name: z.string().min(1, "Subject name is required"),
@@ -91,6 +93,19 @@ export class SubjectService {
                 authorId: validAuthorId,
                 icon: icon,
             },
+        });
+        const subjectName = name.trim();
+        createNotification({
+            recipientRole: "ALL",
+            title: "New Subject Created",
+            message: `A new subject "${subjectName}" has been added to BoardQuest.`,
+            type: "INFO",
+            link: `/subject-management/${newSubject.id}`,
+        }).catch(() => { });
+        pusherService.broadcastEvent("admin-events", "categories-updated", {
+            type: "SUBJECT_CREATED",
+            subjectId: newSubject.id,
+            name: subjectName,
         });
         return newSubject;
     }

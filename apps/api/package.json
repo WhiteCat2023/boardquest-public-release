@@ -36,6 +36,7 @@
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.1",
     "mongodb": "^7.2.0",
+    "pusher": "^5.3.4",
     "rate-limit-redis": "^6.0.1",
     "resend": "^6.24.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",

@@ -1,12 +1,20 @@
 import prisma from "../prisma";
 import sseService from "./sse.service";
+import pusherService from "./pusher.service";
 
 export interface CreateNotificationInput {
   recipientId?: string;
   recipientRole?: string;
   title: string;
   message: string;
-  type?: "INFO" | "SUCCESS" | "WARNING" | "ERROR" | "QUESTION_APPROVED" | "STUDENT_ASSIGNED" | "SYSTEM_UPDATE";
+  type?:
+    | "INFO"
+    | "SUCCESS"
+    | "WARNING"
+    | "ERROR"
+    | "QUESTION_APPROVED"
+    | "STUDENT_ASSIGNED"
+    | "SYSTEM_UPDATE";
   link?: string;
   metadata?: any;
 }
@@ -39,8 +47,20 @@ function getOrConditions(userId?: string, role?: string) {
 }
 
 export async function createNotification(input: CreateNotificationInput) {
-  const { recipientId, recipientRole = "ALL", title, message, type = "INFO", link, metadata } = input;
-  const metadataStr = metadata ? (typeof metadata === "string" ? metadata : JSON.stringify(metadata)) : null;
+  const {
+    recipientId,
+    recipientRole = "ALL",
+    title,
+    message,
+    type = "INFO",
+    link,
+    metadata,
+  } = input;
+  const metadataStr = metadata
+    ? typeof metadata === "string"
+      ? metadata
+      : JSON.stringify(metadata)
+    : null;
 
   const notif = await (prisma as any).notification.create({
     data: {
@@ -60,6 +80,12 @@ export async function createNotification(input: CreateNotificationInput) {
     sseService.broadcastNotification(notif);
   } catch (err) {
     console.warn("SSE broadcast error:", err);
+  }
+
+  try {
+    pusherService.broadcastNotification(notif);
+  } catch (err) {
+    console.warn("Pusher broadcast error:", err);
   }
 
   return notif;
@@ -95,10 +121,7 @@ export async function getUserNotifications(input: GetNotificationsInput) {
   }
 
   const whereClause: any = {
-    AND: [
-      { OR: getOrConditions(userId, role) },
-      ...andConditions,
-    ],
+    AND: [{ OR: getOrConditions(userId, role) }, ...andConditions],
   };
 
   const rawNotifications = await (prisma as any).notification.findMany({
@@ -111,7 +134,9 @@ export async function getUserNotifications(input: GetNotificationsInput) {
     .map((n: any) => {
       const isReadForUser =
         n.isRead ||
-        (userId ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId) : false);
+        (userId
+          ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId)
+          : false);
 
       return {
         ...n,
@@ -123,11 +148,17 @@ export async function getUserNotifications(input: GetNotificationsInput) {
   return processed.slice(0, limit);
 }
 
-export async function markNotificationAsRead(id: string, userId?: string, role?: string) {
+export async function markNotificationAsRead(
+  id: string,
+  userId?: string,
+  role?: string,
+) {
   if (!id) return { success: false };
 
   try {
-    const existing = await (prisma as any).notification.findUnique({ where: { id } });
+    const existing = await (prisma as any).notification.findUnique({
+      where: { id },
+    });
     if (!existing) return { success: false };
 
     if (userId && existing.recipientId === userId) {
@@ -189,11 +220,17 @@ export async function markAllNotificationsAsRead(input: GetNotificationsInput) {
   return { success: true };
 }
 
-export async function deleteNotification(id: string, userId?: string, role?: string) {
+export async function deleteNotification(
+  id: string,
+  userId?: string,
+  role?: string,
+) {
   if (!id) return { success: false };
 
   try {
-    const existing = await (prisma as any).notification.findUnique({ where: { id } });
+    const existing = await (prisma as any).notification.findUnique({
+      where: { id },
+    });
     if (!existing) return { success: false };
 
     if (userId && existing.recipientId === userId) {
