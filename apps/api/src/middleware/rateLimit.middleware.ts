@@ -43,14 +43,21 @@ export const apiLimiter = rateLimit({
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 login/signup attempts per windowMs
+  max: process.env.NODE_ENV === "production" ? 15 : 200, // relaxed in development
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore("rl:auth:"),
-  skip: () => process.env.NODE_ENV === "test",
+  skip: (req) =>
+    process.env.NODE_ENV === "test" ||
+    (process.env.NODE_ENV !== "production" &&
+      (req.ip === "127.0.0.1" ||
+        req.ip === "::1" ||
+        req.ip === "::ffff:127.0.0.1" ||
+        req.hostname === "localhost")),
   message: {
     success: false,
-    message: "Too many authentication attempts from this IP. Please try again after 15 minutes.",
+    message:
+      "Too many authentication attempts from this IP. Please try again after 15 minutes.",
     error: "TOO_MANY_REQUESTS",
   },
 });

@@ -12,6 +12,8 @@ import notificationRoutes from "./admin/notification.routes.js";
 import uploadRoutes from "./admin/upload.routes.js";
 import gameRoutes from "./admin/game_module/game.routes.js";
 import rcAuthRoutes from "./review-center/auth.routes.js";
+import rcScheduleRoutes from "./review-center/schedule.routes.js";
+import rcCandidateRoutes from "./review-center/candidate.routes.js";
 
 const router = Router();
 
@@ -31,6 +33,14 @@ router.use("/upload", uploadRoutes);
 router.use("/game", gameRoutes);
 
 //Review Center Routes
+router.use("/review-center-app/auth", rcAuthRoutes);
 router.use("/auth/review-center", rcAuthRoutes);
+router.use("/review-center/auth", rcAuthRoutes);
+router.use("/review-center-app/schedules", rcScheduleRoutes);
+router.use("/review-center-app/calendar", rcScheduleRoutes);
+router.use("/review-center/schedules", rcScheduleRoutes);
+router.use("/review-center-app/candidates", rcCandidateRoutes);
+router.use("/review-center-app/students", rcCandidateRoutes);
+router.use("/review-center/candidates", rcCandidateRoutes);
 
 export default router;

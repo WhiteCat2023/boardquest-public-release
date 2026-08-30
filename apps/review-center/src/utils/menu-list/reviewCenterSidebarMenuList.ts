@@ -1,42 +1,49 @@
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Settings,
-  BookOpen,
-} from "lucide-react";
+import type { NavItemProps, NavContentProps } from "../../types/sidebarMenuItems";
 
-export interface NavItem {
-  title: string;
-  url: string;
-  icon: any;
-  isActive?: boolean;
-}
-
-export const reviewCenterNavItems: NavItem[] = [
+export const reviewCenterNavItem: NavItemProps[] = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
+    sideBarCategoryName: "OVERVIEW",
+    content: [
+      {
+        title: "Dashboard",
+        path: "/dashboard",
+        icon: "LayoutDashboard",
+      },
+    ],
   },
   {
-    title: "Enrolled Candidates",
-    url: "/candidates",
-    icon: Users,
+    sideBarCategoryName: "STUDENT MANAGEMENT",
+    content: [
+      {
+        title: "Enrolled Students",
+        path: "/candidates",
+        icon: "Users",
+      },
+    ],
   },
   {
-    title: "Review Programs",
-    url: "/programs",
-    icon: BookOpen,
+    sideBarCategoryName: "SCHEDULE & TIMELINE",
+    content: [
+      {
+        title: "Evaluation Schedules",
+        path: "/schedules",
+        icon: "Calendar",
+      },
+    ],
   },
   {
-    title: "Evaluation Schedules",
-    url: "/schedules",
-    icon: Calendar,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    sideBarCategoryName: "SYSTEM & PREFERENCES",
+    content: [
+      {
+        title: "Settings",
+        path: "/settings",
+        icon: "Settings",
+      },
+    ],
   },
 ];
+
+// Compatibility exports
+export type NavItem = NavContentProps;
+export const reviewCenterNavItems = reviewCenterNavItem;
+export default reviewCenterNavItem;

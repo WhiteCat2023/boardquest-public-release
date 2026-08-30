@@ -3,7 +3,7 @@ import request from "supertest";
 import express from "express";
 import reviewCenterAuthRouter from "../routes/review-center/auth.routes";
 import { reviewCenterAuthService } from "../services/review-center/auth.service";
-jest.mock("../services/review-center/reviewCenterAuth.service");
+jest.mock("../services/review-center/auth.service");
 let app;
 beforeAll(() => {
     app = express();

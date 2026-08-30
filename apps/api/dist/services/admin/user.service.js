@@ -477,6 +477,7 @@ export class UserService {
                 phoneNumber: newRep.phonenumber,
                 companyName: newRep.companyName,
                 location: newRep.location,
+                temporaryPassword: tempPassword,
                 accountStatus: newRep.accountStatus ||
                     newRep.account_status ||
                     "ACTIVE",
@@ -529,7 +530,10 @@ export class UserService {
             role: String(role),
             employeeId,
         }).catch((err) => console.error("[createUser] Email send error:", err));
-        return newUser;
+        return {
+            ...newUser,
+            temporaryPassword: tempPassword,
+        };
     }
     async createFaculty(data, creatorRole) {
         return this.createUser(data, creatorRole);
@@ -791,6 +795,7 @@ export class UserService {
                     createdMembers.push({
                         ...sanitized,
                         role: Role.REVIEWCENTER,
+                        temporaryPassword: tempPassword,
                     });
                 }
                 catch (err) {
@@ -845,7 +850,10 @@ export class UserService {
                         employeeId: empId,
                     }).catch((err) => console.error("[BulkImport] Email send error:", err));
                     const { password, ...sanitized } = newUser;
-                    createdMembers.push(sanitized);
+                    createdMembers.push({
+                        ...sanitized,
+                        temporaryPassword: tempPassword,
+                    });
                 }
                 catch (err) {
                     errors.push({

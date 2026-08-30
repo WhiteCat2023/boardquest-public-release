@@ -7,9 +7,9 @@ export function HeaderBreadcrumb() {
 
   const routeNameMap: Record<string, string> = {
     dashboard: "Dashboard",
-    candidates: "Enrolled Candidates",
-    students: "Enrolled Candidates",
-    programs: "Review Programs",
+    candidates: "Enrolled Students",
+    students: "Enrolled Students",
+    add: "Add Students",
     schedules: "Evaluation Schedules",
     settings: "Portal Settings",
   };
@@ -26,7 +26,9 @@ export function HeaderBreadcrumb() {
       {pathnames.map((value, index) => {
         const to = `/${pathnames.slice(0, index + 1).join("/")}`;
         const isLast = index === pathnames.length - 1;
-        const displayName = routeNameMap[value.toLowerCase()] || value;
+        const displayName =
+          routeNameMap[value.toLowerCase()] ||
+          (/^\d{4}-\d{4}$/.test(value) ? `S.Y. ${value}` : decodeURIComponent(value));
 
         return (
           <div key={to} className="flex items-center gap-1.5">

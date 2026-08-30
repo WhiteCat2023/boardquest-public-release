@@ -1,10 +1,10 @@
 import "./setup";
 import request from "supertest";
 import express from "express";
-import reviewCenterRouter from "../routes/admin/reviewCenter.routes";
-import * as reviewCenterService from "../services/admin/reviewCenter.service";
+import reviewCenterRouter from "../routes/review-center/reviewCenter.routes";
+import * as reviewCenterService from "../services/review-center/reviewCenter.service";
 // Mock review center service
-jest.mock("../services/admin/reviewCenter.service");
+jest.mock("../services/review-center/reviewCenter.service");
 jest.mock("../services/admin/calendar.service");
 let app;
 beforeAll(() => {

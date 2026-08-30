@@ -15,11 +15,18 @@ const LoginPage = lazy(
 const Dashboard = lazy(() =>
   import("@/features/dashboard").then((m) => ({ default: m.Dashboard })),
 );
-const StudentsPage = lazy(() =>
-  import("@/features/students").then((m) => ({ default: m.StudentsPage })),
+const SchoolYearsPage = lazy(() =>
+  import("@/features/students").then((m) => ({ default: m.SchoolYearsPage })),
 );
-const ProgramsPage = lazy(() =>
-  import("@/features/programs").then((m) => ({ default: m.ProgramsPage })),
+const SchoolYearStudentsPage = lazy(() =>
+  import("@/features/students").then((m) => ({
+    default: m.SchoolYearStudentsPage,
+  })),
+);
+const AddStudentsPage = lazy(() =>
+  import("@/features/students").then((m) => ({
+    default: m.AddStudentsPage,
+  })),
 );
 const SchedulesPage = lazy(() =>
   import("@/features/schedules").then((m) => ({ default: m.SchedulesPage })),
@@ -64,9 +71,26 @@ function App() {
                 >
                   <Route index element={<Dashboard />} />
                   <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="candidates" element={<StudentsPage />} />
-                  <Route path="students" element={<StudentsPage />} />
-                  <Route path="programs" element={<ProgramsPage />} />
+                  <Route path="candidates" element={<SchoolYearsPage />} />
+                  <Route path="candidates/add" element={<AddStudentsPage />} />
+                  <Route
+                    path="candidates/:schoolYear"
+                    element={<SchoolYearStudentsPage />}
+                  />
+                  <Route
+                    path="candidates/:schoolYear/add"
+                    element={<AddStudentsPage />}
+                  />
+                  <Route path="students" element={<SchoolYearsPage />} />
+                  <Route path="students/add" element={<AddStudentsPage />} />
+                  <Route
+                    path="students/:schoolYear"
+                    element={<SchoolYearStudentsPage />}
+                  />
+                  <Route
+                    path="students/:schoolYear/add"
+                    element={<AddStudentsPage />}
+                  />
                   <Route path="schedules" element={<SchedulesPage />} />
                 </Route>
 

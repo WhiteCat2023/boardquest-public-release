@@ -3,7 +3,7 @@ import { reviewCenterAuthService } from "../../services/review-center/auth.servi
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { signJWT } from "../../utils/jwt.utils";
+import { signJWT, verifyJWT } from "../../utils/jwt.utils";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 
@@ -51,17 +51,20 @@ export const reviewCenterLogin = asyncHandler(
       "7d",
     );
 
-    res.cookie("rc_accessToken", accessToken, {
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
+      sameSite: "none" as const,
+    };
+
+    res.cookie("rc_accessToken", accessToken, {
+      ...cookieOptions,
       maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.cookie("rc_refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -83,8 +86,13 @@ export const reviewCenterLogin = asyncHandler(
 
 export const reviewCenterLogout = asyncHandler(
   async (_req: Request, res: Response) => {
-    res.clearCookie("rc_accessToken");
-    res.clearCookie("rc_refreshToken");
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none" as const,
+    };
+    res.clearCookie("rc_accessToken", cookieOptions);
+    res.clearCookie("rc_refreshToken", cookieOptions);
     return new ApiResponse(200, null, "Logged out successfully").send(res);
   },
 );
@@ -101,6 +109,55 @@ export const getReviewCenterMe = asyncHandler(
       200,
       { user },
       "Review Center profile retrieved successfully",
+    ).send(res);
+  },
+);
+
+export const reviewCenterRefreshToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const refreshToken =
+      req.cookies?.rc_refreshToken || req.cookies?.refreshToken;
+    if (!refreshToken) {
+      throw new ApiError(401, "Refresh token not found");
+    }
+
+    const { payload, expired } = verifyJWT(refreshToken);
+    if (expired || !payload) {
+      throw new ApiError(401, "Invalid or expired refresh token");
+    }
+
+    const decoded = payload as { id: string };
+    const user = await reviewCenterAuthService.getMe(decoded.id);
+    if (!user) {
+      throw new ApiError(404, "User profile not found");
+    }
+
+    const newAccessToken = signJWT(
+      {
+        id: user.id,
+        email: user.email,
+        role: "REVIEW_CENTER_REPRESENTATIVE",
+        reviewCenterId: user.reviewCenterId,
+        companyName: user.companyName,
+      },
+      "1d",
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none" as const,
+    };
+
+    res.cookie("rc_accessToken", newAccessToken, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return new ApiResponse(
+      200,
+      { user, accessToken: newAccessToken },
+      "Access token refreshed successfully",
     ).send(res);
   },
 );

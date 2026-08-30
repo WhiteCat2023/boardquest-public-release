@@ -276,6 +276,7 @@ export default function SetReviewScheduleModal({
                 </label>
                 <Input
                   type="date"
+                  min={isEditing ? undefined : new Date().toISOString().split("T")[0]}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="h-9 bg-muted/40 border border-border rounded-lg text-xs font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary"
@@ -291,6 +292,7 @@ export default function SetReviewScheduleModal({
                 </label>
                 <Input
                   type="date"
+                  min={startDate || new Date().toISOString().split("T")[0]}
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="h-9 bg-muted/40 border border-border rounded-lg text-xs font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary"

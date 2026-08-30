@@ -25,7 +25,7 @@ export function EmptyDashboardState() {
           <Button asChild size="sm" className="rounded-xl font-bold gap-2">
             <Link to="/candidates">
               <Users className="size-3.5" />
-              <span>View Enrolled Candidates</span>
+              <span>View Enrolled Students</span>
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="rounded-xl font-bold gap-2">

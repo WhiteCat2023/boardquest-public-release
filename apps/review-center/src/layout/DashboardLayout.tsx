@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { PanelLeft, X } from "lucide-react";
 import Sidebar from "@/components/custom/sidebar/Sidebar";
 import HeaderBreadcrumb from "@/components/custom/breadcrumb/HeaderBreadcrumb";
 import UserProfileWidget from "@/components/custom/UserProfileWidget";
+import { Button } from "@/components/ui/button";
 
 export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden font-sans">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex shrink-0">
-        <Sidebar />
+        <Sidebar isCollapsed={isCollapsed} />
       </div>
 
       {/* Mobile Drawer Backdrop & Sidebar */}
@@ -22,7 +24,7 @@ export function DashboardLayout() {
             className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative flex flex-col w-64 max-w-[80vw] bg-card border-r border-border z-50 h-full shadow-2xl">
+          <div className="relative flex flex-col w-64 max-w-[80vw] bg-card border-none z-50 h-full shadow-2xl">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
@@ -42,21 +44,30 @@ export function DashboardLayout() {
           {/* Header Bar */}
           <header className="px-4 py-3 border-b bg-card border-border flex items-center justify-between shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="md:hidden p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-                aria-label="Open Sidebar"
+              {/* Sidebar toggle button matching PanelLeft icon from reference image */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (window.innerWidth < 768) {
+                    setMobileOpen(!mobileOpen);
+                  } else {
+                    setIsCollapsed(!isCollapsed);
+                  }
+                }}
+                className="size-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                aria-label="Toggle Sidebar"
               >
-                <Menu className="size-5" />
-              </button>
+                <PanelLeft className="size-4.5" />
+              </Button>
+
               <HeaderBreadcrumb />
             </div>
             <UserProfileWidget />
           </header>
 
           {/* Page Body */}
-          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto flex flex-col bg-background/50">
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto flex flex-col bg-background/50 p-4 md:p-6 lg:p-8">
             <Outlet />
           </div>
         </div>

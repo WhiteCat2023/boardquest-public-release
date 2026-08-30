@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
 import { Mail, Lock, Eye, EyeOff, Building2, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function ReviewCenterLoginPage() {
-  const { login, isLoading } = useReviewCenterAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/";
+  const { user, login, isLoading } = useReviewCenterAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -15,11 +19,18 @@ export function ReviewCenterLoginPage() {
     "Your partner account is currently deactivated. Please contact your system administrator or Dean for assistance."
   );
 
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate(from, { replace: true });
+    }
+  }, [user, isLoading, navigate, from]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
     try {
       await login({ email, password });
+      navigate(from, { replace: true });
     } catch (err: unknown) {
       const errorObj = err as {
         response?: { status?: number; data?: { message?: string } };

@@ -1,16 +1,14 @@
-import { Users, BookOpen, Calendar, Award } from "lucide-react";
+import { Users, Calendar, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface DashboardKpiGridProps {
   candidatesCount?: number;
-  programsCount?: number;
   schedulesCount?: number;
   averageScore?: number | null;
 }
 
 export function DashboardKpiGrid({
   candidatesCount = 0,
-  programsCount = 0,
   schedulesCount = 0,
   averageScore = null,
 }: DashboardKpiGridProps) {
@@ -18,23 +16,21 @@ export function DashboardKpiGrid({
     {
       title: "Enrolled Candidates",
       value: candidatesCount,
-      subtitle: candidatesCount === 0 ? "No candidates enrolled yet" : `${candidatesCount} active candidates`,
+      subtitle:
+        candidatesCount === 0
+          ? "No candidates enrolled yet"
+          : `${candidatesCount} active candidate${candidatesCount === 1 ? "" : "s"}`,
       icon: Users,
       iconColor: "text-primary",
       iconBg: "bg-primary/10",
     },
     {
-      title: "Active Review Programs",
-      value: programsCount,
-      subtitle: programsCount === 0 ? "No active programs configured" : `${programsCount} active programs`,
-      icon: BookOpen,
-      iconColor: "text-blue-500",
-      iconBg: "bg-blue-500/10",
-    },
-    {
-      title: "Upcoming Exam Schedules",
+      title: "Evaluation Schedules",
       value: schedulesCount,
-      subtitle: schedulesCount === 0 ? "No scheduled mock exams" : `${schedulesCount} scheduled sessions`,
+      subtitle:
+        schedulesCount === 0
+          ? "No scheduled review periods"
+          : `${schedulesCount} scheduled session${schedulesCount === 1 ? "" : "s"}`,
       icon: Calendar,
       iconColor: "text-amber-500",
       iconBg: "bg-amber-500/10",
@@ -42,7 +38,10 @@ export function DashboardKpiGrid({
     {
       title: "Cohort Evaluation Status",
       value: averageScore !== null ? `${averageScore}%` : "Standby",
-      subtitle: averageScore !== null ? "Average board readiness score" : "Awaiting evaluation results",
+      subtitle:
+        averageScore !== null
+          ? "Average board readiness score"
+          : "Awaiting evaluation results",
       icon: Award,
       iconColor: "text-emerald-500",
       iconBg: "bg-emerald-500/10",
@@ -50,15 +49,22 @@ export function DashboardKpiGrid({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
       {kpis.map((kpi, index) => {
         const Icon = kpi.icon;
         return (
-          <Card key={index} className="rounded-2xl border-border bg-card shadow-2xs hover:border-border/80 transition-all">
+          <Card
+            key={index}
+            className="rounded-2xl border-border bg-card shadow-2xs hover:border-border/80 transition-all"
+          >
             <CardContent className="p-5 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground">{kpi.title}</span>
-                <div className={`p-2 rounded-xl ${kpi.iconBg} ${kpi.iconColor}`}>
+                <span className="text-xs font-bold text-muted-foreground">
+                  {kpi.title}
+                </span>
+                <div
+                  className={`p-2 rounded-xl ${kpi.iconBg} ${kpi.iconColor}`}
+                >
                   <Icon className="size-4" />
                 </div>
               </div>

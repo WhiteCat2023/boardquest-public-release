@@ -199,6 +199,8 @@ model ReviewCenter {
 
   representatives ReviewCenterRepresentativeUser[]
   programs        ReviewCenterProgram[]
+  candidates      ReviewCenterCandidate[]
+  schoolYears     ReviewCenterSchoolYear[]
 }
 
 model ReviewCenterRepresentativeUser {
@@ -237,6 +239,36 @@ model ReviewCenterProgram {
   updatedAt      DateTime      @updatedAt
 }
 
+model ReviewCenterSchoolYear {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  schoolYear     String
+  isCurrent      Boolean       @default(false)
+  status         String        @default("ACTIVE")
+  companyName    String
+  reviewCenterId String?       @db.ObjectId
+  reviewCenter   ReviewCenter? @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model ReviewCenterCandidate {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  reviewCenterId String?       @db.ObjectId
+  reviewCenter   ReviewCenter? @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
+  companyName    String
+  name           String
+  email          String
+  schoolId       String?
+  schoolYear     String        @default("2026-2027")
+  batch          String        @default("Batch 1")
+  status         String        @default("ENROLLED")
+  studentId      String?       @db.ObjectId
+  student        User?         @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  enrolledAt     DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
 // [ User Schema ]
 
 model User {
@@ -264,6 +296,7 @@ model User {
   questNodeCompletions QuestNodeCompletion[]
   questionAttempts   UserQuestionAttempt[]
   userBadges         UserBadge[]
+  reviewCenterCandidates ReviewCenterCandidate[]
 }
 
 model SubjectMastery {

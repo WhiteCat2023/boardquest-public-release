@@ -1,33 +1,89 @@
-import { Calendar } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  useReviewSchedules,
+  useDeleteReviewSchedule,
+  type ReviewSchedule,
+} from "../api/useCalendar";
+import ReviewCalendarView from "../components/ReviewCalendarView";
+import SetReviewScheduleModal from "../components/SetReviewScheduleModal";
 
 export function SchedulesPage() {
+  const { data: rawSchedules = [], isLoading: isSchedulesLoading } =
+    useReviewSchedules();
+  const deleteScheduleMutation = useDeleteReviewSchedule();
+
+  const schedules = Array.isArray(rawSchedules) ? rawSchedules : [];
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<ReviewSchedule | null>(
+    null
+  );
+
+  const handleOpenAddSchedule = () => {
+    setEditingSchedule(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditSchedule = (sched: ReviewSchedule) => {
+    setEditingSchedule(sched);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteSchedule = (sched: ReviewSchedule) => {
+    deleteScheduleMutation.mutate(sched.id, {
+      onSuccess: () => {
+        toast.success(`Deleted review schedule "${sched.title}".`);
+      },
+      onError: (err: any) => {
+        toast.error(
+          err.response?.data?.message || "Failed to delete schedule."
+        );
+      },
+    });
+  };
+
   return (
     <div className="space-y-6 max-w-7xl w-full mx-auto font-sans">
-      <div>
-        <h1 className="text-2xl font-black text-foreground tracking-tight">
-          Evaluation Schedules
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          Scheduled mock board exams, live drills, and evaluation calendar.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
+            <CalendarIcon className="text-primary size-6 shrink-0" />
+            Evaluation Schedules
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Configure partner review periods, mock board dates, and diagnostic drills to sync with the Academic Calendar.
+          </p>
+        </div>
+
+        <Button
+          onClick={handleOpenAddSchedule}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs px-4 h-9 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
+        >
+          <Plus size={15} />
+          <span>Schedule Review Period</span>
+        </Button>
       </div>
 
-      <Card className="rounded-3xl border-border bg-card p-12 text-center shadow-2xs">
-        <CardContent className="flex flex-col items-center justify-center p-0 space-y-3">
-          <div className="size-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-            <Calendar className="size-7" />
-          </div>
-          <div className="max-w-md space-y-1">
-            <h3 className="text-base font-black text-foreground">
-              No Evaluation Sessions Scheduled
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Upcoming diagnostic exams and mock board exam windows will be synchronized here with the BoardQuest evaluation calendar.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Monthly Interactive Calendar & Schedule List View */}
+      <ReviewCalendarView
+        schedules={schedules}
+        isLoading={isSchedulesLoading}
+        onAddSchedule={handleOpenAddSchedule}
+        onEditSchedule={handleOpenEditSchedule}
+        onDeleteSchedule={handleDeleteSchedule}
+      />
+
+      {/* Modal for setting/updating review schedule */}
+      <SetReviewScheduleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={editingSchedule}
+      />
     </div>
   );
 }
