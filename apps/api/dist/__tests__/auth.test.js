@@ -1,7 +1,7 @@
 import "./setup";
 import request from "supertest";
 import express from "express";
-import authRouter from "../routes/auth.routes";
+import authRouter from "../routes/admin/auth.routes";
 import * as authService from "../services/admin/auth.service";
 import { ApiError } from "../utils/apiError";
 // Mock auth services

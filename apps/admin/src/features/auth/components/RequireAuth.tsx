@@ -9,7 +9,6 @@ const normalizeRole = (role?: any): string => {
   if (s === 'DEAN') return 'DEAN';
   if (s === 'TEAMLEAD') return 'TEAMLEAD';
   if (s === 'TEACHER') return 'TEACHER';
-  if (s === 'REVIEWCENTER' || s === 'EXTERNAL') return 'REVIEWCENTER';
   return s;
 };
 

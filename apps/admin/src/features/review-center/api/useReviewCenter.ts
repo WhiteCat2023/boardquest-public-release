@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type { 
-  ReviewCenterRepresentative, 
-  CreateReviewCenterPayload, 
-  UpdateReviewCenterPayload
+import type {
+  ReviewCenterRepresentative,
+  CreateReviewCenterPayload,
+  UpdateReviewCenterPayload,
 } from "../types/types";
 
 export function useReviewCenters(params?: {
@@ -22,7 +22,8 @@ export function useReviewCenters(params?: {
       const resData = response.data?.data;
       if (Array.isArray(resData)) return resData;
       if (Array.isArray(resData?.reviewCenters)) return resData.reviewCenters;
-      if (Array.isArray(response.data?.reviewCenters)) return response.data.reviewCenters;
+      if (Array.isArray(response.data?.reviewCenters))
+        return response.data.reviewCenters;
       return [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -66,7 +67,13 @@ export function useUpdateReviewCenter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateReviewCenterPayload }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateReviewCenterPayload;
+    }) => {
       const response = await axiosPrivate.put(`/review-center/${id}`, data);
       return response.data;
     },
@@ -90,4 +97,3 @@ export function useDeleteReviewCenter() {
     },
   });
 }
-

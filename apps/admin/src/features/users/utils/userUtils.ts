@@ -91,7 +91,8 @@ export const isAllowedToManageRole = (
 ): boolean => {
   const cNorm = normalizeRole(creatorRole);
   const tNorm = normalizeRole(targetRole);
-  if (cNorm === "SUPERADMIN" || creatorRole === UserRole.SUPERADMIN) return true;
+  if (cNorm === "SUPERADMIN" || creatorRole === UserRole.SUPERADMIN)
+    return true;
   if (cNorm === "DEAN" || creatorRole === UserRole.DEAN) {
     return (
       tNorm === "TEAMLEAD" ||

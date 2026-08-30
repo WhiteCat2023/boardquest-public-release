@@ -142,7 +142,6 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             {/* public routes */}
-            {/* <Route path="home" element={<LandingPage />} /> */}
             <Route path="login" element={<LoginPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />

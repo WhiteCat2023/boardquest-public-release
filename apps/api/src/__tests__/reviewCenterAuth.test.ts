@@ -2,10 +2,10 @@ import "./setup";
 import request from "supertest";
 import express, { Express } from "express";
 import reviewCenterAuthRouter from "../routes/review-center/auth.routes";
-import { reviewCenterAuthService } from "../services/review-center/reviewCenterAuth.service";
+import { reviewCenterAuthService } from "../services/review-center/auth.service";
 import { ApiError } from "../utils/apiError";
 
-jest.mock("../services/review-center/reviewCenterAuth.service");
+jest.mock("../services/review-center/auth.service");
 
 let app: Express;
 
@@ -63,7 +63,7 @@ describe("Review Center Auth Routes", () => {
   describe("POST /api/review-center-app/auth/logout", () => {
     it("should logout representative successfully", async () => {
       const response = await request(app).post(
-        "/api/review-center-app/auth/logout"
+        "/api/review-center-app/auth/logout",
       );
 
       expect(response.status).toBe(200);

@@ -3,7 +3,10 @@ import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
 import { Role } from "../../types/prisma.types";
-import { sendFacultyCredentialsEmail } from "../mail.service";
+import {
+  sendFacultyCredentialsEmail,
+  sendReviewCenterCredentialsEmail,
+} from "../mail.service";
 
 // ============ Validation Schemas ============
 
@@ -515,26 +518,34 @@ export class UserService {
           throw new ApiError(409, "Partner / Employee ID is already in use.");
       }
 
-      // Find or create ReviewCenter organization entity
+      // Find or create ReviewCenter organization entity safely
+      const cleanCompany = companyName.trim();
       let reviewCenter = await this.db.reviewCenter.findFirst({
-        where: { name: { equals: companyName.trim(), mode: "insensitive" } },
+        where: { name: cleanCompany },
       });
 
       if (!reviewCenter) {
-        const centerCode = `RC-${companyName
+        const randSuffix = Math.floor(1000 + Math.random() * 9000);
+        const centerCode = `RC-${cleanCompany
           .replace(/[^a-zA-Z0-9]/g, "")
           .slice(0, 6)
-          .toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-        reviewCenter = await this.db.reviewCenter.create({
-          data: {
-            name: companyName.trim(),
-            code: centerCode,
-            location: location?.trim() || "Philippines",
-            contactEmail: email,
-            contactPhone: phoneNumber,
-            isActive: true,
-          },
-        });
+          .toUpperCase() || "CTR"}-${randSuffix}`;
+        try {
+          reviewCenter = await this.db.reviewCenter.create({
+            data: {
+              name: cleanCompany,
+              code: centerCode,
+              location: location?.trim() || "Philippines",
+              contactEmail: email,
+              contactPhone: phoneNumber,
+              isActive: true,
+            },
+          });
+        } catch {
+          reviewCenter = await this.db.reviewCenter.findFirst({
+            where: { name: cleanCompany },
+          });
+        }
       }
 
       const tempPassword =
@@ -547,26 +558,26 @@ export class UserService {
       const newRep = await this.db.reviewCenterRepresentativeUser.create({
         data: {
           employeeId,
-          name: name || `${companyName} Representative`,
+          name: name || `${cleanCompany} Representative`,
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           email,
-          companyName: companyName.trim(),
+          companyName: cleanCompany,
           phonenumber: phoneNumber,
           password: hash,
           location: location?.trim() || "Philippines",
           accountStatus: "ACTIVE",
           isActive: true,
-          reviewCenterId: reviewCenter.id,
+          reviewCenterId: reviewCenter?.id || undefined,
         },
       });
 
-      // Send welcome credentials email
-      sendFacultyCredentialsEmail({
+      // Send welcome credentials email tailored to Review Center partners
+      sendReviewCenterCredentialsEmail({
         toEmail: email,
         name: newRep.name,
         password: tempPassword,
-        role: "EXTERNAL",
+        companyName: cleanCompany,
         employeeId,
       }).catch((err) =>
         console.error("[createUser EXTERNAL] Email send error:", err),
@@ -583,6 +594,7 @@ export class UserService {
         phoneNumber: newRep.phonenumber,
         companyName: newRep.companyName,
         location: newRep.location,
+        temporaryPassword: tempPassword,
         accountStatus:
           (newRep as any).accountStatus ||
           (newRep as any).account_status ||
@@ -645,7 +657,10 @@ export class UserService {
       employeeId,
     }).catch((err) => console.error("[createUser] Email send error:", err));
 
-    return newUser;
+    return {
+      ...newUser,
+      temporaryPassword: tempPassword,
+    };
   }
 
   async createFaculty(data: CreateFacultyInput, creatorRole: string) {
@@ -956,24 +971,31 @@ export class UserService {
 
         try {
           let reviewCenter = await this.db.reviewCenter.findFirst({
-            where: { name: { equals: compName, mode: "insensitive" } },
+            where: { name: compName },
           });
 
           if (!reviewCenter) {
+            const randSuffix = Math.floor(1000 + Math.random() * 9000);
             const centerCode = `RC-${compName
               .replace(/[^a-zA-Z0-9]/g, "")
               .slice(0, 6)
-              .toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-            reviewCenter = await this.db.reviewCenter.create({
-              data: {
-                name: compName,
-                code: centerCode,
-                location: item.location?.trim() || "Philippines",
-                contactEmail: email,
-                contactPhone: item.phoneNumber?.trim() || "N/A",
-                isActive: true,
-              },
-            });
+              .toUpperCase() || "CTR"}-${randSuffix}`;
+            try {
+              reviewCenter = await this.db.reviewCenter.create({
+                data: {
+                  name: compName,
+                  code: centerCode,
+                  location: item.location?.trim() || "Philippines",
+                  contactEmail: email,
+                  contactPhone: item.phoneNumber?.trim() || "N/A",
+                  isActive: true,
+                },
+              });
+            } catch {
+              reviewCenter = await this.db.reviewCenter.findFirst({
+                where: { name: compName },
+              });
+            }
           }
 
           const randomChars =
@@ -995,15 +1017,15 @@ export class UserService {
               location: item.location?.trim() || "Philippines",
               accountStatus: "ACTIVE",
               isActive: true,
-              reviewCenterId: reviewCenter.id,
+              reviewCenterId: reviewCenter?.id || undefined,
             },
           });
 
-          sendFacultyCredentialsEmail({
+          sendReviewCenterCredentialsEmail({
             toEmail: email,
             name: newRep.name,
             password: tempPassword,
-            role: "EXTERNAL",
+            companyName: compName,
             employeeId: partnerId,
           }).catch((err) =>
             console.error("[BulkImport EXTERNAL] Email send error:", err),
@@ -1013,6 +1035,7 @@ export class UserService {
           createdMembers.push({
             ...sanitized,
             role: Role.REVIEWCENTER,
+            temporaryPassword: tempPassword,
           });
         } catch (err: any) {
           errors.push({
@@ -1075,7 +1098,10 @@ export class UserService {
           );
 
           const { password, ...sanitized } = newUser;
-          createdMembers.push(sanitized);
+          createdMembers.push({
+            ...sanitized,
+            temporaryPassword: tempPassword,
+          });
         } catch (err: any) {
           errors.push({
             email,

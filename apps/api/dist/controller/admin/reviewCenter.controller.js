@@ -21,7 +21,7 @@ export const getReviewCenterById = asyncHandler(async (req, res) => {
     return new ApiResponse(200, { reviewCenter: sanitized }, "Review center retrieved successfully").send(res);
 });
 export const createReviewCenter = asyncHandler(async (req, res) => {
-    const { name, email, companyName, phonenumber, employeeId, location, password } = req.body;
+    const { name, email, companyName, phonenumber, employeeId, location, password, } = req.body;
     if (!name || !email || !companyName) {
         throw new ApiError(400, "Name, email, and company name are required.");
     }

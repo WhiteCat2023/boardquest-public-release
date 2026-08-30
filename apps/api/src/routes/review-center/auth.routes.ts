@@ -9,7 +9,7 @@ import { authenticateReviewCenterToken } from "../../middleware/reviewCenterAuth
 
 const router = Router();
 
-// Dedicated Review Center Representative Authentication Endpoints
+//Review Center Routes
 router.post("/login", authLimiter, reviewCenterLogin);
 router.post("/logout", reviewCenterLogout);
 router.get("/me", authenticateReviewCenterToken, getReviewCenterMe);

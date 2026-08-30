@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
+import { sendReviewCenterCredentialsEmail } from "../mail.service";
 const reviewCenterSelect = {
     id: true,
     employeeId: true,
@@ -60,7 +61,7 @@ export async function createReviewCenter(data) {
     else if (firstName && lastName && !name) {
         name = `${firstName} ${lastName}`.trim();
     }
-    return await prisma.reviewCenterRepresentativeUser.create({
+    const newRepresentative = await prisma.reviewCenterRepresentativeUser.create({
         data: {
             employeeId: data.employeeId,
             name: name || "Representative",
@@ -73,6 +74,17 @@ export async function createReviewCenter(data) {
             location: data.location || "Philippines",
         },
     });
+    // Dispatch welcome email with portal credentials to the representative
+    sendReviewCenterCredentialsEmail({
+        toEmail: data.email,
+        name: name || "Representative",
+        password: defaultPass,
+        companyName: data.companyName,
+        employeeId: data.employeeId,
+    }).catch((err) => {
+        console.warn(`[ReviewCenterService] Failed to send credentials email:`, err?.message);
+    });
+    return newRepresentative;
 }
 export async function updateReviewCenter(id, data) {
     return await prisma.reviewCenterRepresentativeUser.update({

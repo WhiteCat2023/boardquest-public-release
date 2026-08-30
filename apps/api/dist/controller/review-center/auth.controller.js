@@ -1,4 +1,4 @@
-import { reviewCenterAuthService } from "../../services/review-center/reviewCenterAuth.service";
+import { reviewCenterAuthService } from "../../services/review-center/auth.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import { asyncHandler } from "../../utils/asyncHandler";

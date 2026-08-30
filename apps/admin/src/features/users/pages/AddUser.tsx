@@ -1,19 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { UserPlus, Users, ArrowLeft, Building2, Shield } from "lucide-react";
+import {
+  UserPlus,
+  Users,
+  ArrowLeft,
+  Building2,
+  Shield,
+  CheckCircle2,
+  Copy,
+  AlertCircle,
+  KeyRound,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { UserRole } from "@/types/question";
-import type { RoleType, CreateUserPayload, ParsedUserRow } from "@/features/users";
-import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
-import {
-  useCreateUser,
-  useBulkCreateUser,
+import type {
+  RoleType,
+  CreateUserPayload,
+  ParsedUserRow,
 } from "@/features/users";
+import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
+import { useCreateUser, useBulkCreateUser } from "@/features/users";
 import AddIndividualUserTab from "../components/AddIndividualUserTab";
 import AddBulkUserTab from "../components/AddBulkUserTab";
 import AddExternalUserTab from "../components/AddExternalUserTab";
 import useRoleFlags from "@/hooks/useRoleFlags";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function AddUser() {
   const navigate = useNavigate();
@@ -28,7 +48,9 @@ export default function AddUser() {
     tabParam === "external" || typeParam === "external"
       ? "external"
       : "internal";
-  const [accountCategory, setAccountCategory] = useState<"internal" | "external">(initialCategory);
+  const [accountCategory, setAccountCategory] = useState<
+    "internal" | "external"
+  >(initialCategory);
 
   // Sub-tab: "individual" | "bulk"
   const initialTab = tabParam === "bulk" ? "bulk" : "individual";
@@ -82,6 +104,17 @@ export default function AddUser() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    name: string;
+    email: string;
+    employeeId?: string;
+    companyName?: string;
+    temporaryPassword?: string;
+    role?: string;
+    portalUrl?: string;
+  } | null>(null);
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+
   const handleIndividualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -103,9 +136,19 @@ export default function AddUser() {
     };
 
     createMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (res: any) => {
+        const createdUser = res?.data?.data?.user || res?.data?.user;
+        const tempPass = createdUser?.temporaryPassword;
+        setCreatedCredentials({
+          name: createdUser?.name || payload.name,
+          email: createdUser?.email || payload.email,
+          employeeId: createdUser?.employeeId || payload.employeeId,
+          role: String(payload.role || "TEACHER"),
+          temporaryPassword: tempPass,
+          portalUrl: `${window.location.origin}/login`,
+        });
+        setIsCredentialsModalOpen(true);
         toast.success("User registered successfully!");
-        navigate("/faculty-management");
       },
       onError: (err: any) => {
         const msg = err.response?.data?.message || "Failed to register user.";
@@ -118,12 +161,27 @@ export default function AddUser() {
   const handleExternalSubmit = (payload: CreateUserPayload) => {
     setErrorMsg("");
     createMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success("Review Center representative account created successfully!");
-        navigate("/faculty-management");
+      onSuccess: (res: any) => {
+        const createdUser = res?.data?.data?.user || res?.data?.user;
+        const tempPass = createdUser?.temporaryPassword;
+        setCreatedCredentials({
+          name: createdUser?.name || payload.name,
+          email: createdUser?.email || payload.email,
+          employeeId: createdUser?.employeeId || payload.employeeId,
+          companyName: createdUser?.companyName || payload.companyName,
+          role: "EXTERNAL",
+          temporaryPassword: tempPass,
+          portalUrl: "http://localhost:5174/login",
+        });
+        setIsCredentialsModalOpen(true);
+        toast.success(
+          "Review Center representative account created successfully!",
+        );
       },
       onError: (err: any) => {
-        const msg = err.response?.data?.message || "Failed to create external partner account.";
+        const msg =
+          err.response?.data?.message ||
+          "Failed to create external partner account.";
         setErrorMsg(msg);
         toast.error(msg);
       },
@@ -178,10 +236,42 @@ export default function AddUser() {
   const handleDownloadSampleXLSX = () => {
     if (accountCategory === "external") {
       const data = [
-        ["CompanyName", "FirstName", "LastName", "PartnerID", "Email", "PhoneNumber", "Location"],
-        ["TopRank Review Academy", "Roberto", "Cruz", "RC-1001", "roberto.cruz@toprankreview.edu.ph", "09171234567", "Sampaloc, Manila"],
-        ["St. Jude Review Center", "Maria", "Santos", "RC-1002", "maria.santos@stjudereview.edu.ph", "09187654321", "Cebu City"],
-        ["Apex Review Services", "Jonathan", "Reyes", "RC-1003", "jreyes@apexreview.com", "09191234567", "Davao City"],
+        [
+          "CompanyName",
+          "FirstName",
+          "LastName",
+          "PartnerID",
+          "Email",
+          "PhoneNumber",
+          "Location",
+        ],
+        [
+          "TopRank Review Academy",
+          "Roberto",
+          "Cruz",
+          "RC-1001",
+          "roberto.cruz@toprankreview.edu.ph",
+          "09171234567",
+          "Sampaloc, Manila",
+        ],
+        [
+          "St. Jude Review Center",
+          "Maria",
+          "Santos",
+          "RC-1002",
+          "maria.santos@stjudereview.edu.ph",
+          "09187654321",
+          "Cebu City",
+        ],
+        [
+          "Apex Review Services",
+          "Jonathan",
+          "Reyes",
+          "RC-1003",
+          "jreyes@apexreview.com",
+          "09191234567",
+          "Davao City",
+        ],
       ];
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -190,10 +280,42 @@ export default function AddUser() {
       toast.info("Sample External Partners template (.xlsx) downloaded.");
     } else {
       const data = [
-        ["FirstName", "MiddleName", "LastName", "EmployeeID", "Email", "PhoneNumber", "Role"],
-        ["Jane", "Smith", "Doe", "EMP-001", "jane.doe@boardquest.edu", "09171234567", "TEACHER"],
-        ["Juan", "", "Dela Cruz", "EMP-002", "juan.delacruz@boardquest.edu", "09187654321", "TEAMLEAD"],
-        ["Elena", "", "Reyes", "EMP-003", "elena.reyes@boardquest.edu", "09191234567", "DEAN"],
+        [
+          "FirstName",
+          "MiddleName",
+          "LastName",
+          "EmployeeID",
+          "Email",
+          "PhoneNumber",
+          "Role",
+        ],
+        [
+          "Jane",
+          "Smith",
+          "Doe",
+          "EMP-001",
+          "jane.doe@boardquest.edu",
+          "09171234567",
+          "TEACHER",
+        ],
+        [
+          "Juan",
+          "",
+          "Dela Cruz",
+          "EMP-002",
+          "juan.delacruz@boardquest.edu",
+          "09187654321",
+          "TEAMLEAD",
+        ],
+        [
+          "Elena",
+          "",
+          "Reyes",
+          "EMP-003",
+          "elena.reyes@boardquest.edu",
+          "09191234567",
+          "DEAN",
+        ],
       ];
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -205,7 +327,7 @@ export default function AddUser() {
 
   const parseSpreadsheetData = (
     sheetData: (string | number)[][],
-    category: "internal" | "external"
+    category: "internal" | "external",
   ): ParsedUserRow[] => {
     if (!sheetData || sheetData.length <= 1) {
       toast.error("Spreadsheet contains no records or header only.");
@@ -217,7 +339,7 @@ export default function AddUser() {
       String(h ?? "")
         .trim()
         .toLowerCase()
-        .replace(/[^a-z0-9]/g, "")
+        .replace(/[^a-z0-9]/g, ""),
     );
 
     const isExternal = category === "external";
@@ -230,20 +352,27 @@ export default function AddUser() {
           h.includes("review") ||
           h.includes("center") ||
           h.includes("institution") ||
-          h.includes("agency")
+          h.includes("agency"),
       );
       const firstNameIdx = headers.findIndex(
-        (h) => h.includes("first") || h === "fname" || h === "firstname"
+        (h) => h.includes("first") || h === "fname" || h === "firstname",
       );
       const lastNameIdx = headers.findIndex(
-        (h) => h.includes("last") || h === "lname" || h === "lastname" || h.includes("surname")
+        (h) =>
+          h.includes("last") ||
+          h === "lname" ||
+          h === "lastname" ||
+          h.includes("surname"),
       );
       const nameIdx = headers.findIndex(
         (h) =>
-          (h === "name" || h === "fullname" || h.includes("representative") || h === "repname") &&
+          (h === "name" ||
+            h === "fullname" ||
+            h.includes("representative") ||
+            h === "repname") &&
           !h.includes("company") &&
           !h.includes("first") &&
-          !h.includes("last")
+          !h.includes("last"),
       );
       const partnerIdIdx = headers.findIndex(
         (h) =>
@@ -253,16 +382,18 @@ export default function AddUser() {
           h === "empid" ||
           h === "id" ||
           h === "code" ||
-          (h.endsWith("id") && !h.includes("middle"))
+          (h.endsWith("id") && !h.includes("middle")),
       );
-      const emailIdx = headers.findIndex((h) => h.includes("email") || h === "mail");
+      const emailIdx = headers.findIndex(
+        (h) => h.includes("email") || h === "mail",
+      );
       const phoneIdx = headers.findIndex(
         (h) =>
           h.includes("phone") ||
           h.includes("contact") ||
           h.includes("mobile") ||
           h.includes("cell") ||
-          (h.includes("number") && !h.includes("id"))
+          (h.includes("number") && !h.includes("id")),
       );
       const locationIdx = headers.findIndex(
         (h) =>
@@ -270,7 +401,7 @@ export default function AddUser() {
           h.includes("address") ||
           h.includes("branch") ||
           h.includes("campus") ||
-          h.includes("city")
+          h.includes("city"),
       );
 
       const rows: ParsedUserRow[] = [];
@@ -279,7 +410,9 @@ export default function AddUser() {
         const row = sheetData[i];
         if (!row || !Array.isArray(row)) continue;
 
-        const hasAnyValue = row.some((cell) => String(cell ?? "").trim().length > 0);
+        const hasAnyValue = row.some(
+          (cell) => String(cell ?? "").trim().length > 0,
+        );
         if (!hasAnyValue) continue;
 
         const companyName =
@@ -314,7 +447,9 @@ export default function AddUser() {
         const email =
           emailIdx !== -1 && row[emailIdx] !== undefined
             ? String(row[emailIdx]).trim().toLowerCase()
-            : String(row[3] ?? "").trim().toLowerCase();
+            : String(row[3] ?? "")
+                .trim()
+                .toLowerCase();
         const phoneNumber =
           phoneIdx !== -1 && row[phoneIdx] !== undefined
             ? String(row[phoneIdx]).trim()
@@ -365,20 +500,28 @@ export default function AddUser() {
 
     // Internal Users parsing
     const firstNameIdx = headers.findIndex(
-      (h) => h.includes("first") || h === "fname" || h === "firstname"
+      (h) => h.includes("first") || h === "fname" || h === "firstname",
     );
     const middleNameIdx = headers.findIndex(
-      (h) => h.includes("middle") || h === "mname" || h === "mi" || h === "middlename"
+      (h) =>
+        h.includes("middle") ||
+        h === "mname" ||
+        h === "mi" ||
+        h === "middlename",
     );
     const lastNameIdx = headers.findIndex(
-      (h) => h.includes("last") || h === "lname" || h === "lastname" || h.includes("surname")
+      (h) =>
+        h.includes("last") ||
+        h === "lname" ||
+        h === "lastname" ||
+        h.includes("surname"),
     );
     const nameIdx = headers.findIndex(
       (h) =>
         (h === "name" || h === "fullname") &&
         !h.includes("first") &&
         !h.includes("middle") &&
-        !h.includes("last")
+        !h.includes("last"),
     );
     const empIdIdx = headers.findIndex(
       (h) =>
@@ -388,18 +531,25 @@ export default function AddUser() {
         h === "id" ||
         h === "idnumber" ||
         h === "idno" ||
-        (h.endsWith("id") && !h.includes("middle"))
+        (h.endsWith("id") && !h.includes("middle")),
     );
-    const emailIdx = headers.findIndex((h) => h.includes("email") || h === "mail");
+    const emailIdx = headers.findIndex(
+      (h) => h.includes("email") || h === "mail",
+    );
     const phoneIdx = headers.findIndex(
       (h) =>
         h.includes("phone") ||
         h.includes("contact") ||
         h.includes("mobile") ||
         h.includes("cell") ||
-        (h.includes("number") && !h.includes("id"))
+        (h.includes("number") && !h.includes("id")),
     );
-    const roleIdx = headers.findIndex((h) => h.includes("role") || h.includes("position") || h.includes("designation"));
+    const roleIdx = headers.findIndex(
+      (h) =>
+        h.includes("role") ||
+        h.includes("position") ||
+        h.includes("designation"),
+    );
 
     const rows: ParsedUserRow[] = [];
 
@@ -407,7 +557,9 @@ export default function AddUser() {
       const row = sheetData[i];
       if (!row || !Array.isArray(row)) continue;
 
-      const hasAnyValue = row.some((cell) => String(cell ?? "").trim().length > 0);
+      const hasAnyValue = row.some(
+        (cell) => String(cell ?? "").trim().length > 0,
+      );
       if (!hasAnyValue) continue;
 
       let firstName =
@@ -425,7 +577,10 @@ export default function AddUser() {
       let name = "";
 
       if (firstName || lastName) {
-        name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+        name = [firstName, middleName, lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
       } else if (nameIdx !== -1 && row[nameIdx] !== undefined) {
         name = String(row[nameIdx]).trim();
         const parts = name.split(/\s+/);
@@ -450,7 +605,9 @@ export default function AddUser() {
       const email =
         emailIdx !== -1 && row[emailIdx] !== undefined
           ? String(row[emailIdx]).trim().toLowerCase()
-          : String(row[4] ?? "").trim().toLowerCase();
+          : String(row[4] ?? "")
+              .trim()
+              .toLowerCase();
       const phoneNumber =
         phoneIdx !== -1 && row[phoneIdx] !== undefined
           ? String(row[phoneIdx]).trim()
@@ -459,9 +616,12 @@ export default function AddUser() {
       let rawRole =
         roleIdx !== -1 && row[roleIdx] !== undefined
           ? String(row[roleIdx]).trim().toUpperCase()
-          : String(row[6] ?? "").trim().toUpperCase() || "TEACHER";
+          : String(row[6] ?? "")
+              .trim()
+              .toUpperCase() || "TEACHER";
       if (rawRole === "ADMIN" || rawRole === "DEAN") rawRole = "DEAN";
-      else if (rawRole === "TEAMLEAD" || rawRole === "CO-ADMIN") rawRole = "TEAMLEAD";
+      else if (rawRole === "TEAMLEAD" || rawRole === "CO-ADMIN")
+        rawRole = "TEAMLEAD";
       else rawRole = "TEACHER";
 
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -483,7 +643,9 @@ export default function AddUser() {
       }
 
       rows.push({
-        name: name || [firstName, middleName, lastName].filter(Boolean).join(" ").trim(),
+        name:
+          name ||
+          [firstName, middleName, lastName].filter(Boolean).join(" ").trim(),
         firstName: firstName || undefined,
         middleName: middleName || undefined,
         lastName: lastName || undefined,
@@ -523,11 +685,14 @@ export default function AddUser() {
         return;
       }
       const worksheet = workbook.Sheets[firstSheetName];
-      const sheetData = XLSX.utils.sheet_to_json<(string | number)[]>(worksheet, {
-        header: 1,
-        defval: "",
-        blankrows: false,
-      });
+      const sheetData = XLSX.utils.sheet_to_json<(string | number)[]>(
+        worksheet,
+        {
+          header: 1,
+          defval: "",
+          blankrows: false,
+        },
+      );
 
       const parsed = parseSpreadsheetData(sheetData, accountCategory);
       setParsedRows(parsed);
@@ -591,19 +756,23 @@ export default function AddUser() {
       })),
       {
         onSuccess: (res: any) => {
-          const createdCount = res?.data?.data?.users?.createdCount || res?.createdCount || validMembers.length;
+          const createdCount =
+            res?.data?.data?.users?.createdCount ||
+            res?.createdCount ||
+            validMembers.length;
           toast.success(
             accountCategory === "external"
               ? `Successfully registered ${createdCount} external review center account(s)!`
-              : `Successfully registered ${createdCount} internal user account(s)!`
+              : `Successfully registered ${createdCount} internal user account(s)!`,
           );
           navigate("/faculty-management");
         },
         onError: (err: any) => {
-          const msg = err.response?.data?.message || "Failed to process bulk import.";
+          const msg =
+            err.response?.data?.message || "Failed to process bulk import.";
           toast.error(msg);
         },
-      }
+      },
     );
   };
 
@@ -616,7 +785,10 @@ export default function AddUser() {
             to="/faculty-management"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group"
           >
-            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft
+              size={14}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
             Back to Directory
           </Link>
         </div>
@@ -648,8 +820,8 @@ export default function AddUser() {
                   ? "Register Review Center Account"
                   : "Bulk Import Review Centers"
                 : activeTab === "individual"
-                ? "Add New User"
-                : "Bulk Import Users"}
+                  ? "Add New User"
+                  : "Bulk Import Users"}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               {accountCategory === "external"
@@ -657,8 +829,8 @@ export default function AddUser() {
                   ? "Create a dedicated external partner account for review center representatives."
                   : "Batch upload multiple review center partner accounts via CSV/Excel spreadsheet."
                 : activeTab === "individual"
-                ? "Register an individual user account for academic access and management."
-                : "Batch upload multiple user accounts via CSV/Excel spreadsheet."}
+                  ? "Register an individual user account for academic access and management."
+                  : "Batch upload multiple user accounts via CSV/Excel spreadsheet."}
             </p>
           </div>
 
@@ -708,7 +880,7 @@ export default function AddUser() {
             }`}
           >
             <Shield size={14} />
-            Internal Account 
+            Internal Account
           </button>
 
           <button
@@ -782,7 +954,11 @@ export default function AddUser() {
           onLastNameChange={setLastName}
           onFieldChange={handleFieldChange}
           onCategoryChange={(categoryIds) =>
-            setFormData((prev) => ({ ...prev, handledCategoryIds: categoryIds, handledSubjectIds: categoryIds }))
+            setFormData((prev) => ({
+              ...prev,
+              handledCategoryIds: categoryIds,
+              handledSubjectIds: categoryIds,
+            }))
           }
           onSubmit={handleIndividualSubmit}
           onCancel={() => navigate("/faculty-management")}
@@ -819,6 +995,135 @@ export default function AddUser() {
           onCancel={() => navigate("/faculty-management")}
         />
       )}
+
+      {/* Account Created & Credentials Modal */}
+      <Dialog
+        open={isCredentialsModalOpen}
+        onOpenChange={(open) => {
+          setIsCredentialsModalOpen(open);
+          if (!open) {
+            navigate("/faculty-management");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md p-6 bg-card border border-border rounded-3xl shadow-2xl text-foreground font-sans">
+          <DialogHeader className="items-center text-center space-y-2">
+            <div className="size-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+              <CheckCircle2 className="size-6 stroke-[2.5]" />
+            </div>
+            <div>
+              <DialogTitle className="text-base font-extrabold text-foreground tracking-tight">
+                {createdCredentials?.role === "EXTERNAL"
+                  ? "Review Center Account Ready"
+                  : "User Account Ready"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Account registered successfully. Below are the assigned login credentials.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {createdCredentials && (
+            <div className="space-y-4 my-2">
+              {/* Credentials Box */}
+              <div className="bg-muted/40 border border-border rounded-2xl p-4 space-y-2.5">
+                {createdCredentials.companyName && (
+                  <div className="flex items-center justify-between text-xs pb-2 border-b border-border">
+                    <span className="text-muted-foreground font-semibold">
+                      Partner Center:
+                    </span>
+                    <span className="font-bold text-foreground">
+                      {createdCredentials.companyName}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground font-semibold">
+                    Representative / Name:
+                  </span>
+                  <span className="font-bold text-foreground">
+                    {createdCredentials.name}
+                  </span>
+                </div>
+                {createdCredentials.employeeId && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-semibold">
+                      Partner / Employee ID:
+                    </span>
+                    <span className="font-mono font-bold text-foreground">
+                      {createdCredentials.employeeId}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground font-semibold">
+                    Login Email:
+                  </span>
+                  <span className="font-bold text-foreground">
+                    {createdCredentials.email}
+                  </span>
+                </div>
+                {createdCredentials.temporaryPassword && (
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
+                    <span className="text-muted-foreground font-semibold">
+                      Temporary Password:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-black text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                        {createdCredentials.temporaryPassword}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Email Delivery / Sandbox Info Note */}
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-800 dark:text-amber-300 text-[11px] leading-relaxed flex items-start gap-2">
+                <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div>
+                  <strong className="font-bold">Email Dispatch Notice:</strong>{" "}
+                  An onboarding email was triggered. If your email provider is in
+                  sandbox/testing mode (e.g. Resend{" "}
+                  <code className="font-mono text-[10px] bg-amber-500/20 px-1 py-0.5 rounded">
+                    onboarding@resend.dev
+                  </code>
+                  ), delivery is restricted to the registered account owner. You
+                  can copy the credentials below to deliver them directly to the
+                  user.
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const text = `BoardQuest Portal Access Credentials\n--------------------------------\nOrganization: ${createdCredentials.companyName || "BoardQuest"}\nName: ${createdCredentials.name}\nLogin Email / ID: ${createdCredentials.email}\nTemporary Password: ${createdCredentials.temporaryPassword || "N/A"}\nPortal Link: ${createdCredentials.portalUrl || window.location.origin}`;
+                    navigator.clipboard.writeText(text);
+                    toast.success("Credentials copied to clipboard!");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer h-9 text-xs font-bold"
+                >
+                  <Copy className="size-3.5" />
+                  Copy All Credentials & Portal Link
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setIsCredentialsModalOpen(false);
+                    navigate("/faculty-management");
+                  }}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer h-9 text-xs font-bold rounded-xl shadow-xs"
+                >
+                  Done & Back to User Directory
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
