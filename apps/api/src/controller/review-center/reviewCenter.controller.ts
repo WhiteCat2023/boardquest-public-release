@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import * as reviewCenterService from "../../services/review-center/reviewCenter.service";
+import * as candidateService from "../../services/review-center/candidate.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
@@ -103,5 +104,35 @@ export const deleteReviewCenter = asyncHandler(
     return new ApiResponse(200, {}, "Review center deleted successfully").send(
       res,
     );
+  },
+);
+
+export const getReviewCenterCandidatesForAdmin = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const rc = await reviewCenterService.getReviewCenterById(id as string);
+
+    if (!rc) {
+      throw new ApiError(404, "Review center not found");
+    }
+
+    const { search, schoolYear, status, batch } = req.query;
+
+    const data = await candidateService.getReviewCenterCandidates(
+      rc.companyName,
+      rc.id,
+      {
+        search: search as string,
+        schoolYear: schoolYear as string,
+        status: status as string,
+        batch: batch as string,
+      },
+    );
+
+    return new ApiResponse(
+      200,
+      data,
+      "Review center candidates retrieved successfully",
+    ).send(res);
   },
 );

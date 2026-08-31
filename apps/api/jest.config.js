@@ -1,3 +1,5 @@
+process.env.DOTENV_CONFIG_QUIET = 'true';
+
 export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -5,6 +7,7 @@ export default {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.spec.ts', '**/?(*.)+(spec|test).ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  forceExit: true,
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

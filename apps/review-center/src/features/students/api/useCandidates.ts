@@ -7,7 +7,7 @@ export interface Candidate {
   email: string;
   schoolId?: string;
   schoolYear: string;
-  batch: string;
+  batch?: string;
   status: string;
   companyName: string;
   reviewCenterId?: string | null;
@@ -33,7 +33,7 @@ export interface CandidateFilters {
 export interface CandidatesResponse {
   candidates: Candidate[];
   schoolYears: string[];
-  batches: string[];
+  batches?: string[];
   total: number;
 }
 
@@ -42,7 +42,7 @@ export interface EnrollCandidatePayload {
   email: string;
   schoolId?: string;
   schoolYear: string;
-  batch: string;
+  batch?: string;
   status?: string;
 }
 
@@ -122,7 +122,7 @@ export function useUpdateCandidate() {
 
 export interface BulkEnrollPayload {
   schoolYear: string;
-  batch: string;
+  batch?: string;
   students: {
     name: string;
     email: string;

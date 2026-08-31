@@ -65,11 +65,14 @@ export async function getReviewCenterSchedules(
   }
 
   const list = await prisma.reviewCenterProgram.findMany({
-    where: { OR: whereConditions },
+    where: {
+      OR: whereConditions,
+    },
     orderBy: { startDate: "asc" },
   });
 
-  return list.map(mapToSchedule);
+  return list
+    .map(mapToSchedule);
 }
 
 /**

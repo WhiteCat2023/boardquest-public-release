@@ -18,7 +18,6 @@ import {
   AlertCircle,
   FileText,
   Trash2,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,14 +37,19 @@ import {
   useBulkEnrollCandidates,
 } from "../api/useCandidates";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
+import {
+  formatSchoolYearInput,
+  normalizeSchoolYear,
+  isValidSchoolYear,
+} from "@/lib/utils";
 
 // Helper to trigger download of CSV template
 export function downloadStudentTemplateCSV() {
-  const headers = "Full Name,Email,Student ID,Batch";
+  const headers = "Full Name,Email,Student ID";
   const sampleRows = [
-    "Maria Clara Santos,maria.santos@school.edu.ph,2023-0101,Batch 1",
-    "Juan Dela Cruz,juan.delacruz@school.edu.ph,2023-0102,Batch 1",
-    "Angela Reyes,angela.reyes@school.edu.ph,2023-0103,Batch 2",
+    "Maria Clara Santos,maria.santos@school.edu.ph,2023-0101",
+    "Juan Dela Cruz,juan.delacruz@school.edu.ph,2023-0102",
+    "Angela Reyes,angela.reyes@school.edu.ph,2023-0103",
   ];
   const csvString = [headers, ...sampleRows].join("\n");
   const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
@@ -65,13 +69,16 @@ export function AddStudentsPage() {
   const navigate = useNavigate();
   const { user } = useReviewCenterAuth();
 
-  const initialTab = searchParams.get("tab") === "bulk" ? "bulk" : "individual";
-  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+  const activeTab: "individual" | "bulk" =
+    searchParams.get("tab") === "bulk" ? "bulk" : "individual";
+
+  const handleTabChange = (tab: "individual" | "bulk") => {
+    setSearchParams({ tab });
+  };
 
   const { data: candidatesData } = useCandidates();
   const { data: dbSchoolYears = [] } = useSchoolYears();
 
-  const existingBatches = candidatesData?.batches || [];
   const candidateSchoolYears = candidatesData?.schoolYears || [];
 
   const allSchoolYears = useMemo(() => {
@@ -84,15 +91,6 @@ export function AddStudentsPage() {
     ).sort((a, b) => b.localeCompare(a));
   }, [routeSchoolYear, dbSchoolYears, candidateSchoolYears]);
 
-  const allBatches = useMemo(() => {
-    return Array.from(
-      new Set([
-        ...existingBatches,
-        "Batch 1",
-      ])
-    );
-  }, [existingBatches]);
-
   // ── Global School Year state ──
   const [selectedSchoolYear, setSelectedSchoolYear] = useState(
     routeSchoolYear || allSchoolYears[0] || ""
@@ -104,17 +102,9 @@ export function AddStudentsPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [schoolId, setSchoolId] = useState("");
-  const [batch, setBatch] = useState(allBatches[0] || "Batch 1");
-  const [customBatch, setCustomBatch] = useState("");
-  const [isCustomBatch, setIsCustomBatch] = useState(false);
   const [status, setStatus] = useState("ENROLLED");
 
   // ── Bulk Form State ──
-  const [bulkBatch, setBulkBatch] = useState(
-    allBatches[0] || "Batch 1 (August 2026)"
-  );
-  const [customBulkBatch, setCustomBulkBatch] = useState("");
-  const [isCustomBulkBatch, setIsCustomBulkBatch] = useState(false);
   const [bulkRawText, setBulkRawText] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -123,20 +113,8 @@ export function AddStudentsPage() {
   const bulkMutation = useBulkEnrollCandidates();
 
   const finalSchoolYear = isCustomSchoolYear
-    ? customSchoolYear.trim()
+    ? normalizeSchoolYear(customSchoolYear)
     : selectedSchoolYear.trim();
-
-  // Sync tab with URL
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam === "bulk") setActiveTab("bulk");
-    else if (tabParam === "individual") setActiveTab("individual");
-  }, [searchParams]);
-
-  const handleTabChange = (tab: "individual" | "bulk") => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
-  };
 
   // ── Parse Bulk Raw Text ──
   const parsedBulkStudents = useMemo(() => {
@@ -151,7 +129,6 @@ export function AddStudentsPage() {
       name: string;
       email: string;
       schoolId?: string;
-      batch?: string;
       isValid: boolean;
       error?: string;
     }[] = [];
@@ -173,9 +150,6 @@ export function AddStudentsPage() {
       const rowName = parts[0] || "";
       const rowEmail = parts[1] || "";
       const rowSchoolId = parts[2] || "";
-      const rowBatch =
-        parts[3] ||
-        (isCustomBulkBatch ? customBulkBatch.trim() : bulkBatch.trim());
 
       const isValidEmail = Boolean(rowEmail && rowEmail.includes("@"));
       const isValid = Boolean(rowName.trim() && isValidEmail);
@@ -184,7 +158,6 @@ export function AddStudentsPage() {
         name: rowName,
         email: rowEmail,
         schoolId: rowSchoolId,
-        batch: rowBatch,
         isValid,
         error: !rowName
           ? "Missing Name"
@@ -195,7 +168,7 @@ export function AddStudentsPage() {
     }
 
     return result;
-  }, [bulkRawText, isCustomBulkBatch, customBulkBatch, bulkBatch]);
+  }, [bulkRawText]);
 
   const validBulkStudents = useMemo(() => {
     return parsedBulkStudents.filter((s) => s.isValid);
@@ -224,16 +197,6 @@ export function AddStudentsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleInsertSampleData = () => {
-    setUploadedFileName(null);
-    setBulkRawText(
-      "Maria Clara Santos, maria.santos@school.edu.ph, 2023-0101, Batch 1 (August 2026)\n" +
-        "Juan Dela Cruz, juan.delacruz@school.edu.ph, 2023-0102, Batch 1 (August 2026)\n" +
-        "Angela Reyes, angela.reyes@school.edu.ph, 2023-0103, Batch 2 (October 2026)\n" +
-        "Christian Bautista, christian.b@school.edu.ph, 2023-0104, Batch 2 (October 2026)"
-    );
-  };
-
   // ── Handle Individual Submit ──
   const handleIndividualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,10 +213,8 @@ export function AddStudentsPage() {
       toast.error("School Year is required.");
       return;
     }
-
-    const selectedBatch = isCustomBatch ? customBatch.trim() : batch.trim();
-    if (!selectedBatch) {
-      toast.error("Batch is required.");
+    if (!isValidSchoolYear(finalSchoolYear)) {
+      toast.error("Please enter a valid school year format: YYYY-YYYY (e.g. 2026-2027).");
       return;
     }
 
@@ -263,7 +224,6 @@ export function AddStudentsPage() {
         email: email.trim().toLowerCase(),
         schoolId: schoolId.trim() || undefined,
         schoolYear: finalSchoolYear,
-        batch: selectedBatch,
         status,
       },
       {
@@ -290,18 +250,14 @@ export function AddStudentsPage() {
       toast.error("School Year is required.");
       return;
     }
-
-    const defaultBatch = isCustomBulkBatch
-      ? customBulkBatch.trim()
-      : bulkBatch.trim();
-    if (!defaultBatch) {
-      toast.error("Please select or enter a batch name.");
+    if (!isValidSchoolYear(finalSchoolYear)) {
+      toast.error("Please enter a valid school year format: YYYY-YYYY (e.g. 2026-2027).");
       return;
     }
 
     if (validBulkStudents.length === 0) {
       toast.error(
-        "Please provide at least one valid student line (Full Name, Email, Student ID)."
+        "Please provide at least one valid student line from the CSV file."
       );
       return;
     }
@@ -309,12 +265,10 @@ export function AddStudentsPage() {
     bulkMutation.mutate(
       {
         schoolYear: finalSchoolYear,
-        batch: defaultBatch,
         students: validBulkStudents.map((s) => ({
           name: s.name,
           email: s.email,
           schoolId: s.schoolId,
-          batch: s.batch || defaultBatch,
         })),
       },
       {
@@ -407,9 +361,11 @@ export function AddStudentsPage() {
             {isCustomSchoolYear && (
               <Input
                 value={customSchoolYear}
-                onChange={(e) => setCustomSchoolYear(e.target.value)}
-                placeholder="2027-2028"
-                className="h-7 w-28 text-xs rounded-lg bg-background border-border"
+                onChange={(e) => setCustomSchoolYear(formatSchoolYearInput(e.target.value))}
+                onBlur={() => setCustomSchoolYear(normalizeSchoolYear(customSchoolYear))}
+                placeholder="2026-2027"
+                maxLength={9}
+                className="h-7 w-28 text-xs font-mono rounded-lg bg-background border-border"
                 disabled={isPending}
               />
             )}
@@ -457,7 +413,7 @@ export function AddStudentsPage() {
               Student Information
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Enter the student's personal details, batch, and enrollment status.
+              Enter the student's personal details and enrollment status.
             </CardDescription>
           </CardHeader>
 
@@ -512,78 +468,29 @@ export function AddStudentsPage() {
                 </div>
               </div>
 
-              {/* Batch & Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Layers className="size-3.5 text-muted-foreground" />
-                    <span>Batch</span>
-                    <span className="text-destructive">*</span>
-                  </label>
-                  <Select
-                    value={isCustomBatch ? "CUSTOM" : batch}
-                    onValueChange={(val) => {
-                      if (val === "CUSTOM") {
-                        setIsCustomBatch(true);
-                      } else {
-                        setIsCustomBatch(false);
-                        setBatch(val);
-                      }
-                    }}
-                    disabled={isPending}
-                  >
-                    <SelectTrigger className="h-9.5 text-xs rounded-xl bg-background border-border">
-                      <SelectValue placeholder="Select Batch" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      {allBatches.map((b) => (
-                        <SelectItem key={b} value={b} className="text-xs">
-                          {b}
-                        </SelectItem>
-                      ))}
-                      <SelectItem
-                        value="CUSTOM"
-                        className="text-xs font-semibold text-primary"
-                      >
-                        + Custom Batch Name...
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {isCustomBatch && (
-                    <Input
-                      value={customBatch}
-                      onChange={(e) => setCustomBatch(e.target.value)}
-                      placeholder="Enter batch name (e.g. Batch Alpha)"
-                      className="h-8.5 text-xs rounded-xl bg-background border-border mt-1.5"
-                      disabled={isPending}
-                    />
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Tag className="size-3.5 text-muted-foreground" />
-                    <span>Status</span>
-                  </label>
-                  <Select
-                    value={status}
-                    onValueChange={setStatus}
-                    disabled={isPending}
-                  >
-                    <SelectTrigger className="h-9.5 text-xs rounded-xl bg-background border-border">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      <SelectItem value="ENROLLED" className="text-xs">
-                        Enrolled (Active Review)
-                      </SelectItem>
-                      <SelectItem value="COMPLETED" className="text-xs">
-                        Completed
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Status */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Tag className="size-3.5 text-muted-foreground" />
+                  <span>Status</span>
+                </label>
+                <Select
+                  value={status}
+                  onValueChange={setStatus}
+                  disabled={isPending}
+                >
+                  <SelectTrigger className="h-9.5 text-xs rounded-xl bg-background border-border">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="ENROLLED" className="text-xs">
+                      Enrolled (Active Review)
+                    </SelectItem>
+                    <SelectItem value="COMPLETED" className="text-xs">
+                      Completed
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Form Buttons */}
@@ -634,7 +541,7 @@ export function AddStudentsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
                   Download our pre-formatted spreadsheet template with the required columns:{" "}
-                  <span className="font-semibold text-foreground">Full Name, Email, Student ID, Batch</span>. Fill it out and upload it below.
+                  <span className="font-semibold text-foreground">Full Name, Email, Student ID</span>. Fill it out and upload it below.
                 </p>
               </div>
 
@@ -649,67 +556,19 @@ export function AddStudentsPage() {
             </CardContent>
           </Card>
 
-          {/* Bulk Upload / Paste Form */}
+          {/* Bulk Upload Form */}
           <Card className="rounded-2xl border-border bg-card shadow-xs overflow-hidden">
             <CardHeader className="p-5 pb-3 border-b border-border/70 bg-muted/20">
               <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Upload className="size-4 text-primary" />
-                Upload or Paste Students
+                Upload Students CSV
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                You can upload your filled CSV file or paste directly from Excel or Google Sheets.
+                Upload your completed CSV file to enroll students in bulk.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="p-6 space-y-5">
-              {/* Default Batch Selector */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Layers className="size-3.5 text-muted-foreground" />
-                  <span>Default Batch for this list</span>
-                  <span className="text-destructive">*</span>
-                </label>
-                <Select
-                  value={isCustomBulkBatch ? "CUSTOM" : bulkBatch}
-                  onValueChange={(val) => {
-                    if (val === "CUSTOM") {
-                      setIsCustomBulkBatch(true);
-                    } else {
-                      setIsCustomBulkBatch(false);
-                      setBulkBatch(val);
-                    }
-                  }}
-                  disabled={isPending}
-                >
-                  <SelectTrigger className="h-9 text-xs rounded-xl bg-background border-border">
-                    <SelectValue placeholder="Select Default Batch" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {allBatches.map((b) => (
-                      <SelectItem key={b} value={b} className="text-xs">
-                        {b}
-                      </SelectItem>
-                    ))}
-                    <SelectItem
-                      value="CUSTOM"
-                      className="text-xs font-semibold text-primary"
-                    >
-                      + Custom Batch Name...
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {isCustomBulkBatch && (
-                  <Input
-                    value={customBulkBatch}
-                    onChange={(e) => setCustomBulkBatch(e.target.value)}
-                    placeholder="Enter custom batch name"
-                    className="h-8.5 text-xs rounded-xl bg-background border-border mt-1.5"
-                    disabled={isPending}
-                  />
-                )}
-              </div>
-
               {/* Drag & Drop File Area */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -770,34 +629,6 @@ export function AddStudentsPage() {
                 )}
               </div>
 
-              {/* Paste Text / Excel Area */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <span>Or Paste Spreadsheet Rows</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleInsertSampleData}
-                    className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
-                  >
-                    Insert Sample Data
-                  </button>
-                </div>
-
-                <textarea
-                  value={bulkRawText}
-                  onChange={(e) => {
-                    setUploadedFileName(null);
-                    setBulkRawText(e.target.value);
-                  }}
-                  placeholder={"Full Name, Email, Student ID, Batch\nMaria Santos, maria.santos@school.edu.ph, 2023-0101, Batch 1\nJuan Dela Cruz, juan.delacruz@school.edu.ph, 2023-0102, Batch 1"}
-                  rows={5}
-                  className="w-full text-xs font-mono p-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none leading-relaxed"
-                  disabled={isPending}
-                />
-              </div>
-
               {/* Live Preview Table */}
               {parsedBulkStudents.length > 0 && (
                 <div className="space-y-2 pt-2">
@@ -819,7 +650,6 @@ export function AddStudentsPage() {
                           <th className="px-3 py-2">Full Name</th>
                           <th className="px-3 py-2">Email</th>
                           <th className="px-3 py-2">Student ID</th>
-                          <th className="px-3 py-2">Batch</th>
                           <th className="px-3 py-2 text-right">Status</th>
                         </tr>
                       </thead>
@@ -840,9 +670,6 @@ export function AddStudentsPage() {
                             </td>
                             <td className="px-3 py-2 font-mono text-[11px]">
                               {item.schoolId || "—"}
-                            </td>
-                            <td className="px-3 py-2 text-primary font-semibold text-[11px]">
-                              {item.batch || "—"}
                             </td>
                             <td className="px-3 py-2 text-right">
                               {item.isValid ? (

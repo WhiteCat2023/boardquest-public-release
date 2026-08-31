@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import useRoleFlags from "@/hooks/useRoleFlags";
-import { useReviewCenter } from "../api/useReviewCenter";
+import { useReviewCenter, useReviewCenterCandidates } from "../api/useReviewCenter";
 import { useCalendar } from "../api/useCalendar";
-import { useStudents } from "@/features/students";
 import ReviewCenterHeader from "../components/details/ReviewCenterHeader";
 import ReviewCenterOverviewTab from "../components/details/ReviewCenterOverviewTab";
 import ReviewCenterStudentsTab from "../components/details/ReviewCenterStudentsTab";
@@ -22,11 +21,9 @@ export function ReviewCenterDetailsPage() {
   // Fetch Review Center Data
   const { data: reviewCenter, isLoading: isCenterLoading } = useReviewCenter(reviewCenterId);
 
-  // Fetch Students count for this review center / location
-  const { data: studentsData } = useStudents({
-    location: reviewCenter?.location && reviewCenter.location !== "Philippines" ? reviewCenter.location : undefined,
-  });
-  const studentsCount = studentsData?.students?.length ?? 0;
+  // Fetch Enrolled Candidates for this review center
+  const { data: candidatesData } = useReviewCenterCandidates(reviewCenterId);
+  const studentsCount = candidatesData?.candidates?.length ?? candidatesData?.total ?? 0;
 
   // Fetch Schedules count for this review center
   const { data: schedules = [] } = useCalendar({
@@ -83,10 +80,7 @@ export function ReviewCenterDetailsPage() {
       ) : activeTab === "students" ? (
         <ReviewCenterStudentsTab reviewCenter={reviewCenter} />
       ) : (
-        <ReviewCenterSchedulesTab
-          reviewCenter={reviewCenter}
-          canManage={canManage}
-        />
+        <ReviewCenterSchedulesTab reviewCenter={reviewCenter} />
       )}
 
       {/* Edit Review Center Modal */}

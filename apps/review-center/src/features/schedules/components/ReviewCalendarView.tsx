@@ -67,12 +67,14 @@ export default function ReviewCalendarView({
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
 
+  const activeSchedules = schedules || [];
+
   // Helper to check if a specific day is in range of a schedule
   const getSchedulesForDay = (day: number) => {
     const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const targetDate = new Date(dayStr);
 
-    return schedules.filter((sched) => {
+    return activeSchedules.filter((sched) => {
       if (!sched.startDate || !sched.endDate) return false;
       const start = new Date(sched.startDate);
       const end = new Date(sched.endDate);
@@ -263,7 +265,7 @@ export default function ReviewCalendarView({
             </h3>
           </div>
           <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-            {schedules.length}
+            {activeSchedules.length}
           </span>
         </div>
 
@@ -274,7 +276,7 @@ export default function ReviewCalendarView({
               <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               <span className="text-xs">Loading review schedules...</span>
             </div>
-          ) : schedules.length === 0 ? (
+          ) : activeSchedules.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-border rounded-xl">
               <AlertCircle className="size-8 text-muted-foreground/50 mb-2" />
               <p className="text-xs font-bold text-foreground">
@@ -293,7 +295,7 @@ export default function ReviewCalendarView({
               </Button>
             </div>
           ) : (
-            schedules.map((sched) => (
+            activeSchedules.map((sched) => (
               <div
                 key={sched.id}
                 className="p-3 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-all flex flex-col gap-2 group"

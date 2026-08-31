@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { 
   Calendar as CalendarIcon, 
-  Building2, 
+  Gamepad2, 
   Tag, 
   AlignLeft, 
-  Loader2, 
   Clock, 
   Sparkles,
   ArrowRight
@@ -26,31 +25,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { ReviewSchedule, ReviewCenterRepresentative } from "../types/types";
+import type { ReviewSchedule } from "../types/types";
 import { useCreateReviewSchedule, useUpdateReviewSchedule } from "../api/useCalendar";
 
 interface SetReviewScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: ReviewSchedule | null;
-  reviewCenters?: ReviewCenterRepresentative[];
-  prefilledCompany?: string;
 }
 
 export default function SetReviewScheduleModal({
   isOpen,
   onClose,
   initialData,
-  reviewCenters = [],
-  prefilledCompany,
 }: SetReviewScheduleModalProps) {
   const isEditing = !!initialData;
 
   const [title, setTitle] = useState("");
-  const [companyName, setCompanyName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [category, setCategory] = useState("Board Review");
+  const [category, setCategory] = useState("Final Comprehensive Review");
   const [status, setStatus] = useState("UPCOMING");
   const [description, setDescription] = useState("");
 
@@ -61,24 +55,22 @@ export default function SetReviewScheduleModal({
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");
-      setCompanyName(initialData.companyName || "");
       setStartDate(initialData.startDate || "");
       setEndDate(initialData.endDate || "");
-      setCategory(initialData.category || "Board Review");
+      setCategory(initialData.category || "Final Comprehensive Review");
       setStatus(initialData.status || "UPCOMING");
       setDescription(initialData.description || "");
     } else {
       setTitle("");
-      setCompanyName(prefilledCompany || reviewCenters[0]?.companyName || "Apex MedTech Review Center");
       const today = new Date().toISOString().split("T")[0];
       const twoWeeksLater = new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
       setStartDate(today);
       setEndDate(twoWeeksLater);
-      setCategory("Board Review");
+      setCategory("Final Comprehensive Review");
       setStatus("UPCOMING");
       setDescription("");
     }
-  }, [initialData, isOpen, reviewCenters, prefilledCompany]);
+  }, [initialData, isOpen]);
 
   // Calculate duration in days
   const calculateDays = () => {
@@ -97,7 +89,7 @@ export default function SetReviewScheduleModal({
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error("Review title is required.");
+      toast.error("Final review title is required.");
       return;
     }
     if (!startDate) {
@@ -119,7 +111,7 @@ export default function SetReviewScheduleModal({
           id: initialData.id,
           data: {
             title,
-            companyName,
+            companyName: "Institutional (BoardQuest)",
             startDate,
             endDate,
             category,
@@ -129,7 +121,7 @@ export default function SetReviewScheduleModal({
         },
         {
           onSuccess: () => {
-            toast.success("Review schedule dates updated successfully!");
+            toast.success("Game final review schedule updated successfully!");
             onClose();
           },
           onError: (err: any) => {
@@ -141,7 +133,7 @@ export default function SetReviewScheduleModal({
       createMutation.mutate(
         {
           title,
-          companyName,
+          companyName: "Institutional (BoardQuest)",
           startDate,
           endDate,
           category,
@@ -150,7 +142,7 @@ export default function SetReviewScheduleModal({
         },
         {
           onSuccess: () => {
-            toast.success("Review schedule created successfully!");
+            toast.success("Game final review schedule created successfully!");
             onClose();
           },
           onError: (err: any) => {
@@ -169,15 +161,15 @@ export default function SetReviewScheduleModal({
         {/* Styled Top Banner Header */}
         <div className="relative -mx-8 -mt-8 p-7 px-8 bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground flex items-center gap-4">
           <div className="size-14 rounded-2xl bg-primary-foreground/15 border border-primary-foreground/30 text-primary-foreground flex items-center justify-center font-bold shadow-inner shrink-0 backdrop-blur-md">
-            <CalendarIcon size={26} />
+            <Gamepad2 size={26} />
           </div>
           <div>
             <DialogTitle className="text-xl font-bold text-primary-foreground tracking-tight flex items-center gap-2.5">
-              {isEditing ? "Edit Review Schedule & Dates" : "Schedule Review Period"}
+              {isEditing ? "Edit Game Final Review Period" : "Schedule Final Review for Game"}
               <Sparkles size={18} className="text-amber-300" />
             </DialogTitle>
             <DialogDescription className="text-xs text-primary-foreground/80 mt-1">
-              Set the start date and end date for intensive board reviews, mock exams, or subject coaching batches.
+              Set the institutional final review and mock exam dates for the BoardQuest game.
             </DialogDescription>
           </div>
         </div>
@@ -186,12 +178,12 @@ export default function SetReviewScheduleModal({
           {/* Review Title */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <CalendarIcon size={14} className="text-primary" />
-              Review Program / Batch Title *
+              <Gamepad2 size={14} className="text-primary" />
+              Final Review Period Title *
             </label>
             <Input
               type="text"
-              placeholder="e.g. 2026 Comprehensive MTLE Board Review"
+              placeholder="e.g. 2026 Comprehensive MTLE Final Review Mode"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="h-10 bg-muted/40 border border-border rounded-xl text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
@@ -199,54 +191,49 @@ export default function SetReviewScheduleModal({
             />
           </div>
 
-          {/* Grid Layout for Review Center Institution & Category */}
+          {/* Grid Layout for Category & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Review Center Institution */}
-            <div className="space-y-1.5 min-w-0">
-              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Building2 size={14} className="text-muted-foreground shrink-0" />
-                Review Center Institution
-              </label>
-              {reviewCenters.length > 0 ? (
-                <Select value={companyName} onValueChange={setCompanyName}>
-                  <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
-                    <SelectValue placeholder="Select Review Center" className="truncate" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="max-w-[280px]">
-                    {reviewCenters.map((rc) => (
-                      <SelectItem key={rc.id} value={rc.companyName} className="text-xs font-medium">
-                        {rc.companyName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  type="text"
-                  placeholder="e.g. Apex MedTech Review Center"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="h-10 w-full bg-muted/40 border border-border rounded-xl text-sm text-foreground"
-                />
-              )}
-            </div>
-
             {/* Category */}
             <div className="space-y-1.5 min-w-0">
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Tag size={14} className="text-muted-foreground shrink-0" />
-                Category
+                Category / Mode
               </label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="Board Review" className="text-xs font-medium">Board Review</SelectItem>
-                  <SelectItem value="Intensive Coaching" className="text-xs font-medium">Intensive Coaching</SelectItem>
-                  <SelectItem value="Subject Mastery" className="text-xs font-medium">Subject Mastery</SelectItem>
-                  <SelectItem value="Mock Exam" className="text-xs font-medium">Mock Exam</SelectItem>
-                  <SelectItem value="Refresher Program" className="text-xs font-medium">Refresher Program</SelectItem>
+                  <SelectItem value="Final Comprehensive Review" className="text-xs font-medium">
+                    Final Comprehensive Review
+                  </SelectItem>
+                  <SelectItem value="Mock Board Examination" className="text-xs font-medium">
+                    Mock Board Examination
+                  </SelectItem>
+                  <SelectItem value="Pre-Board Diagnostic Drill" className="text-xs font-medium">
+                    Pre-Board Diagnostic Drill
+                  </SelectItem>
+                  <SelectItem value="Subject Intensive Coaching" className="text-xs font-medium">
+                    Subject Intensive Coaching
+                  </SelectItem>
+                  <SelectItem value="Speed & Mastery Challenge" className="text-xs font-medium">
+                    Speed & Mastery Challenge
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Schedule Status Selection */}
+            <div className="space-y-1.5 min-w-0">
+              <label className="text-xs font-bold text-foreground">Schedule Status</label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="UPCOMING" className="text-xs font-medium">Upcoming</SelectItem>
+                  <SelectItem value="ACTIVE" className="text-xs font-medium">Active (Ongoing)</SelectItem>
+                  <SelectItem value="COMPLETED" className="text-xs font-medium">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -262,7 +249,7 @@ export default function SetReviewScheduleModal({
 
               {durationDays !== null && (
                 <span className="text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  {durationDays} {durationDays === 1 ? "Day" : "Days"} Program
+                  {durationDays} {durationDays === 1 ? "Day" : "Days"} Final Review
                 </span>
               )}
             </div>
@@ -310,29 +297,14 @@ export default function SetReviewScheduleModal({
             )}
           </div>
 
-          {/* Schedule Status Selection */}
-          <div className="space-y-1.5 min-w-0">
-            <label className="text-xs font-bold text-foreground">Schedule Status</label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="UPCOMING" className="text-xs font-medium">Upcoming</SelectItem>
-                <SelectItem value="ACTIVE" className="text-xs font-medium">Active (Ongoing)</SelectItem>
-                <SelectItem value="COMPLETED" className="text-xs font-medium">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Notes / Description */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
               <AlignLeft size={14} className="text-muted-foreground" />
-              Description & Notes
+              Description & Guidelines for Students
             </label>
             <textarea
-              placeholder="Enter details, syllabus, or instructions for this review batch..."
+              placeholder="Enter guidelines, coverage, or instructions for this game final review..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -356,7 +328,7 @@ export default function SetReviewScheduleModal({
               className="h-10 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 cursor-pointer shadow-md flex items-center gap-2 transition-all"
             >
               {isSubmitting && <Spinner size="sm" variant="current" />}
-              {isEditing ? "Save Date Changes" : "Create Review Schedule"}
+              {isEditing ? "Save Date Changes" : "Set Final Review Period"}
             </Button>
           </div>
         </form>

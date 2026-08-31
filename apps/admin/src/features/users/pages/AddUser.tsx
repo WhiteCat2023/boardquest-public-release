@@ -427,7 +427,7 @@ export default function AddUser() {
           lastNameIdx !== -1 && row[lastNameIdx] !== undefined
             ? String(row[lastNameIdx]).trim()
             : "";
-        let name = "";
+        let name: string;
 
         if (firstName || lastName) {
           name = [firstName, lastName].filter(Boolean).join(" ").trim();
@@ -574,7 +574,7 @@ export default function AddUser() {
         lastNameIdx !== -1 && row[lastNameIdx] !== undefined
           ? String(row[lastNameIdx]).trim()
           : "";
-      let name = "";
+      let name: string;
 
       if (firstName || lastName) {
         name = [firstName, middleName, lastName]

@@ -4,17 +4,14 @@ import {
   Search,
   Plus,
   Calendar,
-  Layers,
   GraduationCap,
   Edit3,
   Trash2,
   CheckCircle2,
-  Sparkles,
   RotateCcw,
   ArrowLeft,
   ChevronRight,
   FileSpreadsheet,
-  UserPlus,
   FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,22 +44,19 @@ export function StudentsPage() {
 
   // Filters within a School Year
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedBatch, setSelectedBatch] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
   // Query all candidates
   const { data, isLoading } = useCandidates({
     search: selectedSchoolYear ? searchTerm : undefined,
     schoolYear: selectedSchoolYear || undefined,
-    batch: selectedBatch !== "ALL" ? selectedBatch : undefined,
     status: selectedStatus !== "ALL" ? selectedStatus : undefined,
   });
 
   const deleteCandidateMutation = useDeleteCandidate();
 
   const candidates = data?.candidates || [];
-  const querySchoolYears = data?.schoolYears || [];
-  const batches = data?.batches || [];
+  const querySchoolYears = useMemo(() => data?.schoolYears || [], [data?.schoolYears]);
   const total = data?.total || 0;
 
   // Combine known and existing school years
@@ -74,25 +68,27 @@ export function StudentsPage() {
 
   // Group stats per school year for the overview cards
   const { data: allData } = useCandidates();
-  const allCandidatesList = allData?.candidates || [];
+  const allCandidatesList = useMemo(() => allData?.candidates || [], [allData?.candidates]);
 
   const schoolYearStats = useMemo(() => {
     const statsMap: Record<
       string,
-      { count: number; batches: Set<string>; sampleStudents: string[] }
+      { count: number; completedCount: number; sampleStudents: string[] }
     > = {};
 
     allSchoolYearsList.forEach((sy) => {
-      statsMap[sy] = { count: 0, batches: new Set(), sampleStudents: [] };
+      statsMap[sy] = { count: 0, completedCount: 0, sampleStudents: [] };
     });
 
     allCandidatesList.forEach((c) => {
       const sy = c.schoolYear || "2026-2027";
       if (!statsMap[sy]) {
-        statsMap[sy] = { count: 0, batches: new Set(), sampleStudents: [] };
+        statsMap[sy] = { count: 0, completedCount: 0, sampleStudents: [] };
       }
       statsMap[sy].count++;
-      if (c.batch) statsMap[sy].batches.add(c.batch);
+      if (c.status === "COMPLETED") {
+        statsMap[sy].completedCount++;
+      }
       if (statsMap[sy].sampleStudents.length < 3) {
         statsMap[sy].sampleStudents.push(c.name);
       }
@@ -100,6 +96,8 @@ export function StudentsPage() {
 
     return statsMap;
   }, [allSchoolYearsList, allCandidatesList]);
+
+  const totalCompleted = allCandidatesList.filter((c) => c.status === "COMPLETED").length;
 
   // Modals state
   const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
@@ -137,13 +135,11 @@ export function StudentsPage() {
 
   const resetDrilldownFilters = () => {
     setSearchTerm("");
-    setSelectedBatch("ALL");
     setSelectedStatus("ALL");
   };
 
   const isFiltered =
     Boolean(searchTerm) ||
-    selectedBatch !== "ALL" ||
     selectedStatus !== "ALL";
 
   return (
@@ -161,7 +157,7 @@ export function StudentsPage() {
                 Enrolled Students
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Select a school year below to view enrolled students and batches.
+                Select a school year below to view enrolled students.
               </p>
             </div>
 
@@ -215,14 +211,14 @@ export function StudentsPage() {
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="space-y-1">
                   <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Active Cohort Batches
+                    Completed Students
                   </span>
                   <div className="text-2xl font-black text-foreground">
-                    {allData?.batches?.length || 1}
+                    {totalCompleted}
                   </div>
                 </div>
                 <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Layers className="size-5" />
+                  <CheckCircle2 className="size-5" />
                 </div>
               </CardContent>
             </Card>
@@ -232,14 +228,14 @@ export function StudentsPage() {
           <div className="space-y-3">
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               <FolderOpen size={16} className="text-primary" />
-              School Year Batches
+              School Year Directory
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {allSchoolYearsList.map((sy) => {
                 const stats = schoolYearStats[sy] || {
                   count: 0,
-                  batches: new Set(),
+                  completedCount: 0,
                   sampleStudents: [],
                 };
                 const isCurrent = sy === "2026-2027";
@@ -273,16 +269,6 @@ export function StudentsPage() {
                         <div className="p-2.5 rounded-xl bg-muted/60 text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                           <ChevronRight className="size-4" />
                         </div>
-                      </div>
-
-                      {/* Batches indicator */}
-                      <div className="flex items-center gap-1.5 pt-1 border-t border-border/50 text-[11px] text-muted-foreground font-medium">
-                        <Layers size={13} className="text-primary shrink-0" />
-                        <span>
-                          {stats.batches.size === 0
-                            ? "Standard batch"
-                            : `${stats.batches.size} batch${stats.batches.size === 1 ? "" : "es"}`}
-                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -356,28 +342,8 @@ export function StudentsPage() {
               />
             </div>
 
-            {/* Batch Filter */}
-            <div className="w-full sm:w-52">
-              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-                <SelectTrigger className="h-9 text-xs rounded-xl bg-background border-border">
-                  <Layers className="size-3.5 text-muted-foreground mr-1.5 shrink-0" />
-                  <SelectValue placeholder="All Batches" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="ALL" className="text-xs font-semibold">
-                    All Batches
-                  </SelectItem>
-                  {batches.map((b) => (
-                    <SelectItem key={b} value={b} className="text-xs">
-                      {b}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Status Filter */}
-            <div className="w-full sm:w-36">
+            <div className="w-full sm:w-40">
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="h-9 text-xs rounded-xl bg-background border-border">
                   <SelectValue placeholder="All Status" />
@@ -430,7 +396,7 @@ export function StudentsPage() {
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {isFiltered
-                      ? "Try changing your search term or batch filter."
+                      ? "Try changing your search term or status filter."
                       : "Add students individually or bulk paste multiple students at once."}
                   </p>
                 </div>
@@ -464,8 +430,6 @@ export function StudentsPage() {
                     <tr className="border-b border-border bg-muted/30 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                       <th className="px-4 py-3">Student</th>
                       <th className="px-4 py-3">Student ID</th>
-                      <th className="px-4 py-3">Batch</th>
-                      <th className="px-4 py-3">BoardQuest App</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -506,29 +470,6 @@ export function StudentsPage() {
                           {/* Student ID */}
                           <td className="px-4 py-3 font-mono text-[11.5px] text-foreground font-semibold">
                             {cand.schoolId || "—"}
-                          </td>
-
-                          {/* Batch */}
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
-                              {cand.batch}
-                            </span>
-                          </td>
-
-                          {/* BoardQuest App Status */}
-                          <td className="px-4 py-3">
-                            {cand.studentDetails ? (
-                              <div className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                                <Sparkles size={11} />
-                                <span>
-                                  Level {cand.studentDetails.level} ({cand.studentDetails.xp} XP)
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-[10.5px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
-                                Registered in RC
-                              </span>
-                            )}
                           </td>
 
                           {/* Status */}
@@ -583,7 +524,6 @@ export function StudentsPage() {
         initialData={editingCandidate}
         defaultSchoolYear={selectedSchoolYear || "2026-2027"}
         existingSchoolYears={allSchoolYearsList}
-        existingBatches={batches}
       />
 
       {/* ── Bulk Add Modal ── */}
@@ -591,7 +531,6 @@ export function StudentsPage() {
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
         schoolYear={selectedSchoolYear || "2026-2027"}
-        existingBatches={batches}
       />
     </div>
   );

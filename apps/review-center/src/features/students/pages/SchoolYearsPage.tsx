@@ -4,13 +4,12 @@ import {
   Users,
   Plus,
   Calendar,
-  Layers,
   GraduationCap,
   ChevronRight,
   FolderOpen,
   CalendarPlus,
   Loader2,
-  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,11 @@ import {
   useSchoolYears,
   useCreateSchoolYear,
 } from "../api/useCandidates";
+import {
+  formatSchoolYearInput,
+  normalizeSchoolYear,
+  isValidSchoolYear,
+} from "@/lib/utils";
 
 export function SchoolYearsPage() {
   const navigate = useNavigate();
@@ -37,8 +41,7 @@ export function SchoolYearsPage() {
   const { data: dbSchoolYears = [], isLoading: isSchoolYearsLoading } = useSchoolYears();
   const createSchoolYearMutation = useCreateSchoolYear();
 
-  const allCandidatesList = candidatesData?.candidates || [];
-  const batches = candidatesData?.batches || [];
+  const allCandidatesList = useMemo(() => candidatesData?.candidates || [], [candidatesData?.candidates]);
 
   // Strictly use actual school years from the database (No demo data)
   const allSchoolYearsList = useMemo(() => {
@@ -51,21 +54,23 @@ export function SchoolYearsPage() {
   const schoolYearStats = useMemo(() => {
     const statsMap: Record<
       string,
-      { count: number; batches: Set<string> }
+      { count: number; completedCount: number }
     > = {};
 
     allSchoolYearsList.forEach((sy) => {
-      statsMap[sy] = { count: 0, batches: new Set() };
+      statsMap[sy] = { count: 0, completedCount: 0 };
     });
 
     allCandidatesList.forEach((c) => {
       const sy = c.schoolYear;
       if (sy) {
         if (!statsMap[sy]) {
-          statsMap[sy] = { count: 0, batches: new Set() };
+          statsMap[sy] = { count: 0, completedCount: 0 };
         }
         statsMap[sy].count++;
-        if (c.batch) statsMap[sy].batches.add(c.batch);
+        if (c.status === "COMPLETED") {
+          statsMap[sy].completedCount++;
+        }
       }
     });
 
@@ -74,10 +79,10 @@ export function SchoolYearsPage() {
 
   const handleCreateSchoolYear = (e: React.FormEvent) => {
     e.preventDefault();
-    const formatted = newSchoolYearInput.trim().replace(/^s\.?y\.?\s*/i, "");
+    const formatted = normalizeSchoolYear(newSchoolYearInput);
 
-    if (!formatted) {
-      toast.error("Please enter a valid school year (e.g. 2026-2027).");
+    if (!isValidSchoolYear(formatted)) {
+      toast.error("Please enter a valid school year in YYYY-YYYY format (e.g. 2026-2027).");
       return;
     }
 
@@ -97,6 +102,8 @@ export function SchoolYearsPage() {
 
   const isLoading = isCandidatesLoading || isSchoolYearsLoading;
 
+  const totalCompleted = allCandidatesList.filter((c) => c.status === "COMPLETED").length;
+
   return (
     <div className="space-y-6 max-w-7xl w-full mx-auto font-sans">
       {/* ── Header ── */}
@@ -107,7 +114,7 @@ export function SchoolYearsPage() {
             Enrolled Students
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Select a school year below to view enrolled students and batches.
+            Select a school year below to view enrolled students.
           </p>
         </div>
 
@@ -158,14 +165,14 @@ export function SchoolYearsPage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                Review Batches
+                Completed Students
               </span>
               <div className="text-2xl font-black text-foreground">
-                {batches.length || 0}
+                {totalCompleted}
               </div>
             </div>
             <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Layers className="size-5" />
+              <CheckCircle2 className="size-5" />
             </div>
           </CardContent>
         </Card>
@@ -213,7 +220,7 @@ export function SchoolYearsPage() {
             {allSchoolYearsList.map((sy, index) => {
               const stats = schoolYearStats[sy] || {
                 count: 0,
-                batches: new Set(),
+                completedCount: 0,
               };
               const isFirst = index === 0;
 
@@ -247,17 +254,8 @@ export function SchoolYearsPage() {
                     </div>
                   </div>
 
-                  {/* Middle & Right: Batches & Action */}
+                  {/* Right: Action */}
                   <div className="flex items-center gap-6 shrink-0">
-                    <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-                      <Layers size={13.5} className="text-primary shrink-0" />
-                      <span>
-                        {stats.batches.size === 0
-                          ? "0 batches"
-                          : `${stats.batches.size} batch${stats.batches.size === 1 ? "" : "es"}`}
-                      </span>
-                    </div>
-
                     <div className="flex items-center gap-1.5 text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">
                       <span className="hidden sm:inline">View Students</span>
                       <ChevronRight className="size-4" />
@@ -301,9 +299,11 @@ export function SchoolYearsPage() {
               </label>
               <Input
                 value={newSchoolYearInput}
-                onChange={(e) => setNewSchoolYearInput(e.target.value)}
-                placeholder="e.g. 2026-2027"
-                className="h-9.5 text-xs rounded-xl bg-background border-border"
+                onChange={(e) => setNewSchoolYearInput(formatSchoolYearInput(e.target.value))}
+                onBlur={() => setNewSchoolYearInput(normalizeSchoolYear(newSchoolYearInput))}
+                placeholder="2026-2027"
+                maxLength={9}
+                className="h-9.5 text-xs font-mono rounded-xl bg-background border-border"
                 autoFocus
                 disabled={createSchoolYearMutation.isPending}
               />

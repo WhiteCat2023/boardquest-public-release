@@ -10,7 +10,8 @@ import {
   Edit3, 
   Trash2, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReviewSchedule } from "../types/types";
@@ -301,27 +302,41 @@ export default function ReviewCalendarView({
                     </div>
                   )}
 
-                  {/* Action Buttons */}
+                  {/* Action Buttons or Read-Only Badge */}
                   <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditSchedule(sched)}
-                      className="h-6 text-[10px] sm:text-[10.5px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md px-1.5 cursor-pointer gap-1"
-                    >
-                      <Edit3 size={11} />
-                      Set / Change Dates
-                    </Button>
+                    {sched.companyName && sched.companyName !== "Institutional (BoardQuest)" ? (
+                      <div className="flex items-center justify-between w-full text-[10px] sm:text-[10.5px] text-muted-foreground bg-background/60 px-2 py-1 rounded-md border border-border/50">
+                        <span className="flex items-center gap-1.5 font-medium text-foreground/85">
+                          <Lock size={11} className="text-primary shrink-0" />
+                          <span>Set by Review Center</span>
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
+                          Read-Only
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditSchedule(sched)}
+                          className="h-6 text-[10px] sm:text-[10.5px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md px-1.5 cursor-pointer gap-1"
+                        >
+                          <Edit3 size={11} />
+                          Set / Change Dates
+                        </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteSchedule(sched)}
-                      className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
-                      title="Remove Schedule"
-                    >
-                      <Trash2 size={12} />
-                    </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDeleteSchedule(sched)}
+                          className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
+                          title="Remove Final Review Schedule"
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))

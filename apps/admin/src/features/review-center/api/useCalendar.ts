@@ -28,8 +28,10 @@ export function useReviewSchedules(params?: { company?: string }) {
       }
       return list;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 1000 * 5, // Automatically sync changes from DB every 5 seconds
   });
 }
 

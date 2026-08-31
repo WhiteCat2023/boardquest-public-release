@@ -97,3 +97,68 @@ export function useDeleteReviewCenter() {
     },
   });
 }
+
+export interface ReviewCenterCandidateItem {
+  id: string;
+  name: string;
+  email: string;
+  schoolId?: string;
+  schoolYear: string;
+  batch?: string;
+  status: string;
+  companyName: string;
+  studentId?: string | null;
+  studentDetails?: {
+    level: number;
+    xp: number;
+    streak: number;
+    verified: boolean;
+  } | null;
+  enrolledAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ReviewCenterCandidatesResponse {
+  candidates: ReviewCenterCandidateItem[];
+  schoolYears: string[];
+  batches?: string[];
+  total: number;
+}
+
+export function useReviewCenterCandidates(
+  reviewCenterId?: string,
+  params?: { search?: string; schoolYear?: string; status?: string; batch?: string },
+) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<ReviewCenterCandidatesResponse>({
+    queryKey: ["reviewCenterCandidates", reviewCenterId, params],
+    queryFn: async () => {
+      if (!reviewCenterId) {
+        return { candidates: [], schoolYears: [], batches: [], total: 0 };
+      }
+      const response = await axiosPrivate.get(`/review-center/${reviewCenterId}/candidates`, {
+        params,
+      });
+      const resData = response.data?.data;
+      if (resData && Array.isArray(resData.candidates)) {
+        return resData;
+      }
+      if (Array.isArray(resData)) {
+        return {
+          candidates: resData,
+          schoolYears: [],
+          batches: [],
+          total: resData.length,
+        };
+      }
+      return { candidates: [], schoolYears: [], batches: [], total: 0 };
+    },
+    enabled: !!reviewCenterId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 1000 * 5, // live sync every 5 seconds
+  });
+}

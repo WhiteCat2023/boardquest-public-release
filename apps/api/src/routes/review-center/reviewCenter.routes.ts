@@ -9,6 +9,7 @@ import {
   createReviewCenter,
   updateReviewCenter,
   deleteReviewCenter,
+  getReviewCenterCandidatesForAdmin,
 } from "../../controller/review-center/reviewCenter.controller";
 import {
   getReviewSchedules,
@@ -32,6 +33,18 @@ router.get(
   authenticateToken,
   requireRoles(allowedRoles),
   getReviewCenterById,
+);
+router.get(
+  "/:id/candidates",
+  authenticateToken,
+  requireRoles(allowedRoles),
+  getReviewCenterCandidatesForAdmin,
+);
+router.get(
+  "/:id/students",
+  authenticateToken,
+  requireRoles(allowedRoles),
+  getReviewCenterCandidatesForAdmin,
 );
 router.post(
   "/",

@@ -5,7 +5,6 @@ import {
   Mail,
   GraduationCap,
   Calendar,
-  Layers,
   Loader2,
   Tag,
 } from "lucide-react";
@@ -28,6 +27,11 @@ import { toast } from "sonner";
 import type { Candidate } from "../api/useCandidates";
 import { useEnrollCandidate, useUpdateCandidate } from "../api/useCandidates";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
+import {
+  formatSchoolYearInput,
+  normalizeSchoolYear,
+  isValidSchoolYear,
+} from "@/lib/utils";
 
 interface EnrollCandidateModalProps {
   isOpen: boolean;
@@ -35,7 +39,6 @@ interface EnrollCandidateModalProps {
   initialData?: Candidate | null;
   defaultSchoolYear?: string;
   existingSchoolYears?: string[];
-  existingBatches?: string[];
 }
 
 const DEFAULT_SCHOOL_YEARS = [
@@ -45,22 +48,12 @@ const DEFAULT_SCHOOL_YEARS = [
   "2023-2024",
 ];
 
-const DEFAULT_BATCHES = [
-  "Batch 1 (August 2026)",
-  "Batch 2 (October 2026)",
-  "Batch 3 (March 2027)",
-  "Batch Alpha",
-  "Batch Bravo",
-  "Intensive Pre-Board",
-];
-
 export default function EnrollCandidateModal({
   isOpen,
   onClose,
   initialData,
   defaultSchoolYear,
   existingSchoolYears = [],
-  existingBatches = [],
 }: EnrollCandidateModalProps) {
   const { user } = useReviewCenterAuth();
   const isEditing = !!initialData;
@@ -73,11 +66,6 @@ export default function EnrollCandidateModal({
   );
   const [customSchoolYear, setCustomSchoolYear] = useState("");
   const [isCustomSchoolYear, setIsCustomSchoolYear] = useState(false);
-
-  const [batch, setBatch] = useState("Batch 1 (August 2026)");
-  const [customBatch, setCustomBatch] = useState("");
-  const [isCustomBatch, setIsCustomBatch] = useState(false);
-
   const [status, setStatus] = useState("ENROLLED");
 
   const enrollMutation = useEnrollCandidate();
@@ -89,9 +77,6 @@ export default function EnrollCandidateModal({
       ...DEFAULT_SCHOOL_YEARS,
       ...existingSchoolYears,
     ])
-  );
-  const allBatches = Array.from(
-    new Set([...DEFAULT_BATCHES, ...existingBatches])
   );
 
   useEffect(() => {
@@ -109,15 +94,6 @@ export default function EnrollCandidateModal({
         setCustomSchoolYear(initialData.schoolYear);
         setIsCustomSchoolYear(true);
       }
-
-      if (allBatches.includes(initialData.batch)) {
-        setBatch(initialData.batch);
-        setIsCustomBatch(false);
-      } else {
-        setBatch("CUSTOM");
-        setCustomBatch(initialData.batch);
-        setIsCustomBatch(true);
-      }
     } else {
       setName("");
       setEmail("");
@@ -125,9 +101,6 @@ export default function EnrollCandidateModal({
       setSchoolYear(defaultSchoolYear || allSchoolYears[0] || "2026-2027");
       setIsCustomSchoolYear(false);
       setCustomSchoolYear("");
-      setBatch(allBatches[0] || "Batch 1 (August 2026)");
-      setIsCustomBatch(false);
-      setCustomBatch("");
       setStatus("ENROLLED");
     }
   }, [initialData, isOpen, defaultSchoolYear]);
@@ -145,17 +118,17 @@ export default function EnrollCandidateModal({
       return;
     }
 
-    const selectedSY = isCustomSchoolYear
-      ? customSchoolYear.trim()
+    const rawSY = isCustomSchoolYear
+      ? normalizeSchoolYear(customSchoolYear)
       : schoolYear.trim();
-    if (!selectedSY) {
+
+    if (!rawSY) {
       toast.error("School Year is required.");
       return;
     }
 
-    const selectedBatch = isCustomBatch ? customBatch.trim() : batch.trim();
-    if (!selectedBatch) {
-      toast.error("Batch is required.");
+    if (!isValidSchoolYear(rawSY)) {
+      toast.error("Please enter a valid school year format: YYYY-YYYY (e.g. 2026-2027).");
       return;
     }
 
@@ -163,8 +136,7 @@ export default function EnrollCandidateModal({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       schoolId: schoolId.trim() || undefined,
-      schoolYear: selectedSY,
-      batch: selectedBatch,
+      schoolYear: rawSY,
       status,
     };
 
@@ -186,7 +158,7 @@ export default function EnrollCandidateModal({
     } else {
       enrollMutation.mutate(payload, {
         onSuccess: () => {
-          toast.success(`Enrolled ${name.trim()} into School Year ${selectedSY}!`);
+          toast.success(`Enrolled ${name.trim()} into School Year ${rawSY}!`);
           onClose();
         },
         onError: (err: any) => {
@@ -215,7 +187,7 @@ export default function EnrollCandidateModal({
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                 {isEditing
-                  ? "Update student details or batch."
+                  ? "Update student details or enrollment status."
                   : `Add a student to ${user?.companyName || "your review center"}.`}
               </DialogDescription>
             </div>
@@ -309,54 +281,11 @@ export default function EnrollCandidateModal({
             {isCustomSchoolYear && (
               <Input
                 value={customSchoolYear}
-                onChange={(e) => setCustomSchoolYear(e.target.value)}
-                placeholder="Enter custom School Year (e.g. 2027-2028)"
-                className="h-8.5 text-xs rounded-xl bg-background border-border mt-1.5"
-                disabled={isPending}
-              />
-            )}
-          </div>
-
-          {/* Batch Selection */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Layers className="size-3.5 text-muted-foreground" />
-              <span>Batch</span>
-              <span className="text-destructive">*</span>
-            </label>
-            <Select
-              value={isCustomBatch ? "CUSTOM" : batch}
-              onValueChange={(val) => {
-                if (val === "CUSTOM") {
-                  setIsCustomBatch(true);
-                } else {
-                  setIsCustomBatch(false);
-                  setBatch(val);
-                }
-              }}
-              disabled={isPending}
-            >
-              <SelectTrigger className="h-9 text-xs rounded-xl bg-background border-border">
-                <SelectValue placeholder="Select Batch" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                {allBatches.map((b) => (
-                  <SelectItem key={b} value={b} className="text-xs">
-                    {b}
-                  </SelectItem>
-                ))}
-                <SelectItem value="CUSTOM" className="text-xs font-semibold text-primary">
-                  + Custom Batch Name...
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {isCustomBatch && (
-              <Input
-                value={customBatch}
-                onChange={(e) => setCustomBatch(e.target.value)}
-                placeholder="Enter batch name (e.g. Batch 1 - August 2026)"
-                className="h-8.5 text-xs rounded-xl bg-background border-border mt-1.5"
+                onChange={(e) => setCustomSchoolYear(formatSchoolYearInput(e.target.value))}
+                onBlur={() => setCustomSchoolYear(normalizeSchoolYear(customSchoolYear))}
+                placeholder="2026-2027"
+                maxLength={9}
+                className="h-8.5 text-xs font-mono rounded-xl bg-background border-border mt-1.5"
                 disabled={isPending}
               />
             )}

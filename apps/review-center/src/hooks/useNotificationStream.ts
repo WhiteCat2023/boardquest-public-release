@@ -44,7 +44,7 @@ export function useNotificationStream() {
         }
       });
 
-      eventSource.addEventListener("questions-updated", (_event: MessageEvent) => {
+      eventSource.addEventListener("questions-updated", () => {
         try {
           // Instantly refresh all question list, review desk, and category stats
           queryClient.invalidateQueries({ queryKey: ["questions"] });

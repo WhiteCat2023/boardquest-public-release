@@ -4,14 +4,11 @@ import {
   Users,
   Search,
   Plus,
-  Layers,
   Edit3,
   Trash2,
   CheckCircle2,
-  Sparkles,
   RotateCcw,
   ArrowLeft,
-  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +28,6 @@ import {
   type Candidate,
 } from "../api/useCandidates";
 import EnrollCandidateModal from "../components/EnrollCandidateModal";
-import BulkEnrollModal from "../components/BulkEnrollModal";
 
 export function SchoolYearStudentsPage() {
   const { schoolYear = "2026-2027" } = useParams<{ schoolYear: string }>();
@@ -48,28 +44,17 @@ export function SchoolYearStudentsPage() {
   const deleteCandidateMutation = useDeleteCandidate();
 
   const candidates = data?.candidates || [];
-  const batches = data?.batches || [];
   const total = data?.total || 0;
 
   // Modals state
   const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
     null
   );
 
-  const handleOpenAddSingle = () => {
-    setEditingCandidate(null);
-    setIsSingleModalOpen(true);
-  };
-
   const handleOpenEditSingle = (cand: Candidate) => {
     setEditingCandidate(cand);
     setIsSingleModalOpen(true);
-  };
-
-  const handleOpenBulk = () => {
-    setIsBulkModalOpen(true);
   };
 
   const handleDelete = (cand: Candidate) => {
@@ -199,7 +184,7 @@ export function SchoolYearStudentsPage() {
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {isFiltered
-                  ? "Try changing your search term or batch filter."
+                  ? "Try changing your search term or status filter."
                   : "Add students individually or bulk paste multiple students at once."}
               </p>
             </div>
@@ -226,8 +211,6 @@ export function SchoolYearStudentsPage() {
                 <tr className="border-b border-border bg-muted/30 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   <th className="px-4 py-3">Student</th>
                   <th className="px-4 py-3">Student ID</th>
-                  <th className="px-4 py-3">Batch</th>
-                  <th className="px-4 py-3">BoardQuest App</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -268,29 +251,6 @@ export function SchoolYearStudentsPage() {
                       {/* Student ID */}
                       <td className="px-4 py-3 font-mono text-[11.5px] text-foreground font-semibold">
                         {cand.schoolId || "—"}
-                      </td>
-
-                      {/* Batch */}
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
-                          {cand.batch}
-                        </span>
-                      </td>
-
-                      {/* BoardQuest App Status */}
-                      <td className="px-4 py-3">
-                        {cand.studentDetails ? (
-                          <div className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                            <Sparkles size={11} />
-                            <span>
-                              Level {cand.studentDetails.level} ({cand.studentDetails.xp} XP)
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-[10.5px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
-                            Registered in RC
-                          </span>
-                        )}
                       </td>
 
                       {/* Status */}
@@ -342,15 +302,6 @@ export function SchoolYearStudentsPage() {
         onClose={() => setIsSingleModalOpen(false)}
         initialData={editingCandidate}
         defaultSchoolYear={schoolYear}
-        existingBatches={batches}
-      />
-
-      {/* ── Bulk Add Modal ── */}
-      <BulkEnrollModal
-        isOpen={isBulkModalOpen}
-        onClose={() => setIsBulkModalOpen(false)}
-        schoolYear={schoolYear}
-        existingBatches={batches}
       />
     </div>
   );

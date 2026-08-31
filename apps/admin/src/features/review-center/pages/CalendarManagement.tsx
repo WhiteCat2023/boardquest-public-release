@@ -54,7 +54,7 @@ export default function CalendarManagement() {
             Academic Calendar
           </h1>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Set and manage review periods, mock exams, and institutional timelines.
+            Set and manage institutional game final review periods, mock exams, and review center timelines.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export default function CalendarManagement() {
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3 sm:px-3.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus size={14} />
-            <span className="hidden xs:inline sm:inline">Schedule Review Period</span>
+            <span className="hidden xs:inline sm:inline">Schedule Final Review</span>
             <span className="xs:hidden sm:hidden">Schedule</span>
           </Button>
         </div>
@@ -79,12 +79,11 @@ export default function CalendarManagement() {
         onDeleteSchedule={handleDeleteSchedule}
       />
 
-      {/* Set Review Schedule Modal (Start/End Date picker) */}
+      {/* Set Game Final Review Schedule Modal */}
       <SetReviewScheduleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingSchedule}
-        reviewCenters={reviewCenters}
       />
     </div>
   );

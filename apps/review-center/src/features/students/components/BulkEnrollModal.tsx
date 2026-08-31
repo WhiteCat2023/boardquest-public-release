@@ -1,13 +1,8 @@
 import { useState } from "react";
 import {
-  Users,
   FileSpreadsheet,
-  Layers,
-  Calendar,
   Loader2,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -16,14 +11,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useBulkEnrollCandidates } from "../api/useCandidates";
 
@@ -31,31 +18,13 @@ interface BulkEnrollModalProps {
   isOpen: boolean;
   onClose: () => void;
   schoolYear: string;
-  existingBatches?: string[];
 }
-
-const DEFAULT_BATCHES = [
-  "Batch 1 (August 2026)",
-  "Batch 2 (October 2026)",
-  "Batch 3 (March 2027)",
-  "Batch Alpha",
-  "Batch Bravo",
-  "Intensive Pre-Board",
-];
 
 export default function BulkEnrollModal({
   isOpen,
   onClose,
   schoolYear,
-  existingBatches = [],
 }: BulkEnrollModalProps) {
-  const allBatches = Array.from(
-    new Set([...DEFAULT_BATCHES, ...existingBatches])
-  );
-
-  const [batch, setBatch] = useState(allBatches[0] || "Batch 1 (August 2026)");
-  const [customBatch, setCustomBatch] = useState("");
-  const [isCustomBatch, setIsCustomBatch] = useState(false);
   const [rawText, setRawText] = useState("");
 
   const bulkMutation = useBulkEnrollCandidates();
@@ -102,12 +71,6 @@ export default function BulkEnrollModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const selectedBatch = isCustomBatch ? customBatch.trim() : batch.trim();
-    if (!selectedBatch) {
-      toast.error("Please select or enter a batch name.");
-      return;
-    }
-
     if (parsedStudents.length === 0) {
       toast.error(
         "Please enter at least one valid student in format: Full Name, Email, Student ID"
@@ -118,7 +81,6 @@ export default function BulkEnrollModal({
     bulkMutation.mutate(
       {
         schoolYear,
-        batch: selectedBatch,
         students: parsedStudents,
       },
       {
@@ -175,54 +137,6 @@ export default function BulkEnrollModal({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
-          {/* Target Batch */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Layers className="size-3.5 text-muted-foreground" />
-              <span>Select Batch</span>
-              <span className="text-destructive">*</span>
-            </label>
-            <Select
-              value={isCustomBatch ? "CUSTOM" : batch}
-              onValueChange={(val) => {
-                if (val === "CUSTOM") {
-                  setIsCustomBatch(true);
-                } else {
-                  setIsCustomBatch(false);
-                  setBatch(val);
-                }
-              }}
-              disabled={isPending}
-            >
-              <SelectTrigger className="h-9 text-xs rounded-xl bg-background border-border">
-                <SelectValue placeholder="Select Batch" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                {allBatches.map((b) => (
-                  <SelectItem key={b} value={b} className="text-xs">
-                    {b}
-                  </SelectItem>
-                ))}
-                <SelectItem
-                  value="CUSTOM"
-                  className="text-xs font-semibold text-primary"
-                >
-                  + Custom Batch Name...
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {isCustomBatch && (
-              <Input
-                value={customBatch}
-                onChange={(e) => setCustomBatch(e.target.value)}
-                placeholder="Enter batch name (e.g. Batch 1 - August 2026)"
-                className="h-8.5 text-xs rounded-xl bg-background border-border mt-1.5"
-                disabled={isPending}
-              />
-            )}
-          </div>
-
           {/* Paste Instructions & Sample */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -261,7 +175,7 @@ export default function BulkEnrollModal({
                 <span>{parsedStudents.length} student(s) ready to add</span>
               </div>
               <span className="text-[11px] text-muted-foreground">
-                Will be enrolled in {isCustomBatch ? customBatch : batch}
+                Will be enrolled in S.Y. {schoolYear}
               </span>
             </div>
           )}
