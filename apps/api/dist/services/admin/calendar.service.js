@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import { ApiError } from "../../utils/apiError";
 function mapProgramToSchedule(item) {
     return {
         id: item.id,
@@ -26,16 +27,18 @@ export async function getReviewScheduleById(id) {
     const item = await prisma.reviewCenterProgram.findUnique({
         where: { id },
     });
-    if (!item)
+    if (!item) {
         return null;
+    }
     return mapProgramToSchedule(item);
 }
 export async function createReviewSchedule(data) {
     const created = await prisma.reviewCenterProgram.create({
         data: {
             title: data.title,
-            companyName: data.companyName || "Review Center Partner",
-            category: data.category || "Board Review",
+            companyName: data.companyName || "Institutional (BoardQuest)",
+            reviewCenterId: null, // Admin only sets institutional game final review schedules
+            category: data.category || "Final Comprehensive Review",
             startDate: data.startDate ? new Date(data.startDate) : new Date(),
             endDate: data.endDate ? new Date(data.endDate) : new Date(),
             status: data.status || "UPCOMING",
@@ -45,11 +48,23 @@ export async function createReviewSchedule(data) {
     return mapProgramToSchedule(created);
 }
 export async function updateReviewSchedule(id, data) {
+    const existing = await prisma.reviewCenterProgram.findUnique({
+        where: { id },
+    });
+    if (!existing) {
+        throw new ApiError(404, "Review schedule not found");
+    }
+    // Internal accounts cannot edit schedules that the review center representative set for their organization
+    const isReviewCenterSchedule = Boolean(existing.reviewCenterId) ||
+        (Boolean(existing.companyName) &&
+            existing.companyName?.trim() !== "Institutional (BoardQuest)");
+    if (isReviewCenterSchedule) {
+        throw new ApiError(403, "Access Denied: Internal accounts cannot edit schedules that the review center representative set for their organization.");
+    }
     const updated = await prisma.reviewCenterProgram.update({
         where: { id },
         data: {
             ...(data.title && { title: data.title }),
-            ...(data.companyName && { companyName: data.companyName }),
             ...(data.category && { category: data.category }),
             ...(data.startDate && { startDate: new Date(data.startDate) }),
             ...(data.endDate && { endDate: new Date(data.endDate) }),
@@ -60,6 +75,19 @@ export async function updateReviewSchedule(id, data) {
     return mapProgramToSchedule(updated);
 }
 export async function deleteReviewSchedule(id) {
+    const existing = await prisma.reviewCenterProgram.findUnique({
+        where: { id },
+    });
+    if (!existing) {
+        throw new ApiError(404, "Review schedule not found");
+    }
+    // Internal accounts cannot delete schedules that the review center representative set for their organization
+    const isReviewCenterSchedule = Boolean(existing.reviewCenterId) ||
+        (Boolean(existing.companyName) &&
+            existing.companyName?.trim() !== "Institutional (BoardQuest)");
+    if (isReviewCenterSchedule) {
+        throw new ApiError(403, "Access Denied: Internal accounts cannot delete schedules that the review center representative set for their organization.");
+    }
     await prisma.reviewCenterProgram.delete({
         where: { id },
     });

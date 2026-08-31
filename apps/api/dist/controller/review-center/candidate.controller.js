@@ -15,7 +15,7 @@ export const createMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
     if (!schoolYear) {
         throw new ApiError(400, "School Year is required.");
     }
-    const companyName = user?.companyName || "Review Center Partner";
+    const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
     const created = await candidateService.createReviewCenterSchoolYear(companyName, schoolYear, reviewCenterId);
     return new ApiResponse(201, { schoolYear: created }, "School year created successfully in database").send(res);
@@ -42,8 +42,8 @@ export const enrollMyReviewCenterCandidate = asyncHandler(async (req, res) => {
     if (!name || !email) {
         throw new ApiError(400, "Name and email are required.");
     }
-    if (!schoolYear || !batch) {
-        throw new ApiError(400, "School Year and Batch are required.");
+    if (!schoolYear) {
+        throw new ApiError(400, "School Year is required.");
     }
     const companyName = user?.companyName || "Review Center Partner";
     const reviewCenterId = user?.reviewCenterId;

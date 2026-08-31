@@ -1,28 +1,19 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
-function parseCandidateItem(item, userMap) {
-    let meta = {};
-    if (item.description) {
-        try {
-            meta = JSON.parse(item.description);
-        }
-        catch {
-            meta = {};
-        }
-    }
-    const email = meta.email || "";
+function mapToCandidate(item, userMap) {
+    const email = item.email || "";
     const studentInfo = email && userMap ? userMap.get(email.toLowerCase()) : null;
     return {
         id: item.id,
-        name: item.title,
+        name: item.name,
         email: email,
-        schoolId: meta.schoolId || "",
-        schoolYear: meta.schoolYear || "2026-2027",
-        batch: meta.batch || "Batch 1",
+        schoolId: item.schoolId || "",
+        schoolYear: item.schoolYear || "2026-2027",
+        batch: item.batch || item.schoolYear || "Batch 1",
         status: item.status || "ENROLLED",
         companyName: item.companyName,
         reviewCenterId: item.reviewCenterId || null,
-        studentId: meta.studentId || studentInfo?.id || null,
+        studentId: item.studentId || studentInfo?.id || null,
         studentDetails: studentInfo
             ? {
                 level: studentInfo.level || 1,
@@ -31,11 +22,12 @@ function parseCandidateItem(item, userMap) {
                 verified: studentInfo.verified || false,
             }
             : null,
-        enrolledAt: item.createdAt,
+        enrolledAt: item.enrolledAt || item.createdAt,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
     };
 }
+const dbSchoolYear = prisma.reviewCenterSchoolYear;
 export async function getReviewCenterSchoolYears(companyName, reviewCenterId) {
     const whereConditions = [];
     if (reviewCenterId) {
@@ -49,59 +41,67 @@ export async function getReviewCenterSchoolYears(companyName, reviewCenterId) {
     if (whereConditions.length === 0) {
         return [];
     }
-    const [dbSchoolYearPrograms, candidatePrograms] = await Promise.all([
-        prisma.reviewCenterProgram.findMany({
-            where: {
-                category: "SCHOOL_YEAR",
-                OR: whereConditions,
-            },
-            orderBy: { createdAt: "desc" },
-        }),
-        prisma.reviewCenterProgram.findMany({
-            where: {
-                category: "STUDENT_ENROLLMENT",
-                OR: whereConditions,
-            },
-            select: { description: true },
+    const [dbSchoolYears, candidateSchoolYears] = await Promise.all([
+        dbSchoolYear
+            ? dbSchoolYear.findMany({
+                where: { OR: whereConditions },
+                orderBy: { createdAt: "desc" },
+            })
+            : [],
+        prisma.reviewCenterCandidate.findMany({
+            where: { OR: whereConditions },
+            select: { schoolYear: true },
         }),
     ]);
     const existingYearsSet = new Set();
     const results = [];
-    for (const sy of dbSchoolYearPrograms) {
-        if (sy.title && !existingYearsSet.has(sy.title.trim())) {
-            existingYearsSet.add(sy.title.trim());
+    for (const sy of dbSchoolYears) {
+        const name = sy.schoolYear?.trim();
+        if (name && !existingYearsSet.has(name)) {
+            existingYearsSet.add(name);
             results.push({
                 id: sy.id,
-                schoolYear: sy.title.trim(),
-                isCurrent: false,
+                schoolYear: name,
+                isCurrent: sy.isCurrent,
                 createdAt: sy.createdAt,
             });
         }
     }
-    for (const c of candidatePrograms) {
-        if (c.description) {
-            try {
-                const meta = JSON.parse(c.description);
-                const syName = meta.schoolYear?.trim();
-                if (syName && !existingYearsSet.has(syName)) {
-                    existingYearsSet.add(syName);
-                    results.push({
-                        id: syName,
-                        schoolYear: syName,
-                        isCurrent: false,
-                        createdAt: new Date(),
-                    });
-                }
-            }
-            catch { }
+    for (const c of candidateSchoolYears) {
+        const syName = c.schoolYear?.trim();
+        if (syName && !existingYearsSet.has(syName)) {
+            existingYearsSet.add(syName);
+            results.push({
+                id: syName,
+                schoolYear: syName,
+                isCurrent: false,
+                createdAt: new Date(),
+            });
         }
     }
     return results.sort((a, b) => b.schoolYear.localeCompare(a.schoolYear));
 }
+export function normalizeSchoolYearString(sy) {
+    const clean = sy.trim().replace(/^s\.?y\.?\s*/i, "");
+    const digits = clean.replace(/\D/g, "");
+    if (digits.length === 4) {
+        const start = parseInt(digits, 10);
+        if (!isNaN(start) && start >= 1900 && start <= 2100) {
+            return `${start}-${start + 1}`;
+        }
+    }
+    if (digits.length === 8) {
+        return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    }
+    return clean;
+}
 export async function createReviewCenterSchoolYear(companyName, schoolYear, reviewCenterId) {
-    const cleanSY = schoolYear.trim().replace(/^s\.?y\.?\s*/i, "");
+    const cleanSY = normalizeSchoolYearString(schoolYear);
     if (!cleanSY) {
         throw new ApiError(400, "School Year is required.");
+    }
+    if (!/^\d{4}-\d{4}$/.test(cleanSY)) {
+        throw new ApiError(400, "Invalid School Year format. Please use YYYY-YYYY format (e.g. 2026-2027).");
     }
     let finalReviewCenterId = reviewCenterId;
     if (!finalReviewCenterId && companyName) {
@@ -113,33 +113,38 @@ export async function createReviewCenterSchoolYear(companyName, schoolYear, revi
             finalReviewCenterId = rc.id;
         }
     }
-    const existing = await prisma.reviewCenterProgram.findFirst({
-        where: {
-            category: "SCHOOL_YEAR",
-            title: { equals: cleanSY, mode: "insensitive" },
-            companyName: { equals: companyName.trim(), mode: "insensitive" },
-        },
-    });
-    if (existing) {
+    if (dbSchoolYear) {
+        const existing = await dbSchoolYear.findFirst({
+            where: {
+                schoolYear: { equals: cleanSY, mode: "insensitive" },
+                companyName: { equals: companyName.trim(), mode: "insensitive" },
+            },
+        });
+        if (existing) {
+            return {
+                id: existing.id,
+                schoolYear: existing.schoolYear,
+                createdAt: existing.createdAt,
+            };
+        }
+        const created = await dbSchoolYear.create({
+            data: {
+                schoolYear: cleanSY,
+                companyName: companyName.trim(),
+                reviewCenterId: finalReviewCenterId || null,
+                status: "ACTIVE",
+            },
+        });
         return {
-            id: existing.id,
-            schoolYear: existing.title,
-            createdAt: existing.createdAt,
+            id: created.id,
+            schoolYear: created.schoolYear,
+            createdAt: created.createdAt,
         };
     }
-    const created = await prisma.reviewCenterProgram.create({
-        data: {
-            title: cleanSY,
-            category: "SCHOOL_YEAR",
-            companyName: companyName.trim(),
-            reviewCenterId: finalReviewCenterId || null,
-            status: "ACTIVE",
-        },
-    });
     return {
-        id: created.id,
-        schoolYear: created.title,
-        createdAt: created.createdAt,
+        id: cleanSY,
+        schoolYear: cleanSY,
+        createdAt: new Date(),
     };
 }
 export async function deleteReviewCenterSchoolYear(schoolYear, companyName, reviewCenterId) {
@@ -153,13 +158,14 @@ export async function deleteReviewCenterSchoolYear(schoolYear, companyName, revi
             companyName: { equals: companyName.trim(), mode: "insensitive" },
         });
     }
-    await prisma.reviewCenterProgram.deleteMany({
-        where: {
-            category: "SCHOOL_YEAR",
-            title: { equals: cleanSY, mode: "insensitive" },
-            OR: whereConditions,
-        },
-    });
+    if (dbSchoolYear) {
+        await dbSchoolYear.deleteMany({
+            where: {
+                schoolYear: { equals: cleanSY, mode: "insensitive" },
+                OR: whereConditions,
+            },
+        });
+    }
     return true;
 }
 export async function getReviewCenterCandidates(companyName, reviewCenterId, filters = {}) {
@@ -181,30 +187,20 @@ export async function getReviewCenterCandidates(companyName, reviewCenterId, fil
         };
     }
     const baseWhere = {
-        category: "STUDENT_ENROLLMENT",
         AND: [{ OR: whereConditions }],
     };
     if (filters.status && filters.status !== "ALL") {
         baseWhere.status = filters.status;
     }
     const [rawCandidates, allSYRecords] = await Promise.all([
-        prisma.reviewCenterProgram.findMany({
+        prisma.reviewCenterCandidate.findMany({
             where: baseWhere,
             orderBy: { createdAt: "desc" },
         }),
         getReviewCenterSchoolYears(companyName, reviewCenterId),
     ]);
     // Extract all emails to batch query User table for level/xp
-    const allEmails = rawCandidates
-        .map((c) => {
-        try {
-            return JSON.parse(c.description || "{}").email?.toLowerCase();
-        }
-        catch {
-            return null;
-        }
-    })
-        .filter(Boolean);
+    const allEmails = rawCandidates.map((c) => c.email.toLowerCase()).filter(Boolean);
     let userMap = new Map();
     if (allEmails.length > 0) {
         const users = await prisma.user.findMany({
@@ -221,33 +217,22 @@ export async function getReviewCenterCandidates(companyName, reviewCenterId, fil
         });
         users.forEach((u) => userMap.set(u.email.toLowerCase(), u));
     }
-    let candidates = rawCandidates.map((c) => parseCandidateItem(c, userMap));
+    let candidates = rawCandidates.map((c) => mapToCandidate(c, userMap));
     // In-memory filter for schoolYear, batch, search
     if (filters.schoolYear && filters.schoolYear !== "ALL") {
         candidates = candidates.filter((c) => c.schoolYear.toLowerCase() === filters.schoolYear?.toLowerCase());
-    }
-    if (filters.batch && filters.batch !== "ALL") {
-        candidates = candidates.filter((c) => c.batch.toLowerCase() === filters.batch?.toLowerCase());
     }
     if (filters.search && filters.search.trim()) {
         const term = filters.search.trim().toLowerCase();
         candidates = candidates.filter((c) => c.name.toLowerCase().includes(term) ||
             c.email.toLowerCase().includes(term) ||
-            c.schoolId.toLowerCase().includes(term));
+            (c.schoolId && c.schoolId.toLowerCase().includes(term)));
     }
-    const distinctBatches = Array.from(new Set(rawCandidates.map((c) => {
-        try {
-            return JSON.parse(c.description || "{}").batch;
-        }
-        catch {
-            return null;
-        }
-    }).filter(Boolean)));
     const schoolYears = allSYRecords.map((s) => s.schoolYear);
     return {
         candidates,
         schoolYears,
-        batches: distinctBatches,
+        batches: [],
         total: candidates.length,
     };
 }
@@ -257,9 +242,6 @@ export async function enrollCandidate(data) {
     }
     if (!data.schoolYear?.trim()) {
         throw new ApiError(400, "School Year is required.");
-    }
-    if (!data.batch?.trim()) {
-        throw new ApiError(400, "Batch identifier is required.");
     }
     let finalReviewCenterId = data.reviewCenterId;
     if (!finalReviewCenterId && data.companyName) {
@@ -271,56 +253,44 @@ export async function enrollCandidate(data) {
             finalReviewCenterId = rc.id;
         }
     }
-    // Ensure School Year is saved
-    await createReviewCenterSchoolYear(data.companyName, data.schoolYear, finalReviewCenterId);
-    // Check if candidate already enrolled in this school year + batch
-    const existingCandidates = await prisma.reviewCenterProgram.findMany({
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanSY = normalizeSchoolYearString(data.schoolYear);
+    // Ensure School Year is saved in ReviewCenterSchoolYear
+    await createReviewCenterSchoolYear(data.companyName, cleanSY, finalReviewCenterId);
+    // Check if candidate already enrolled in this school year in ReviewCenterCandidate
+    const existingCandidate = await prisma.reviewCenterCandidate.findFirst({
         where: {
-            category: "STUDENT_ENROLLMENT",
+            email: { equals: cleanEmail, mode: "insensitive" },
+            schoolYear: { equals: cleanSY, mode: "insensitive" },
             companyName: { equals: data.companyName.trim(), mode: "insensitive" },
         },
     });
-    const duplicate = existingCandidates.find((c) => {
-        try {
-            const meta = JSON.parse(c.description || "{}");
-            return (meta.email?.toLowerCase() === data.email.trim().toLowerCase() &&
-                meta.schoolYear?.toLowerCase() === data.schoolYear.trim().toLowerCase() &&
-                meta.batch?.toLowerCase() === data.batch.trim().toLowerCase());
-        }
-        catch {
-            return false;
-        }
-    });
-    if (duplicate) {
-        throw new ApiError(400, `Student with email "${data.email}" is already enrolled in ${data.batch} (${data.schoolYear}).`);
+    if (existingCandidate) {
+        throw new ApiError(400, `Student with email "${data.email}" is already enrolled in School Year ${data.schoolYear}.`);
     }
     // Auto-link registered user
     let studentId = null;
     const registeredUser = await prisma.user.findUnique({
-        where: { email: data.email.trim().toLowerCase() },
+        where: { email: cleanEmail },
         select: { id: true },
     });
     if (registeredUser) {
         studentId = registeredUser.id;
     }
-    const payload = {
-        email: data.email.trim().toLowerCase(),
-        schoolId: data.schoolId?.trim() || "",
-        schoolYear: data.schoolYear.trim(),
-        batch: data.batch.trim(),
-        studentId,
-    };
-    const created = await prisma.reviewCenterProgram.create({
+    const created = await prisma.reviewCenterCandidate.create({
         data: {
-            title: data.name.trim(),
-            description: JSON.stringify(payload),
-            category: "STUDENT_ENROLLMENT",
+            name: data.name.trim(),
+            email: cleanEmail,
+            schoolId: data.schoolId?.trim() || null,
+            schoolYear: cleanSY,
+            batch: data.batch?.trim() || cleanSY,
             status: data.status || "ENROLLED",
             companyName: data.companyName.trim(),
             reviewCenterId: finalReviewCenterId || null,
+            studentId,
         },
     });
-    return parseCandidateItem(created);
+    return mapToCandidate(created);
 }
 export async function bulkEnrollCandidates(data) {
     if (!data.schoolYear?.trim()) {
@@ -339,14 +309,17 @@ export async function bulkEnrollCandidates(data) {
             finalReviewCenterId = rc.id;
         }
     }
-    // Ensure School Year exists in DB
-    await createReviewCenterSchoolYear(data.companyName, data.schoolYear, finalReviewCenterId);
-    const existingCandidates = await prisma.reviewCenterProgram.findMany({
+    const cleanSY = normalizeSchoolYearString(data.schoolYear);
+    // Ensure School Year exists in ReviewCenterSchoolYear
+    await createReviewCenterSchoolYear(data.companyName, cleanSY, finalReviewCenterId);
+    const existingCandidates = await prisma.reviewCenterCandidate.findMany({
         where: {
-            category: "STUDENT_ENROLLMENT",
+            schoolYear: { equals: cleanSY, mode: "insensitive" },
             companyName: { equals: data.companyName.trim(), mode: "insensitive" },
         },
+        select: { email: true },
     });
+    const existingEmailsSet = new Set(existingCandidates.map((c) => c.email.toLowerCase()));
     let enrolledCount = 0;
     let skippedCount = 0;
     const createdList = [];
@@ -355,20 +328,8 @@ export async function bulkEnrollCandidates(data) {
             skippedCount++;
             continue;
         }
-        const itemBatch = item.batch?.trim() || data.batch?.trim() || "Batch 1";
         const itemEmail = item.email.trim().toLowerCase();
-        const isDup = existingCandidates.some((c) => {
-            try {
-                const meta = JSON.parse(c.description || "{}");
-                return (meta.email?.toLowerCase() === itemEmail &&
-                    meta.schoolYear?.toLowerCase() === data.schoolYear.trim().toLowerCase() &&
-                    meta.batch?.toLowerCase() === itemBatch.toLowerCase());
-            }
-            catch {
-                return false;
-            }
-        });
-        if (isDup) {
+        if (existingEmailsSet.has(itemEmail)) {
             skippedCount++;
             continue;
         }
@@ -380,24 +341,21 @@ export async function bulkEnrollCandidates(data) {
         if (registeredUser) {
             studentId = registeredUser.id;
         }
-        const payload = {
-            email: itemEmail,
-            schoolId: item.schoolId?.trim() || "",
-            schoolYear: data.schoolYear.trim(),
-            batch: itemBatch,
-            studentId,
-        };
-        const created = await prisma.reviewCenterProgram.create({
+        const created = await prisma.reviewCenterCandidate.create({
             data: {
-                title: item.name.trim(),
-                description: JSON.stringify(payload),
-                category: "STUDENT_ENROLLMENT",
+                name: item.name.trim(),
+                email: itemEmail,
+                schoolId: item.schoolId?.trim() || null,
+                schoolYear: cleanSY,
+                batch: item.batch?.trim() || data.batch?.trim() || cleanSY,
                 status: "ENROLLED",
                 companyName: data.companyName.trim(),
                 reviewCenterId: finalReviewCenterId || null,
+                studentId,
             },
         });
-        createdList.push(parseCandidateItem(created));
+        existingEmailsSet.add(itemEmail);
+        createdList.push(mapToCandidate(created));
         enrolledCount++;
     }
     return {
@@ -408,10 +366,10 @@ export async function bulkEnrollCandidates(data) {
     };
 }
 export async function updateCandidate(id, data, companyName, reviewCenterId) {
-    const existing = await prisma.reviewCenterProgram.findUnique({
+    const existing = await prisma.reviewCenterCandidate.findUnique({
         where: { id },
     });
-    if (!existing || existing.category !== "STUDENT_ENROLLMENT") {
+    if (!existing) {
         throw new ApiError(404, "Student record not found");
     }
     const isOwner = (reviewCenterId && existing.reviewCenterId === reviewCenterId) ||
@@ -420,33 +378,28 @@ export async function updateCandidate(id, data, companyName, reviewCenterId) {
     if (!isOwner) {
         throw new ApiError(403, "Access denied: You can only edit students enrolled in your review center.");
     }
-    let currentMeta = {};
-    try {
-        currentMeta = JSON.parse(existing.description || "{}");
+    const cleanSY = data.schoolYear ? normalizeSchoolYearString(data.schoolYear) : undefined;
+    if (cleanSY && (companyName || existing.companyName)) {
+        await createReviewCenterSchoolYear(companyName || existing.companyName, cleanSY, reviewCenterId || existing.reviewCenterId || undefined);
     }
-    catch { }
-    const updatedMeta = {
-        ...currentMeta,
-        ...(data.email && { email: data.email.trim().toLowerCase() }),
-        ...(data.schoolId !== undefined && { schoolId: data.schoolId.trim() }),
-        ...(data.schoolYear && { schoolYear: data.schoolYear.trim() }),
-        ...(data.batch && { batch: data.batch.trim() }),
-    };
-    const updated = await prisma.reviewCenterProgram.update({
+    const updated = await prisma.reviewCenterCandidate.update({
         where: { id },
         data: {
-            ...(data.name && { title: data.name.trim() }),
+            ...(data.name && { name: data.name.trim() }),
+            ...(data.email && { email: data.email.trim().toLowerCase() }),
+            ...(data.schoolId !== undefined && { schoolId: data.schoolId.trim() || null }),
+            ...(cleanSY && { schoolYear: cleanSY }),
+            ...(data.batch && { batch: data.batch.trim() }),
             ...(data.status && { status: data.status }),
-            description: JSON.stringify(updatedMeta),
         },
     });
-    return parseCandidateItem(updated);
+    return mapToCandidate(updated);
 }
 export async function deleteCandidate(id, companyName, reviewCenterId) {
-    const existing = await prisma.reviewCenterProgram.findUnique({
+    const existing = await prisma.reviewCenterCandidate.findUnique({
         where: { id },
     });
-    if (!existing || existing.category !== "STUDENT_ENROLLMENT") {
+    if (!existing) {
         throw new ApiError(404, "Student record not found");
     }
     const isOwner = (reviewCenterId && existing.reviewCenterId === reviewCenterId) ||
@@ -455,7 +408,7 @@ export async function deleteCandidate(id, companyName, reviewCenterId) {
     if (!isOwner) {
         throw new ApiError(403, "Access denied: You can only remove students enrolled in your review center.");
     }
-    await prisma.reviewCenterProgram.delete({
+    await prisma.reviewCenterCandidate.delete({
         where: { id },
     });
     return true;

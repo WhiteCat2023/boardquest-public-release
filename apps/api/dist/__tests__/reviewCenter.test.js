@@ -3,8 +3,10 @@ import request from "supertest";
 import express from "express";
 import reviewCenterRouter from "../routes/review-center/reviewCenter.routes";
 import * as reviewCenterService from "../services/review-center/reviewCenter.service";
-// Mock review center service
+import * as candidateService from "../services/review-center/candidate.service";
+// Mock review center and candidate service
 jest.mock("../services/review-center/reviewCenter.service");
+jest.mock("../services/review-center/candidate.service");
 jest.mock("../services/admin/calendar.service");
 let app;
 beforeAll(() => {
@@ -50,6 +52,53 @@ describe("Review Center Routes", () => {
             expect(response.status).toBe(200);
             expect(response.body.data.reviewCenter).toBeDefined();
             expect(response.body.data.reviewCenter.companyName).toBe("TopRank Review Academy");
+        });
+    });
+    describe("GET /api/review-center/:id/candidates", () => {
+        it("should fetch candidates for a review center successfully", async () => {
+            const mockCenter = {
+                id: "rc_1",
+                name: "Dr. Jane Doe",
+                companyName: "TopRank Review Academy",
+            };
+            const mockCandidateData = {
+                candidates: [
+                    {
+                        id: "cand_1",
+                        name: "Maria Santos",
+                        email: "maria@school.edu",
+                        schoolYear: "2026-2027",
+                        status: "ENROLLED",
+                        studentId: "u_1",
+                        studentDetails: { level: 5, xp: 1200, streak: 3, verified: true },
+                    },
+                    {
+                        id: "cand_2",
+                        name: "Juan Dela Cruz",
+                        email: "juan@school.edu",
+                        schoolYear: "2026-2027",
+                        status: "ENROLLED",
+                        studentId: null,
+                        studentDetails: null,
+                    },
+                ],
+                schoolYears: ["2026-2027"],
+                batches: [],
+                total: 2,
+            };
+            reviewCenterService.getReviewCenterById.mockResolvedValue(mockCenter);
+            candidateService.getReviewCenterCandidates.mockResolvedValue(mockCandidateData);
+            const response = await request(app).get("/api/review-center/rc_1/candidates");
+            expect(response.status).toBe(200);
+            expect(response.body.data.candidates).toBeDefined();
+            expect(response.body.data.candidates.length).toBe(2);
+            expect(response.body.data.candidates[0].studentDetails).toBeDefined();
+            expect(response.body.data.candidates[1].studentDetails).toBeNull();
+        });
+        it("should return 404 if review center is not found", async () => {
+            reviewCenterService.getReviewCenterById.mockResolvedValue(null);
+            const response = await request(app).get("/api/review-center/rc_nonexistent/candidates");
+            expect(response.status).toBe(404);
         });
     });
     describe("POST /api/review-center", () => {

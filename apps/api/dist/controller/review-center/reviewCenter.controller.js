@@ -1,4 +1,5 @@
 import * as reviewCenterService from "../../services/review-center/reviewCenter.service";
+import * as candidateService from "../../services/review-center/candidate.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
@@ -47,4 +48,19 @@ export const deleteReviewCenter = asyncHandler(async (req, res) => {
     const { id } = req.params;
     await reviewCenterService.deleteReviewCenter(id);
     return new ApiResponse(200, {}, "Review center deleted successfully").send(res);
+});
+export const getReviewCenterCandidatesForAdmin = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const rc = await reviewCenterService.getReviewCenterById(id);
+    if (!rc) {
+        throw new ApiError(404, "Review center not found");
+    }
+    const { search, schoolYear, status, batch } = req.query;
+    const data = await candidateService.getReviewCenterCandidates(rc.companyName, rc.id, {
+        search: search,
+        schoolYear: schoolYear,
+        status: status,
+        batch: batch,
+    });
+    return new ApiResponse(200, data, "Review center candidates retrieved successfully").send(res);
 });

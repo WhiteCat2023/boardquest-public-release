@@ -37,10 +37,13 @@ export async function getReviewCenterSchedules(companyName, reviewCenterId) {
         return [];
     }
     const list = await prisma.reviewCenterProgram.findMany({
-        where: { OR: whereConditions },
+        where: {
+            OR: whereConditions,
+        },
         orderBy: { startDate: "asc" },
     });
-    return list.map(mapToSchedule);
+    return list
+        .map(mapToSchedule);
 }
 /**
  * Create a review schedule strictly tied to the current representative's review center
