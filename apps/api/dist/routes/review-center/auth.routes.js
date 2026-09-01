@@ -1,11 +1,13 @@
 import { Router } from "express";
-import { reviewCenterLogin, reviewCenterLogout, getReviewCenterMe, reviewCenterRefreshToken, } from "../../controller/review-center/auth.controller";
-import { authLimiter } from "../../middleware/rateLimit.middleware";
+import { reviewCenterLogin, reviewCenterLogout, getReviewCenterMe, reviewCenterRefreshToken, reviewCenterForgotPassword, reviewCenterResetPassword, } from "../../controller/review-center/auth.controller";
+import { authLimiter, passwordResetLimiter, } from "../../middleware/rateLimit.middleware";
 import { authenticateReviewCenterToken } from "../../middleware/reviewCenterAuth.middleware";
 const router = Router();
-//Review Center Routes
+// Review Center Auth Routes
 router.post("/login", authLimiter, reviewCenterLogin);
 router.post("/logout", reviewCenterLogout);
+router.post("/forgot-password", passwordResetLimiter, reviewCenterForgotPassword);
+router.post("/reset-password", passwordResetLimiter, reviewCenterResetPassword);
 router.get("/refresh", reviewCenterRefreshToken);
 router.get("/me", authenticateReviewCenterToken, getReviewCenterMe);
 export default router;

@@ -201,6 +201,8 @@ model ReviewCenter {
   programs        ReviewCenterProgram[]
   candidates      ReviewCenterCandidate[]
   schoolYears     ReviewCenterSchoolYear[]
+  assessments     ReviewCenterAssessment[]
+  scores          ReviewCenterScore[]
 }
 
 model ReviewCenterRepresentativeUser {
@@ -265,8 +267,61 @@ model ReviewCenterCandidate {
   studentId      String?       @db.ObjectId
   student        User?         @relation(fields: [studentId], references: [id], onDelete: SetNull)
   enrolledAt     DateTime      @default(now())
+  scores         ReviewCenterScore[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+}
+
+model ReviewCenterAssessment {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  reviewCenterId String?       @db.ObjectId
+  reviewCenter   ReviewCenter? @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
+  companyName    String
+  title          String
+  customLabel    String?
+  subject        String        // Predefined MedTech subject
+  schoolYear     String        @default("2026-2027")
+  batch          String        @default("Batch 1")
+  maxScore       Float         @default(100)
+  passingScore   Float         @default(75)
+  passingRate    Float         @default(75)
+  assessmentDate DateTime?
+  isPublished    Boolean       @default(false)
+  
+  meanScore      Float?
+  medianScore    Float?
+  modeScore      Float[]       @default([])
+  highestScore   Float?
+  lowestScore    Float?
+  passCount      Int           @default(0)
+  failCount      Int           @default(0)
+
+  scores         ReviewCenterScore[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model ReviewCenterScore {
+  id             String                 @id @default(auto()) @map("_id") @db.ObjectId
+  reviewCenterId String?                @db.ObjectId
+  reviewCenter   ReviewCenter?          @relation(fields: [reviewCenterId], references: [id], onDelete: SetNull)
+  companyName    String?
+  assessmentId   String                 @db.ObjectId
+  assessment     ReviewCenterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidateId    String                 @db.ObjectId
+  candidate      ReviewCenterCandidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  score          Float?
+  percentage     Float?
+  percentile     Float?
+  status         String                 @default("PRESENT") // PRESENT | ABSENT | EXCUSED | INCOMPLETE
+  emailStatus    String                 @default("NOT_SENT") // NOT_SENT | PENDING | SENT | FAILED
+  emailSentAt    DateTime?
+  remarks        String?
+  recordedBy     String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@unique([assessmentId, candidateId])
 }
 
 // [ User Schema ]

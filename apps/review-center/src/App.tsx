@@ -11,6 +11,12 @@ import { Toaster } from "@/components/ui/sonner";
 const LoginPage = lazy(
   () => import("@/features/auth/pages/ReviewCenterLoginPage")
 );
+const ForgotPasswordPage = lazy(
+  () => import("@/features/auth/pages/ReviewCenterForgotPasswordPage")
+);
+const ResetPasswordPage = lazy(
+  () => import("@/features/auth/pages/ReviewCenterResetPasswordPage")
+);
 
 const Dashboard = lazy(() =>
   import("@/features/dashboard").then((m) => ({ default: m.Dashboard })),
@@ -30,6 +36,15 @@ const AddStudentsPage = lazy(() =>
 );
 const SchedulesPage = lazy(() =>
   import("@/features/schedules").then((m) => ({ default: m.SchedulesPage })),
+);
+const ScoresDashboardPage = lazy(() =>
+  import("@/features/scores").then((m) => ({ default: m.ScoresDashboardPage })),
+);
+const SubjectScoresPage = lazy(() =>
+  import("@/features/scores").then((m) => ({ default: m.SubjectScoresPage })),
+);
+const AssessmentScoresPage = lazy(() =>
+  import("@/features/scores").then((m) => ({ default: m.AssessmentScoresPage })),
 );
 const SettingsPage = lazy(() =>
   import("@/features/settings").then((m) => ({ default: m.SettingsPage })),
@@ -58,6 +73,8 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             {/* public routes */}
             <Route path="login" element={<LoginPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
 
             {/* private routes */}
             <Route element={<PersistentSession />}>
@@ -90,6 +107,31 @@ function App() {
                   <Route
                     path="students/:schoolYear/add"
                     element={<AddStudentsPage />}
+                  />
+                  <Route path="scores" element={<ScoresDashboardPage />} />
+                  <Route
+                    path="scores/:schoolYear"
+                    element={<ScoresDashboardPage />}
+                  />
+                  <Route
+                    path="scores/subject/:subjectSlug"
+                    element={<SubjectScoresPage />}
+                  />
+                  <Route
+                    path="scores/:schoolYear/subject/:subjectSlug"
+                    element={<SubjectScoresPage />}
+                  />
+                  <Route
+                    path="scores/assessment/:assessmentId"
+                    element={<AssessmentScoresPage />}
+                  />
+                  <Route
+                    path="scores/subject/:subjectSlug/assessment/:assessmentId"
+                    element={<AssessmentScoresPage />}
+                  />
+                  <Route
+                    path="scores/:schoolYear/subject/:subjectSlug/assessment/:assessmentId"
+                    element={<AssessmentScoresPage />}
                   />
                   <Route path="schedules" element={<SchedulesPage />} />
                 </Route>

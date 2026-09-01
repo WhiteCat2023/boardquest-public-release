@@ -97,3 +97,11 @@ export const reviewCenterRefreshToken = asyncHandler(async (req, res) => {
     });
     return new ApiResponse(200, { user, accessToken: newAccessToken }, "Access token refreshed successfully").send(res);
 });
+export const reviewCenterForgotPassword = asyncHandler(async (req, res) => {
+    const result = await reviewCenterAuthService.forgotPassword(req.body);
+    return new ApiResponse(200, result, "Password reset request processed successfully").send(res);
+});
+export const reviewCenterResetPassword = asyncHandler(async (req, res) => {
+    const result = await reviewCenterAuthService.resetPassword(req.body);
+    return new ApiResponse(200, result, "Password has been reset successfully").send(res);
+});

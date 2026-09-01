@@ -1,21 +1,18 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
-  Users,
   UserPlus,
   FileSpreadsheet,
   Download,
   Upload,
   ArrowLeft,
   Calendar,
-  Layers,
   Mail,
   User,
   GraduationCap,
   Tag,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   FileText,
   Trash2,
 } from "lucide-react";
@@ -304,25 +301,24 @@ export function AddStudentsPage() {
   return (
     <div className="space-y-6 max-w-4xl w-full mx-auto font-sans pb-12">
       {/* ── Top Navigation & Header ── */}
-      <div className="space-y-2 pb-3 border-b border-border">
-        <Link
-          to={backTarget}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer mb-1"
-        >
-          <ArrowLeft size={13} />
-          <span>
-            {routeSchoolYear
-              ? `Back to S.Y. ${routeSchoolYear}`
-              : "Back to School Years"}
-          </span>
-        </Link>
-
+      <div className="pb-3 border-b border-border">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
-              <UserPlus className="size-6 text-primary shrink-0" />
-              <span>Add Enrolled Students</span>
-            </h1>
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to={backTarget}
+                className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-xs cursor-pointer mr-0.5"
+                title={routeSchoolYear ? `Back to S.Y. ${routeSchoolYear}` : "Back to School Years"}
+              >
+                <ArrowLeft className="size-4" />
+              </Link>
+
+              <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
+                <UserPlus className="size-6 text-primary shrink-0" />
+                <span>Add Enrolled Students</span>
+              </h1>
+            </div>
+
             <p className="text-xs text-muted-foreground mt-0.5">
               Enroll MedTech students into {user?.companyName || "your review center"} individually or via bulk spreadsheet import.
             </p>

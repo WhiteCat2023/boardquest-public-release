@@ -12,6 +12,15 @@ export function HeaderBreadcrumb() {
     add: "Add Students",
     schedules: "Evaluation Schedules",
     settings: "Portal Settings",
+    scores: "Scores & Grades",
+    subject: "Subject",
+    assessment: "Assessment",
+    "clinical-chemistry": "Clinical Chemistry",
+    "microbiology-parasitology": "Microbiology & Parasitology",
+    hematology: "Hematology",
+    "immunology-serology": "Immunology & Serology",
+    "clinical-microscopy": "Clinical Microscopy",
+    "histopathology-medtech-laws": "Histopathology & MedTech Laws",
   };
 
   return (
@@ -28,7 +37,11 @@ export function HeaderBreadcrumb() {
         const isLast = index === pathnames.length - 1;
         const displayName =
           routeNameMap[value.toLowerCase()] ||
-          (/^\d{4}-\d{4}$/.test(value) ? `S.Y. ${value}` : decodeURIComponent(value));
+          (/^[0-9a-fA-F]{24}$/.test(value)
+            ? "Scores & Roster"
+            : /^\d{4}-\d{4}$/.test(value)
+            ? `S.Y. ${value}`
+            : decodeURIComponent(value));
 
         return (
           <div key={to} className="flex items-center gap-1.5">

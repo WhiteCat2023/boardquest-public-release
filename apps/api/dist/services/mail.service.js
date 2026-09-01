@@ -11,9 +11,9 @@ function getFromAddress() {
         process.env.SMTP_FROM ||
         "BoardQuest <onboarding@resend.dev>");
 }
-export async function sendPasswordResetEmail({ toEmail, resetToken, userName, }) {
+export async function sendPasswordResetEmail({ toEmail, resetToken, userName, resetUrl: customResetUrl, portalName, }) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+    const resetUrl = customResetUrl || `${frontendUrl}/reset-password?token=${resetToken}`;
     const htmlContent = `
 <!DOCTYPE html>
 <html>

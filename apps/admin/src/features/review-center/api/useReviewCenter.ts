@@ -98,6 +98,27 @@ export function useDeleteReviewCenter() {
   });
 }
 
+export function useReviewCenterAssessments(
+  id?: string,
+  params?: { schoolYear?: string; subject?: string }
+) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery({
+    queryKey: ["reviewCenterAssessmentsAdmin", id, params],
+    queryFn: async () => {
+      if (!id) throw new Error("Review center ID is required");
+      const response = await axiosPrivate.get(`/review-center/${id}/assessments`, {
+        params,
+      });
+      return response.data?.data;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 3,
+  });
+}
+
+
 export interface ReviewCenterCandidateItem {
   id: string;
   name: string;

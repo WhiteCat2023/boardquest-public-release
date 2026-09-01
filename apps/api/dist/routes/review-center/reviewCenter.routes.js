@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
 import { getReviewCenters, getReviewCenterById, createReviewCenter, updateReviewCenter, deleteReviewCenter, getReviewCenterCandidatesForAdmin, } from "../../controller/review-center/reviewCenter.controller";
+import { getAdminReviewCenterAssessments } from "../../controller/review-center/assessment.controller";
 import { getReviewSchedules, createReviewSchedule, updateReviewSchedule, deleteReviewSchedule, } from "../../controller/admin/calendar.controller";
 const router = Router();
 const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
@@ -9,6 +10,7 @@ router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewCenters)
 router.get("/representatives/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);
 router.get("/:id/candidates", authenticateToken, requireRoles(allowedRoles), getReviewCenterCandidatesForAdmin);
 router.get("/:id/students", authenticateToken, requireRoles(allowedRoles), getReviewCenterCandidatesForAdmin);
+router.get("/:id/assessments", authenticateToken, requireRoles(allowedRoles), getAdminReviewCenterAssessments);
 router.post("/", authenticateToken, requireRoles(allowedRoles), createReviewCenter);
 router.put("/:id", authenticateToken, requireRoles(allowedRoles), updateReviewCenter);
 router.delete("/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewCenter);

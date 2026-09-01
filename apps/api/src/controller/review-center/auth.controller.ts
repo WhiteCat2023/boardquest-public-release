@@ -161,3 +161,25 @@ export const reviewCenterRefreshToken = asyncHandler(
     ).send(res);
   },
 );
+
+export const reviewCenterForgotPassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await reviewCenterAuthService.forgotPassword(req.body);
+    return new ApiResponse(
+      200,
+      result,
+      "Password reset request processed successfully",
+    ).send(res);
+  },
+);
+
+export const reviewCenterResetPassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await reviewCenterAuthService.resetPassword(req.body);
+    return new ApiResponse(
+      200,
+      result,
+      "Password has been reset successfully",
+    ).send(res);
+  },
+);

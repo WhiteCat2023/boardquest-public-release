@@ -4,6 +4,8 @@ interface SendPasswordResetMailOptions {
   toEmail: string;
   resetToken: string;
   userName?: string;
+  resetUrl?: string;
+  portalName?: string;
 }
 
 function getResendClient(): Resend | null {
@@ -26,9 +28,11 @@ export async function sendPasswordResetEmail({
   toEmail,
   resetToken,
   userName,
+  resetUrl: customResetUrl,
+  portalName,
 }: SendPasswordResetMailOptions) {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+  const resetUrl = customResetUrl || `${frontendUrl}/reset-password?token=${resetToken}`;
 
   const htmlContent = `
 <!DOCTYPE html>

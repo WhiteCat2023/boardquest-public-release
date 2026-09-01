@@ -8,6 +8,7 @@ import ReviewCenterHeader from "../components/details/ReviewCenterHeader";
 import ReviewCenterOverviewTab from "../components/details/ReviewCenterOverviewTab";
 import ReviewCenterStudentsTab from "../components/details/ReviewCenterStudentsTab";
 import ReviewCenterSchedulesTab from "../components/details/ReviewCenterSchedulesTab";
+import ReviewCenterAssessmentsTab from "../components/details/ReviewCenterAssessmentsTab";
 import AddEditReviewCenterModal from "../components/AddEditReviewCenterModal";
 
 export function ReviewCenterDetailsPage() {
@@ -16,7 +17,7 @@ export function ReviewCenterDetailsPage() {
   const { isAdminOrSuperAdmin, isTeamLead } = useRoleFlags();
   const canManage = isAdminOrSuperAdmin || isTeamLead;
 
-  const [activeTab, setActiveTab] = useState<"overview" | "students" | "schedules">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "students" | "schedules" | "assessments">("overview");
 
   // Fetch Review Center Data
   const { data: reviewCenter, isLoading: isCenterLoading } = useReviewCenter(reviewCenterId);
@@ -79,6 +80,8 @@ export function ReviewCenterDetailsPage() {
         />
       ) : activeTab === "students" ? (
         <ReviewCenterStudentsTab reviewCenter={reviewCenter} />
+      ) : activeTab === "assessments" ? (
+        <ReviewCenterAssessmentsTab reviewCenter={reviewCenter} />
       ) : (
         <ReviewCenterSchedulesTab reviewCenter={reviewCenter} />
       )}

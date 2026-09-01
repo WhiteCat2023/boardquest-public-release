@@ -33,6 +33,8 @@ import {
 } from "../api/useCandidates";
 import EnrollCandidateModal from "../components/EnrollCandidateModal";
 import BulkEnrollModal from "../components/BulkEnrollModal";
+import { CandidateScoreDrawer } from "@/features/scores/components/CandidateScoreDrawer";
+import { PdfPreviewModal } from "@/features/scores/components/PdfPreviewModal";
 
 const DEFAULT_KNOWN_YEARS = ["2026-2027", "2025-2026", "2024-2025"];
 
@@ -105,6 +107,11 @@ export function StudentsPage() {
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
     null
   );
+  const [scoreCandidateId, setScoreCandidateId] = useState<string | null>(null);
+  const [pdfPreviewData, setPdfPreviewData] = useState<{
+    assessmentId: string;
+    candidateId: string;
+  } | null>(null);
 
   const handleOpenAddSingle = () => {
     setEditingCandidate(null);
@@ -285,24 +292,26 @@ export function StudentsPage() {
           {/* Back Navigation Bar & Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
             <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSchoolYear(null);
-                  resetDrilldownFilters();
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer mb-1"
-              >
-                <ArrowLeft size={13} />
-                <span>Back to School Years</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSchoolYear(null);
+                    resetDrilldownFilters();
+                  }}
+                  className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-xs cursor-pointer mr-0.5"
+                  title="Back to School Years"
+                >
+                  <ArrowLeft className="size-4" />
+                </button>
 
-              <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
-                <span>School Year {selectedSchoolYear}</span>
-                <span className="text-xs font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full border border-border">
-                  {total} {total === 1 ? "Student" : "Students"}
-                </span>
-              </h1>
+                <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
+                  <span>School Year {selectedSchoolYear}</span>
+                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full border border-border">
+                    {total} {total === 1 ? "Student" : "Students"}
+                  </span>
+                </h1>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Showing all MedTech review students enrolled for S.Y. {selectedSchoolYear}.
               </p>
@@ -450,21 +459,26 @@ export function StudentsPage() {
                         >
                           {/* Student Info */}
                           <td className="px-4 py-3 min-w-[200px]">
-                            <div className="flex items-center gap-2.5">
-                              <Avatar className="size-8 rounded-lg border border-border shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setScoreCandidateId(cand.id)}
+                              className="flex items-center gap-2.5 text-left cursor-pointer group/student w-fit"
+                              title="Click to view student scores & grade breakdown"
+                            >
+                              <Avatar className="size-8 rounded-lg border border-border shrink-0 group-hover/student:border-primary/50 transition-colors">
                                 <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
                                   {initials}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-foreground truncate">
+                                <span className="font-bold text-foreground group-hover/student:text-primary transition-colors truncate">
                                   {cand.name}
                                 </span>
                                 <span className="text-[10.5px] text-muted-foreground truncate">
                                   {cand.email}
                                 </span>
                               </div>
-                            </div>
+                            </button>
                           </td>
 
                           {/* Student ID */}
@@ -488,6 +502,14 @@ export function StudentsPage() {
                           {/* Actions */}
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setScoreCandidateId(cand.id)}
+                                className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                                title="View Scores & Grades"
+                              >
+                                <GraduationCap size={14} />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleOpenEditSingle(cand)}
@@ -531,6 +553,24 @@ export function StudentsPage() {
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
         schoolYear={selectedSchoolYear || "2026-2027"}
+      />
+
+      {/* ── Candidate Scores & Grade Transcript Modal ── */}
+      <CandidateScoreDrawer
+        open={Boolean(scoreCandidateId)}
+        onOpenChange={(open) => !open && setScoreCandidateId(null)}
+        candidateId={scoreCandidateId}
+        onPreviewPdf={(assessmentId, candidateId) => {
+          setPdfPreviewData({ assessmentId, candidateId });
+        }}
+      />
+
+      {/* ── PDF Preview Modal ── */}
+      <PdfPreviewModal
+        open={Boolean(pdfPreviewData)}
+        onOpenChange={(open) => !open && setPdfPreviewData(null)}
+        assessmentId={pdfPreviewData?.assessmentId || null}
+        candidateId={pdfPreviewData?.candidateId || null}
       />
     </div>
   );

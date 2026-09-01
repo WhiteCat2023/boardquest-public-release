@@ -1,19 +1,21 @@
-import { useState } from "react";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Clock, 
-  Building2, 
-  Tag, 
-  Edit3, 
-  Trash2, 
-  CheckCircle2, 
+import { useState, useMemo } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Plus,
+  Clock,
+  Building2,
+  Tag,
+  Edit3,
+  Trash2,
+  CheckCircle2,
   AlertCircle,
-  Lock
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ReviewSchedule } from "../types/types";
 
 interface ReviewCalendarViewProps {
@@ -24,6 +26,8 @@ interface ReviewCalendarViewProps {
   onDeleteSchedule: (schedule: ReviewSchedule) => void;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ReviewCalendarView({
   schedules,
   isLoading,
@@ -33,13 +37,25 @@ export default function ReviewCalendarView({
 }: ReviewCalendarViewProps) {
   // Calendar month state (defaults dynamically to the current month)
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const handlePrevMonth = () => {
@@ -58,12 +74,41 @@ export default function ReviewCalendarView({
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
 
+  const activeSchedules = schedules || [];
+
+  const filteredSchedules = useMemo(() => {
+    if (!searchQuery.trim()) return activeSchedules;
+    const q = searchQuery.toLowerCase().trim();
+    return activeSchedules.filter((sched) => {
+      return (
+        sched.title?.toLowerCase().includes(q) ||
+        sched.companyName?.toLowerCase().includes(q) ||
+        sched.category?.toLowerCase().includes(q) ||
+        sched.startDate?.toLowerCase().includes(q) ||
+        sched.endDate?.toLowerCase().includes(q) ||
+        sched.description?.toLowerCase().includes(q)
+      );
+    });
+  }, [activeSchedules, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSchedules.length / ITEMS_PER_PAGE));
+
+  const paginatedSchedules = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredSchedules.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredSchedules, currentPage]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
   // Helper to check if a specific day is in range of a schedule
   const getSchedulesForDay = (day: number) => {
     const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const targetDate = new Date(dayStr);
 
-    return schedules.filter((sched) => {
+    return activeSchedules.filter((sched) => {
       if (!sched.startDate || !sched.endDate) return false;
       const start = new Date(sched.startDate);
       const end = new Date(sched.endDate);
@@ -88,261 +133,334 @@ export default function ReviewCalendarView({
     switch (status?.toUpperCase()) {
       case "ACTIVE":
         return (
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
+          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
             <CheckCircle2 size={10} /> Active
           </span>
         );
       case "COMPLETED":
         return (
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-semibold text-muted-foreground bg-muted border border-border px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
+          <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full shrink-0">
             Completed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
-            <Clock size={10} /> Upcoming
+          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full shrink-0">
+            Upcoming
           </span>
         );
     }
   };
 
   return (
-    <div className="flex flex-col gap-3.5 sm:gap-4 font-sans flex-1 h-full min-h-0">
-      {/* Calendar Top Control Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 bg-card border border-border p-2.5 sm:p-3 px-3 sm:px-4 rounded-xl shadow-2xs shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="size-7 sm:size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 shadow-2xs">
-            <CalendarIcon size={16} className="sm:size-4.5" />
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full font-sans">
+      {/* ── Left 2 Cols: Monthly Calendar Grid ── */}
+      <div className="xl:col-span-2 flex flex-col bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs">
+        {/* Month Navigation & Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-3 border-b border-border/80">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <CalendarIcon className="size-4" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+                {monthNames[month]} {year}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Review schedule and timeline overview
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h2 className="text-xs sm:text-sm md:text-base font-bold text-foreground tracking-tight truncate">
-              {monthNames[month]} {year}
-            </h2>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-              Review schedule and timeline overview
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 self-stretch sm:self-auto justify-between sm:justify-end shrink-0 w-full sm:w-auto">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 self-start sm:self-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handleToday}
-              className="h-7 sm:h-8 text-[11px] sm:text-xs font-semibold text-foreground border-border bg-card hover:bg-accent rounded-lg px-2 sm:px-2.5 cursor-pointer"
+              className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border cursor-pointer hover:bg-muted"
             >
               Today
             </Button>
-
-            <div className="flex items-center border border-border rounded-lg bg-muted/40 p-0.5">
+            <div className="flex items-center border border-border rounded-lg overflow-hidden bg-background">
               <button
+                type="button"
                 onClick={handlePrevMonth}
-                className="p-1 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Previous Month"
               >
-                <ChevronLeft size={14} className="sm:size-[15px]" />
+                <ChevronLeft size={16} />
               </button>
+              <div className="w-px h-4 bg-border" />
               <button
+                type="button"
                 onClick={handleNextMonth}
-                className="p-1 text-muted-foreground hover:text-foreground hover:bg-card rounded-md transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Next Month"
               >
-                <ChevronRight size={14} className="sm:size-[15px]" />
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
+        </div>
 
-          <Button
-            onClick={onAddSchedule}
-            className="h-7 sm:h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-[11px] sm:text-xs px-2.5 sm:px-3 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-          >
-            <Plus size={14} />
-            <span className="hidden sm:inline">Schedule Review Period</span>
-            <span className="sm:hidden">Add Period</span>
-          </Button>
+        {/* Days of the Week Header */}
+        <div className="grid grid-cols-7 gap-1 text-center mb-1">
+          {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+            <div
+              key={d}
+              className="py-1.5 text-[10px] sm:text-[11px] font-bold text-muted-foreground tracking-wider uppercase"
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar Day Grid */}
+        <div className="grid grid-cols-7 gap-1 flex-1 min-h-[360px] sm:min-h-[420px]">
+          {/* Empty cells before month start */}
+          {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+            <div
+              key={`empty-${i}`}
+              className="rounded-xl bg-muted/10 border border-transparent min-h-[60px] sm:min-h-[72px]"
+            />
+          ))}
+
+          {/* Days of Month */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const daySchedules = getSchedulesForDay(day);
+            const hasSchedules = daySchedules.length > 0;
+            const today = isToday(day);
+
+            return (
+              <div
+                key={`day-${day}`}
+                className={`
+                  flex flex-col p-1.5 rounded-xl border transition-all duration-150 relative min-h-[60px] sm:min-h-[72px] overflow-hidden
+                  ${
+                    today
+                      ? "border-primary bg-primary/5 font-bold shadow-2xs"
+                      : hasSchedules
+                      ? "border-border/90 bg-muted/20 hover:bg-muted/40"
+                      : "border-border/40 bg-card hover:bg-muted/20"
+                  }
+                `}
+              >
+                {/* Day Number */}
+                <div className="flex items-center justify-between mb-1">
+                  <span
+                    className={`
+                      text-[11px] sm:text-xs font-semibold leading-none
+                      ${
+                        today
+                          ? "size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px]"
+                          : "text-foreground"
+                      }
+                    `}
+                  >
+                    {day}
+                  </span>
+                  {hasSchedules && (
+                    <span className="size-1.5 rounded-full bg-primary" />
+                  )}
+                </div>
+
+                {/* Day Events Indicator */}
+                <div className="flex flex-col gap-0.5 overflow-y-auto max-h-[40px] sm:max-h-[48px] no-scrollbar">
+                  {daySchedules.slice(0, 2).map((sched) => (
+                    <div
+                      key={sched.id}
+                      onClick={() => onEditSchedule(sched)}
+                      className="px-1 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary border border-primary/25 truncate cursor-pointer hover:opacity-80 transition-opacity"
+                      title={`${sched.title} (${sched.startDate} to ${sched.endDate})`}
+                    >
+                      {sched.title}
+                    </div>
+                  ))}
+                  {daySchedules.length > 2 && (
+                    <span className="text-[8px] font-bold text-muted-foreground pl-0.5">
+                      +{daySchedules.length - 2} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main Grid & Side Panel Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 flex-1 h-full min-h-0">
-        {/* Monthly Grid View (2 Columns on lg) */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-2.5 sm:p-3.5 shadow-2xs space-y-2 sm:space-y-3 flex flex-col flex-1 h-full min-h-0 overflow-hidden">
-          {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-1 text-center border-b border-border pb-1.5 sm:pb-2 shrink-0">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((dayName, idx) => (
-              <div key={idx} className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <span className="hidden sm:inline">{dayName}</span>
-                <span className="sm:hidden">{dayName[0]}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Month Days Grid */}
-          <div className="grid grid-cols-7 gap-1 flex-1 h-full min-h-0 auto-rows-fr">
-            {/* Empty padding cells for start weekday */}
-            {Array.from({ length: firstDayOfWeek }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="h-full bg-muted/15 rounded-lg border border-transparent min-h-[50px] sm:min-h-[64px]" />
-            ))}
-
-            {/* Days of the month */}
-            {Array.from({ length: daysInMonth }).map((_, idx) => {
-              const dayNum = idx + 1;
-              const daySchedules = getSchedulesForDay(dayNum);
-              const currentDayIsToday = isToday(dayNum);
-
-              return (
-                <div
-                  key={`day-${dayNum}`}
-                  className={`h-full min-h-[50px] sm:min-h-[64px] p-1 sm:p-1.5 rounded-lg border transition-all flex flex-col justify-between group overflow-hidden ${
-                    currentDayIsToday
-                      ? "bg-primary/5 border-primary/40 shadow-2xs"
-                      : "bg-card border-border/70 hover:border-border hover:bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span
-                      className={`text-[10px] sm:text-[11px] font-bold size-4.5 sm:size-5 rounded-full flex items-center justify-center shrink-0 ${
-                        currentDayIsToday
-                          ? "bg-primary text-primary-foreground"
-                          : "text-foreground"
-                      }`}
-                    >
-                      {dayNum}
-                    </span>
-                    {daySchedules.length > 0 && (
-                      <span className="size-1.5 rounded-full bg-primary animate-pulse shrink-0" />
-                    )}
-                  </div>
-
-                  {/* Schedule Pills on Calendar Day */}
-                  <div className="space-y-0.5 mt-0.5 overflow-hidden">
-                    {daySchedules.slice(0, 2).map((sched) => (
-                      <div
-                        key={sched.id}
-                        onClick={() => onEditSchedule(sched)}
-                        className="text-[8px] sm:text-[8.5px] font-semibold p-0.5 px-1 rounded bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer truncate"
-                        title={`${sched.title} (${sched.startDate} to ${sched.endDate})`}
-                      >
-                        <span className="hidden sm:inline">{sched.title}</span>
-                        <span className="sm:hidden">{sched.title.slice(0, 4)}..</span>
-                      </div>
-                    ))}
-                    {daySchedules.length > 2 && (
-                      <span className="text-[8px] font-bold text-muted-foreground block truncate">
-                        +{daySchedules.length - 2}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Schedule List Side Panel (1 Column on lg) */}
-        <div className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col space-y-2.5 sm:space-y-3 flex-1 h-full min-h-0 max-h-[380px] lg:max-h-full">
-          <div className="flex items-center justify-between border-b border-border pb-2 shrink-0">
-            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Clock size={14} className="text-primary shrink-0" />
+      {/* ── Right Col: Scheduled Review Periods List ── */}
+      <div className="flex flex-col bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-border/80">
+          <div className="flex items-center gap-2">
+            <Clock className="size-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">
               Scheduled Review Periods
             </h3>
-            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
-              {schedules.length}
-            </span>
           </div>
-
-          {/* List of Schedules with Start/End Dates */}
-          <div className="space-y-2 sm:space-y-2.5 overflow-y-auto flex-1 h-full min-h-0 pr-0.5">
-            {schedules.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-6 text-center space-y-1.5 border border-dashed border-border rounded-xl bg-muted/20">
-                <AlertCircle size={20} className="text-muted-foreground/40" />
-                <p className="text-xs font-bold text-foreground">No Review Periods</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Click 'Schedule Review Period' to set dates.
-                </p>
-              </div>
-            ) : (
-              schedules.map((sched) => (
-                <div
-                  key={sched.id}
-                  className="bg-muted/30 hover:bg-muted/60 border border-border rounded-xl p-2 sm:p-2.5 transition-all space-y-2 group"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h4
-                        className="text-xs font-bold text-foreground truncate"
-                        title={sched.title}
-                      >
-                        {sched.title}
-                      </h4>
-                      <p className="text-[10px] sm:text-[10.5px] font-medium text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Building2 size={11} className="text-muted-foreground/70 shrink-0" />
-                        <span className="truncate">{sched.companyName}</span>
-                      </p>
-                    </div>
-                    {getStatusBadge(sched.status)}
-                  </div>
-
-                  {/* START DATE & END DATE BADGES */}
-                  <div className="flex items-center gap-1.5 p-1.5 bg-card border border-border rounded-lg text-[10px] sm:text-[10.5px]">
-                    <CalendarIcon size={12} className="text-primary shrink-0" />
-                    <div className="flex items-center gap-1 font-semibold text-foreground truncate">
-                      <span>{sched.startDate}</span>
-                      <span className="text-muted-foreground font-normal">to</span>
-                      <span>{sched.endDate}</span>
-                    </div>
-                  </div>
-
-                  {sched.category && (
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
-                      <Tag size={10} className="text-muted-foreground/70 shrink-0" />
-                      <span className="truncate">{sched.category}</span>
-                    </div>
-                  )}
-
-                  {/* Action Buttons or Read-Only Badge */}
-                  <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
-                    {sched.companyName && sched.companyName !== "Institutional (BoardQuest)" ? (
-                      <div className="flex items-center justify-between w-full text-[10px] sm:text-[10.5px] text-muted-foreground bg-background/60 px-2 py-1 rounded-md border border-border/50">
-                        <span className="flex items-center gap-1.5 font-medium text-foreground/85">
-                          <Lock size={11} className="text-primary shrink-0" />
-                          <span>Set by Review Center</span>
-                        </span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
-                          Read-Only
-                        </span>
-                      </div>
-                    ) : (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEditSchedule(sched)}
-                          className="h-6 text-[10px] sm:text-[10.5px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md px-1.5 cursor-pointer gap-1"
-                        >
-                          <Edit3 size={11} />
-                          Set / Change Dates
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDeleteSchedule(sched)}
-                          className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
-                          title="Remove Final Review Schedule"
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+            {filteredSchedules.length}
+          </span>
         </div>
+
+        {/* Search Bar */}
+        <div className="relative flex items-center shrink-0">
+          <Search className="size-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search review periods..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="h-8 pl-8 pr-7 text-xs bg-muted/30 border-border rounded-lg placeholder:text-muted-foreground/60 focus-visible:ring-1"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange("")}
+              className="absolute right-2 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Clear search"
+            >
+              <X className="size-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Schedule List Items */}
+        <div className="flex-1 overflow-y-auto space-y-2.5 max-h-[460px] pr-0.5">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground gap-2">
+              <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs">Loading review schedules...</span>
+            </div>
+          ) : activeSchedules.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-border rounded-xl">
+              <AlertCircle className="size-8 text-muted-foreground/50 mb-2" />
+              <p className="text-xs font-bold text-foreground">
+                No Review Periods
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Click &quot;Schedule Review Period&quot; to set review dates and
+                timelines.
+              </p>
+              <Button
+                size="sm"
+                onClick={onAddSchedule}
+                className="mt-3 h-7.5 text-xs rounded-lg bg-primary text-primary-foreground font-semibold"
+              >
+                <Plus size={13} className="mr-1" /> Set Schedule
+              </Button>
+            </div>
+          ) : filteredSchedules.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-6 text-center space-y-2 border border-dashed border-border rounded-xl bg-muted/20">
+              <Search size={18} className="text-muted-foreground/40" />
+              <p className="text-xs font-bold text-foreground">
+                No matching review periods
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                No review periods found for &quot;{searchQuery}&quot;
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSearchChange("")}
+                className="h-6 text-[10px] rounded-lg px-2 text-primary border-primary/20 hover:bg-primary/10 cursor-pointer"
+              >
+                Clear search
+              </Button>
+            </div>
+          ) : (
+            paginatedSchedules.map((sched) => (
+              <div
+                key={sched.id}
+                className="p-3 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-all flex flex-col gap-2 group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-foreground truncate">
+                      {sched.title}
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground font-medium truncate block">
+                      {sched.companyName && sched.companyName !== "Institutional (BoardQuest)"
+                        ? `${sched.companyName} • ${sched.category || "Board Review"}`
+                        : sched.category || "Board Review"}
+                    </span>
+                  </div>
+                  {getStatusBadge(sched.status)}
+                </div>
+
+                {/* Dates & Duration */}
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded-md border border-border/60">
+                  <CalendarIcon className="size-3 text-primary shrink-0" />
+                  <span>
+                    {sched.startDate} → {sched.endDate}
+                  </span>
+                </div>
+
+                {/* Description if present */}
+                {sched.description && (
+                  <p className="text-[11px] text-muted-foreground/80 line-clamp-2 italic">
+                    &quot;{sched.description}&quot;
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
+                  <button
+                    type="button"
+                    onClick={() => onEditSchedule(sched)}
+                    className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold"
+                  >
+                    <Edit3 size={12} /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteSchedule(sched)}
+                    className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold ml-1"
+                  >
+                    <Trash2 size={12} /> Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* ── Pagination Footer ── */}
+        {filteredSchedules.length > 0 && (
+          <div className="flex items-center justify-between pt-2.5 border-t border-border/80 text-xs shrink-0">
+            <span className="text-[11px] text-muted-foreground font-medium">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchedules.length)} of{" "}
+              {filteredSchedules.length}
+            </span>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft size={14} />
+              </button>
+
+              <span className="text-[11px] font-bold text-foreground px-1.5 min-w-[3rem] text-center">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

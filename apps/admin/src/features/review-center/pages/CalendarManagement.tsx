@@ -45,29 +45,26 @@ export default function CalendarManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 md:p-6 w-full min-h-screen lg:min-h-[calc(100vh-5rem)] flex-1 font-sans bg-background text-foreground">
-      {/* Sticky Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-4 sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-3 -mx-3 sm:-mt-4 sm:-mx-4 md:-mt-6 md:-mx-6 px-3 sm:px-4 md:px-6 border-b border-border z-10 font-sans">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8 pb-16 w-full max-w-7xl mx-auto font-sans bg-background text-foreground">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
         <div>
-          <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-            <CalendarIcon className="text-primary size-4.5 sm:size-5 shrink-0" />
-            Academic Calendar
+          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
+            <CalendarIcon className="size-6 text-primary shrink-0" />
+            <span>Academic Calendar</span>
           </h1>
-          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Set and manage institutional game final review periods, mock exams, and review center timelines.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-          <Button
-            onClick={handleOpenAddSchedule}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-3 sm:px-3.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus size={14} />
-            <span className="hidden xs:inline sm:inline">Schedule Final Review</span>
-            <span className="xs:hidden sm:hidden">Schedule</span>
-          </Button>
-        </div>
+        <Button
+          onClick={handleOpenAddSchedule}
+          className="h-9 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:bg-primary/90 flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
+        >
+          <Plus size={14} />
+          <span>Schedule Review Period</span>
+        </Button>
       </div>
 
       {/* Interactive Monthly Calendar & Schedule View */}

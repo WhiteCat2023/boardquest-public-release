@@ -136,21 +136,25 @@ export function DropdownMenuItem({
   children,
   className,
   onClick,
+  disabled,
 }: {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   const { setOpen } = useDropdown();
 
   return (
     <div
       onClick={() => {
+        if (disabled) return;
         onClick?.();
         setOpen(false);
       }}
       className={cn(
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
+        "relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground",
+        disabled && "pointer-events-none opacity-40 cursor-not-allowed",
         className
       )}
     >

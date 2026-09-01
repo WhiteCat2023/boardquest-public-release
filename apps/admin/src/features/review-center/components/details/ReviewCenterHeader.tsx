@@ -17,10 +17,10 @@ interface ReviewCenterHeaderProps {
   reviewCenter: ReviewCenterRepresentative | null | undefined;
   isLoading: boolean;
   canManage: boolean;
-  activeTab: "overview" | "students" | "schedules";
+  activeTab: "overview" | "students" | "schedules" | "assessments";
   studentsCount: number;
   schedulesCount: number;
-  onTabChange: (tab: "overview" | "students" | "schedules") => void;
+  onTabChange: (tab: "overview" | "students" | "schedules" | "assessments") => void;
   onOpenEdit: () => void;
   onBackNav: () => void;
 }
@@ -136,7 +136,20 @@ export default function ReviewCenterHeader({
               }`}
             >
               <GraduationCap size={13} />
-              Enrolled Students ({studentsCount})
+              Students ({studentsCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onTabChange("assessments")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "assessments"
+                  ? "bg-card text-foreground shadow-2xs border border-border/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <CheckCircle2 size={13} />
+              Scores & Tests
             </button>
 
             <button

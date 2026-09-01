@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
 import { Mail, Lock, Eye, EyeOff, Building2, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -107,9 +107,17 @@ export function ReviewCenterLoginPage() {
 
             {/* Password Field */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-foreground uppercase tracking-wide block">
-                PASSWORD
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-foreground uppercase tracking-wide block">
+                  PASSWORD
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] font-bold text-primary hover:underline transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="relative flex items-center">
                 <Input
                   type={showPassword ? "text" : "password"}

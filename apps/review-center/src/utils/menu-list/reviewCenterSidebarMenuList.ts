@@ -19,6 +19,11 @@ export const reviewCenterNavItem: NavItemProps[] = [
         path: "/candidates",
         icon: "Users",
       },
+      {
+        title: "Scores & Grades",
+        path: "/scores",
+        icon: "Award",
+      },
     ],
   },
   {

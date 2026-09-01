@@ -292,10 +292,10 @@ export default function ViewUser() {
     String(activeMember.role) === "REVIEWCENTER";
 
   return (
-    <phantom-ui loading={isLoading}>
-      <div className="flex flex-col gap-6 p-6 md:p-8 w-full min-h-full font-sans bg-background text-foreground max-w-5xl mx-auto">
+    <div className="flex-1 w-full min-h-0 overflow-y-auto font-sans bg-background text-foreground">
+      <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8 pb-32 w-full max-w-5xl mx-auto">
         {/* Header & Back Navigation */}
-        <div className="flex flex-col gap-4 sticky top-0 bg-background/95 backdrop-blur-md pb-4 pt-4 -mt-4 z-10 border-b border-border">
+        <div className="flex flex-col gap-3 pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Link
               to="/faculty-management"
@@ -863,7 +863,7 @@ export default function ViewUser() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </phantom-ui>
+    </div>
   );
 }
 
