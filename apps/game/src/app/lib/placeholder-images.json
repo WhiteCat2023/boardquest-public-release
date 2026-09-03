@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "island1",
+      "description": "Floating island region for Clinical Chemistry",
+      "imageUrl": "/images/island1.png",
+      "imageHint": "floating island"
+    }
+  ]
+}

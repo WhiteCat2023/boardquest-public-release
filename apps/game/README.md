@@ -1,75 +1,101 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# BoardQuest | Gamified AI-Assisted Board Review System
 
-Currently, two official plugins are available:
+> An intelligent, AI-driven licensure examination preparation platform engineered for Medical Technology students.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 📋 Overview & Purpose
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**BoardQuest** is a specialized review platform designed specifically for 4th-year Medical Technology (MedTech) students preparing for the Medical Technologist Licensure Examination (MTLE). 
 
-## Expanding the ESLint configuration
+By combining spaced repetition algorithms, situational clinical scenarios, and adaptive mock examinations with personalized generative AI feedback, BoardQuest transforms traditional board exam preparation into a structured, high-yield learning experience.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Core Disciplines Covered
+- **Clinical Chemistry**
+- **Hematology**
+- **Microbiology**
+- **Immunohematology (Blood Banking)**
+- **Clinical Microscopy**
+- **Histopathology & Medical Technology Laws**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Key Functional Modules
+- 📊 **Executive Dashboard:** Real-time analytical visualization of subject mastery, experience points (XP), learning streaks, and peer rankings.
+- 🎯 **Adaptive Learning Quests:** Practice modules incorporating spaced repetition and AI-generated clinical situational cases.
+- ⏱️ **Mock Exam Engine:** High-stakes, timed exam simulations replicating authentic licensure testing environments.
+- 🤖 **AI Pedagogical Tutor:** Real-time diagnostic explanations and step-by-step reasoning tailored to student response patterns.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ Setup & Local Installation
 
-```
+Follow the steps below to configure and run the BoardQuest platform locally.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### System Prerequisites
+- **Node.js**: Version 18.0.0 or higher
+- **Git**: Version control CLI
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Quick Start Guide
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/Itsan12345/BoardQuesters.git
+   cd studio
+   ```
 
-```
+2. **Install Project Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory and supply your database connection string and AI service credentials:
+   ```env
+   DATABASE_URL="your-database-connection-string"
+   GEMINI_API_KEY="your-api-key"
+   ```
+
+4. **Initialize Database & Start Development Server**
+   ```bash
+   npx prisma generate
+   npm run dev
+   ```
+
+5. **Access Application**
+   Open your web browser and navigate to `http://localhost:9002`.
+
+---
+
+## 📁 Repository Architecture
+
+The codebase follows a modular Next.js App Router architecture. Below is an overview of the primary directories and configuration files:
+
+| Directory / File | Description |
+| :--- | :--- |
+| `src/app/` | Core application routes, page layouts, server actions, and API endpoints. |
+| `src/components/` | Modular, reusable UI components built with Tailwind CSS and Radix UI. |
+| `src/ai/` | Genkit & Google Gemini AI orchestration scripts and prompt definitions. |
+| `public/` | Static media assets, icons, and public visual resources. |
+| `prisma/` | Relational database schema definitions, ORM configurations, and migrations. |
+| `.env` | Local environment configuration and credential store *(git-ignored)*. |
+| `package.json` | Project manifest defining dependencies, build pipelines, and system scripts. |
+
+---
+
+## ✉️ Contact Information
+
+For inquiries, technical support, or administrative questions regarding this Capstone system:
+
+- **Project Team:** BoardQuest Engineering & Capstone Team
+- **Primary Email:** `ethangabrielrolloque@gmail.com`
+- **GitHub Repository:** [BoardQuest Capstone Repository](https://github.com/Itsan12345/BoardQuesters)
+
+---
+
+## 📜 License
+
+**Proprietary License**  
+Copyright © 2026 BoardQuest Team. All Rights Reserved.
+
+This software and its associated documentation are proprietary materials developed strictly for Capstone project evaluation. Unauthorized copying, modification, distribution, or commercial deployment of this repository is strictly prohibited.
+

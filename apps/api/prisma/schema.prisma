@@ -121,8 +121,21 @@ model Question {
   authorId String    @db.ObjectId
 
   schoolYear String? @default("S.Y. 2025-2026")
+  feedback   String? @default("")
+
+  aiExplanation QuestionExplanation?
   comments QuestionComment[]
   attempts UserQuestionAttempt[]
+}
+
+model QuestionExplanation {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  questionId  String   @unique @db.ObjectId
+  explanation String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model QuestionComment {
@@ -352,6 +365,8 @@ model User {
   questionAttempts   UserQuestionAttempt[]
   userBadges         UserBadge[]
   reviewCenterCandidates ReviewCenterCandidate[]
+
+  @@index([xp])
 }
 
 model SubjectMastery {
@@ -380,14 +395,18 @@ model LessonCompletion {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+  @@index([userId, status])
 }
 
 model StudyPlan {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
   subject    String
-  targetDate DateTime
-  updatedAt  DateTime @updatedAt
+  targetDate DateTime?
+  startDate  DateTime? @default(now())
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -408,6 +427,9 @@ model Achievement {
   timestamp        DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp])
+  @@index([userId, type, timestamp])
 }
 
 model ExamResult {
@@ -420,6 +442,9 @@ model ExamResult {
   timestamp DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp])
+  @@index([userId, subject])
 }
 
 enum LogLevel {
@@ -505,6 +530,7 @@ model QuestNodeCompletion {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, nodeId, difficulty])
+  @@index([userId, status])
 }
 
 model UserQuestionAttempt {
@@ -537,6 +563,7 @@ model Badge {
   name            String   // 'Gold Quest Badge', 'Silver Quest Badge', 'Speed Master'
   description     String   // Full description of unlock conditions
   category        BadgeCategory  @default(QUEST) 
+  tier            String?  @default("STANDARD")
   icon            String   // 'trophy', 'flame', 'zap', 'shield', 'crown'
   spriteUrl       String?  // '/ui/gold-badge.png', '/ui/master-badge.png', etc.
   color           String   // Hex color code ('#FFD700', '#C0C0C0', '#CD7F32')
@@ -553,7 +580,7 @@ model Badge {
 model UserBadge {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
-  badgeId         String   @db.ObjectId
+  badgeId         String?  @db.ObjectId
   badgeSlug       String   // Matches Badge.badgeId (e.g. 'gold', 'speed')
   subject         String?  // Subject area context (e.g. 'Clinical Chemistry')
   questMode       String?  // 'learning' | 'test' | 'boss'
@@ -562,10 +589,12 @@ model UserBadge {
   xpEarned        Int      @default(0)
   unlockedAt      DateTime @default(now())
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge? @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeSlug, subject])
+  @@index([userId])
+  @@index([badgeSlug])
 }
 
 model GameConfig {

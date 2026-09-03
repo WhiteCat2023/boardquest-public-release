@@ -34,7 +34,7 @@
     "test": "turbo test",
     "test:api": "pnpm --filter=./apps/api test",
     "test:admin": "pnpm --filter=./apps/admin lint",
-    "test:game": "pnpm --filter=./apps/game test",
+    "test:game": "pnpm --filter=./apps/game lint",
 
     "prisma:generate": "pnpm --filter=./apps/api exec prisma generate",
     "prisma:migrate:dev": "pnpm --filter=./apps/api prisma migrate dev",

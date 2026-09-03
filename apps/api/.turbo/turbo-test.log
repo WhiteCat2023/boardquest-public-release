@@ -1,2 +1,25 @@
 $ jest
-Terminate batch job (Y/N)? 
+PASS src/__tests__/calendar.test.ts (17.811 s)
+PASS src/__tests__/candidate.test.ts (17.853 s)
+PASS src/__tests__/game.test.ts (17.871 s)
+PASS src/__tests__/logs.test.ts
+PASS src/__tests__/analytics.test.ts
+PASS src/__tests__/statsCalculator.test.ts
+PASS src/__tests__/reviewCenter.test.ts (18.378 s)
+PASS src/__tests__/upload.test.ts
+PASS src/__tests__/assessment.test.ts
+PASS src/__tests__/guidance.test.ts (18.499 s)
+PASS src/__tests__/notification.test.ts (18.504 s)
+PASS src/__tests__/user.test.ts (19.259 s)
+PASS src/__tests__/reviewCenterAuth.test.ts (19.664 s)
+PASS src/__tests__/student.test.ts (19.754 s)
+PASS src/__tests__/auth.test.ts (19.776 s)
+PASS src/__tests__/question.test.ts (20.082 s)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 16 passed, 16 total
+Tests:       163 passed, 163 total
+Snapshots:   0 total
+Time:        23.316 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

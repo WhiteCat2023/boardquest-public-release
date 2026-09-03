@@ -1,0 +1,29 @@
+# Step 4 Walkthrough: Batch Pre-generation
+
+I have successfully implemented the background batch pre-generation script to help you proactively generate explanations for your questions and save on API costs.
+
+## What was built
+
+1. **New AI Batch Flow**
+   - Created `src/ai/flows/batch-provide-exam-feedback.ts`. 
+   - This flow uses a highly optimized prompt designed to take an array of questions (up to 10 at a time) and return an array of concise explanations in a single API request, heavily reducing token overhead.
+
+2. **Background Script**
+   - Created `scripts/batch-generate-feedback.ts`.
+   - This script queries your Prisma database for all `APPROVED` questions that are currently missing explanations (`feedback: null` or `""`).
+   - It iterates through these questions in batches of 10.
+   - For each batch, it calls the new AI flow, receives 10 explanations at once, and updates the database immediately.
+   - It also includes a built-in 10-second delay between batches to ensure you do not hit rate limits on the free tier.
+
+3. **NPM Command**
+   - Added a new script to your `package.json`.
+
+## How to use it
+
+Whenever you add a large batch of new questions to your database via the Admin panel, you can open your terminal and run:
+
+```bash
+npm run generate-feedback
+```
+
+The script will automatically detect any questions missing explanations, process them in batches, and save the AI-generated feedback directly to your database. Once it finishes, all your users will instantly see the explanations in-game without ever triggering the AI API themselves!
