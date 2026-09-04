@@ -20,13 +20,11 @@
     "dev:api": "pnpm --filter=./apps/api dev",
     "dev:admin": "pnpm --filter=./apps/admin dev",
     "dev:review-center": "pnpm --filter=./apps/review-center dev",
-    "dev:game": "pnpm --filter=./apps/game dev",
     
     "build": "turbo build",
     "build:api": "pnpm --filter=./apps/api build",
     "build:admin": "pnpm --filter=./apps/admin build",
     "build:review-center": "pnpm --filter=./apps/review-center build",
-    "build:game": "pnpm --filter=./apps/game build",
 
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
@@ -34,7 +32,6 @@
     "test": "turbo test",
     "test:api": "pnpm --filter=./apps/api test",
     "test:admin": "pnpm --filter=./apps/admin lint",
-    "test:game": "pnpm --filter=./apps/game lint",
 
     "prisma:generate": "pnpm --filter=./apps/api exec prisma generate",
     "prisma:migrate:dev": "pnpm --filter=./apps/api prisma migrate dev",
