@@ -6,33 +6,59 @@ All the roles mentioned here connect directly to the roles defined in [roles_and
 
 ---
 
-## 1. Simple Escalation Flowchart
+## 1. Support Tier Escalation Diagram
 
-When a user runs into an issue, the problem follows this simple path:
+The diagram below shows how an issue moves through the support tiers and who is responsible at each level:
 
 ```mermaid
-flowchart TD
-    User["User encounters a problem<br/>(Student, Teacher, or Review Center)"] --> L1["Level 1: Frontline Help<br/>(Teacher / Review Center Staff)"]
-    
-    L1 --> Check{"What kind of problem is it?"}
-    
-    Check -- "Wrong question or answer key" --> L2A["Level 2A: Subject Team Lead<br/>(BoardQuest_TeamLead)"]
-    Check -- "App glitch, login issue, or bug" --> L2B["Level 2B: System Admin<br/>(Technical Support)"]
-    
-    L2A -- "Question corrected" --> Fixed(["Problem Fixed!"])
-    L2B -- "Settings / Account fixed" --> Fixed
-    
-    L2A -- "Big grading dispute or exam rule issue" --> L4["Level 4: Dean & Executive<br/>(BoardQuest_Dean)"]
-    L2B -- "Server crash, broken database, or code bug" --> L3["Level 3: Super Admin<br/>(BoardQuest_SuperAdmin)"]
-    
-    L3 -- "Code fixed / Server restarted" --> Fixed
-    L3 -- "Major outage during a live exam" --> L4
-    L4 -- "Official decision / Exam rescheduled" --> Fixed
+graph LR
+    subgraph T0 [Tier 0: Self-Service]
+        KB[Automated KB / FAQ / Status Page]
+    end
+
+    subgraph T1 [Tier 1: Frontline Triage]
+        R1[BoardQuest_Teacher]
+        R2[BoardQuest_ReviewCenter Coordinator]
+    end
+
+    subgraph T2 [Tier 2: Functional Specialists]
+        R3[BoardQuest_TeamLead - Content Domain]
+        R4[System Admin - Platform Support]
+    end
+
+    subgraph T3 [Tier 3: Deep Technical & Infrastructure]
+        R5[BoardQuest_SuperAdmin - Tech Stack & DevOps]
+        R6[External Cloud Providers]
+    end
+
+    subgraph T4 [Tier 4: Executive Governance]
+        R7[BoardQuest_Dean - Academic Policy]
+        R8[Incident Commander / Super Admin]
+    end
+
+    T0 --> T1
+    T1 --> T2
+    T2 --> T3
+    T2 --> T4
+    T3 --> T4
 ```
 
 ---
 
-## 2. The Four Support Levels (Tiers)
+## 2. Support Levels (Tiers) Explained
+
+### Tier 0: Self-Service & Automated Help
+*Self-help tools available to users before contacting support.*
+
+* **Who uses it:** Any user (`BoardQuest_Student`, `BoardQuest_Teacher`, `BoardQuest_ReviewCenter`).
+* **What it does:**
+  * Searchable Help Center / FAQs for common questions.
+  * Public system status page showing if servers are online.
+  * Automated password reset and login assistance.
+* **When to pass the issue up (Escalate to Tier 1):**
+  * Automated help does not resolve the issue, or an account remains locked.
+
+---
 
 ### Level 1: Frontline Help
 *First people to receive the issue and help the user.*
