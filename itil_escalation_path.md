@@ -1,415 +1,168 @@
-# BoardQuest: ITIL Incident Management & Escalation Path Documentation
+# BoardQuest: Escalation Path Documentation
 
-This document defines the official **ITIL Service Operation: Incident Management & Escalation Path** framework for the **BoardQuest** platform. It establishes structured workflows, functional/hierarchical escalation paths, response/resolution target thresholds, and multi-channel communication protocols when users (Students, Faculty, Review Centers, or Administrators) encounter operational or technical problems.
+This document explains what happens when a user runs into a problem on **BoardQuest** and how issues are passed up the ladder (escalated) until they are fixed.
 
-This documentation directly references and aligns with the governance boundaries established in [roles_and_responsibilities.md](file:///d:/Code/capstone/roles_and_responsibilities.md).
-
----
-
-## 1. Overview & Escalation Principles
-
-In accordance with **ITIL v4 Service Management** principles, an *Incident* is defined as an unplanned interruption to a service or reduction in the quality of a service. The escalation framework distinguishes between two fundamental escalation dimensions:
-
-1. **Functional Escalation (Horizontal):** Transferring an incident to a role or support group with specialized technical skills, content domain mastery, or system permissions (e.g., Tier 1 Faculty Support → Tier 2 Subject Team Lead → Tier 3 Super Admin / DevOps).
-2. **Hierarchical Escalation (Vertical):** Elevating an incident up the administrative chain of command when an issue threatens service level agreements (SLAs), involves institutional liability, requires emergency resource reallocation, or warrants a Major Incident (P1) declaration (e.g., Team Lead → Dean / Academic Administrator & Super Admin).
+All the roles mentioned here connect directly to the roles defined in [roles_and_responsibilities.md](file:///d:/Code/capstone/roles_and_responsibilities.md).
 
 ---
 
-## 2. End-to-End Incident Escalation Flowchart
+## 1. Simple Escalation Flowchart
 
-The diagram below illustrates the complete lifecycle and escalation path from initial user problem encounter to final resolution and post-incident review (PIR).
+When a user runs into an issue, the problem follows this simple path:
 
 ```mermaid
 flowchart TD
-    classDef startNode fill:#1e293b,stroke:#0284c7,stroke-width:2px,color:#fff
-    classDef tier0 fill:#334155,stroke:#64748b,stroke-width:2px,color:#fff
-    classDef tier1 fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#fff
-    classDef tier2 fill:#065f46,stroke:#10b981,stroke-width:2px,color:#fff
-    classDef tier3 fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fff
-    classDef tier4 fill:#701a75,stroke:#d946ef,stroke-width:2px,color:#fff
-    classDef resolveNode fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff
-
-    Start(["User Encounters Problem<br/>(Student, Teacher, Review Center)"]):::startNode --> T0["Tier 0: Self-Service & In-App Diagnostics<br/>Knowledge Base, Status Page, Password Reset"]:::tier0
-
-    T0 -- Self-Resolved --> Closed(["Incident Resolved & Logged"]):::resolveNode
-    T0 -- Unresolved / Ticket Logged --> T1["Tier 1: Frontline Triage & First-Contact Support<br/>(BoardQuest_Teacher / Review Center Rep)"]:::tier1
-
-    T1 --> CheckType{"Incident Type<br/>Assessment"}
-
-    %% Academic Track
-    CheckType -- "Content / Question Bank / Academic Defect" --> T2A["Tier 2A: Academic & Content Domain Support<br/>(BoardQuest_TeamLead)"]:::tier2
-    T2A -- "Question / Key Validated & Fixed" --> Closed
-    T2A -- "Curriculum Conflict / Grade Policy Dispute" --> T4A["Hierarchical Escalation: Academic Authority<br/>(BoardQuest_Dean)"]:::tier4
-    T4A --> Closed
-
-    %% Technical Track
-    CheckType -- "Technical Bug / Permissions / Data Sync" --> T2B["Tier 2B: Application & Operational Support<br/>(System Admin / BoardQuest_SuperAdmin)"]:::tier2
-    T2B -- "Config / Account / Known Bug Fixed" --> Closed
-    T2B -- "Unresolved within SLA / DB Lock / Code Fix Needed" --> T3["Tier 3: Core Engineering & Infrastructure<br/>(BoardQuest_SuperAdmin & DevOps)"]:::tier3
-
-    %% Critical / Major Incident Branch
-    CheckType -- "Critical Outage / Data Breach / P1" --> MIM["Major Incident Management (War Room)<br/>Super Admin + Dean"]:::tier4
-
-    T3 -- "Hotfix Deployed / DB Restored" --> Closed
-    T3 -- "Underlying Vendor Failure" --> Vendor["External Vendor Escalation<br/>(Render, Supabase, Cloudflare)"]:::tier3
-    Vendor --> T3
-
-    MIM --> T3
-    MIM -- "Executive Broadcast & Academic Waiver" --> T4A
-    Closed --> PIR["Post-Incident Review (PIR) & Knowledge Base Update"]:::startNode
+    User["User encounters a problem<br/>(Student, Teacher, or Review Center)"] --> L1["Level 1: Frontline Help<br/>(Teacher / Review Center Staff)"]
+    
+    L1 --> Check{"What kind of problem is it?"}
+    
+    Check -- "Wrong question or answer key" --> L2A["Level 2A: Subject Team Lead<br/>(BoardQuest_TeamLead)"]
+    Check -- "App glitch, login issue, or bug" --> L2B["Level 2B: System Admin<br/>(Technical Support)"]
+    
+    L2A -- "Question corrected" --> Fixed(["Problem Fixed!"])
+    L2B -- "Settings / Account fixed" --> Fixed
+    
+    L2A -- "Big grading dispute or exam rule issue" --> L4["Level 4: Dean & Executive<br/>(BoardQuest_Dean)"]
+    L2B -- "Server crash, broken database, or code bug" --> L3["Level 3: Super Admin<br/>(BoardQuest_SuperAdmin)"]
+    
+    L3 -- "Code fixed / Server restarted" --> Fixed
+    L3 -- "Major outage during a live exam" --> L4
+    L4 -- "Official decision / Exam rescheduled" --> Fixed
 ```
 
 ---
 
-## 3. Tiered Support Architecture & Role Alignment
+## 2. The Four Support Levels (Tiers)
 
-Every support tier maps directly to the operational roles and accountability boundaries defined in Section 1 and Section 2 of [roles_and_responsibilities.md](file:///d:/Code/capstone/roles_and_responsibilities.md).
+### Level 1: Frontline Help
+*First people to receive the issue and help the user.*
 
-```mermaid
-graph LR
-    subgraph T0 [Tier 0: Self-Service]
-        KB[Automated KB / FAQ / Status Page]
-    end
-
-    subgraph T1 [Tier 1: Frontline Triage]
-        R1[BoardQuest_Teacher]
-        R2[BoardQuest_ReviewCenter Coordinator]
-    end
-
-    subgraph T2 [Tier 2: Functional Specialists]
-        R3[BoardQuest_TeamLead - Content Domain]
-        R4[System Admin - Platform Support]
-    end
-
-    subgraph T3 [Tier 3: Deep Technical & Infrastructure]
-        R5[BoardQuest_SuperAdmin - Tech Stack & DevOps]
-        R6[External Cloud Providers]
-    end
-
-    subgraph T4 [Tier 4: Executive Governance]
-        R7[BoardQuest_Dean - Academic Policy]
-        R8[Incident Commander / Super Admin]
-    end
-
-    T0 --> T1
-    T1 --> T2
-    T2 --> T3
-    T2 --> T4
-    T3 --> T4
-```
+* **Who is in this role:** 
+  * **`BoardQuest_Teacher`** (for students and exam questions)
+  * **`BoardQuest_ReviewCenter`** (for review center students and schedules)
+* **What they do:**
+  * Answer everyday questions from students.
+  * Check if the student made a simple mistake or needs study help.
+  * Collect details about the issue (take screenshots, note the question number).
+* **When to pass the issue up (Escalation Trigger):**
+  * The question has a wrong answer or an error in the explanation.
+  * The app is giving error messages or freezing.
+  * The teacher cannot solve the problem within 15 to 30 minutes.
+* **How fast they reply and fix it:**
+  * **Reply time:** Within 15 minutes for urgent problems; within 2 hours for normal questions.
+  * **Fix time:** Within 1 to 4 hours.
+* **How people communicate:**
+  * In-app "Report Issue" button.
+  * Support ticket desk.
+  * School email (`support@boardquest.edu`).
 
 ---
 
-### Tier 0: Self-Service & Automated Remediation
+### Level 2: Team Lead & System Admin
+*Experienced staff who can fix content or adjust app settings.*
 
-| Parameter | Specification |
-| :--- | :--- |
-| **Primary Actor / Mechanism** | Automated In-App Systems, Self-Service Portal, Help Center Knowledge Base |
-| **Target User Group** | `BoardQuest_Student`, `BoardQuest_Teacher`, `BoardQuest_ReviewCenter` |
-| **Scope & Capabilities** | Automated password resets, session refresh, browser caching guidance, searchable question rationales, live system health check dashboard (`/healthz`). |
-| **What Warrants Escalation to Tier 1** | Self-help fails to resolve the blocker; account locked out after automated retries; client-side rendering exception persistent across refresh; exam submission transaction errors. |
-| **Target Response / Resolution Time** | Immediate (Automated / < 1 minute) |
-| **Communication Channels** | In-App Help Tooltips, Public Status Page, Automated System Toast Notifications |
+This level is split into two paths depending on the problem:
 
----
+#### Level 2A: Subject Team Lead (For Question & Subject Issues)
+* **Who is in this role:** **`BoardQuest_TeamLead`** (Subject Department Head)
+* **What they do:**
+  * Check disputed exam questions.
+  * Fix wrong answer keys or remove bad questions from the active question bank.
+* **When to pass the issue up (Escalate to Level 4 - Dean):**
+  * The wrong question affected an entire mock board exam and students want their scores re-graded.
+* **How fast they reply and fix it:**
+  * **Reply time:** Within 20 minutes for live exam questions; within 2 hours for regular questions.
+  * **Fix time:** Within 2 to 6 hours.
+* **How people communicate:**
+  * Teacher review queue inside BoardQuest.
+  * Team chat (Slack / Discord / Teams).
+  * Email.
 
-### Tier 1: Frontline Triage & First-Contact Support
-
-| Parameter | Specification |
-| :--- | :--- |
-| **Role Alignment** | **`BoardQuest_Teacher`** (for Academic/Student inquiries)<br/>**`BoardQuest_ReviewCenter Representative`** (for Reviewee candidate roster/schedule inquiries) |
-| **Scope & Capabilities** | First point of human contact. Validates report completeness (screenshots, question ID, exam batch ID); verifies student identity; solves navigational, syllabus clarity, and routine usage issues; classifies incident category and urgency. |
-| **What Warrants Escalation to Tier 2** | <ul><li>**Academic / Question Defect:** Student flags a flawed answer key, disputed clinical rationale, or ambiguous distractor that requires subject-matter consensus.</li><li>**Application / Functional Glitch:** Student cannot submit quiz due to persistent API error, quest XP/streak is not crediting, or UI components fail to load.</li><li>**Access / Enrollment Failure:** Teacher or Review Center coordinator cannot enroll batches or assign guidance modules due to permission mismatches.</li><li>**First-Contact SLA Breach:** Issue remains unresolved after **15 minutes** (P1) or **2 hours** (P3).</li></ul> |
-| **Expected Response Time** | <ul><li>**P1 / Urgent:** ≤ 15 minutes</li><li>**P2 / High:** ≤ 30 minutes</li><li>**P3 / Medium:** ≤ 2 hours</li><li>**P4 / Low:** ≤ 8 hours</li></ul> |
-| **Expected Resolution Time** | <ul><li>**P1 / Urgent:** ≤ 1 hour (or immediate functional handoff)</li><li>**P2 / High:** ≤ 4 hours</li><li>**P3 / Medium:** ≤ 12 hours</li><li>**P4 / Low:** ≤ 24 hours</li></ul> |
-| **Communication Channels** | <ul><li>**Primary:** In-App Feedback & Support Ticket Desk, Student Help Modal</li><li>**Secondary:** Official Institutional Email (`support@boardquest.edu`)</li><li>**Tracking:** Support Ticket Registry with auto-assigned Ticket ID</li></ul> |
-
----
-
-### Tier 2: Functional, Content & Operational Escalation
-
-Tier 2 splits functionally into two specialized domains based on the root cause determined at Tier 1:
-
-#### Tier 2A: Academic Domain & Content Gatekeeping
-
-| Parameter | Specification |
-| :--- | :--- |
-| **Role Alignment** | **`BoardQuest_TeamLead`** (Subject Team Lead / Department Head) |
-| **Scope & Capabilities** | Content gatekeeper for specific medical technology verticals (Clinical Chemistry, Microbiology, Hematology, etc.). Has full authority to review, revise, unpublish, or replace defective question items in the live question bank without software deployments. |
-| **What Warrants Escalation to Tier 2A** | <ul><li>Reported clinical inaccuracy or wrong answer key in published questions.</li><li>Item difficulty anomaly (e.g., 0% passing on a valid question).</li><li>Missing syllabus coverage or module content inaccuracies.</li></ul> |
-| **What Warrants Escalation to Tier 4 (Dean)** | Departmental grade contestations, unresolvable curriculum disputes between instructors, or systemic failure to meet licensure exam syllabus benchmarks. |
-| **Expected Response Time** | <ul><li>**P1 (Active Exam Item Defect):** ≤ 20 minutes</li><li>**P2 (High / Upcoming Mock Board):** ≤ 2 hours</li><li>**P3 / P4 (General Question Revision):** ≤ 8 hours</li></ul> |
-| **Expected Resolution Time** | <ul><li>**P1:** ≤ 2 hours (immediate question quarantine/override)</li><li>**P2:** ≤ 8 hours</li><li>**P3 / P4:** ≤ 24–48 hours</li></ul> |
-| **Communication Channels** | <ul><li>**Internal Ticketing:** Jira Service Desk / GitHub Project Board (Content Vertical)</li><li>**Collaboration:** Dedicated Team Lead Content Chat (Teams/Discord/Slack #content-review)</li><li>**Email:** Departmental faculty mailing lists</li></ul> |
-
-#### Tier 2B: Application & Platform Administration
-
-| Parameter | Specification |
-| :--- | :--- |
-| **Role Alignment** | **System Admin / Application Support Specialist** (Operating under delegation from `BoardQuest_SuperAdmin`) |
-| **Scope & Capabilities** | User account role modifications, clearing persistent cached sessions, inspecting client error payloads, checking server logs via application logging dashboards, validating database record states via Admin portal tools. |
-| **What Warrants Escalation to Tier 3** | <ul><li>Application returns 500 Internal Server Errors reproducible across multiple tenants.</li><li>Database connection pool exhaustion, latency spikes (>2000ms), or database write deadlocks.</li><li>Security alert triggered (unauthorized API access, suspicious token generation).</li><li>Software bug requiring schema migration, code refactoring, or new container build.</li><li>Tier 2 resolution timer exceeds **50% of SLA limit**.</li></ul> |
-| **Expected Response Time** | <ul><li>**P1:** ≤ 15 minutes</li><li>**P2:** ≤ 45 minutes</li><li>**P3:** ≤ 2 hours</li><li>**P4:** ≤ 6 hours</li></ul> |
-| **Expected Resolution Time** | <ul><li>**P1:** ≤ 2 hours (or immediate Tier 3 handoff)</li><li>**P2:** ≤ 6 hours</li><li>**P3:** ≤ 16 hours</li><li>**P4:** ≤ 36 hours</li></ul> |
-| **Communication Channels** | <ul><li>**Ticketing:** Internal Engineering Ticketing System (Linear / Jira)</li><li>**Operations Chat:** `#admin-ops-support` channel</li><li>**Direct Notification:** In-app SuperAdmin Notification Bar</li></ul> |
+#### Level 2B: System Admin (For Account & App Glitches)
+* **Who is in this role:** System Administrator (assisting **`BoardQuest_SuperAdmin`**)
+* **What they do:**
+  * Fix locked user accounts.
+  * Reset passwords and permissions.
+  * Check error logs when a button or page doesn't load.
+* **When to pass the issue up (Escalate to Level 3 - Super Admin):**
+  * The server is down or giving "500 Error" messages to many users.
+  * The database is locked or not saving student answers.
+  * The issue requires rewriting code.
+* **How fast they reply and fix it:**
+  * **Reply time:** Within 15 minutes for urgent bugs; within 1 hour for normal bugs.
+  * **Fix time:** Within 2 to 6 hours.
+  * **How people communicate:**
+  * Internal support tickets.
+  * Admin team chat channel.
 
 ---
 
-### Tier 3: Core Engineering, Infrastructure & Root-Cause Resolution
+### Level 3: Super Admin & Technical Lead
+*Deep technical fixes for servers, code, and databases.*
 
-| Parameter | Specification |
-| :--- | :--- |
-| **Role Alignment** | **`BoardQuest_SuperAdmin`** (Technical Owner & DevOps Lead) |
-| **Scope & Capabilities** | Total authority over the entire technical stack: source code repository, CI/CD deployment pipelines (Turbo/GitHub Actions), Render hosting, Docker containers, Prisma ORM schema, PostgreSQL database instances, and environment secrets. |
-| **What Warrants Escalation to Tier 3** | <ul><li>Production crash, server unresponsiveness, or network partition.</li><li>Data corruption, broken database migrations, or missing backups.</li><li>Critical regression introduced by a recent release.</li><li>External cloud infrastructure outages requiring failover or vendor support ticket creation (Render, Supabase, Cloudflare).</li></ul> |
-| **Expected Response Time** | <ul><li>**P1 / Critical:** ≤ 15 minutes (24/7 on-call)</li><li>**P2 / High:** ≤ 30 minutes</li><li>**P3 / Medium:** ≤ 4 hours</li><li>**P4 / Low:** ≤ 12 hours</li></ul> |
-| **Expected Resolution Time** | <ul><li>**P1 / Critical:** ≤ 4 hours (hotfix deploy, rollback, or failover)</li><li>**P2 / High:** ≤ 12 hours</li><li>**P3 / Medium:** ≤ 48 hours</li><li>**P4 / Low:** Planned in next sprint release</li></ul> |
-| **Communication Channels** | <ul><li>**Emergency:** PagerDuty / Opsgenie automated on-call paging, direct emergency mobile call tree</li><li>**Incident Command:** Dedicated War Room (`#war-room-incident-prod`)</li><li>**Codebase:** GitHub PR review queue with emergency hotfix bypass protocols</li></ul> |
-
----
-
-### Tier 4: Executive & Institutional Governance
-
-| Parameter | Specification |
-| :--- | :--- |
-| **Role Alignment** | **`BoardQuest_Dean`** (Academic Administrator) & **`BoardQuest_SuperAdmin`** (Incident Commander) |
-| **Scope & Capabilities** | Institutional policy authority, legal and academic regulatory compliance (CHED / PRC), emergency exam schedule postponement, cohort-wide score recalibration sign-off, public incident disclosures, and contractual escalations with external Review Centers. |
-| **What Warrants Escalation to Tier 4** | <ul><li>**Major Incident (P1) Active:** Complete platform downtime lasting > 1 hour during scheduled institutional mock board exams.</li><li>**Academic Integrity Compromise:** Suspected leak of question bank items, unauthorized batch score alteration, or mass cheating exploit.</li><li>**Data Breach:** Exposure of student personal identification or review center proprietary records.</li><li>**Institutional Dispute:** Contractual conflict or formal grievance raised by external `BoardQuest_ReviewCenter` leadership.</li></ul> |
-| **Expected Response Time** | <ul><li>**P1 / Emergency:** ≤ 30 minutes</li><li>**P2 / Institutional Concern:** ≤ 2 hours</li><li>**P3 / Standard Review:** ≤ 24 hours</li></ul> |
-| **Expected Resolution Time** | Defined by Executive Incident Directive (Academic adjustments made within 24 hours of technical recovery). |
-| **Communication Channels** | <ul><li>**Direct:** Executive Phone Call / SMS, High-Priority Encrypted Email</li><li>**Executive Briefing:** Formal Incident Status Memorandum & Emergency Board Meeting</li></ul> |
+* **Who is in this role:** **`BoardQuest_SuperAdmin`** (Technical Stack Owner)
+* **What they do:**
+  * Fix website code bugs.
+  * Restart and repair crashed servers.
+  * Restore backups if data is corrupted.
+  * Contact hosting and cloud providers if the internet host has an outage.
+* **When to pass the issue up (Escalate to Level 4 - Dean):**
+  * The entire website is down during a scheduled exam.
+  * Data was lost or an exam cannot be finished on time.
+* **How fast they reply and fix it:**
+  * **Reply time:** Within 15 minutes for major crashes; within 2 hours for normal bugs.
+  * **Fix time:** Within 2 to 4 hours for major crashes; within 24 hours for normal bugs.
+* **How people communicate:**
+  * Emergency phone call / SMS.
+  * Urgent alert on team chat (`#war-room`).
+  * Bug tracking tickets (GitHub / Jira).
 
 ---
 
-## 4. Incident Priority & SLA/OLA Resolution Matrix
+### Level 4: Dean & Management
+*Final authority for major decisions and emergencies.*
 
-The priority of an incident is calculated using a standard ITIL **Impact × Urgency** matrix. The targets below represent binding Operational Level Agreements (OLAs) between support tiers.
-
-### Priority Determination Matrix
-
-```mermaid
-quadrantChart
-    title Incident Priority Matrix (Impact vs Urgency)
-    x-axis Low Urgency --> High Urgency
-    y-axis Low Impact --> High Impact
-    quadrant-1 P1 - Critical / Major Incident
-    quadrant-2 P2 - High Priority
-    quadrant-3 P4 - Low / Inquiry
-    quadrant-4 P3 - Medium Priority
-    "Complete Exam Outage": [0.95, 0.95]
-    "Corrupted Live Answer Key": [0.85, 0.8]
-    "Question Bank Submission Failure": [0.4, 0.75]
-    "Student Leaderboard Sync Delay": [0.75, 0.35]
-    "Avatar Cosmetic Glitch": [0.2, 0.2]
-```
-
-### Comprehensive SLA & Escalation Threshold Targets
-
-| Priority Level | Classification Criteria | Responsible Roles (from #2) | Max T1 Initial Response | Max Escalation Trigger Time (T1 → T2) | Max Escalation Trigger Time (T2 → T3) | Target Service Resolution (SLA) | Status Update Cadence |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **P1 — Critical (Blocker)** | Complete platform outage, database failure, or critical glitch preventing an entire cohort from completing a scheduled mock board exam. | `SuperAdmin` (Command)<br/>`Dean` (Informed)<br/>`ReviewCenter` (Affected) | **≤ 15 mins** | **≤ 15 mins** | **Immediate (≤ 15 mins)** | **≤ 4 Hours** | Every 30 minutes |
-| **P2 — High (Degraded)** | Core feature unavailable without workaround (e.g., question bank submission queue blocked, automated grading service timing out, review center cannot export results). | `SuperAdmin` (Engineering)<br/>`TeamLead` (Content)<br/>`Dean` (Informed) | **≤ 30 mins** | **≤ 45 mins** | **≤ 2 Hours** | **≤ 8 Hours** | Every 2 hours |
-| **P3 — Medium (Normal)** | System functional with workaround available (e.g., isolated question rationale typo, student streak count discrepancy, non-critical filter failure in admin tables). | `Teacher` (Triage)<br/>`TeamLead` (Review)<br/>`SuperAdmin` (Backlog) | **≤ 2 Hours** | **≤ 4 Hours** | **≤ 12 Hours** | **≤ 24 Hours** | Every 12 hours |
-| **P4 — Low (Inquiry / Minor)** | Cosmetic UI issue, general how-to inquiry, minor enhancement suggestion, non-urgent profile avatar adjustment. | `Teacher`<br/>Help Desk Staff | **≤ 8 Hours** | **≤ 24 Hours** | N/A (Sprint Backlog) | **≤ 5 Business Days** | At status change |
+* **Who is in this role:** **`BoardQuest_Dean`** (Academic Head) and **`BoardQuest_SuperAdmin`**
+* **What they do:**
+  * Decide whether to reschedule or pause an exam.
+  * Authorize score adjustments or retakes for students.
+  * Send official announcements to students, teachers, and review centers.
+* **When it reaches this level:**
+  * Total platform outage during an exam.
+  * Large cheating or data privacy concern.
+  * Official dispute between a review center and the school.
+* **How fast they reply and fix it:**
+  * **Reply time:** Within 30 minutes for emergencies.
+  * **Fix time:** Same-day emergency decisions.
+* **How people communicate:**
+  * Direct phone call.
+  * Emergency video meeting.
+  * Official school email memo.
 
 ---
 
-## 5. Communication Channels by Tier & Role
+## 3. How Fast Issues Are Handled (SLA Targets)
 
-To eliminate miscommunication and guarantee auditability, each tier operates across defined official communication channels mapped directly to the roles in [roles_and_responsibilities.md](file:///d:/Code/capstone/roles_and_responsibilities.md).
+Problems are grouped by how urgent and serious they are:
 
-```mermaid
-flowchart LR
-    subgraph Channels ["Incident Communication Ecosystem"]
-        direction TB
-        C1["In-App Support Widget & Toast"]
-        C2["Central Support Ticketing Desk"]
-        C3["Official Email (support@boardquest.edu)"]
-        C4["Ops Collaboration Channels (Slack/Discord)"]
-        C5["PagerDuty / Automated Call Tree"]
-        C6["Public System Status Page"]
-    end
-
-    subgraph Roles ["Assigned Role Stakeholders"]
-        direction TB
-        R_ST["BoardQuest_Student"]
-        R_TC["BoardQuest_Teacher"]
-        R_TL["BoardQuest_TeamLead"]
-        R_RC["BoardQuest_ReviewCenter"]
-        R_SA["BoardQuest_SuperAdmin"]
-        R_DN["BoardQuest_Dean"]
-    end
-
-    R_ST <--> C1
-    R_ST <--> C2
-    R_TC <--> C2
-    R_TC <--> C3
-    R_RC <--> C2
-    R_RC <--> C3
-    R_TL <--> C4
-    R_SA <--> C4
-    R_SA <--> C5
-    R_DN <--> C3
-    R_DN <--> C5
-    C6 -.-> R_ST
-    C6 -.-> R_RC
-```
-
-### Channel Matrix by Support Tier
-
-| Tier | Primary Communication Channel | Secondary / Fallback Channel | Tooling & Integration | Associated Roles |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tier 0** | In-App Help Modals & Banner Alerts | Public System Status Page (`status.boardquest.edu`) | Embedded Tooltips, UptimeRobot, Vercel/Render Status Webhooks | `BoardQuest_Student` |
-| **Tier 1** | Support Ticketing Portal (`help.boardquest.edu`) | Official Email (`support@boardquest.edu`) | Linear Service Desk, Zendesk, or GitHub Issues (Triage Board) | `BoardQuest_Student`<br/>`BoardQuest_Teacher`<br/>`BoardQuest_ReviewCenter` |
-| **Tier 2A** | Departmental Review Queue & Content Channel | Academic Email & Bi-weekly Content Sync | In-app Question Review Queue, `#content-review` Chat | `BoardQuest_Teacher`<br/>`BoardQuest_TeamLead` |
-| **Tier 2B** | Admin Operations Channel (`#admin-ops-support`) | Direct Ticket Escalation Tag (`@sysadmin`) | Linear / Jira Service Desk, Slack / Discord Webhooks | `BoardQuest_TeamLead`<br/>`BoardQuest_SuperAdmin` |
-| **Tier 3** | Engineering War Room (`#war-room-incident-prod`) | Automated On-Call Escalation (SMS / Pager) | PagerDuty, Opsgenie, GitHub PR Review Queue | `BoardQuest_SuperAdmin`<br/>External Cloud Vendors |
-| **Tier 4** | High-Priority Executive Call Tree / SMS | Formal Academic Memorandum & Video Briefing | Encrypted Direct Line, Google Meet Incident Command | `BoardQuest_SuperAdmin`<br/>`BoardQuest_Dean` |
+| Urgency Level | What it means | Example | Who handles it | Reply Target | Fix Target |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Emergency (Critical)** | The whole system is down or students cannot take/submit an exam. | The website won't load during a live mock board exam. | `SuperAdmin` & `Dean` | **15 minutes** | **4 hours or less** |
+| **High** | An important feature is broken, but the rest of the site works. | Teachers cannot upload questions; grading is stuck. | `TeamLead` & `SuperAdmin` | **30 minutes** | **8 hours** |
+| **Medium** | Normal problem, and users have a way to work around it. | Typo in an explanation; a student badge is missing. | `Teacher` & System Admin | **2 hours** | **24 hours** |
+| **Low** | Minor inquiry or visual suggestion. | Small button alignment issue; question about how points work. | `Teacher` / Help Desk | **8 hours** | **3 to 5 days** |
 
 ---
 
-## 6. Functional Escalation Protocols
+## 4. Communication Channels Summary
 
-### 6.1 Academic & Curriculum Defect Escalation Flow
+Here is a quick summary of how each person reaches help:
 
-When a problem pertains to academic content, examination integrity, or question bank authoring:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Student as BoardQuest_Student
-    actor Teacher as BoardQuest_Teacher
-    actor TeamLead as BoardQuest_TeamLead
-    actor Dean as BoardQuest_Dean
-
-    Student->>Teacher: Reports invalid question / erroneous key via in-app report
-    Note over Teacher: Validates report against clinical references (≤ 30 mins)
-    alt Simple Question Authoring Error
-        Teacher->>Teacher: Submits corrected item & rationale into review queue
-    else Disputed Item / Active Mock Exam Item
-        Teacher->>TeamLead: Functional Escalation (Tier 2A) via Content Desk
-        Note over TeamLead: Authorizes immediate question unpublish / key override
-        TeamLead->>Student: Updates ticket with revised score / explanation
-    end
-    opt Cohort-wide Grade Dispute / Curriculum Conflict
-        TeamLead->>Dean: Hierarchical Escalation (Tier 4)
-        Note over Dean: Authorizes institutional exam curve / score re-evaluation
-        Dean-->>Student: Official academic memorandum issued
-    end
-```
-
-1. **Step 1 (Submission):** Student flags question item using the in-exam "Report Issue" button, providing rationale and observed contradiction.
-2. **Step 2 (Tier 1 Validation):** Assigned `BoardQuest_Teacher` verifies clinical rationale against reference textbooks within 30 minutes.
-3. **Step 3 (Tier 2A Escalation):** If item is live or requires editorial override, it is escalated to `BoardQuest_TeamLead`. The Team Lead uses Question Bank Studio permissions to unpublish the defective item or apply an immediate scoring key correction.
-4. **Step 4 (Tier 4 Escalation, if needed):** If the defect compromised a high-stakes mock board exam impacting graduation eligibility or batch rankings, the Team Lead escalates to `BoardQuest_Dean` for academic score adjustments or re-take authorization.
-
----
-
-### 6.2 Technical & Infrastructure Defect Escalation Flow
-
-When an incident involves software bugs, infrastructure outages, or database anomalies:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Affected User (Student / Teacher / RC)
-    actor SysAdmin as Tier 2 Application Support
-    actor SuperAdmin as BoardQuest_SuperAdmin (Tier 3)
-    actor Vendor as Cloud Provider (Render / Supabase)
-
-    User->>SysAdmin: Submits ticket: 500 error on exam submission
-    Note over SysAdmin: Triage logs, validates DB connection (≤ 15 mins)
-    alt Known Configuration / Session Issue
-        SysAdmin->>SysAdmin: Clears user session / resets client state
-        SysAdmin-->>User: Issue resolved
-    else Systemic Crash / Database Deadlock
-        SysAdmin->>SuperAdmin: Functional Escalation (Tier 3) via #war-room
-        Note over SuperAdmin: Analyzes Prisma logs & DB transaction pool
-        alt Cloud Platform Outage
-            SuperAdmin->>Vendor: Dispatches emergency vendor support ticket
-            Vendor-->>SuperAdmin: Node migrated / failover restored
-        else Codebase Defect
-            SuperAdmin->>SuperAdmin: Builds hotfix, runs migrations & deploys to Prod
-        end
-        SuperAdmin-->>SysAdmin: Verifies deployment in UAT/Prod
-        SysAdmin-->>User: Notifies of service restoration
-    end
-```
-
-1. **Step 1 (Ingestion):** User report generates a high-severity ticket in the central service desk.
-2. **Step 2 (Tier 2 Triage):** Application administrator assesses API health metrics, error status codes, and user permissions.
-3. **Step 3 (Tier 3 Escalation):** If reproducible in server logs as an unhandled exception, deadlocked transaction, or infrastructure degradation, the ticket is assigned directly to `BoardQuest_SuperAdmin`.
-4. **Step 4 (Hotfix & Deployment):** Super Admin coordinates code or database mitigation, commits hotfix branch, executes CI/CD validation, and deploys directly to Production pursuant to Section 1 approval authorities.
-
----
-
-## 7. Hierarchical Escalation & Major Incident Management (MIM)
-
-### 7.1 Major Incident (P1) Declaration Triggers
-A Major Incident is immediately declared if any of the following triggers occur:
-- Platform-wide downtime exceeding **10 consecutive minutes**.
-- More than **15% of active concurrent examinees** unable to load questions or submit mock board exams.
-- Database write failure or transaction rollback loop affecting candidate exam records.
-- Confirmed security breach, compromised administrative credentials, or data exfiltration.
-
-### 7.2 Major Incident Team Structure & Responsibilities
-
-```mermaid
-flowchart TD
-    subgraph IncidentCommand ["Major Incident War Room Command"]
-        IC["Incident Commander<br/>(BoardQuest_SuperAdmin)"]
-        LeadTech["Technical Lead / DevOps<br/>(Super Admin Team)"]
-        AcademicRep["Academic & Institutional Lead<br/>(BoardQuest_Dean)"]
-        CommsLead["Communications Lead<br/>(Student / Review Center Liaison)"]
-    end
-
-    IC --- LeadTech
-    IC --- AcademicRep
-    IC --- CommsLead
-
-    LeadTech --> Diagnostics["Diagnose Root Cause, Rollback Deployments, Failover DB"]
-    AcademicRep --> Policy["Evaluate Exam Postponement, Retake Guidelines, CHED Notice"]
-    CommsLead --> Broadcast["Post Status Page Alerts, Send Student/Partner SMS & Email"]
-```
-
-- **Incident Commander (`BoardQuest_SuperAdmin`):** Holds sole authority over technical remediation, infrastructure cutover, database recovery, and vendor escalation.
-- **Academic Authority (`BoardQuest_Dean`):** Decides whether scheduled exams must be paused, extended, or rescheduled; issues formal institutional advisories to faculty and external review centers.
-- **Communications Lead:** Maintains real-time updates on the public status page every 30 minutes until full operational recovery is declared.
-
----
-
-## 8. Incident Resolution, Post-Incident Review (PIR) & Continual Improvement
-
-An incident is not officially closed upon technical recovery. In compliance with ITIL Continual Service Improvement (CSI):
-
-```mermaid
-flowchart LR
-    A["Incident Resolved & Verified"] --> B["User Confirmation / Ticket Closure"]
-    B --> C{"Severity Level"}
-    C -- "P1 / P2" --> D["Draft Post-Incident Review (PIR)<br/>within 48 Hours"]
-    C -- "P3 / P4" --> E["Log to Sprint Backlog / KB Update"]
-    D --> F["Root Cause Analysis (RCA)<br/>5 Whys Methodology"]
-    F --> G["Preventive Action Items Assigned<br/>in Issue Tracker"]
-    G --> H["Institutional Archive & Dean Sign-off"]
-```
-
-1. **Resolution Verification:** The resolving tier must verify recovery using automated health checks, test submissions, and explicit confirmation from the affected user.
-2. **Post-Incident Review (PIR):** For all P1 and P2 incidents, `BoardQuest_SuperAdmin` must publish a formal PIR document within **48 hours**, covering:
-   - Chronological timeline of events and detection triggers.
-   - Root Cause Analysis (RCA) utilizing the *5 Whys* methodology.
-   - Preventive actions, architectural enhancements, or automated alert thresholds added.
-3. **Dean & Stakeholder Briefing:** `BoardQuest_Dean` reviews and signs off on the final PIR to ensure institutional and regulatory reporting obligations are fulfilled.
-4. **Knowledge Base Enrichment:** Any newly discovered operational workaround or remediation procedure must be converted into a Tier 0/Tier 1 Knowledge Base article within **3 business days**.
-
----
-
-## 9. Document Control & Cross-Reference
-
-| Document Attribute | Details |
-| :--- | :--- |
-| **Document Title** | BoardQuest ITIL Artifact — Escalation Path Documentation |
-| **Framework Version** | ITIL v4 Service Operation & Incident Management Standard |
-| **Governing RACI Document** | [roles_and_responsibilities.md](file:///d:/Code/capstone/roles_and_responsibilities.md) |
-| **Primary Authors / Owners** | Technical Administration (`BoardQuest_SuperAdmin`) & Academic Governance (`BoardQuest_Dean`) |
-| **Review Cadence** | Semi-annually or immediately following any P1 Major Incident |
-| **Effective Date** | Academic Year 2025–2026 |
+| Role (from #2) | How they report a problem | Who receives it | Tool used |
+| :--- | :--- | :--- | :--- |
+| **`BoardQuest_Student`** | Clicks "Report Issue" or uses Help Desk | `BoardQuest_Teacher` | In-app Help button, ticket system |
+| **`BoardQuest_Teacher`** | Reports broken question or app bug | `BoardQuest_TeamLead` or System Admin | Review Queue, team chat, ticket system |
+| **`BoardQuest_ReviewCenter`** | Reports roster or exam schedule issue | `BoardQuest_Dean` or System Admin | Email, support ticket desk |
+| **`BoardQuest_TeamLead`** | Passes up hard code bugs or major score disputes | `BoardQuest_SuperAdmin` or `BoardQuest_Dean` | Team chat, internal ticket |
+| **`BoardQuest_SuperAdmin`** | Alerts school leadership during a crash | `BoardQuest_Dean` | Direct phone call, emergency chat |
+| **`BoardQuest_Dean`** | Sends official updates to everyone | All Students, Teachers & Review Centers | Official school memo, website announcement |
