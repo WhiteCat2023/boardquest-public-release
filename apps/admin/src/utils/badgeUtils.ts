@@ -142,6 +142,128 @@ export function getTierColors(colorStr?: string) {
   };
 }
 
+export const BOARDQUESTERS_BADGE_DEFAULTS: Record<
+  string,
+  {
+    name: string;
+    title: string;
+    category: string;
+    icon: string;
+    color: string;
+    spriteUrl?: string;
+    description: string;
+    xpReward: number;
+    unlockCondition?: string;
+  }
+> = {
+  master: {
+    name: "Master Badge",
+    title: "Master Badge",
+    category: "PERFORMANCE",
+    icon: "trophy",
+    color: "#ffd700",
+    spriteUrl: "/ui/master-badge.png",
+    description: "Achieved 100% accuracy on a quest.",
+    xpReward: 250,
+    unlockCondition: "Score 100% accuracy in a quest",
+  },
+  gold: {
+    name: "Gold Badge",
+    title: "Gold Badge",
+    category: "PERFORMANCE",
+    icon: "trophy",
+    color: "#ffd700",
+    spriteUrl: "/ui/gold-badge.png",
+    description: "Achieved 80–99% accuracy on a quest.",
+    xpReward: 150,
+    unlockCondition: "Score 80-99% accuracy in a quest",
+  },
+  silver: {
+    name: "Silver Badge",
+    title: "Silver Badge",
+    category: "PERFORMANCE",
+    icon: "medal",
+    color: "#c0c0c0",
+    spriteUrl: "/ui/silver-badge.png",
+    description: "Achieved 60–79% accuracy on a quest.",
+    xpReward: 100,
+    unlockCondition: "Score 60-79% accuracy in a quest",
+  },
+  bronze: {
+    name: "Bronze Badge",
+    title: "Bronze Badge",
+    category: "PERFORMANCE",
+    icon: "award",
+    color: "#cd7f32",
+    spriteUrl: "/ui/bronze-badge.png",
+    description: "Achieved 40–59% accuracy on a quest.",
+    xpReward: 50,
+    unlockCondition: "Score 40-59% accuracy in a quest",
+  },
+  adept: {
+    name: "Adept Learner",
+    title: "Adept Learner",
+    category: "STREAK",
+    icon: "star",
+    color: "#ff5722",
+    spriteUrl: "/ui/adept-badge.png",
+    description: "Maintained a 7-day study streak in the game.",
+    xpReward: 150,
+    unlockCondition: "7-day study streak",
+  },
+  speed: {
+    name: "Speedmaster",
+    title: "Speedmaster",
+    category: "SPEED",
+    icon: "zap",
+    color: "#00e5ff",
+    spriteUrl: "/ui/speedmaster-badge.png",
+    description: "Completed a quest in under 2 minutes with passing accuracy.",
+    xpReward: 75,
+    unlockCondition: "Quest completed in < 2 minutes",
+  },
+  "streak-7": {
+    name: "7-Day Streak",
+    title: "7-Day Streak",
+    category: "STREAK",
+    icon: "flame",
+    color: "#ff5722",
+    description: "7 consecutive daily logins.",
+    xpReward: 100,
+    unlockCondition: "7 consecutive logins",
+  },
+  "streak-14": {
+    name: "14-Day Streak",
+    title: "14-Day Streak",
+    category: "STREAK",
+    icon: "flame",
+    color: "#ff5722",
+    description: "14 consecutive daily logins.",
+    xpReward: 250,
+    unlockCondition: "14 consecutive logins",
+  },
+  "streak-30": {
+    name: "30-Day Streak",
+    title: "30-Day Streak",
+    category: "STREAK",
+    icon: "crown",
+    color: "#ffd700",
+    description: "30 consecutive daily logins.",
+    xpReward: 500,
+    unlockCondition: "30 consecutive logins",
+  },
+  "boss-slayer": {
+    name: "Boss Slayer",
+    title: "Boss Slayer",
+    category: "SPECIAL",
+    icon: "swords",
+    color: "#9c27b0",
+    description: "Defeated an epic chapter boss quiz.",
+    xpReward: 300,
+    unlockCondition: "Defeat a chapter boss",
+  },
+};
+
 /**
  * Maps student active earned badges (filtered on the backend) into UI StudentBadge objects.
  */
@@ -158,21 +280,46 @@ export function getStudentEarnedBadges(
   // If userBadges are present (populated from backend with active badges), map each achieved badge
   if (userBadges.length > 0) {
     return userBadges.map((ub: any) => {
-      const rawBadge = ub.badge || {};
+      let rawBadge = ub.badge || {};
+      const slug = (ub.badgeSlug || rawBadge.badgeId || "").toLowerCase();
+
+      // If ub.badge is missing or lacks basic info, attempt resolution against dbBadges
+      if ((!rawBadge || !rawBadge.name) && dbBadges && dbBadges.length > 0) {
+        const found = dbBadges.find(
+          (b) =>
+            (b.badgeId && b.badgeId.toLowerCase() === slug) ||
+            (b.id && b.id === ub.badgeId)
+        );
+        if (found) {
+          rawBadge = found;
+        }
+      }
+
+      // Fallback preset if available
+      const fallbackPreset = BOARDQUESTERS_BADGE_DEFAULTS[slug];
       const badgeId = ub.badgeSlug || rawBadge.badgeId || ub.badgeId || "badge";
-      const title = rawBadge.title || rawBadge.name || ub.badgeSlug || "Badge";
-      const tierStyling = getTierColors(rawBadge.color);
+      const title = rawBadge.title || rawBadge.name || fallbackPreset?.name || ub.badgeSlug || "Badge";
+      const color = rawBadge.color || fallbackPreset?.color || "#ffd700";
+      const tierStyling = getTierColors(color);
+      const iconKey = rawBadge.icon || rawBadge.iconName || fallbackPreset?.icon || "trophy";
+      const spriteUrl = rawBadge.spriteUrl || rawBadge.imageUrl || fallbackPreset?.spriteUrl || null;
+      const description =
+        rawBadge.description ||
+        rawBadge.unlockCondition ||
+        fallbackPreset?.description ||
+        "Earned evaluation badge";
+      const category = rawBadge.category || fallbackPreset?.category || "QUEST";
+      const xpReward = ub.xpEarned || rawBadge.xpReward || fallbackPreset?.xpReward || 50;
 
       return {
         id: ub.id || ub.badgeId,
         badgeId,
         title,
         name: rawBadge.name || title,
-        description:
-          rawBadge.description || rawBadge.unlockCondition || "Earned evaluation badge",
-        category: rawBadge.category || "QUEST",
-        icon: resolveBadgeIcon(rawBadge.icon || rawBadge.iconName || "trophy"),
-        spriteUrl: rawBadge.spriteUrl || rawBadge.imageUrl || null,
+        description,
+        category,
+        icon: resolveBadgeIcon(iconKey),
+        spriteUrl,
         color: tierStyling.color,
         bgColor: tierStyling.bgColor,
         borderColor: tierStyling.borderColor,
@@ -180,8 +327,8 @@ export function getStudentEarnedBadges(
         unlockedAt: ub.unlockedAt,
         accuracy: ub.accuracy,
         confidenceLevel: ub.confidenceLevel,
-        xpReward: ub.xpEarned || rawBadge.xpReward || 50,
-        unlockCondition: rawBadge.unlockCondition,
+        xpReward,
+        unlockCondition: rawBadge.unlockCondition || fallbackPreset?.unlockCondition,
         isActive: true,
       };
     });

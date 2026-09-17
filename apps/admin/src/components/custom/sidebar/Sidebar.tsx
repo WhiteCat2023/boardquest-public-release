@@ -1,13 +1,14 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { NavItemProps, NavContentProps } from "@/types/sidebarMenuItems";
-import { useState, useEffect } from "react";
 import useAuth from "@/hooks/useAuth";
 import boardQuestIcon from "@/assets/baordquest-no-title.png";
 import {
   Sidebar as UISidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -17,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { NavUser } from "./nav-user";
 
 type LucideIconName = keyof typeof LucideIcons;
 
@@ -77,7 +79,8 @@ function SidebarItem({
     const isActive =
       location.pathname === content.path ||
       (content.path === "/question-bank/my-questions" &&
-        (location.pathname === "/question-bank" || location.pathname === "/question-bank/"));
+        (location.pathname === "/question-bank" ||
+          location.pathname === "/question-bank/"));
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
@@ -163,10 +166,15 @@ function SidebarItem({
   );
 }
 
-function Sidebar({ navItem }: SidebarContentProps) {
+function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
   const location = useLocation();
-  const { auth } = useAuth();
-  const currentUserRole = auth?.data?.user?.role || auth?.user?.role;
+  const { auth, logout: authLogout } = useAuth();
+  const logout = logoutProp || authLogout;
+
+  const user = auth?.data?.user || auth?.user;
+  const userName = user?.name || "Admin User";
+  const userEmail = user?.email || "admin@boardquest.edu.ph";
+  const currentUserRole = user?.role;
 
   const getPortalTitle = (role?: string) => {
     switch (role?.toUpperCase()) {
@@ -182,27 +190,12 @@ function Sidebar({ navItem }: SidebarContentProps) {
     }
   };
 
-  const getPortalInitials = (role?: string) => {
-    switch (role?.toUpperCase()) {
-      case "SUPERADMIN":
-        return "SAP";
-      case "DEAN":
-        return "DP";
-      case "TEAMLEAD":
-        return "TLP";
-      case "TEACHER":
-      default:
-        return "FP";
-    }
-  };
-
   const portalTitle = getPortalTitle(currentUserRole);
-  const portalInitials = getPortalInitials(currentUserRole);
 
   return (
     <UISidebar
       collapsible="icon"
-      className="font-sans bg-card text-foreground border-none "
+      className="font-sans bg-card text-foreground border-none"
     >
       <SidebarHeader className="p-2.5 pb-0.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:pt-2.5">
         <Link
@@ -251,6 +244,26 @@ function Sidebar({ navItem }: SidebarContentProps) {
             </SidebarGroup>
           ))}
       </SidebarContent>
+
+      <SidebarFooter>
+        <NavUser
+          user={{
+            name: userName,
+            email: userEmail,
+            avatar: user?.avatarUrl || "",
+          }}
+          logout={logout}
+          accountPath="/profile-settings"
+          notificationsPath="/notifications"
+          settingsPath={
+            ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
+              (currentUserRole || "").toUpperCase(),
+            )
+              ? "/settings"
+              : undefined
+          }
+        />
+      </SidebarFooter>
     </UISidebar>
   );
 }

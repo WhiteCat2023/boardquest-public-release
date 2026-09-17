@@ -10,7 +10,23 @@ import "@aejkatappaja/phantom-ui";
 
 import { ThemeProvider } from 'next-themes';
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        if (
+          error?.response?.status === 401 ||
+          error?.response?.status === 403 ||
+          error?.status === 401 ||
+          error?.status === 403
+        ) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

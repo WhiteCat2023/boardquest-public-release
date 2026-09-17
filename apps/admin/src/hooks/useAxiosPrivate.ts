@@ -5,14 +5,14 @@ import useAuth from "@/hooks/useAuth";
 
 const useAxiosPrivate = () => {
   const refresh = useRefreshToken();
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
 
   useEffect(() => {
     const requestIntercept = AxiosInstance.interceptors.request.use(
       (config) => {
-        if (!config.headers["Authorization"]) {
+        if (!config.headers["Authorization"] && auth?.accessToken) {
           config.headers["Authorization"] =
-            `Bearer ${auth?.accessToken}`;
+            `Bearer ${auth.accessToken}`;
         }
         return config;
       },
@@ -27,18 +27,28 @@ const useAxiosPrivate = () => {
         const prevRequest = error?.config;
         const isAuthRequest =
           prevRequest?.url?.includes("/auth/login") ||
-          prevRequest?.url?.includes("/auth/refresh");
+          prevRequest?.url?.includes("/auth/refresh") ||
+          prevRequest?.url?.includes("/auth/logout");
 
         if (
           error?.response?.status === 401 &&
           !prevRequest?.sent &&
+          !prevRequest?._retry &&
           !isAuthRequest
         ) {
           prevRequest.sent = true;
+          prevRequest._retry = true;
           const newAccessToken = await refresh();
           if (newAccessToken) {
             prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
             return AxiosInstance(prevRequest);
+          } else {
+            // Auto-logout when token refresh fails
+            try {
+              await logout();
+            } catch {
+              // ignore
+            }
           }
         }
         return Promise.reject(error);
@@ -49,7 +59,7 @@ const useAxiosPrivate = () => {
       AxiosInstance.interceptors.request.eject(requestIntercept);
       AxiosInstance.interceptors.response.eject(responseIntercept);
     };
-  }, [auth, refresh]);
+  }, [auth, refresh, logout]);
 
   return AxiosInstance;
 };

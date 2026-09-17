@@ -145,12 +145,12 @@ export default function HeaderBreadcrumb() {
   });
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb className="text-xs">
+      <BreadcrumbList className="text-xs gap-1 sm:gap-1.5">
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="/">
-              <Home size={16} />
+            <Link to="/" className="p-0.5 rounded hover:text-foreground">
+              <Home size={14} />
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>

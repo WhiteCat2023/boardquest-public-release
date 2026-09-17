@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type { GameBadge, GameConfigSettings } from "../types/types";
+import type { GameBadge, GameConfigSettings, RankTier, RankStudent } from "../types/types";
 
 export function useGameBadges(params?: {
   search?: string;
@@ -151,5 +151,128 @@ export function useGameLeaderboard(params?: { limit?: number; subject?: string }
     },
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
+  });
+}
+
+// ============================================
+// RANK TIERS CMS HOOKS
+// ============================================
+
+export function useGameRanks(params?: {
+  search?: string;
+  status?: string;
+  activeOnly?: boolean;
+}) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<RankTier[]>({
+    queryKey: ["game-ranks", params],
+    queryFn: async () => {
+      const cleanParams = params
+        ? Object.fromEntries(
+            Object.entries(params).filter(
+              ([_, val]) => val !== undefined && val !== "" && val !== "ALL"
+            )
+          )
+        : undefined;
+
+      const response = await axiosPrivate.get("/game/ranks", {
+        params: cleanParams,
+      });
+      const data = response.data?.data;
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useCreateRank() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (rankData: Partial<RankTier>) => {
+      const response = await axiosPrivate.post("/game/ranks", rankData);
+      return response.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game-ranks"] });
+    },
+  });
+}
+
+export function useUpdateRank() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<RankTier> }) => {
+      const response = await axiosPrivate.put(`/game/ranks/${id}`, data);
+      return response.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game-ranks"] });
+    },
+  });
+}
+
+export function useToggleRankActive() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosPrivate.patch(`/game/ranks/${id}/toggle`);
+      return response.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game-ranks"] });
+    },
+  });
+}
+
+export function useDeleteRank() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosPrivate.delete(`/game/ranks/${id}`);
+      return response.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game-ranks"] });
+    },
+  });
+}
+
+export function useRankStudents(
+  rankId: string | null,
+  params?: { search?: string; page?: number; limit?: number }
+) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<{
+    rank: Partial<RankTier>;
+    students: RankStudent[];
+    pagination: { total: number; page: number; limit: number; totalPages: number };
+  }>({
+    queryKey: ["rank-students", rankId, params],
+    queryFn: async () => {
+      if (!rankId) return { rank: {}, students: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } };
+      const response = await axiosPrivate.get(`/game/ranks/${rankId}/students`, {
+        params,
+      });
+      return (
+        response.data?.data || {
+          rank: {},
+          students: [],
+          pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
+        }
+      );
+    },
+    enabled: !!rankId,
+    staleTime: 1000 * 60 * 1,
   });
 }

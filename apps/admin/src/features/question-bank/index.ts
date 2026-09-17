@@ -9,6 +9,7 @@ export { default as SubjectManagement } from './pages/SubjectManagement';
 export { default as SubjectDetailsPage } from './pages/SubjectDetailsPage';
 export { default as FastReviewWorkspace } from './components/review/FastReviewWorkspace';
 export { default as FastReviewShortcutsModal } from './components/review/FastReviewShortcutsModal';
+export { default as ReviewQuestionsTable } from './components/review/ReviewQuestionsTable';
 export { default as QuestionCommentsPanel } from './components/QuestionCommentsPanel';
 export * from './api/useQuestionBank';
 export * from './api/useQuestionQualityCheck';

@@ -1,15 +1,19 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   HelpCircle,
   BookOpen,
   GraduationCap,
   Users,
-  ArrowRight,
+  MoreHorizontal,
+  ExternalLink,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { UserRole } from "./DashboardBanner";
-import appContent from "@/constants/appContent";
 
 interface DashboardKpiCardsProps {
   userRole: UserRole;
@@ -30,140 +34,118 @@ export function DashboardKpiCards({
   totalStudents,
   totalFaculties,
 }: DashboardKpiCardsProps) {
+  const navigate = useNavigate();
   const isTeacher = userRole === "TEACHER";
-  const kpi = appContent.dashboard.kpiCards;
+
+  const formatCount = (count: number) => {
+    if (count >= 0 && count < 10) {
+      return `0${count}`;
+    }
+    return count.toLocaleString();
+  };
+
+  const cards = [
+    {
+      id: "questions",
+      title: isTeacher ? "MY QUESTIONS" : "QUESTION BANK",
+      count: isTeacher ? teacherAuthoredCount : totalQuestions,
+      subtitle: isTeacher ? "Authored in draft & review" : "In question repository",
+      icon: HelpCircle,
+      link: isTeacher ? "/question-bank/my-questions" : "/question-bank/shared-library",
+    },
+    {
+      id: "curriculum",
+      title: isTeacher ? "HANDLED SUBJECTS" : "EXAM SUBJECTS",
+      count: isTeacher ? handledCategoriesCount : totalCategories,
+      subtitle: isTeacher ? "Assigned subject areas" : "Board licensure subjects",
+      icon: BookOpen,
+      link: "/subject-management",
+    },
+    {
+      id: "students",
+      title: "ENROLLED STUDENTS",
+      count: totalStudents,
+      subtitle: "Across all active cohorts",
+      icon: GraduationCap,
+      link: "/student-management",
+    },
+    {
+      id: "users",
+      title: isTeacher ? "FACULTY PEERS" : "ACTIVE FACULTY",
+      count: totalFaculties,
+      subtitle: "Registered teaching staff",
+      icon: Users,
+      link: "/faculty-management",
+    },
+  ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 font-sans">
-      {/* Card 1: Question Bank / My Questions */}
-      <Card className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col justify-between gap-2.5 hover:border-primary/30 transition-all min-w-0">
-        <div className="flex items-center justify-between gap-1">
-          <div className="p-1.5 bg-primary/10 text-primary rounded-lg border border-primary/20 shrink-0">
-            <HelpCircle className="size-4 stroke-[2.2]" />
-          </div>
-          <Badge
-            variant="outline"
-            className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold px-2 py-0.5 rounded-md truncate"
-          >
-            {isTeacher ? "My Questions" : "Question Bank"}
-          </Badge>
-        </div>
-        <div className="min-w-0">
-          <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground block truncate">
-            {isTeacher ? teacherAuthoredCount : totalQuestions}
-          </span>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-            {isTeacher ? "Authored Questions" : "Total Questions"}
-          </p>
-        </div>
-        <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">Repository</span>
-          <Link
-            to="/question-bank"
-            className="text-primary font-semibold flex items-center gap-1 hover:underline shrink-0 text-xs"
-          >
-            {kpi.questionBank.actionView} <ArrowRight size={11} />
-          </Link>
-        </div>
-      </Card>
+      {cards.map((card) => {
+        const IconComponent = card.icon;
 
-      {/* Card 2: Curriculum / Handled Subjects */}
-      <Card className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col justify-between gap-2.5 hover:border-primary/30 transition-all min-w-0">
-        <div className="flex items-center justify-between gap-1">
-          <div className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-500/20 shrink-0">
-            <BookOpen className="size-4 stroke-[2.2]" />
-          </div>
-          <Badge
-            variant="outline"
-            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md truncate"
+        return (
+          <div
+            key={card.id}
+            onClick={() => navigate(card.link)}
+            className="group relative bg-card border border-border/80 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:border-border hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between min-w-0"
           >
-            {isTeacher
-              ? kpi.curriculum.badges.teacher
-              : (kpi.curriculum.badges as any).dean || (kpi.curriculum.badges as any).admin}
-          </Badge>
-        </div>
-        <div className="min-w-0">
-          <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground block truncate">
-            {isTeacher ? handledCategoriesCount : totalCategories}
-          </span>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-            {isTeacher
-              ? kpi.curriculum.labels.teacher
-              : (kpi.curriculum.labels as any).dean || (kpi.curriculum.labels as any).admin}
-          </p>
-        </div>
-        <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">{kpi.curriculum.subtitle}</span>
-          <Link
-            to="/subject-management"
-            className="text-primary font-semibold flex items-center gap-1 hover:underline shrink-0 text-xs"
-          >
-            {kpi.curriculum.actionSubjects} <ArrowRight size={11} />
-          </Link>
-        </div>
-      </Card>
+            {/* Top Row: Icon + Title + More Options */}
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="size-6 sm:size-7 rounded-lg bg-muted/60 border border-border/40 flex items-center justify-center text-foreground/75 shrink-0">
+                  <IconComponent className="size-3.5 sm:size-4 stroke-[2]" />
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-bold text-foreground/80 tracking-wider uppercase truncate">
+                  {card.title}
+                </span>
+              </div>
 
-      {/* Card 3: Enrolled Students */}
-      <Card className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col justify-between gap-2.5 hover:border-primary/30 transition-all min-w-0">
-        <div className="flex items-center justify-between gap-1">
-          <div className="p-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg border border-amber-500/20 shrink-0">
-            <GraduationCap className="size-4 stroke-[2.2]" />
-          </div>
-          <Badge
-            variant="outline"
-            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md truncate"
-          >
-            {kpi.enrolledStudents.badge}
-          </Badge>
-        </div>
-        <div className="min-w-0">
-          <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground block truncate">{totalStudents}</span>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-            {kpi.enrolledStudents.label}
-          </p>
-        </div>
-        <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">{kpi.enrolledStudents.subtitle}</span>
-          <Link
-            to="/student-management"
-            className="text-primary font-semibold flex items-center gap-1 hover:underline shrink-0 text-xs"
-          >
-            {kpi.enrolledStudents.actionRoster} <ArrowRight size={11} />
-          </Link>
-        </div>
-      </Card>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1 -mr-1 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer shrink-0"
+                    title="Options"
+                  >
+                    <MoreHorizontal className="size-3.5 sm:size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-36 rounded-xl p-1 text-xs shadow-lg"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DropdownMenuItem
+                    onClick={() => navigate(card.link)}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
+                    <ExternalLink className="size-3.5 text-muted-foreground" />
+                    <span>View details</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-      {/* Card 4: Users / Accounts */}
-      <Card className="bg-card border border-border rounded-xl p-3 sm:p-3.5 shadow-2xs flex flex-col justify-between gap-2.5 hover:border-primary/30 transition-all min-w-0">
-        <div className="flex items-center justify-between gap-1">
-          <div className="p-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg border border-blue-500/20 shrink-0">
-            <Users className="size-4 stroke-[2.2]" />
+            {/* Middle Row: Large Value */}
+            <div className="mt-3 sm:mt-3.5">
+              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground block truncate">
+                {formatCount(card.count)}
+              </span>
+            </div>
+
+            {/* Bottom Row: Context Subtitle */}
+            <div className="mt-1">
+              <p className="text-[10.5px] sm:text-[11.5px] text-muted-foreground truncate leading-tight">
+                {card.subtitle}
+              </p>
+            </div>
           </div>
-          <Badge
-            variant="outline"
-            className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md truncate"
-          >
-            Users
-          </Badge>
-        </div>
-        <div className="min-w-0">
-          <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground block truncate">
-            {totalFaculties}
-          </span>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-            Active Users
-          </p>
-        </div>
-        <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium gap-1 min-w-0">
-          <span className="truncate">User Directory</span>
-          <Link
-            to="/faculty-management"
-            className="text-primary font-semibold flex items-center gap-1 hover:underline shrink-0 text-xs"
-          >
-            View Users <ArrowRight size={11} />
-          </Link>
-        </div>
-      </Card>
+        );
+      })}
     </div>
   );
 }
+
+export default DashboardKpiCards;

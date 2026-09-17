@@ -1,20 +1,27 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useLocation, NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
-import {
-  ChevronsUpDown,
-  LogOut,
-  ShieldCheck,
-  Bell,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   reviewCenterNavItem,
 } from "@/utils/menu-list/reviewCenterSidebarMenuList";
 import type { NavItemProps, NavContentProps } from "@/types/sidebarMenuItems";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import boardQuestLogo from "@/assets/baordquest-no-title.png";
+import {
+  Sidebar as UISidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { NavUser } from "./nav-user";
 
 type LucideIconName = keyof typeof LucideIcons;
 
@@ -34,225 +41,210 @@ function DynamicIcon({
   return <IconComponent size={size} className={className} />;
 }
 
-interface SidebarProps {
+interface SidebarContentProps {
   navItems?: NavItemProps[];
-  isCollapsed?: boolean;
+  navItem?: NavItemProps[];
+}
+
+function SidebarItem({
+  content,
+  location,
+}: {
+  content: NavContentProps;
+  location: any;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  const hasSubItems = !!content.subItems && content.subItems.length > 0;
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const isAnySubActive =
+    hasSubItems &&
+    content.subItems!.some(
+      (sub) => location.pathname + location.search === sub.path,
+    );
+
+  const [isOpen, setIsOpen] = useState(isAnySubActive);
+
+  useEffect(() => {
+    if (isAnySubActive) {
+      setIsOpen(true);
+    }
+  }, [location.pathname, location.search, isAnySubActive]);
+
+  if (!hasSubItems) {
+    const isActive =
+      location.pathname === content.path ||
+      (content.path !== "/dashboard" &&
+        content.path !== "/" &&
+        location.pathname.startsWith(content.path));
+
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          asChild
+          isActive={isActive}
+          tooltip={content.title}
+          className={`
+            flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold z-10
+            transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2
+            ${
+              isActive
+                ? "bg-primary/10 text-primary font-bold border border-primary/20 shadow-2xs dark:bg-primary/20 dark:text-primary dark:border-primary/30"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            }
+          `}
+        >
+          <Link to={content.path} onClick={handleLinkClick}>
+            <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden truncate">
+              {content.title}
+            </span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  const isParentActive = location.pathname === content.path || isAnySubActive;
+
+  return (
+    <SidebarMenuItem className="flex flex-col w-full">
+      <SidebarMenuButton
+        onClick={() => setIsOpen(!isOpen)}
+        tooltip={content.title}
+        className={`
+          flex items-center justify-between gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer
+          transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2
+          ${
+            isParentActive
+              ? "bg-muted/70 text-foreground font-bold"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          }
+        `}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden truncate">
+            {content.title}
+          </span>
+        </div>
+        <div className="group-data-[collapsible=icon]:hidden text-muted-foreground/60 hover:text-foreground transition-colors shrink-0">
+          {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        </div>
+      </SidebarMenuButton>
+
+      {isOpen && (
+        <div className="pl-2.5 mt-0.5 flex flex-col gap-0.5 border-l border-border/80 ml-3.5 group-data-[collapsible=icon]:hidden animate-in slide-in-from-top-1 duration-150">
+          {content.subItems!.map((sub, idx) => {
+            const isSubActive =
+              location.pathname + location.search === sub.path;
+            return (
+              <Link
+                key={idx}
+                to={sub.path}
+                onClick={handleLinkClick}
+                className={`
+                  text-[11px] py-1 px-2 rounded-md font-semibold transition-all duration-150 truncate
+                  ${
+                    isSubActive
+                      ? "text-primary bg-primary/10 font-bold border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }
+                `}
+              >
+                {sub.title}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </SidebarMenuItem>
+  );
 }
 
 export function Sidebar({
   navItems = reviewCenterNavItem,
-  isCollapsed = false,
-}: SidebarProps) {
+  navItem,
+}: SidebarContentProps) {
+  const items = navItem || navItems;
   const location = useLocation();
   const { user, logout } = useReviewCenterAuth();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close user popup when clicking outside
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target as Node)
-      ) {
-        setIsUserMenuOpen(false);
-      }
-    }
-    if (isUserMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isUserMenuOpen]);
-
-  const userInitials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "RC";
 
   return (
-    <aside
-      className={cn(
-        "h-screen bg-card text-foreground border-none flex flex-col shrink-0 font-sans select-none z-30 transition-all duration-200",
-        isCollapsed ? "w-16" : "w-64"
-      )}
+    <UISidebar
+      collapsible="icon"
+      className="font-sans bg-card text-foreground border-none"
     >
       {/* ── 1. Brand Header ── */}
-      <div className="h-16 px-4 border-none flex items-center justify-between shrink-0">
+      <SidebarHeader className="p-2.5 pb-0.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:pt-2.5">
         <Link
           to="/"
-          className="flex items-center gap-2.5 group hover:opacity-90 transition-opacity min-w-0"
+          className="flex items-center gap-2 px-1 py-1 rounded-lg hover:opacity-90 transition-opacity group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
         >
           <img
             src={boardQuestLogo}
             alt="BoardQuest"
-            className="size-7 object-contain shrink-0"
+            className="size-7 object-contain shrink-0 group-data-[collapsible=icon]:size-6 group-data-[collapsible=icon]:mx-auto"
           />
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black tracking-tight text-foreground">
-                  BOARDQUEST
-                </span>
-                <span className="text-[9px] font-extrabold bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.2 rounded-md shrink-0">
-                  RC
-                </span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-semibold truncate">
-                Review Center Portal
-              </span>
-            </div>
-          )}
+          <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+            <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground leading-tight">
+              BoardQuest
+            </span>
+            <span className="text-[10px] font-medium text-muted-foreground leading-tight">
+              Review Center Portal
+            </span>
+          </div>
         </Link>
-      </div>
+      </SidebarHeader>
 
       {/* ── 2. Navigation Content ── */}
-      <div className="flex-1 px-2 py-3 overflow-y-auto space-y-3">
-        {navItems.map((category: NavItemProps, catIdx: number) => (
-          <div key={catIdx} className="space-y-1">
-            {!isCollapsed && (
-              <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase">
-                {category.sideBarCategoryName}
-              </div>
-            )}
-
-            <div className="space-y-0.5">
-              {category.content.map(
-                (item: NavContentProps, itemIdx: number) => {
-                  const isActive =
-                    location.pathname === item.path ||
-                    (item.path !== "/dashboard" &&
-                      location.pathname.startsWith(item.path));
-
-                  return (
-                    <NavLink
-                      key={itemIdx}
-                      to={item.path}
-                      className={cn(
-                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors group cursor-pointer",
-                        isActive
-                          ? "bg-accent text-accent-foreground font-semibold"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                      )}
-                    >
-                      <DynamicIcon
-                        name={item.icon}
-                        size={16}
-                        className={cn(
-                          "shrink-0 transition-transform group-hover:scale-105",
-                          isActive
-                            ? "text-foreground"
-                            : "text-muted-foreground group-hover:text-foreground"
-                        )}
+      <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">
+        {items
+          .filter(
+            (item: NavItemProps) => item.content && item.content.length > 0,
+          )
+          .map((item: NavItemProps, index: number) => (
+            <SidebarGroup key={index} className="p-0">
+              <SidebarGroupLabel className="text-[9.5px] font-bold text-muted-foreground/60 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
+                {item.sideBarCategoryName}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
+                  {item.content.map(
+                    (content: NavContentProps, contentIndex: number) => (
+                      <SidebarItem
+                        key={contentIndex}
+                        content={content}
+                        location={location}
                       />
-                      {!isCollapsed && (
-                        <span className="truncate">{item.title}</span>
-                      )}
-                    </NavLink>
-                  );
-                }
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+                    ),
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+      </SidebarContent>
 
-      {/* ── 3. Bottom User Profile (NavUser) with Popover Menu ── */}
-      <div className="p-2 border-none shrink-0 relative" ref={userMenuRef}>
-        <button
-          type="button"
-          onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-          className={cn(
-            "w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/80 transition-colors text-left group cursor-pointer",
-            isUserMenuOpen ? "bg-accent text-foreground" : ""
-          )}
-        >
-          <Avatar className="size-8 rounded-lg border border-border shrink-0">
-            <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white font-bold text-xs">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
-
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-xs font-semibold text-foreground truncate leading-tight">
-                {user?.name || "Representative"}
-              </span>
-              <span className="text-[10px] text-muted-foreground truncate leading-tight">
-                {user?.email || "rep@reviewcenter.edu.ph"}
-              </span>
-            </div>
-          )}
-
-          {!isCollapsed && (
-            <ChevronsUpDown className="size-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
-          )}
-        </button>
-
-        {/* ── Floating Popup Menu ── */}
-        {isUserMenuOpen && (
-          <div className="absolute bottom-16 left-2 right-2 w-[calc(100%-16px)] min-w-[220px] bg-card border border-border rounded-2xl shadow-2xl p-1.5 z-50 text-foreground font-sans animate-in fade-in-0 zoom-in-95 duration-150">
-            {/* Header User Card */}
-            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-muted/40">
-              <Avatar className="size-8 rounded-lg border border-border shrink-0">
-                <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white font-bold text-xs">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-xs font-bold text-foreground truncate">
-                  {user?.name || "Representative"}
-                </span>
-                <span className="text-[10.5px] text-muted-foreground truncate">
-                  {user?.email || "rep@reviewcenter.edu.ph"}
-                </span>
-              </div>
-            </div>
-
-            <div className="h-px bg-border my-1" />
-
-            {/* Clean Menu Items */}
-            <div className="space-y-0.5 text-xs font-medium">
-              <Link
-                to="/settings"
-                onClick={() => setIsUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-accent hover:text-foreground transition-colors cursor-pointer text-muted-foreground"
-              >
-                <ShieldCheck className="size-4" />
-                <span>Account</span>
-              </Link>
-
-              <Link
-                to="/settings"
-                onClick={() => setIsUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-accent hover:text-foreground transition-colors cursor-pointer text-muted-foreground"
-              >
-                <Bell className="size-4" />
-                <span>Notifications</span>
-              </Link>
-
-              <div className="h-px bg-border my-1" />
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  logout();
-                }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-left"
-              >
-                <LogOut className="size-4" />
-                <span>Log out</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </aside>
+      {/* ── 3. Bottom User Profile (NavUser) ── */}
+      <SidebarFooter>
+        <NavUser
+          user={{
+            name: user?.name || "Representative",
+            email: user?.email || "rep@reviewcenter.edu.ph",
+            avatar: (user as any)?.avatarUrl || "",
+          }}
+          logout={logout}
+          accountPath="/settings"
+          notificationsPath="/settings"
+          settingsPath="/settings"
+        />
+      </SidebarFooter>
+    </UISidebar>
   );
 }
 

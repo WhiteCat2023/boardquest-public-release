@@ -70,11 +70,6 @@ export const adminNavItem: NavItemProps[] = [
         icon: "GraduationCap",
       },
       {
-        title: "Performance",
-        path: "/analytics",
-        icon: "BarChart2",
-      },
-      {
         title: "Game Management",
         path: "/game-management",
         icon: "Gamepad2",

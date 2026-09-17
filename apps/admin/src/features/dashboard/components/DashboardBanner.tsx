@@ -48,7 +48,7 @@ export function DashboardBanner({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs font-sans">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card font-sans">
       <div className="space-y-0.5">
         <div className="flex items-center gap-2 mb-1">
           <Badge

@@ -45,20 +45,6 @@ export const getQuestionColumns = ({
     ),
   },
   {
-    accessorKey: "id",
-    header: () => <div className="text-center">ID</div>,
-    meta: {
-      className: "w-20 sm:w-24 px-2 text-center shrink-0",
-    },
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <span className="rounded-md bg-muted/60 px-2 py-1 text-[11px] font-semibold font-mono tracking-wide text-muted-foreground border border-border">
-          Q-{row.original.id.slice(-4).toUpperCase()}
-        </span>
-      </div>
-    ),
-  },
-  {
     accessorKey: "question",
     header: "Question",
     meta: {

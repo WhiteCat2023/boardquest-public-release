@@ -30,6 +30,8 @@ interface FastReviewWorkspaceProps {
   isLoading: boolean;
   onRefresh?: () => void;
   selectedAuthor?: any;
+  initialQuestionId?: string | null;
+  onBackToTable?: () => void;
 }
 
 export default function FastReviewWorkspace({
@@ -37,13 +39,31 @@ export default function FastReviewWorkspace({
   isLoading,
   onRefresh,
   selectedAuthor,
+  initialQuestionId,
+  onBackToTable,
 }: FastReviewWorkspaceProps) {
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (initialQuestionId && questions.length > 0) {
+      const idx = questions.findIndex((q) => q.id === initialQuestionId);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+
+  // Sync index if initialQuestionId changes
+  useEffect(() => {
+    if (initialQuestionId && questions.length > 0) {
+      const idx = questions.findIndex((q) => q.id === initialQuestionId);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+      }
+    }
+  }, [initialQuestionId, questions]);
 
   // Clamp index if questions array changes
   useEffect(() => {
@@ -54,10 +74,6 @@ export default function FastReviewWorkspace({
 
   const activeQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
-  const progressPercent =
-    totalQuestions > 0
-      ? Math.round(((currentIndex + 1) / totalQuestions) * 100)
-      : 0;
 
   // Approve Mutation
   const approveMutation = useMutation({
@@ -119,7 +135,10 @@ export default function FastReviewWorkspace({
         return;
       }
 
-      if (e.key === "a" || e.key === "A") {
+      if (e.key === "Escape" && onBackToTable) {
+        e.preventDefault();
+        onBackToTable();
+      } else if (e.key === "a" || e.key === "A") {
         e.preventDefault();
         handleApprove();
       } else if (e.key === "j" || e.key === "J" || e.key === "ArrowRight") {
@@ -142,7 +161,7 @@ export default function FastReviewWorkspace({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleNext, handlePrev, handleFocusComment, handleEdit]);
+  }, [handleApprove, handleNext, handlePrev, handleFocusComment, handleEdit, onBackToTable]);
 
   if (isLoading) {
     return (
@@ -169,6 +188,17 @@ export default function FastReviewWorkspace({
             ? `There are no remaining pending questions for ${selectedAuthor.name}.`
             : "The review queue for the selected criteria is completely clear."}
         </p>
+        {onBackToTable && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBackToTable}
+            className="mt-4 gap-1.5 cursor-pointer text-xs"
+          >
+            <ArrowLeft size={13} />
+            Back to Table
+          </Button>
+        )}
       </div>
     );
   }
@@ -217,51 +247,6 @@ export default function FastReviewWorkspace({
 
   return (
     <div className="flex flex-col gap-3 font-sans w-full animate-in fade-in duration-200">
-      {/* ── Top Progress & Info Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 px-4 rounded-2xl bg-card border border-border shadow-2xs">
-        {/* Left: Progress & Counter */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-foreground">
-                Question {currentIndex + 1} of {totalQuestions}
-              </span>
-              <Badge
-                variant="outline"
-                className="text-[10px] font-mono font-bold bg-primary/10 text-primary border-primary/20 px-1.5 py-0 rounded-md"
-              >
-                {progressPercent}% Complete
-              </Badge>
-            </div>
-            {/* Progress bar */}
-            <div className="w-36 sm:w-48 bg-muted h-1.5 rounded-full overflow-hidden mt-1.5 border border-border/40">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Quick Jump dots + Shortcuts button */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setIsShortcutsOpen(true)}
-            className="h-7 px-2.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground border-border bg-card rounded-lg gap-1.5 cursor-pointer shadow-2xs"
-            title="View keyboard shortcuts"
-          >
-            <Keyboard size={13} className="text-primary" />
-            <span>Shortcuts</span>
-            <kbd className="px-1.5 py-0.2 bg-muted text-[9px] font-mono rounded border border-border">
-              ?
-            </kbd>
-          </Button>
-        </div>
-      </div>
-
       {/* ── Main Split View Area ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
         {/* ── Left Column: Question Details & Inspection (7 Cols) ── */}
@@ -270,6 +255,19 @@ export default function FastReviewWorkspace({
             {/* Question Card Header */}
             <div className="p-3 px-4 border-b border-border bg-muted/30 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
+                {onBackToTable && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onBackToTable}
+                    className="h-6 px-2 text-[11px] font-bold rounded-md bg-card hover:bg-accent border-border text-foreground gap-1 cursor-pointer shadow-2xs mr-0.5"
+                    title="Return to questions table (Esc)"
+                  >
+                    <ArrowLeft size={11} />
+                    <span>Table</span>
+                  </Button>
+                )}
                 <span className="rounded-md bg-card px-2 py-0.5 text-[11px] font-mono font-extrabold tracking-wider text-foreground border border-border shadow-2xs">
                   Q-{activeQuestion.id.slice(-4).toUpperCase()}
                 </span>
@@ -505,7 +503,11 @@ export default function FastReviewWorkspace({
 
         {/* ── Right Column: Integrated Comments & Discussion Panel (5 Cols) ── */}
         <div className="lg:col-span-5 flex flex-col gap-3">
-          <QuestionCommentsPanel questionId={activeQuestion.id} />
+          <QuestionCommentsPanel
+            questionId={activeQuestion.id}
+            questionStatus={activeQuestion.status}
+            onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          />
         </div>
       </div>
 

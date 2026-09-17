@@ -105,114 +105,45 @@ export function BadgesManagementTab({
 
   const filteredBadges = serverBadges || badges;
 
-  const totalBadges = badges.length;
-  const activeBadges = badges.filter((b) => b.isActive).length;
-  const totalXPPool = badges.reduce((acc, b) => acc + (b.xpReward || b.xp || 0), 0);
-  const totalUnlockedAcrossAll = badges.reduce(
-    (acc, b) => acc + (b.unlockedCount || 0),
-    0,
-  );
-
   const handleImageError = (url?: string | null) => {
     if (!url) return;
     setImageErrorUrls((prev) => ({ ...prev, [url]: true }));
   };
 
-  const getTierMeta = (type?: string) => {
-    return BADGE_TYPES.find((b) => b.type === type) || BADGE_TYPES[0];
+  const getTierMeta = (badgeOrType?: GameBadge | string) => {
+    if (!badgeOrType) return BADGE_TYPES[0];
+    if (typeof badgeOrType === "string") {
+      return BADGE_TYPES.find((b) => b.type === badgeOrType) || BADGE_TYPES[0];
+    }
+    const badge = badgeOrType;
+    const rawType = (badge.badgeType || badge.tier || "").toLowerCase();
+    const match = BADGE_TYPES.find((b) => b.type.toLowerCase() === rawType);
+    if (match) return match;
+
+    const c = (badge.color || "").toLowerCase();
+    if (c.includes("ffd700") || c.includes("gold") || c.includes("amber-500")) {
+      return BADGE_TYPES.find((b) => b.type === "gold") || BADGE_TYPES[0];
+    }
+    if (c.includes("c0c0c0") || c.includes("silver") || c.includes("slate")) {
+      return BADGE_TYPES.find((b) => b.type === "silver") || BADGE_TYPES[0];
+    }
+    if (c.includes("cd7f32") || c.includes("bronze") || c.includes("amber-600")) {
+      return BADGE_TYPES.find((b) => b.type === "bronze") || BADGE_TYPES[0];
+    }
+    if (c.includes("ff5722") || c.includes("orange") || c.includes("fire")) {
+      return BADGE_TYPES.find((b) => b.type === "fire") || BADGE_TYPES[0];
+    }
+    if (c.includes("00e5ff") || c.includes("cyan") || c.includes("speed")) {
+      return BADGE_TYPES.find((b) => (b.type as string) === "speed") || BADGE_TYPES.find((b) => b.type === "lightning") || BADGE_TYPES[0];
+    }
+    if (c.includes("9c27b0") || c.includes("purple") || c.includes("boss")) {
+      return BADGE_TYPES.find((b) => (b.type as string) === "master") || BADGE_TYPES.find((b) => b.type === "cosmic") || BADGE_TYPES[0];
+    }
+    return BADGE_TYPES[0];
   };
 
   return (
     <div className="space-y-4">
-      {/* Top Gamification Overview Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Total Badges */}
-        <Card className="bg-card/90 border-border/80 shadow-xs relative overflow-hidden group hover:border-primary/40 transition-all">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/15 transition-all" />
-          <CardContent className="p-3.5 flex items-center justify-between relative">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Total Badges
-              </p>
-              <h3 className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
-                {totalBadges}
-              </h3>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> {activeBadges} Active
-                in Production
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/25 shadow-xs">
-              <Trophy className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* XP Reward Pool */}
-        <Card className="bg-card/90 border-border/80 shadow-xs relative overflow-hidden group hover:border-amber-500/40 transition-all">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/15 transition-all" />
-          <CardContent className="p-3.5 flex items-center justify-between relative">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                XP Reward Pool
-              </p>
-              <h3 className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
-                {totalXPPool.toLocaleString()}{" "}
-                <span className="text-sm font-bold text-amber-500">XP</span>
-              </h3>
-              <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                Milestone gamification rewards
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-500 border border-amber-500/30 shadow-xs">
-              <Sparkles className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Unlocked Badges */}
-        <Card className="bg-card/90 border-border/80 shadow-xs relative overflow-hidden group hover:border-indigo-500/40 transition-all">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/15 transition-all" />
-          <CardContent className="p-3.5 flex items-center justify-between relative">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Candidate Unlocks
-              </p>
-              <h3 className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
-                {totalUnlockedAcrossAll.toLocaleString()}
-              </h3>
-              <p className="text-[11px] text-indigo-500 font-semibold flex items-center gap-1 mt-0.5">
-                <Users className="w-3.5 h-3.5" /> Earned by Aspirants
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 shadow-xs">
-              <Award className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Active Categories */}
-        <Card className="bg-card/90 border-border/80 shadow-xs relative overflow-hidden group hover:border-cyan-500/40 transition-all">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/15 transition-all" />
-          <CardContent className="p-3.5 flex items-center justify-between relative">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Configured Tiers
-              </p>
-              <h3 className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
-                {BADGE_TYPES.length} Tiers
-              </h3>
-              <p className="text-[11px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5 truncate max-w-[150px]">
-                Bronze to Cosmic Tier
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 shadow-xs">
-              <Gem className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filter and Action Bar */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl border border-border/80 bg-card/95 shadow-xs backdrop-blur-xs">
         <div className="flex flex-wrap flex-1 items-center gap-2 w-full lg:w-auto">
@@ -243,8 +174,12 @@ export function BadgesManagementTab({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Categories</SelectItem>
-              <SelectItem value="QUEST">⚔️ Quest</SelectItem>
+              <SelectItem value="PERFORMANCE">🏆 Performance</SelectItem>
+              <SelectItem value="SPEED">⚡ Speed</SelectItem>
+              <SelectItem value="MASTERY">🌟 Mastery</SelectItem>
+              <SelectItem value="SPECIAL">✨ Special</SelectItem>
               <SelectItem value="STREAK">🔥 Streak</SelectItem>
+              <SelectItem value="QUEST">⚔️ Quest</SelectItem>
               <SelectItem value="BOSS">👑 Boss</SelectItem>
               <SelectItem value="SUBJECT">📚 Subject</SelectItem>
               <SelectItem value="EXAM">⚡ Exam</SelectItem>
@@ -343,7 +278,7 @@ export function BadgesManagementTab({
         filteredBadges.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
             {filteredBadges.map((badge) => {
-              const tierMeta = getTierMeta(badge.badgeType);
+              const tierMeta = getTierMeta(badge);
               const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
               const photoUrl = badge.spriteUrl || badge.imageUrl;
               const hasCustomPhoto = Boolean(
@@ -396,10 +331,20 @@ export function BadgesManagementTab({
                     </div>
 
                     {/* Title & Category & Description */}
-                    <div className="w-full space-y-0.5">
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground block truncate">
-                        {badge.category}
-                      </span>
+                    <div className="w-full space-y-1">
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground block truncate">
+                          {badge.category}
+                        </span>
+                        {badge.badgeId && (
+                          <span
+                            className="text-[8px] font-mono px-1.5 py-0.2 rounded bg-muted/80 text-muted-foreground border border-border/50"
+                            title={`Slug: ${badge.badgeId}`}
+                          >
+                            slug: {badge.badgeId}
+                          </span>
+                        )}
+                      </div>
                       <h4
                         className={`text-xs font-black tracking-tight ${tierMeta.color} truncate`}
                         title={displayName}
@@ -521,7 +466,7 @@ export function BadgesManagementTab({
               </thead>
               <tbody className="divide-y divide-border/60">
                 {filteredBadges.map((badge) => {
-                  const tierMeta = getTierMeta(badge.badgeType);
+                  const tierMeta = getTierMeta(badge);
                   const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
                   const photoUrl = badge.spriteUrl || badge.imageUrl;
                   const hasCustomPhoto = Boolean(
@@ -558,10 +503,20 @@ export function BadgesManagementTab({
                           )}
                         </div>
                         <div>
-                          <div
-                            className={`font-bold text-xs ${tierMeta.color}`}
-                          >
-                            {displayName}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`font-bold text-xs ${tierMeta.color}`}
+                            >
+                              {displayName}
+                            </span>
+                            {badge.badgeId && (
+                              <span
+                                className="text-[8px] font-mono px-1 py-0.2 rounded bg-muted/80 text-muted-foreground border border-border/50"
+                                title={`Slug: ${badge.badgeId}`}
+                              >
+                                {badge.badgeId}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-muted-foreground line-clamp-1 max-w-[200px]">
                             {badge.description}

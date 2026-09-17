@@ -31,6 +31,7 @@ import {
 import EnrollCandidateModal from "../components/EnrollCandidateModal";
 import { CandidateScoreDrawer } from "@/features/scores/components/CandidateScoreDrawer";
 import { PdfPreviewModal } from "@/features/scores/components/PdfPreviewModal";
+import { ConfirmDialog } from "@/components/custom/ConfirmDialog";
 
 export function SchoolYearStudentsPage() {
   const { schoolYear = "2026-2027" } = useParams<{ schoolYear: string }>();
@@ -54,6 +55,9 @@ export function SchoolYearStudentsPage() {
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
     null
   );
+  const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(
+    null
+  );
   const [scoreCandidateId, setScoreCandidateId] = useState<string | null>(null);
   const [pdfPreviewData, setPdfPreviewData] = useState<{
     assessmentId: string;
@@ -65,10 +69,16 @@ export function SchoolYearStudentsPage() {
     setIsSingleModalOpen(true);
   };
 
-  const handleDelete = (cand: Candidate) => {
-    deleteCandidateMutation.mutate(cand.id, {
+  const handleOpenDelete = (cand: Candidate) => {
+    setCandidateToDelete(cand);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!candidateToDelete) return;
+    deleteCandidateMutation.mutate(candidateToDelete.id, {
       onSuccess: () => {
-        toast.success(`Removed ${cand.name} from enrolled students.`);
+        toast.success(`Removed ${candidateToDelete.name} from enrolled students.`);
+        setCandidateToDelete(null);
       },
       onError: (err: any) => {
         toast.error(
@@ -302,7 +312,7 @@ export function SchoolYearStudentsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDelete(cand)}
+                            onClick={() => handleOpenDelete(cand)}
                             className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                             title="Delete Student"
                           >
@@ -343,6 +353,28 @@ export function SchoolYearStudentsPage() {
         onOpenChange={(open) => !open && setPdfPreviewData(null)}
         assessmentId={pdfPreviewData?.assessmentId || null}
         candidateId={pdfPreviewData?.candidateId || null}
+      />
+
+      {/* ── Confirm Delete Student Modal ── */}
+      <ConfirmDialog
+        open={Boolean(candidateToDelete)}
+        onOpenChange={(open) => !open && setCandidateToDelete(null)}
+        title="Remove Enrolled Student"
+        description={
+          <span>
+            Are you sure you want to remove{" "}
+            <strong className="text-foreground">{candidateToDelete?.name}</strong>
+            {candidateToDelete?.schoolId ? ` (${candidateToDelete.schoolId})` : ""} from the directory?
+            <br />
+            This action will unenroll the candidate from School Year {schoolYear} and remove their associated score records.
+          </span>
+        }
+        confirmLabel="Remove Student"
+        cancelLabel="Cancel"
+        variant="destructive"
+        icon="danger"
+        isLoading={deleteCandidateMutation.isPending}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

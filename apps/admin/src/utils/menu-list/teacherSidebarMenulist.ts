@@ -44,11 +44,6 @@ export const teacherNavItem: NavItemProps[] = [
         path: "/student-management",
         icon: "GraduationCap",
       },
-      {
-        title: "Performance",
-        path: "/analytics",
-        icon: "BarChart2",
-      },
     ],
   },
   {

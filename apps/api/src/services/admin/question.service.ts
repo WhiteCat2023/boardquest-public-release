@@ -395,7 +395,7 @@ export class QuestionService {
       subjectId: categoryFilter,
       type,
       status: statusFilter,
-      authorId,
+      authorId: authorId === "unassigned" ? null : authorId,
       isPublished,
       ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
     };
@@ -923,6 +923,7 @@ export class QuestionService {
         id: true,
         authorId: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -955,8 +956,9 @@ export class QuestionService {
       );
       const latestSubmissionAt = authorQuestions.reduce(
         (latest: any, q: any) => {
-          return !latest || new Date(q.createdAt) > new Date(latest)
-            ? q.createdAt
+          const date = q.updatedAt || q.createdAt;
+          return !latest || new Date(date) > new Date(latest)
+            ? date
             : latest;
         },
         null as Date | null,
@@ -968,6 +970,32 @@ export class QuestionService {
         latestSubmissionAt,
       };
     });
+
+    const matchedAuthorIds = new Set(authors.map((a: any) => a.id));
+    const unassignedQuestions = pendingQuestions.filter(
+      (q: any) => !q.authorId || !matchedAuthorIds.has(q.authorId),
+    );
+
+    if (unassignedQuestions.length > 0) {
+      const latestSubmissionAt = unassignedQuestions.reduce(
+        (latest: any, q: any) => {
+          const date = q.updatedAt || q.createdAt;
+          return !latest || new Date(date) > new Date(latest)
+            ? date
+            : latest;
+        },
+        null as Date | null,
+      );
+
+      result.push({
+        id: "unassigned",
+        name: "Unassigned Submissions",
+        email: "system@boardquest.internal",
+        role: "SYSTEM",
+        pendingCount: unassignedQuestions.length,
+        latestSubmissionAt,
+      });
+    }
 
     return result.sort((a: any, b: any) => b.pendingCount - a.pendingCount);
   }
@@ -1034,11 +1062,28 @@ export class QuestionService {
       },
     });
 
+    const commenter = comment.author;
+    const commenterRole = commenter?.role;
+    const isReviewer =
+      commenterRole === "SUPERADMIN" ||
+      commenterRole === "DEAN" ||
+      commenterRole === "TEAMLEAD";
+
+    const isApprovedReopened =
+      question.status === QuestionStatus.APPROVED && isReviewer;
+
+    // If an approved question receives a comment from an admin reviewer,
+    // transition it back to PENDING_REVISION so it appears on the review questions page
+    if (isApprovedReopened) {
+      await this.db.question.update({
+        where: { id: questionId },
+        data: { status: QuestionStatus.PENDING_REVISION },
+      });
+    }
+
     // Notify author if comment is from another reviewer/user
     if (question.authorId && question.authorId !== authorId) {
       try {
-        const commenter = comment.author;
-        const commenterRole = commenter?.role;
         const roleLabel =
           commenterRole === "SUPERADMIN"
             ? "Super Administrator"
@@ -1056,9 +1101,13 @@ export class QuestionService {
 
         await createNotification({
           recipientId: question.authorId,
-          title: "New Comment on Question",
-          message: `${commenterName} (${roleLabel}) commented on your question: "${contentSnippet}"`,
-          type: "INFO",
+          title: isApprovedReopened
+            ? "Revision Requested on Approved Question"
+            : "New Comment on Question",
+          message: isApprovedReopened
+            ? `${commenterName} (${roleLabel}) requested revisions on your approved question: "${contentSnippet}". It has been returned to the review queue.`
+            : `${commenterName} (${roleLabel}) commented on your question: "${contentSnippet}"`,
+          type: isApprovedReopened ? "WARNING" : "INFO",
           link: `/question-bank/view/${questionId}`,
         });
       } catch (err) {

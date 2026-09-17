@@ -323,28 +323,16 @@ export default function ReviewCenterStudentsTab({
                       <TableCell className="py-2.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {candidate.studentId ? (
-                            <>
-                              <Link
-                                to={`/analytics?studentId=${candidate.studentId}`}
+                            <Link
+                              to={`/student-management/${candidate.studentId}`}
+                            >
+                              <button
+                                className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"
+                                title="View Student Profile & Performance"
                               >
-                                <button
-                                  className="size-7 p-1 text-muted-foreground hover:text-primary rounded-md hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center"
-                                  title="View Game Analytics"
-                                >
-                                  <BarChart2 size={14} />
-                                </button>
-                              </Link>
-                              <Link
-                                to={`/student-management/${candidate.studentId}`}
-                              >
-                                <button
-                                  className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"
-                                  title="View Student Profile"
-                                >
-                                  <Eye size={14} />
-                                </button>
-                              </Link>
-                            </>
+                                <Eye size={14} />
+                              </button>
+                            </Link>
                           ) : (
                             <span
                               className="text-[10px] font-medium text-muted-foreground/60 px-2 py-0.5 bg-muted/40 rounded border border-border/40"

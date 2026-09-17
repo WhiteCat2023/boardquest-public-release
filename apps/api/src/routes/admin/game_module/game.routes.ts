@@ -8,6 +8,15 @@ import {
   deleteBadge,
 } from "../../../controller/admin/game_module/gameBadge.controller";
 import {
+  getAllRanks,
+  getRankById,
+  createRank,
+  updateRank,
+  toggleRankActive,
+  deleteRank,
+  getRankStudents,
+} from "../../../controller/admin/game_module/gameRank.controller";
+import {
   getGameConfig,
   updateGameConfig,
   getLeaderboard,
@@ -52,6 +61,37 @@ router.delete(
   authenticateToken,
   requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   deleteBadge
+);
+
+// ============================================
+// RANKS MANAGEMENT (CMS) ROUTES
+// ============================================
+router.get("/ranks", optionalAuth, getAllRanks);
+router.get("/ranks/:id", optionalAuth, getRankById);
+router.get("/ranks/:id/students", optionalAuth, getRankStudents);
+router.post(
+  "/ranks",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  createRank
+);
+router.put(
+  "/ranks/:id",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  updateRank
+);
+router.patch(
+  "/ranks/:id/toggle",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  toggleRankActive
+);
+router.delete(
+  "/ranks/:id",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  deleteRank
 );
 
 // ============================================

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { MessageSquare, X, AlertCircle, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import useAuth from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import {
   useDeleteQuestionComment,
   useToggleResolveComment,
 } from "../api/useQuestionComments";
+import { useQuestionDetail } from "../api/useQuestionBank";
 import UnresolvedCommentsWarningBanner from "./comments/UnresolvedCommentsWarningBanner";
 import CommentInputForm from "./comments/CommentInputForm";
 import CommentFilterToolbar from "./comments/CommentFilterToolbar";
@@ -16,22 +17,33 @@ import CommentItem from "./comments/CommentItem";
 
 interface QuestionCommentsPanelProps {
   questionId: string;
+  questionStatus?: string;
   onClose?: () => void;
+  onOpenShortcuts?: () => void;
+  headerRight?: React.ReactNode;
 }
 
 export default function QuestionCommentsPanel({
   questionId,
+  questionStatus,
   onClose,
+  onOpenShortcuts,
+  headerRight,
 }: QuestionCommentsPanelProps) {
   const { auth } = useAuth();
   const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
   const currentUserId = currentUser?.id || (auth as any)?.data?.id || (auth as any)?.id;
   const currentUserRole = currentUser?.role || (auth as any)?.data?.user?.role;
+  const normRole = String(currentUserRole || "").toUpperCase();
+  const isReviewer = ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(normRole);
 
   const [commentFilter, setCommentFilter] = useState<"ALL" | "OPEN" | "RESOLVED">("ALL");
   const [visibleCount, setVisibleCount] = useState(5);
 
   const { data: comments = [], isLoading } = useQuestionComments(questionId);
+  const { data: detailData } = useQuestionDetail(questionId);
+  const activeStatus = questionStatus || detailData?.status;
+  const isApproved = activeStatus === "APPROVED";
   const addCommentMutation = useAddQuestionComment(questionId);
   const deleteCommentMutation = useDeleteQuestionComment(questionId);
   const toggleResolveMutation = useToggleResolveComment(questionId);
@@ -52,30 +64,51 @@ export default function QuestionCommentsPanel({
   return (
     <div className="flex flex-col bg-card border border-border rounded-2xl shadow-sm overflow-hidden font-sans">
       {/* Header */}
-      <div className="p-3 px-4 border-b border-border bg-muted/40 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+      <div className="p-3 px-4 border-b border-border bg-muted/40 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
             <MessageSquare size={15} />
           </div>
-          <h3 className="text-xs font-extrabold text-foreground flex items-center gap-1.5 tracking-tight">
+          <h3 className="text-xs font-extrabold text-foreground flex items-center gap-1.5 tracking-tight truncate">
             Question Discussion & Comments
-            <span className="rounded-full bg-primary/10 text-primary px-2 py-0.2 text-[10px] font-extrabold border border-primary/20">
+            <span className="rounded-full bg-primary/10 text-primary px-2 py-0.2 text-[10px] font-extrabold border border-primary/20 shrink-0">
               {comments.length}
             </span>
           </h3>
         </div>
 
-        {onClose && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground"
-          >
-            <X size={14} />
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {headerRight}
+
+          {onOpenShortcuts && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onOpenShortcuts}
+              className="h-7 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground border-border bg-card rounded-lg gap-1.5 cursor-pointer shadow-2xs"
+              title="View keyboard shortcuts"
+            >
+              <Keyboard size={13} className="text-primary" />
+              <span>Shortcuts</span>
+              <kbd className="px-1.5 py-0.2 bg-muted text-[9px] font-mono rounded border border-border">
+                ?
+              </kbd>
+            </Button>
+          )}
+
+          {onClose && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground"
+            >
+              <X size={14} />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Main Container */}
@@ -83,6 +116,16 @@ export default function QuestionCommentsPanel({
         
         {/* Unresolved Comments Warning Banner */}
         <UnresolvedCommentsWarningBanner unresolvedCount={unresolvedCount} />
+
+        {/* Reopen notice for approved questions commented by a reviewer */}
+        {isApproved && isReviewer && (
+          <div className="p-2.5 px-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2 text-[11px] text-amber-700 dark:text-amber-300 leading-snug">
+            <AlertCircle size={14} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <span>
+              Posting a reviewer comment will reopen this approved question and return it to the <strong>Review Questions</strong> desk for revision.
+            </span>
+          </div>
+        )}
 
         {/* Comment Input Form */}
         <CommentInputForm

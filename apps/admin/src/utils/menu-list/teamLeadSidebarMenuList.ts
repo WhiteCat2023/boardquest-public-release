@@ -65,11 +65,6 @@ export const teamLeadNavItem: NavItemProps[] = [
     sideBarCategoryName: "STUDENT MANAGEMENT",
     content: [
       {
-        title: "Performance",
-        path: "/analytics",
-        icon: "BarChart2",
-      },
-      {
         title: "Game Management",
         path: "/game-management",
         icon: "Gamepad2",

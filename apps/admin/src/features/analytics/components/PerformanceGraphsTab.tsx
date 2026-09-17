@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TrendingUp, BarChart2, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,46 +8,98 @@ interface PerformanceGraphsTabProps {
   report: StudentAnalyticsResult;
 }
 
+interface ChartPoint {
+  x: number;
+  y: number;
+  data: PerformanceTrendItem;
+  index: number;
+}
+
 export function PerformanceGraphsTab({ report }: PerformanceGraphsTabProps) {
   const [hoverTrendPoint, setHoverTrendPoint] = useState<PerformanceTrendItem | null>(null);
 
-  const trendData = Array.isArray(report?.performanceTrend) ? report.performanceTrend : [];
+  const trendData = useMemo<PerformanceTrendItem[]>(
+    () => (Array.isArray(report?.performanceTrend) ? report.performanceTrend : []),
+    [report?.performanceTrend]
+  );
   const masteryList = Array.isArray(report?.metrics?.mastery) ? report.metrics.mastery : [];
   const easyData = report?.difficultyBreakdown?.easy || { attempted: 0, accuracy: 0 };
   const mediumData = report?.difficultyBreakdown?.medium || { attempted: 0, accuracy: 0 };
   const hardData = report?.difficultyBreakdown?.hard || { attempted: 0, accuracy: 0 };
 
-  const svgWidth = 600;
-  const svgHeight = 220;
-  const paddingX = 36;
-  const paddingY = 24;
-  const minVal = 40;
-  const maxVal = 100;
+  const activeTrendPoint = hoverTrendPoint || (trendData.length > 0 ? trendData[trendData.length - 1] : null);
+
+  // SVG Chart Geometry with proper breathing room
+  const svgWidth = Math.max(680, trendData.length * 36);
+  const svgHeight = 250;
+  const paddingLeft = 46;
+  const paddingRight = 24;
+  const paddingTop = 24;
+  const paddingBottom = 46;
+
+  const usableWidth = svgWidth - paddingLeft - paddingRight;
+  const usableHeight = svgHeight - paddingTop - paddingBottom;
+  const baselineY = svgHeight - paddingBottom;
 
   const getX = (idx: number) => {
-    const step = trendData.length > 1 ? (svgWidth - paddingX * 2) / (trendData.length - 1) : 0;
-    return paddingX + idx * step;
+    if (trendData.length <= 1) return paddingLeft + usableWidth / 2;
+    return paddingLeft + (idx / (trendData.length - 1)) * usableWidth;
   };
 
   const getY = (val: number) => {
-    const usableHeight = svgHeight - paddingY * 2;
-    const ratio = (val - minVal) / (maxVal - minVal);
-    return svgHeight - paddingY - ratio * usableHeight;
+    // Clamped strictly between 0 and 100% so points never overflow below the baseline
+    const clamped = Math.max(0, Math.min(100, Number(val) || 0));
+    return baselineY - (clamped / 100) * usableHeight;
   };
 
-  const scorePoints = trendData.map((d, i) => ({ x: getX(i), y: getY(d.score), data: d }));
-  const accuracyPoints = trendData.map((d, i) => ({ x: getX(i), y: getY(d.accuracy), data: d }));
+  const scorePoints = useMemo<ChartPoint[]>(
+    () => trendData.map((d: PerformanceTrendItem, i: number): ChartPoint => ({ x: getX(i), y: getY(d.score), data: d, index: i })),
+    [trendData, baselineY, usableHeight, usableWidth]
+  );
 
-  const scorePath = scorePoints.reduce((acc, pt, idx, arr) => {
-    if (idx === 0) return `M ${pt.x},${pt.y}`;
-    const prev = arr[idx - 1];
-    const cx = (prev.x + pt.x) / 2;
-    return `${acc} C ${cx},${prev.y} ${cx},${pt.y} ${pt.x},${pt.y}`;
-  }, "");
+  const accuracyPoints = useMemo<ChartPoint[]>(
+    () => trendData.map((d: PerformanceTrendItem, i: number): ChartPoint => ({ x: getX(i), y: getY(d.accuracy), data: d, index: i })),
+    [trendData, baselineY, usableHeight, usableWidth]
+  );
 
-  const scoreArea = scorePoints.length > 0
-    ? `${scorePath} L ${scorePoints[scorePoints.length - 1].x},${svgHeight - paddingY} L ${scorePoints[0].x},${svgHeight - paddingY} Z`
-    : "";
+  const scorePath = useMemo<string>(() => {
+    return scorePoints.reduce((acc: string, pt: ChartPoint, idx: number, arr: ChartPoint[]) => {
+      if (idx === 0) return `M ${pt.x},${pt.y}`;
+      const prev = arr[idx - 1];
+      const cx = (prev.x + pt.x) / 2;
+      return `${acc} C ${cx},${prev.y} ${cx},${pt.y} ${pt.x},${pt.y}`;
+    }, "");
+  }, [scorePoints]);
+
+  const accuracyPath = useMemo<string>(() => {
+    return accuracyPoints.reduce((acc: string, pt: ChartPoint, idx: number, arr: ChartPoint[]) => {
+      if (idx === 0) return `M ${pt.x},${pt.y}`;
+      const prev = arr[idx - 1];
+      const cx = (prev.x + pt.x) / 2;
+      return `${acc} C ${cx},${prev.y} ${cx},${pt.y} ${pt.x},${pt.y}`;
+    }, "");
+  }, [accuracyPoints]);
+
+  const scoreArea = useMemo<string>(() => {
+    if (scorePoints.length <= 1) return "";
+    return `${scorePath} L ${scorePoints[scorePoints.length - 1].x},${baselineY} L ${scorePoints[0].x},${baselineY} Z`;
+  }, [scorePath, scorePoints, baselineY]);
+
+  // Smart X-axis label decimation: prevent label collision regardless of number of attempts
+  const visibleIndices = useMemo<number[]>(() => {
+    if (trendData.length <= 6) {
+      return trendData.map((_: PerformanceTrendItem, i: number) => i);
+    }
+    const count = 5;
+    const step = (trendData.length - 1) / count;
+    const indices = new Set<number>();
+    indices.add(0);
+    for (let i = 1; i < count; i++) {
+      indices.add(Math.round(i * step));
+    }
+    indices.add(trendData.length - 1);
+    return Array.from(indices).sort((a: number, b: number) => a - b);
+  }, [trendData.length]);
 
   return (
     <div className="flex flex-col gap-3.5 sm:gap-4 animate-in fade-in duration-150 min-w-0">
@@ -88,38 +140,59 @@ export function PerformanceGraphsTab({ report }: PerformanceGraphsTabProps) {
               No exam performance history recorded yet.
             </div>
           ) : (
-            <div className="min-w-[480px]">
+            <div className="min-w-[500px]">
               <svg 
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`} 
-                className="w-full h-auto max-h-[260px] overflow-visible"
+                className="w-full h-auto max-h-[280px]"
               >
                 <defs>
                   <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
                   </linearGradient>
+                  <clipPath id="chartPlotArea">
+                    <rect
+                      x={paddingLeft - 8}
+                      y={paddingTop - 8}
+                      width={usableWidth + 16}
+                      height={usableHeight + 16}
+                    />
+                  </clipPath>
                 </defs>
 
-                {/* Grid Horizontal Lines */}
-                {[40, 60, 75, 90, 100].map((val) => {
+                {/* Grid Horizontal Lines: 0, 25, 50, 75 (target), 100 */}
+                {[0, 25, 50, 75, 100].map((val) => {
                   const y = getY(val);
                   const isBenchmark = val === 75;
+                  const isBaseline = val === 0;
                   return (
                     <g key={val}>
                       <line 
-                        x1={paddingX} 
+                        x1={paddingLeft} 
                         y1={y} 
-                        x2={svgWidth - paddingX} 
+                        x2={svgWidth - paddingRight} 
                         y2={y} 
                         stroke="currentColor" 
-                        strokeDasharray={isBenchmark ? "4 4" : "2 2"}
-                        className={isBenchmark ? "text-amber-500/80 stroke-[1.5]" : "text-border/40"}
+                        strokeDasharray={isBaseline ? "none" : isBenchmark ? "5 4" : "2 3"}
+                        className={
+                          isBenchmark
+                            ? "text-amber-500/80 stroke-[1.5]"
+                            : isBaseline
+                            ? "text-border stroke-[1.5]"
+                            : "text-border/40"
+                        }
                       />
                       <text 
-                        x={paddingX - 6} 
+                        x={paddingLeft - 8} 
                         y={y + 3} 
                         textAnchor="end" 
-                        className={`text-[8px] font-bold ${isBenchmark ? "fill-amber-500 font-black" : "fill-muted-foreground"}`}
+                        className={`text-[8.5px] font-bold ${
+                          isBenchmark
+                            ? "fill-amber-500 font-black"
+                            : isBaseline
+                            ? "fill-foreground font-bold"
+                            : "fill-muted-foreground"
+                        }`}
                       >
                         {val}%
                       </text>
@@ -127,74 +200,157 @@ export function PerformanceGraphsTab({ report }: PerformanceGraphsTabProps) {
                   );
                 })}
 
-                {/* Area Fill for Score */}
-                <path d={scoreArea} fill="url(#scoreGradient)" />
+                {/* Plot Area with clipping */}
+                <g clipPath="url(#chartPlotArea)">
+                  {/* Area Fill for Score */}
+                  {scoreArea && <path d={scoreArea} fill="url(#scoreGradient)" />}
 
-                {/* Score Curve */}
-                <path 
-                  d={scorePath} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  className="text-primary"
-                />
-
-                {/* Accuracy Curve */}
-                <path 
-                  d={accuracyPoints.reduce((acc, pt, idx, arr) => {
-                    if (idx === 0) return `M ${pt.x},${pt.y}`;
-                    const prev = arr[idx - 1];
-                    const cx = (prev.x + pt.x) / 2;
-                    return `${acc} C ${cx},${prev.y} ${cx},${pt.y} ${pt.x},${pt.y}`;
-                  }, "")} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeDasharray="3 3"
-                  className="text-emerald-500"
-                />
-
-                {/* Score Points */}
-                {scorePoints.map((pt, idx) => (
-                  <g key={idx} className="cursor-pointer" onMouseEnter={() => setHoverTrendPoint(pt.data)}>
-                    <circle 
-                      cx={pt.x} 
-                      cy={pt.y} 
-                      r="4.5" 
-                      className="fill-background stroke-primary stroke-[2] hover:r-6 transition-all"
+                  {/* Score Curve */}
+                  {scorePath && (
+                    <path 
+                      d={scorePath} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      className="text-primary"
                     />
-                  </g>
-                ))}
+                  )}
 
-                {/* Date Labels below */}
-                {trendData.map((d, i) => (
-                  <text 
-                    key={i} 
-                    x={getX(i)} 
-                    y={svgHeight - 6} 
-                    textAnchor="middle" 
-                    className="text-[8px] font-bold fill-muted-foreground"
-                  >
-                    {d.date}
-                  </text>
-                ))}
+                  {/* Accuracy Curve */}
+                  {accuracyPath && (
+                    <path 
+                      d={accuracyPath} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeDasharray="3 3"
+                      className="text-emerald-500"
+                    />
+                  )}
+
+                  {/* Active Hover Guide Line */}
+                  {activeTrendPoint && (
+                    <line
+                      x1={getX(trendData.indexOf(activeTrendPoint))}
+                      y1={paddingTop}
+                      x2={getX(trendData.indexOf(activeTrendPoint))}
+                      y2={baselineY}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeDasharray="3 3"
+                      className="text-primary/50"
+                    />
+                  )}
+
+                  {/* Accuracy Points */}
+                  {accuracyPoints.map((pt: ChartPoint, idx: number) => {
+                    const isHovered = activeTrendPoint === pt.data;
+                    return (
+                      <circle 
+                        key={`acc-${idx}`} 
+                        cx={pt.x} 
+                        cy={pt.y} 
+                        r={isHovered ? 5 : 3} 
+                        className={`fill-background stroke-emerald-500 transition-all duration-150 ${
+                          isHovered ? "stroke-[2.5]" : "stroke-[1.5]"
+                        }`}
+                      />
+                    );
+                  })}
+
+                  {/* Score Points */}
+                  {scorePoints.map((pt: ChartPoint, idx: number) => {
+                    const isHovered = activeTrendPoint === pt.data;
+                    return (
+                      <circle 
+                        key={`score-${idx}`} 
+                        cx={pt.x} 
+                        cy={pt.y} 
+                        r={isHovered ? 6 : 4} 
+                        className={`fill-background stroke-primary transition-all duration-150 ${
+                          isHovered ? "stroke-[3] drop-shadow-xs" : "stroke-[2]"
+                        }`}
+                      />
+                    );
+                  })}
+                </g>
+
+                {/* X-Axis Ticks & Clean Non-overlapping Labels */}
+                {visibleIndices.map((i: number) => {
+                  const d = trendData[i];
+                  if (!d) return null;
+                  const x = getX(i);
+                  return (
+                    <g key={`x-axis-${i}`}>
+                      {/* Tick marker below baseline */}
+                      <line
+                        x1={x}
+                        y1={baselineY}
+                        x2={x}
+                        y2={baselineY + 5}
+                        stroke="currentColor"
+                        className="text-border stroke-[1.5]"
+                      />
+                      {/* Date label */}
+                      <text 
+                        x={x} 
+                        y={baselineY + 18} 
+                        textAnchor="middle" 
+                        className="text-[9px] font-bold fill-muted-foreground"
+                      >
+                        {d.date}
+                      </text>
+                      {/* Attempt index indicator */}
+                      <text 
+                        x={x} 
+                        y={baselineY + 30} 
+                        textAnchor="middle" 
+                        className="text-[8px] font-medium fill-muted-foreground/60"
+                      >
+                        Exam #{i + 1}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* Interactive Full Column Hover Slices */}
+                {trendData.map((d: PerformanceTrendItem, i: number) => {
+                  const x = getX(i);
+                  const colWidth = trendData.length > 1 ? usableWidth / (trendData.length - 1) : usableWidth;
+                  return (
+                    <rect
+                      key={`col-${i}`}
+                      x={x - colWidth / 2}
+                      y={paddingTop}
+                      width={colWidth}
+                      height={usableHeight + paddingBottom}
+                      fill="transparent"
+                      className="cursor-pointer"
+                      onMouseEnter={() => setHoverTrendPoint(d)}
+                    />
+                  );
+                })}
               </svg>
             </div>
           )}
 
-          {/* Hover Info Tooltip Banner */}
-          {hoverTrendPoint && (
-            <div className="mt-2 p-2 sm:p-2.5 bg-card/90 border border-border/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 text-xs animate-in fade-in duration-100 shadow-xs">
+          {/* Active Hover / Current Result Details Banner */}
+          {activeTrendPoint && (
+            <div className="mt-2.5 p-2.5 sm:p-3 bg-muted/20 border border-border/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs">
               <div className="flex items-center gap-2 min-w-0">
-                <Badge variant="outline" className="text-[9px] font-bold bg-background shrink-0">
-                  {hoverTrendPoint.date}
+                <Badge variant="outline" className="text-[10px] font-bold bg-background shrink-0 border-border">
+                  {activeTrendPoint.date}
                 </Badge>
-                <span className="font-bold text-foreground text-xs truncate">{hoverTrendPoint.examName}</span>
-                <span className="text-[11px] text-muted-foreground truncate">({hoverTrendPoint.subject})</span>
+                <span className="font-bold text-foreground text-xs truncate">{activeTrendPoint.examName}</span>
+                <span className="text-[11px] text-muted-foreground truncate">({activeTrendPoint.subject})</span>
               </div>
               <div className="flex items-center gap-3 font-bold text-xs shrink-0">
-                <span className="text-primary">Score: {hoverTrendPoint.score}%</span>
-                <span className="text-emerald-500">Accuracy: {hoverTrendPoint.accuracy}%</span>
+                <span className="inline-flex items-center gap-1.5 text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg">
+                  Score: {activeTrendPoint.score}%
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg">
+                  Accuracy: {activeTrendPoint.accuracy}%
+                </span>
               </div>
             </div>
           )}

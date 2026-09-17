@@ -554,6 +554,7 @@ export default function ViewQuestion() {
         <aside className="w-full lg:w-[320px] shrink-0 self-start sticky top-6 transition-all duration-300 animate-in slide-in-from-right-4">
           <QuestionCommentsPanel
             questionId={questionId}
+            questionStatus={question?.status}
             onClose={() => setShowComments(false)}
           />
         </aside>

@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+ // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
@@ -57,6 +57,10 @@ enum BadgeCategory {
   BOSS
   SUBJECT
   EXAM
+  PERFORMANCE
+  SPEED
+  MASTERY
+  SPECIAL
 }
 
 enum AccountStatus {
@@ -562,7 +566,7 @@ model Badge {
   title           String   // 'Master', 'Adept', 'Aspirant', 'Swift Solver', 'Boss Slayer'
   name            String   // 'Gold Quest Badge', 'Silver Quest Badge', 'Speed Master'
   description     String   // Full description of unlock conditions
-  category        BadgeCategory  @default(QUEST) 
+  category        String   @default("QUEST")
   tier            String?  @default("STANDARD")
   icon            String   // 'trophy', 'flame', 'zap', 'shield', 'crown'
   spriteUrl       String?  // '/ui/gold-badge.png', '/ui/master-badge.png', etc.

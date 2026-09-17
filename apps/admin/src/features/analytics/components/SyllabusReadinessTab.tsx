@@ -39,7 +39,13 @@ export function SyllabusReadinessTab({ report }: SyllabusReadinessTabProps) {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-emerald-500 stroke-current transition-all duration-1000"
+                className={`${
+                  readinessScore >= 75
+                    ? "text-emerald-500"
+                    : readinessScore >= 60
+                    ? "text-amber-500"
+                    : "text-rose-500"
+                } stroke-current transition-all duration-1000`}
                 strokeDasharray={`${readinessScore}, 100`}
                 strokeWidth="3.5"
                 strokeLinecap="round"
@@ -48,8 +54,28 @@ export function SyllabusReadinessTab({ report }: SyllabusReadinessTabProps) {
               />
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
-              <span className="text-2xl sm:text-2.5xl font-black text-foreground">{readinessScore}%</span>
-              <span className="text-[8px] sm:text-[9px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">High Probability</span>
+              <span className="text-2xl sm:text-2.5xl font-black text-foreground">
+                {typeof readinessScore === "number"
+                  ? readinessScore % 1 !== 0
+                    ? readinessScore.toFixed(1)
+                    : readinessScore
+                  : readinessScore}%
+              </span>
+              <span
+                className={`text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider ${
+                  readinessScore >= 75
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : readinessScore >= 60
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-rose-600 dark:text-rose-400"
+                }`}
+              >
+                {readinessScore >= 75
+                  ? "High Probability"
+                  : readinessScore >= 60
+                  ? "In Training"
+                  : "Needs Remediation"}
+              </span>
             </div>
           </div>
 

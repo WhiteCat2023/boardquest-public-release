@@ -167,17 +167,26 @@ export class StudentService {
                 xp: true,
                 streak: true,
                 location: true,
+                equippedItem: true,
                 createdAt: true,
+                studyPlans: {
+                    select: {
+                        id: true,
+                        subject: true,
+                        startDate: true,
+                        endDate: true,
+                        targetDate: true,
+                    },
+                },
                 achievements: {
                     orderBy: { timestamp: "desc" },
                     take: 5,
                 },
+                mastery: true,
+                examResults: {
+                    orderBy: { timestamp: "desc" },
+                },
                 userBadges: {
-                    where: {
-                        badge: {
-                            isActive: true,
-                        },
-                    },
                     include: {
                         badge: true,
                     },
@@ -201,11 +210,50 @@ export class StudentService {
             },
         });
         const total = await this.db.user.count({ where });
-        // Ensure deactivated badges are stripped out on backend level
-        const sanitizedStudents = students.map((s) => ({
-            ...s,
-            userBadges: (s.userBadges || []).filter((ub) => !ub.badge || ub.badge.isActive !== false),
-        }));
+        // Fetch batch UserSettings for these students from MongoDB collection
+        const studentIds = students.map((s) => s.id);
+        const userSettingsMap = new Map();
+        if (studentIds.length > 0) {
+            try {
+                const rawSettings = await this.db.$runCommandRaw({
+                    find: "UserSettings",
+                    filter: { userId: { $in: studentIds } },
+                });
+                const batch = rawSettings?.cursor?.firstBatch || [];
+                for (const item of batch) {
+                    if (item?.userId) {
+                        userSettingsMap.set(item.userId, {
+                            ...item,
+                            id: item._id?.toString?.() || item._id,
+                            targetExamDate: item.targetExamDate ? new Date(item.targetExamDate).toISOString() : null,
+                        });
+                    }
+                }
+            }
+            catch (err) {
+                // Silently continue if collection is not yet populated
+            }
+        }
+        // Ensure deactivated badges are stripped out and attach target period info
+        const sanitizedStudents = students.map((s) => {
+            const settings = userSettingsMap.get(s.id) || null;
+            const plans = (s.studyPlans || []).map((p) => ({
+                ...p,
+                endDate: p.endDate || p.targetDate,
+            }));
+            // Calculate active objective milestone
+            const now = new Date();
+            const futurePlans = plans
+                .filter((p) => p.endDate && new Date(p.endDate) >= now)
+                .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+            const activeObj = futurePlans.length > 0 ? futurePlans[0] : (plans[0] || null);
+            return {
+                ...s,
+                userSettings: settings,
+                activeObjective: activeObj,
+                userBadges: (s.userBadges || []).filter((ub) => !ub.badge || ub.badge.isActive !== false),
+            };
+        });
         return {
             data: sanitizedStudents,
             pagination: {
@@ -217,7 +265,242 @@ export class StudentService {
         };
     }
     /**
-     * Get student profile by ID
+     * Helper to calculate technical performance, pointing scorecard, accuracy history,
+     * and study target periods matching BoardQuesters algorithms.
+     */
+    computePerformanceAndTargets(student, userSettings, dbSubjects) {
+        const OFFICIAL_DISCIPLINES = [
+            "Clinical Chemistry",
+            "Microbiology",
+            "Hematology",
+            "Immunology & Serology and Immunohematology",
+            "Clinical Microscopy & Parasitology",
+            "Histopathology and Medtech Laws",
+        ];
+        const dbSubjectNames = Array.isArray(dbSubjects) && dbSubjects.length > 0
+            ? dbSubjects
+                .filter((s) => {
+                const lower = (s.name || "").toLowerCase().trim();
+                const isOfficial = OFFICIAL_DISCIPLINES.some((o) => lower.includes(o.toLowerCase()) || o.toLowerCase().includes(lower));
+                const hasModules = Array.isArray(s.modules) && s.modules.some((m) => m.isPublished !== false);
+                return isOfficial || hasModules;
+            })
+                .map((s) => s.name)
+            : null;
+        const STANDARD_SUBJECTS = (dbSubjectNames && dbSubjectNames.length > 0)
+            ? dbSubjectNames
+            : OFFICIAL_DISCIPLINES;
+        const RADAR_LABELS = {
+            "Clinical Chemistry": "Chemistry",
+            "Hematology": "Hematology",
+            "Microbiology": "Microbiology",
+            "Immunology & Serology and Immunohematology": "Immunochem",
+            "Clinical Microscopy & Parasitology": "Microscopy",
+            "Histopathology & MT Laws": "Histopath",
+            "Histopathology and Medtech Laws": "Histopath",
+        };
+        const CURRICULUM_LESSONS_MAP = {
+            "Clinical Chemistry": 2,
+            "Hematology": 2,
+            "Microbiology": 2,
+            "Immunology & Serology and Immunohematology": 2,
+            "Clinical Microscopy & Parasitology": 2,
+            "Histopathology & MT Laws": 2,
+            "Histopathology and Medtech Laws": 2,
+        };
+        if (Array.isArray(dbSubjects) && dbSubjects.length > 0) {
+            dbSubjects.forEach((sub) => {
+                const count = Array.isArray(sub.modules) ? sub.modules.filter((m) => m.isPublished !== false).length : 0;
+                if (count > 0) {
+                    CURRICULUM_LESSONS_MAP[sub.name] = count;
+                }
+            });
+        }
+        const normalize = (name) => {
+            const lower = (name || "").toLowerCase();
+            if (lower.includes("chem"))
+                return "Clinical Chemistry";
+            if (lower.includes("hemat"))
+                return "Hematology";
+            if (lower.includes("microb"))
+                return "Microbiology";
+            if (lower.includes("immuno") || lower.includes("serolog") || lower.includes("blood bank")) {
+                return "Immunology & Serology and Immunohematology";
+            }
+            if (lower.includes("microscop") || lower.includes("parasit") || lower.includes("urinalysis")) {
+                return "Clinical Microscopy & Parasitology";
+            }
+            if (lower.includes("histo") || lower.includes("law")) {
+                return "Histopathology and Medtech Laws";
+            }
+            return name;
+        };
+        const allCompletions = student.lessonCompletions || [];
+        const allExamResults = student.examResults || [];
+        const allMastery = student.mastery || [];
+        const allAchievements = student.achievements || [];
+        const allStudyPlans = (student.studyPlans || []).map((sp) => ({
+            ...sp,
+            startDate: sp.startDate ? new Date(sp.startDate).toISOString() : (sp.createdAt ? new Date(sp.createdAt).toISOString() : new Date().toISOString()),
+            endDate: sp.endDate ? new Date(sp.endDate).toISOString() : (sp.targetDate ? new Date(sp.targetDate).toISOString() : new Date().toISOString()),
+            targetDate: sp.targetDate ? new Date(sp.targetDate).toISOString() : (sp.endDate ? new Date(sp.endDate).toISOString() : new Date().toISOString()),
+        }));
+        // 1. Compute Subject Metrics
+        const subjectMetrics = STANDARD_SUBJECTS.map((subjectName) => {
+            const normSubject = subjectName.trim().toLowerCase();
+            const totalLessons = CURRICULUM_LESSONS_MAP[subjectName] || 2;
+            const completedCount = allCompletions.filter((c) => {
+                const s = (c.subject || "").trim().toLowerCase();
+                return (s === normSubject || s.includes(normSubject) || normSubject.includes(s)) && c.status === "completed";
+            }).length;
+            const completion = totalLessons > 0 ? Math.min(100, Math.round((completedCount / totalLessons) * 100)) : 0;
+            const matchedExams = allExamResults.filter((e) => {
+                const s = normalize(e.subject || "");
+                return s === subjectName;
+            });
+            const totalQAnswered = matchedExams.reduce((sum, r) => sum + (r.total || 0), 0);
+            const totalCorrect = matchedExams.reduce((sum, r) => sum + (r.score || 0), 0);
+            const rawAccuracy = totalQAnswered > 0 ? (totalCorrect / totalQAnswered) * 100 : 0;
+            const volumeWeight = Math.min(1.0, totalQAnswered / 100);
+            const dbMasteryRecord = allMastery.find((m) => normalize(m.subject || "") === subjectName);
+            let proficiency = 0;
+            if (totalQAnswered > 0) {
+                proficiency = Math.round(rawAccuracy * volumeWeight);
+            }
+            else if (dbMasteryRecord && typeof dbMasteryRecord.proficiency === "number") {
+                proficiency = dbMasteryRecord.proficiency;
+            }
+            let status = "Not Started";
+            if (totalQAnswered === 0 && completion === 0) {
+                status = "Not Started";
+            }
+            else if (proficiency >= 80 && totalQAnswered >= 25) {
+                status = "Mastered";
+            }
+            else if (proficiency >= 65 && totalQAnswered >= 15) {
+                status = "Proficient";
+            }
+            else if (proficiency >= 35 || totalQAnswered >= 1) {
+                status = "In Training";
+            }
+            else {
+                status = "Needs Focus";
+            }
+            // BoardQuesters pointing formula: 25 Pts per correct question answered + 6 Pts per % completion (capped at 1,200 max)
+            const points = Math.min(1200, Math.round(totalCorrect * 25 + completion * 6));
+            return {
+                subject: subjectName,
+                shortName: subjectName.split(" ")[0],
+                radarLabel: RADAR_LABELS[subjectName] || subjectName.split(" ")[0],
+                completion,
+                mastery: Math.round(rawAccuracy),
+                proficiency,
+                totalQuestionsAnswered: totalQAnswered,
+                totalCorrect,
+                masteryStatus: status,
+                status,
+                points,
+            };
+        });
+        // 2. Compute pointing system totals
+        const disciplinePoints = subjectMetrics.reduce((acc, m) => acc + (m.points || 0), 0);
+        const totalPoints = disciplinePoints + (student.xp || 0);
+        const avgProficiency = subjectMetrics.length > 0
+            ? subjectMetrics.reduce((acc, m) => acc + m.proficiency, 0) / subjectMetrics.length
+            : 0;
+        const avgCompletion = subjectMetrics.length > 0
+            ? Math.round(subjectMetrics.reduce((acc, m) => acc + m.completion, 0) / subjectMetrics.length)
+            : 0;
+        const masteredCount = subjectMetrics.filter((m) => m.status === "Mastered").length;
+        // Standing Tier
+        let tierStanding = "In Training";
+        if (avgProficiency >= 85)
+            tierStanding = "High Distinction";
+        else if (avgProficiency >= 70)
+            tierStanding = "Proficient Standing";
+        else if (avgProficiency < 50 && totalPoints < 500)
+            tierStanding = "Needs Focus";
+        // 3. Compute Accuracy History Bar Chart Data
+        const accuracyHistory = STANDARD_SUBJECTS.map((subName) => {
+            const canonical = normalize(subName);
+            const relevantExams = allExamResults.filter((e) => normalize(e.subject || "") === canonical);
+            const relevantAchievements = allAchievements.filter((a) => normalize(a.subject || "") === canonical && a.accuracy !== null && a.accuracy !== undefined);
+            let avgAcc = 0;
+            let attemptCount = relevantExams.length;
+            const totalScore = relevantExams.reduce((sum, r) => sum + (r.score || 0), 0);
+            const totalQuestions = relevantExams.reduce((sum, r) => sum + (r.total || 0), 0);
+            if (relevantExams.length > 0) {
+                const sumAcc = relevantExams.reduce((sum, r) => sum + (r.accuracy || 0), 0);
+                avgAcc = Math.round(sumAcc / relevantExams.length);
+            }
+            else if (relevantAchievements.length > 0) {
+                const sumAcc = relevantAchievements.reduce((sum, a) => sum + (a.accuracy || 0), 0);
+                avgAcc = Math.round(sumAcc / relevantAchievements.length);
+                attemptCount = relevantAchievements.length;
+            }
+            return {
+                subject: RADAR_LABELS[canonical] || canonical.split(" ")[0],
+                fullSubjectName: canonical,
+                avgAccuracy: avgAcc,
+                attemptCount,
+                totalScore,
+                totalQuestions,
+            };
+        });
+        // 4. Compute Active Mission Objective Milestone
+        const now = new Date();
+        const futurePlans = allStudyPlans
+            .filter((p) => new Date(p.endDate || p.targetDate || p.createdAt) >= now)
+            .sort((a, b) => {
+            const dateA = new Date(a.endDate || a.targetDate || a.createdAt).getTime();
+            const dateB = new Date(b.endDate || b.targetDate || b.createdAt).getTime();
+            return dateA - dateB;
+        });
+        const activePlan = futurePlans.length > 0 ? futurePlans[0] : (allStudyPlans[0] || null);
+        let activeObjective = null;
+        if (activePlan) {
+            const targetEndDate = new Date(activePlan.endDate || activePlan.targetDate || activePlan.createdAt);
+            const diffDays = Math.max(0, Math.ceil((targetEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+            const matchedMetric = subjectMetrics.find((m) => normalize(m.subject) === normalize(activePlan.subject));
+            activeObjective = {
+                id: typeof activePlan.id === "object" && activePlan.id ? activePlan.id.toString() : String(activePlan.id || ""),
+                subject: activePlan.subject,
+                startDate: activePlan.startDate,
+                endDate: activePlan.endDate,
+                targetDate: activePlan.targetDate,
+                daysRemaining: diffDays,
+                mastery: matchedMetric?.proficiency ?? matchedMetric?.mastery ?? 0,
+                completion: matchedMetric?.completion ?? 0,
+                status: matchedMetric?.status ?? "In Training",
+            };
+        }
+        return {
+            userSettings: userSettings || {
+                userId: student.id,
+                focusSubject: "none",
+                targetExamDate: null,
+                targetBatch: "",
+                school: "",
+                dailyQuota: 50,
+                defaultDifficulty: "MEDIUM",
+            },
+            studyPlans: allStudyPlans,
+            subjectMetrics,
+            accuracyHistory,
+            scorecardSummary: {
+                totalPoints,
+                disciplinePoints,
+                avgProficiency: Number(avgProficiency.toFixed(1)),
+                avgCompletion,
+                masteredCount,
+                totalSubjects: STANDARD_SUBJECTS.length,
+                tierStanding,
+            },
+            activeObjective,
+        };
+    }
+    /**
+     * Get student profile by ID with full performance and game target period data
      */
     async getStudentById(studentId) {
         if (!studentId ||
@@ -236,14 +519,11 @@ export class StudentService {
                     examResults: {
                         orderBy: { timestamp: "desc" },
                     },
-                    studyPlans: true,
+                    studyPlans: {
+                        orderBy: { createdAt: "asc" },
+                    },
                     lessonCompletions: true,
                     userBadges: {
-                        where: {
-                            badge: {
-                                isActive: true,
-                            },
-                        },
                         include: {
                             badge: true,
                         },
@@ -267,7 +547,61 @@ export class StudentService {
                 Array.isArray(sanitizedStudent.userBadges)) {
                 sanitizedStudent.userBadges = sanitizedStudent.userBadges.filter((ub) => !ub.badge || ub.badge.isActive !== false);
             }
-            return sanitizedStudent;
+            // Fetch UserSettings from MongoDB collection directly
+            let userSettings = null;
+            try {
+                const rawSettings = await this.db.$runCommandRaw({
+                    find: "UserSettings",
+                    filter: { userId: studentId },
+                });
+                if (rawSettings?.cursor?.firstBatch?.length > 0) {
+                    const item = rawSettings.cursor.firstBatch[0];
+                    userSettings = {
+                        ...item,
+                        id: item._id?.toString?.() || item._id,
+                        targetExamDate: item.targetExamDate ? new Date(item.targetExamDate).toISOString() : null,
+                        createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : null,
+                        updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : null,
+                    };
+                }
+            }
+            catch (err) {
+                // Silently fallback if UserSettings is not present
+            }
+            // Fetch StudyPlans from MongoDB collection directly
+            try {
+                const rawPlansResult = await this.db.$runCommandRaw({
+                    find: "StudyPlan",
+                    filter: { userId: studentId },
+                });
+                const batch = rawPlansResult?.cursor?.firstBatch || [];
+                if (batch.length > 0) {
+                    sanitizedStudent.studyPlans = batch.map((p) => ({
+                        id: p._id?.toString?.() || p._id?.$oid || p._id,
+                        userId: p.userId,
+                        subject: p.subject,
+                        startDate: p.startDate?.$date ? new Date(p.startDate.$date).toISOString() : (p.startDate ? new Date(p.startDate).toISOString() : new Date().toISOString()),
+                        endDate: p.endDate?.$date ? new Date(p.endDate.$date).toISOString() : (p.endDate ? new Date(p.endDate).toISOString() : new Date().toISOString()),
+                        targetDate: p.endDate?.$date ? new Date(p.endDate.$date).toISOString() : (p.endDate ? new Date(p.endDate).toISOString() : new Date().toISOString()),
+                        createdAt: p.createdAt?.$date ? new Date(p.createdAt.$date).toISOString() : new Date().toISOString(),
+                        updatedAt: p.updatedAt?.$date ? new Date(p.updatedAt.$date).toISOString() : new Date().toISOString(),
+                    }));
+                }
+            }
+            catch (err) {
+                // Silently fallback to prisma studyPlans
+            }
+            // Fetch real subjects from database
+            const dbSubjects = await this.db.subject.findMany({
+                select: { id: true, name: true, modules: { select: { id: true, isPublished: true } } },
+                orderBy: { createdAt: "asc" },
+            });
+            // Compute performance metrics and target periods matching BoardQuesters
+            const performanceData = this.computePerformanceAndTargets(sanitizedStudent, userSettings, dbSubjects);
+            return {
+                ...sanitizedStudent,
+                ...performanceData,
+            };
         }
         catch (err) {
             if (err instanceof ApiError)

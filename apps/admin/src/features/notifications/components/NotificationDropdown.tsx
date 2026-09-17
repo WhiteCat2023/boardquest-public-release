@@ -57,13 +57,13 @@ export default function NotificationDropdown() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer border border-transparent hover:border-border outline-hidden focus:ring-2 focus:ring-ring/20 font-sans"
+          className="relative size-7.5 sm:size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer border border-transparent hover:border-border outline-hidden focus:ring-2 focus:ring-ring/20 font-sans"
           title="Notifications"
         >
-          <Bell size={18} />
+          <Bell size={15} />
           {/* Animated Unread Notification Badge */}
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[9px] font-extrabold text-primary-foreground ring-2 ring-background animate-pulse">
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-primary text-[8px] font-extrabold text-primary-foreground ring-1.5 ring-background animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}

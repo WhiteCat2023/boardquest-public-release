@@ -6,8 +6,9 @@ import {
   UserCheck,
   RotateCcw,
   ShieldCheck,
-  Check,
   Clock,
+  LayoutList,
+  Columns2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePendingReviewAuthors, useQuestionBank, FastReviewWorkspace } from "@/features/question-bank";
+import {
+  usePendingReviewAuthors,
+  useQuestionBank,
+  FastReviewWorkspace,
+  ReviewQuestionsTable,
+} from "@/features/question-bank";
+import { type Question } from "@/types/question";
 import ApproveAuthorQuestionsDialog from "../components/review/ApproveAuthorQuestionsDialog";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -40,6 +47,17 @@ export default function ReviewQuestions() {
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "workspace">("table");
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+
+  const handleSelectQuestion = (question: Question, _index: number) => {
+    setSelectedQuestionId(question.id);
+    setViewMode("workspace");
+  };
+
+  const handleBackToTable = () => {
+    setViewMode("table");
+  };
 
   const { data: authors = [], isLoading: isAuthorsLoading } =
     usePendingReviewAuthors({
@@ -231,7 +249,11 @@ export default function ReviewQuestions() {
               return (
                 <button
                   key={author.id}
-                  onClick={() => setSelectedAuthorId(author.id)}
+                  onClick={() => {
+                    setSelectedAuthorId(author.id);
+                    setViewMode("table");
+                    setSelectedQuestionId(null);
+                  }}
                   className={`w-full text-left p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group border ${
                     isSelected
                       ? "bg-primary/10 border-primary/30 shadow-2xs"
@@ -441,17 +463,59 @@ export default function ReviewQuestions() {
                 Reset
               </Button>
             )}
+
+            {/* View Mode Switcher Toggle */}
+            <div className="flex items-center p-0.5 rounded-lg bg-muted/60 border border-border shrink-0 ml-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer ${
+                  viewMode === "table"
+                    ? "bg-card text-foreground shadow-2xs font-bold"
+                    : "text-muted-foreground hover:text-foreground font-medium"
+                }`}
+                title="Show Questions Table"
+              >
+                <LayoutList size={13} />
+                <span>Table</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("workspace")}
+                disabled={questions.length === 0}
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer disabled:opacity-40 ${
+                  viewMode === "workspace"
+                    ? "bg-card text-foreground shadow-2xs font-bold"
+                    : "text-muted-foreground hover:text-foreground font-medium"
+                }`}
+                title="Show Review Workspace"
+              >
+                <Columns2 size={13} />
+                <span>Review Desk</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ── Fast Review Split-Screen Workspace ── */}
+        {/* ── Content: Table or Fast Review Workspace ── */}
         <div className="space-y-3 min-w-0">
-          <FastReviewWorkspace
-            questions={questions}
-            isLoading={isQuestionsLoading}
-            onRefresh={refetchQuestions}
-            selectedAuthor={selectedAuthor}
-          />
+          {viewMode === "table" ? (
+            <ReviewQuestionsTable
+              questions={questions}
+              isLoading={isQuestionsLoading}
+              onSelectQuestion={handleSelectQuestion}
+              selectedAuthor={selectedAuthor}
+            />
+          ) : (
+            <FastReviewWorkspace
+              questions={questions}
+              isLoading={isQuestionsLoading}
+              onRefresh={refetchQuestions}
+              selectedAuthor={selectedAuthor}
+              initialQuestionId={selectedQuestionId}
+              onBackToTable={handleBackToTable}
+            />
+          )}
         </div>
       </main>
 

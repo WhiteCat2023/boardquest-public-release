@@ -32,6 +32,7 @@
     "test": "turbo test",
     "test:api": "pnpm --filter=./apps/api test",
     "test:admin": "pnpm --filter=./apps/admin lint",
+    "test:review-center": "pnpm --filter=./apps/review-center lint",
 
     "prisma:generate": "pnpm --filter=./apps/api exec prisma generate",
     "prisma:migrate:dev": "pnpm --filter=./apps/api prisma migrate dev",

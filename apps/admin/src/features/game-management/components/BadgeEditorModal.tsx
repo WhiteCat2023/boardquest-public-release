@@ -210,6 +210,173 @@ export const BADGE_CATEGORIES: {
     badgeTag: "⚡ EXAM",
     description: "Speed & high precision exam solver",
   },
+  {
+    value: "PERFORMANCE",
+    label: "Performance",
+    badgeTag: "🎯 PERFORMANCE",
+    description: "Accuracy & exam score performance tiers",
+  },
+  {
+    value: "SPEED",
+    label: "Speed",
+    badgeTag: "⚡ SPEED",
+    description: "Rapid completion under time limits",
+  },
+  {
+    value: "MASTERY",
+    label: "Mastery",
+    badgeTag: "🌟 MASTERY",
+    description: "Skill mastery & comprehensive review",
+  },
+  {
+    value: "SPECIAL",
+    label: "Special",
+    badgeTag: "✨ SPECIAL",
+    description: "Seasonal or institutional milestones",
+  },
+];
+
+export const BOARDQUESTERS_PRESETS = [
+  {
+    badgeId: "master",
+    title: "Master",
+    name: "Master Badge",
+    description: "Earned by completing a quest with 100% perfect accuracy. Peak medical tech mastery!",
+    category: "PERFORMANCE" as BadgeCategory,
+    badgeType: "gold" as BadgeType,
+    tier: "GOLD",
+    iconName: "Trophy",
+    spriteUrl: "/ui/master-badge.png",
+    color: "#FFD700",
+    unlockCondition: "100% perfect accuracy",
+    xpReward: 250,
+  },
+  {
+    badgeId: "gold",
+    title: "Gold",
+    name: "Gold Badge",
+    description: "Earned by completing a quest with 80-99% accuracy. Outstanding high performance!",
+    category: "PERFORMANCE" as BadgeCategory,
+    badgeType: "gold" as BadgeType,
+    tier: "GOLD",
+    iconName: "Trophy",
+    spriteUrl: "/ui/gold-badge.png",
+    color: "#FFD700",
+    unlockCondition: "80-99% accuracy",
+    xpReward: 150,
+  },
+  {
+    badgeId: "silver",
+    title: "Silver",
+    name: "Silver Badge",
+    description: "Earned by completing a quest with 60-79% accuracy. Solid medical board competence!",
+    category: "PERFORMANCE" as BadgeCategory,
+    badgeType: "silver" as BadgeType,
+    tier: "SILVER",
+    iconName: "Trophy",
+    spriteUrl: "/ui/silver-badge.png",
+    color: "#C0C0C0",
+    unlockCondition: "60-79% accuracy",
+    xpReward: 100,
+  },
+  {
+    badgeId: "bronze",
+    title: "Bronze",
+    name: "Bronze Badge",
+    description: "Earned by completing a quest with 40-59% accuracy. Good effort on your journey!",
+    category: "PERFORMANCE" as BadgeCategory,
+    badgeType: "bronze" as BadgeType,
+    tier: "BRONZE",
+    iconName: "Trophy",
+    spriteUrl: "/ui/bronze-badge.png",
+    color: "#CD7F32",
+    unlockCondition: "40-59% accuracy",
+    xpReward: 50,
+  },
+  {
+    badgeId: "adept",
+    title: "Adept",
+    name: "Adept Badge",
+    description: "Earned by maintaining a 7-day study streak or reaching high skill milestones.",
+    category: "MASTERY" as BadgeCategory,
+    badgeType: "cosmic" as BadgeType,
+    tier: "STANDARD",
+    iconName: "Star",
+    spriteUrl: "/ui/adept-badge.png",
+    color: "#7986CB",
+    unlockCondition: "7-day streak or High Skill",
+    xpReward: 150,
+  },
+  {
+    badgeId: "speed",
+    title: "Speed Master",
+    name: "Speed Master Badge",
+    description: "Earned by completing a quest in under 2 minutes. Lightning fast!",
+    category: "SPEED" as BadgeCategory,
+    badgeType: "lightning" as BadgeType,
+    tier: "GOLD",
+    iconName: "Zap",
+    spriteUrl: "/ui/speedmaster-badge.png",
+    color: "#FFD700",
+    unlockCondition: "Complete under 2 min",
+    xpReward: 75,
+  },
+  {
+    badgeId: "streak-7",
+    title: "7-Day Streak",
+    name: "Consistent Champion",
+    description: "Maintained a 7-day streak of consistent daily questing.",
+    category: "STREAK" as BadgeCategory,
+    badgeType: "fire" as BadgeType,
+    tier: "STANDARD",
+    iconName: "Flame",
+    spriteUrl: "/ui/adept-badge.png",
+    color: "#FF6B6B",
+    unlockCondition: "7-day streak",
+    xpReward: 150,
+  },
+  {
+    badgeId: "streak-14",
+    title: "14-Day Streak",
+    name: "Unstoppable Streak",
+    description: "Maintained a 14-day streak. Your dedication is inspiring!",
+    category: "STREAK" as BadgeCategory,
+    badgeType: "fire" as BadgeType,
+    tier: "SILVER",
+    iconName: "Flame",
+    spriteUrl: "/ui/silver-badge.png",
+    color: "#FF8C42",
+    unlockCondition: "14-day streak",
+    xpReward: 200,
+  },
+  {
+    badgeId: "streak-30",
+    title: "30-Day Streak",
+    name: "Legendary Streak",
+    description: "Maintained a 30-day streak. You are a true champion of BoardQuest!",
+    category: "STREAK" as BadgeCategory,
+    badgeType: "fire" as BadgeType,
+    tier: "GOLD",
+    iconName: "Flame",
+    spriteUrl: "/ui/master-badge.png",
+    color: "#FFB84D",
+    unlockCondition: "30-day streak",
+    xpReward: 300,
+  },
+  {
+    badgeId: "boss-slayer",
+    title: "Boss Slayer",
+    name: "Subject Master Badge",
+    description: "Conquered major subject board examination simulator.",
+    category: "BOSS" as BadgeCategory,
+    badgeType: "crown" as BadgeType,
+    tier: "MYTHIC",
+    iconName: "Crown",
+    spriteUrl: "/ui/master-badge.png",
+    color: "#9C27B0",
+    unlockCondition: "Complete comprehensive subject mock exam",
+    xpReward: 500,
+  },
 ];
 
 export const ICONS = [
@@ -372,6 +539,35 @@ export function BadgeEditorModal({
     }
   };
 
+  const handleApplyPreset = (preset: typeof BOARDQUESTERS_PRESETS[number]) => {
+    const matchedTier = BADGE_TYPES.find((b) => b.type === preset.badgeType) || BADGE_TYPES[0];
+    setFormData((prev) => ({
+      ...prev,
+      badgeId: preset.badgeId,
+      title: preset.title,
+      name: preset.name,
+      category: preset.category,
+      description: preset.description,
+      unlockCondition: preset.unlockCondition,
+      badgeType: preset.badgeType,
+      tier: preset.tier,
+      iconName: preset.iconName,
+      icon: preset.iconName.toLowerCase(),
+      imageUrl: preset.spriteUrl,
+      spriteUrl: preset.spriteUrl,
+      color: preset.color,
+      bgColor: matchedTier.bgColor,
+      borderColor: matchedTier.borderColor,
+      glowColor: matchedTier.glowColor,
+      xp: preset.xpReward,
+      xpReward: preset.xpReward,
+    }));
+    setImagePreviewUrl(preset.spriteUrl || "");
+    setIsCloudUploaded(Boolean(preset.spriteUrl));
+    setSelectedFile(null);
+    toast.success(`Loaded '${preset.name}' preset!`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim() || !formData.description?.trim()) {
@@ -379,7 +575,7 @@ export function BadgeEditorModal({
       return;
     }
 
-    let finalImageUrl = formData.imageUrl?.trim() || "";
+    let finalImageUrl = formData.imageUrl?.trim() || formData.spriteUrl?.trim() || "";
 
     // If there is a local file pending upload, upload it to cloud before saving
     if (selectedFile && !isCloudUploaded) {
@@ -399,7 +595,7 @@ export function BadgeEditorModal({
         setImagePreviewUrl(finalImageUrl);
         setSelectedFile(null);
         setIsCloudUploaded(true);
-        setFormData((prev) => ({ ...prev, imageUrl: finalImageUrl }));
+        setFormData((prev) => ({ ...prev, imageUrl: finalImageUrl, spriteUrl: finalImageUrl }));
         toast.success("Badge image uploaded to Supabase Cloud Storage!");
       } catch (err: any) {
         console.error("Storage upload before save failed:", err);
@@ -417,20 +613,25 @@ export function BadgeEditorModal({
     const currentTier =
       BADGE_TYPES.find((t) => t.type === formData.badgeType) || BADGE_TYPES[0];
 
+    const cleanSlug = (formData.badgeId || formData.title || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
     onSave({
       id: formData.id || "",
-      badgeId:
-        formData.badgeId ||
-        formData.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      badgeId: cleanSlug,
       title: formData.title.trim(),
-      name: formData.name || formData.title.trim(),
+      name: formData.name?.trim() || formData.title.trim(),
       category: formData.category || "QUEST",
+      tier: formData.tier || currentTier.type.toUpperCase(),
       description: formData.description.trim(),
-      icon: formData.icon || formData.iconName || "trophy",
+      icon: (formData.iconName || formData.icon || "trophy").toLowerCase(),
       spriteUrl: finalImageUrl || null,
       color: formData.color || currentTier.color,
       unlockCondition:
-        formData.unlockCondition || `Complete ${formData.title.trim()}`,
+        formData.unlockCondition?.trim() || `Complete ${formData.title.trim()}`,
       xpReward: Number(formData.xpReward) || Number(formData.xp) || 50,
       confidenceFactor: Number(formData.confidenceFactor) || 1.0,
       isActive: formData.isActive ?? true,
@@ -659,11 +860,43 @@ export function BadgeEditorModal({
 
               {/* Section 2: General Information */}
               <div className="p-4 rounded-2xl border border-border/80 bg-accent/15 space-y-4">
-                <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                  <SlidersHorizontal className="w-4 h-4 text-primary" />
-                  <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
-                    2. Badge Details & Identity
-                  </h3>
+                <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-primary" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
+                      2. Badge Details & Identity
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-semibold">
+                    Synced with BoardQuesters Engine
+                  </span>
+                </div>
+
+                {/* Quick Presets Bar */}
+                <div className="space-y-1.5 p-2.5 rounded-xl bg-background/60 border border-border/80">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>BoardQuesters Preset Badges (Click to auto-populate)</span>
+                    </Label>
+                    <span className="text-[10px] font-mono text-muted-foreground">Standard Game Slugs</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                    {BOARDQUESTERS_PRESETS.map((p) => (
+                      <button
+                        key={p.badgeId}
+                        type="button"
+                        onClick={() => handleApplyPreset(p)}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition-all cursor-pointer ${
+                          formData.badgeId === p.badgeId
+                            ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                            : "bg-card hover:bg-accent hover:border-primary/50 text-foreground border-border/80"
+                        }`}
+                      >
+                        {p.title} <span className="font-mono text-[9px] opacity-75">({p.badgeId})</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -673,14 +906,43 @@ export function BadgeEditorModal({
                     </Label>
                     <Input
                       id="title"
-                      placeholder="e.g., Sharp Mind, On Fire"
+                      placeholder="e.g., Speed Master, Master"
                       value={formData.title || ""}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          title: val,
+                          badgeId: prev.badgeId ? prev.badgeId : val.toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
+                        }));
+                      }}
                       className="h-9 text-xs font-semibold bg-background"
                       required
                     />
                   </div>
 
+                  <div className="space-y-1.5">
+                    <Label htmlFor="badgeId" className="text-xs font-bold text-foreground flex items-center justify-between">
+                      <span>Badge Slug / ID <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] font-mono text-muted-foreground">Game linking slug</span>
+                    </Label>
+                    <Input
+                      id="badgeId"
+                      placeholder="e.g., speed, master, gold, streak-7"
+                      value={formData.badgeId || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          badgeId: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
+                        })
+                      }
+                      className="h-9 text-xs font-mono font-semibold bg-background"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="category" className="text-xs font-bold text-foreground">
                       Category
@@ -704,15 +966,28 @@ export function BadgeEditorModal({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="unlockCondition" className="text-xs font-bold text-foreground">
+                      Unlock Condition Short Text
+                    </Label>
+                    <Input
+                      id="unlockCondition"
+                      placeholder="e.g., 100% perfect accuracy, 7-day streak"
+                      value={formData.unlockCondition || ""}
+                      onChange={(e) => setFormData({ ...formData, unlockCondition: e.target.value })}
+                      className="h-9 text-xs font-semibold bg-background"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="description" className="text-xs font-bold text-foreground">
-                    Description & Unlock Criteria <span className="text-rose-500">*</span>
+                    Description & Unlock Details <span className="text-rose-500">*</span>
                   </Label>
                   <Textarea
                     id="description"
-                    placeholder="e.g., Achieved high accuracy (>=80%) on diagnostic evaluations"
+                    placeholder="e.g., Earned by completing a quest with 100% perfect accuracy."
                     value={formData.description || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })

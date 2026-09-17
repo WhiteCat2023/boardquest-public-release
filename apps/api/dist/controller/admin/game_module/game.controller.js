@@ -13,9 +13,7 @@ export const completeGameSession = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Unauthorized");
     }
     // Validate input
-    if (typeof score !== "number" ||
-        typeof total !== "number" ||
-        !subject) {
+    if (typeof score !== "number" || typeof total !== "number" || !subject) {
         throw new ApiError(400, "Invalid input: score, total, and subject are required");
     }
     if (score < 0 || score > total || total <= 0) {
@@ -91,10 +89,7 @@ export const getGameConfig = asyncHandler(async (req, res) => {
 export const updateGameConfig = asyncHandler(async (req, res) => {
     const { baseXP, xpMultiplier, streakBonus, accuracyThreshold } = req.body;
     // Validate at least one field is provided
-    if (!baseXP &&
-        !xpMultiplier &&
-        !streakBonus &&
-        !accuracyThreshold) {
+    if (!baseXP && !xpMultiplier && !streakBonus && !accuracyThreshold) {
         throw new ApiError(400, "At least one configuration value is required");
     }
     gameFacade.updateConfig({

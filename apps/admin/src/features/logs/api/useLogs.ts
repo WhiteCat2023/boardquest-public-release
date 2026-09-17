@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import useAuth from "@/hooks/useAuth";
 
 export type LogLevelType = "INFO" | "WARN" | "ERROR" | "FATAL";
 
@@ -30,6 +31,8 @@ export interface UseLogsParams {
 
 export function useLogs({ level = "ALL", search = "" }: UseLogsParams = {}) {
   const axiosPrivate = useAxiosPrivate();
+  const { auth } = useAuth();
+  const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
 
   return useQuery<LogItem[]>({
     queryKey: ["system-logs", level, search],
@@ -39,17 +42,33 @@ export function useLogs({ level = "ALL", search = "" }: UseLogsParams = {}) {
           params: { level, search, limit: 200 },
         });
         return response.data?.data?.logs || response.data?.logs || [];
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error?.response?.status === 401 ||
+          error?.response?.status === 403 ||
+          error?.status === 401 ||
+          error?.status === 403
+        ) {
+          throw error;
+        }
         console.warn("Failed to fetch system logs from backend:", error);
         return [];
       }
     },
-    refetchInterval: 5000,
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      if (!isAuthenticated || query.state.error) {
+        return false;
+      }
+      return 5000;
+    },
   });
 }
 
 export function useLogStats() {
   const axiosPrivate = useAxiosPrivate();
+  const { auth } = useAuth();
+  const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
 
   return useQuery<LogStats>({
     queryKey: ["system-logs-stats"],
@@ -66,12 +85,26 @@ export function useLogStats() {
             fatal: 0,
           }
         );
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error?.response?.status === 401 ||
+          error?.response?.status === 403 ||
+          error?.status === 401 ||
+          error?.status === 403
+        ) {
+          throw error;
+        }
         console.warn("Failed to fetch log stats:", error);
         return { total: 0, info: 0, warn: 0, error: 0, fatal: 0 };
       }
     },
-    refetchInterval: 5000,
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      if (!isAuthenticated || query.state.error) {
+        return false;
+      }
+      return 5000;
+    },
   });
 }
 

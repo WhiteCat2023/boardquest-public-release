@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
-import { Eye, MapPin, Calendar, Zap, UserCheck, BarChart2 } from "lucide-react";
+import { Eye, MapPin, Calendar, Zap, UserCheck, Target } from "lucide-react";
 import type { Student } from "@/features/students";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { getStudentEarnedBadges } from "@/utils/badgeUtils";
 import useRoleFlags from "@/hooks/useRoleFlags";
 
 interface StudentTableRowProps {
@@ -30,8 +29,6 @@ export default function StudentTableRow({
       year: "numeric",
     });
   };
-
-  const badges = getStudentEarnedBadges(student);
 
   return (
     <TableRow className="hover:bg-accent/40 transition-colors group border-b border-border">
@@ -72,44 +69,22 @@ export default function StudentTableRow({
         </div>
       </TableCell>
 
-      {/* Level & XP */}
+      {/* Progression Level */}
       <TableCell className="hidden sm:table-cell py-2 px-3">
-        <div className="flex items-center gap-1.5">
-          <Badge
-            variant="outline"
-            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9px] font-bold gap-1 px-2 py-0.5 rounded-full"
-          >
-            <Zap size={10} className="fill-amber-500 text-amber-500" />
-            Lvl {student.level || 1}
-          </Badge>
-          <span className="text-[11px] font-semibold text-foreground/80">
-            {student.xp || 0} XP
-          </span>
-        </div>
+        <Badge
+          variant="outline"
+          className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[9px] font-bold gap-1 px-2 py-0.5 rounded-full inline-flex items-center"
+        >
+          <Zap size={10} className="fill-amber-500 text-amber-500" />
+          Lvl {student.level || 1}
+        </Badge>
       </TableCell>
 
-      {/* Badges Earned */}
+      {/* EXP */}
       <TableCell className="hidden sm:table-cell py-2 px-3">
-        <div className="flex items-center gap-1 flex-wrap max-w-[200px]">
-          {badges.slice(0, 2).map((badge) => {
-            const IconComp = badge.icon;
-            return (
-              <span
-                key={badge.id}
-                title={`${badge.title}: ${badge.description}`}
-                className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${badge.bgColor} ${badge.color} ${badge.borderColor}`}
-              >
-                <IconComp size={9} className="stroke-[2.5]" />
-                {badge.title}
-              </span>
-            );
-          })}
-          {badges.length > 2 && (
-            <span className="text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-              +{badges.length - 2}
-            </span>
-          )}
-        </div>
+        <span className="text-[11px] font-bold text-foreground/80">
+          {(student.xp || 0).toLocaleString()} XP
+        </span>
       </TableCell>
 
       {/* Location */}
@@ -119,6 +94,35 @@ export default function StudentTableRow({
           <span className="truncate max-w-[110px]">
             {student.location || "Philippines"}
           </span>
+        </div>
+      </TableCell>
+
+      {/* Study Target / Batch */}
+      <TableCell className="hidden md:table-cell py-2 px-3">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          {student.userSettings?.targetBatch ? (
+            <Badge
+              variant="outline"
+              className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold px-1.5 py-0 rounded-full w-fit truncate max-w-[120px]"
+            >
+              {student.userSettings.targetBatch}
+            </Badge>
+          ) : student.userSettings?.targetExamDate ? (
+            <Badge
+              variant="outline"
+              className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold px-1.5 py-0 rounded-full w-fit truncate max-w-[120px]"
+            >
+              Exam: {formatDate(student.userSettings.targetExamDate)}
+            </Badge>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/60 italic">No Target Set</span>
+          )}
+          {student.activeObjective && (
+            <span className="text-[9.5px] text-muted-foreground font-semibold truncate max-w-[130px] flex items-center gap-1">
+              <Target size={9} className="text-primary shrink-0" />
+              {student.activeObjective.subject} ({student.activeObjective.daysRemaining}d left)
+            </span>
+          )}
         </div>
       </TableCell>
 
@@ -144,18 +148,10 @@ export default function StudentTableRow({
               Assign Guidance
             </button>
           )}
-          <Link to={`/analytics?studentId=${student.id}`}>
-            <button
-              className="size-7 p-1 text-muted-foreground hover:text-primary rounded-md hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center"
-              title="View Student Performance"
-            >
-              <BarChart2 size={14} />
-            </button>
-          </Link>
           <Link to={`/student-management/${student.id}`}>
             <button
               className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"
-              title="View Student Profile"
+              title="View Student Profile & Performance"
             >
               <Eye size={14} />
             </button>

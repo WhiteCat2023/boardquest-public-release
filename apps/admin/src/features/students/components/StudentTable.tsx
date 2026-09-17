@@ -69,13 +69,16 @@ export default function StudentTable({
                     Student Profile
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Progression Level & XP
+                    Progression Level
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Badges Earned
+                    EXP
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Location
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
+                    Study Target / Batch
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Enrolled Date

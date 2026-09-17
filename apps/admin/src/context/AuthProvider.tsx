@@ -1,7 +1,8 @@
 import { createContext, useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import { AxiosInstance } from "@/utils/AxiosInstance";
+import { queryClient } from "@/main";
 import { type LoginRequest } from "@/types/types";
 import { ValidateLoginInput } from "../utils/ValidateInput";
 
@@ -39,44 +40,34 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 const AUTH_STORAGE_KEY = "bq_auth_session";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [auth, setAuth] = useState<AuthState>(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch (e) {
-      return {};
-    }
-  });
+  // In-memory auth state only - not persisted to localStorage for security
+  const [auth, setAuth] = useState<AuthState>({});
 
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
-  const axiosPrivate = useAxiosPrivate();
 
+  // Clean up any legacy localStorage session on mount
   useEffect(() => {
     try {
-      if (auth && (auth.accessToken || auth.data?.user?.id || auth.user?.id)) {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
-      } else {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-      }
-    } catch (e) {
-      console.warn("Failed to sync auth state to localStorage:", e);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch {
+      // ignore
     }
-  }, [auth]);
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginRequest) => {
-      const response = await axiosPrivate.post("/auth/login", credentials);
+      const response = await AxiosInstance.post("/auth/login", credentials);
       return response.data;
     },
   });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await axiosPrivate.post("/auth/logout");
+      const response = await AxiosInstance.post("/auth/logout");
       return response.data;
-    }
+    },
   });
 
   const login = async (userData: LoginRequest) => {
@@ -86,9 +77,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return console.error("Login failed:", validateLoginInput.error.flatten().fieldErrors);
       }
       const response = await loginMutation.mutateAsync(userData);
-      setAuth(response);
+      const rawData = response?.data || response;
+      const user = rawData?.user || rawData;
+
+      setAuth({
+        ...response,
+        data: {
+          ...rawData,
+          user,
+        },
+        user,
+        accessToken: rawData?.accessToken || response?.accessToken,
+      });
+
       console.log("Login successful:", response);
-      navigate("/", { replace: true });
+      navigate(from === "/login" ? "/" : from, { replace: true });
     } catch (error: any) {
       console.error("Login failed:", error?.response?.data?.message || error);
       throw error;
@@ -102,7 +105,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Logout failed:", error);
     } finally {
       setAuth({});
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch {}
+      queryClient.clear();
       navigate("/login", { replace: true });
     }
   };

@@ -2,7 +2,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Power, Search, RotateCcw, X } from "lucide-react";
 import type { RoleType } from "@/features/users";
-import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
+import {
+  getAllowedRolesToCreate,
+  getManagedRolesForFilter,
+} from "@/features/users/utils/userUtils";
 import {
   useUsers,
   useToggleUserStatus,
@@ -38,6 +41,9 @@ export default function UserManagement() {
   const currentUserRole = userRole as RoleType;
   const currentUserId = currentUser?.id;
 
+  const roleFilterOptions = getManagedRolesForFilter(currentUserRole);
+  const showRoleFilter = roleFilterOptions.length > 0;
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("ALL");
@@ -51,7 +57,7 @@ export default function UserManagement() {
   const { data: userResponse, isLoading: isUsersLoading } = useUsers(
     {
       search: searchTerm,
-      role: selectedRole,
+      role: showRoleFilter ? selectedRole : "ALL",
       status: selectedStatus,
       cursor: currentCursor || undefined,
       limit: ITEMS_PER_PAGE,
@@ -157,7 +163,7 @@ export default function UserManagement() {
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
-    selectedRole !== "ALL" ||
+    (showRoleFilter && selectedRole !== "ALL") ||
     selectedStatus !== "ALL";
 
   const canAddUser = getAllowedRolesToCreate(currentUserRole).length > 0;
@@ -198,25 +204,27 @@ export default function UserManagement() {
         {/* Filter Dropdowns */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {/* Role Filter */}
-          <Select
-            value={selectedRole}
-            onValueChange={(v) => {
-              setSelectedRole(v);
-              resetPaginationOnFilterChange();
-            }}
-          >
-            <SelectTrigger className="h-8.5 w-full sm:w-[125px] flex-1 sm:flex-initial bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectItem value="ALL">All Roles</SelectItem>
-              <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
-              <SelectItem value="DEAN">Dean</SelectItem>
-              <SelectItem value="TEAMLEAD">Team Lead</SelectItem>
-              <SelectItem value="TEACHER">Teacher</SelectItem>
-              <SelectItem value="REVIEWCENTER">Review Center</SelectItem>
-            </SelectContent>
-          </Select>
+          {showRoleFilter && (
+            <Select
+              value={selectedRole}
+              onValueChange={(v) => {
+                setSelectedRole(v);
+                resetPaginationOnFilterChange();
+              }}
+            >
+              <SelectTrigger className="h-8.5 w-full sm:w-[125px] flex-1 sm:flex-initial bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="ALL">All Roles</SelectItem>
+                {roleFilterOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Status Filter */}
           <Select

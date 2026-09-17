@@ -113,11 +113,6 @@ export class AnalyticsService {
         achievements: { orderBy: { timestamp: "desc" } },
         studyPlans: { orderBy: { targetDate: "asc" } },
         userBadges: {
-          where: {
-            badge: {
-              isActive: true,
-            },
-          },
           include: {
             badge: true,
           },
@@ -133,7 +128,12 @@ export class AnalyticsService {
     // 2. Aggregate core metrics strictly from real DB records
     const examsCount = student.examResults ? student.examResults.length : 0;
     const avgScore = examsCount > 0 
-      ? Math.round(student.examResults.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0) / examsCount)
+      ? Math.round(student.examResults.reduce((acc: number, curr: any) => {
+          const itemAcc = curr.accuracy !== undefined && curr.accuracy !== null
+            ? curr.accuracy
+            : (curr.total ? (curr.score / curr.total) * 100 : curr.score || 0);
+          return acc + itemAcc;
+        }, 0) / examsCount)
       : 0;
     const avgAccuracy = examsCount > 0 
       ? Math.round(student.examResults.reduce((acc: number, curr: any) => acc + (curr.accuracy || curr.score || 0), 0) / examsCount)
@@ -154,11 +154,26 @@ export class AnalyticsService {
       },
     });
 
+    const normalizeSubject = (name?: string | null) => {
+      const lower = (name || "").toLowerCase().trim();
+      if (lower.includes("chem")) return "Clinical Chemistry";
+      if (lower.includes("immuno") || lower.includes("serolog") || lower.includes("blood bank")) {
+        return "Immunology & Serology and Immunohematology";
+      }
+      if (lower.includes("hemat")) return "Hematology";
+      if (lower.includes("microb")) return "Microbiology";
+      if (lower.includes("microscop") || lower.includes("parasit") || lower.includes("urinalysis")) {
+        return "Clinical Microscopy & Parasitology";
+      }
+      if (lower.includes("histo") || lower.includes("law")) {
+        return "Histopathology and Medtech Laws";
+      }
+      return lower;
+    };
+
     const matchSubject = (s1?: string | null, s2?: string | null) => {
       if (!s1 || !s2) return false;
-      const a = s1.toLowerCase().trim();
-      const b = s2.toLowerCase().trim();
-      return a === b || a.includes(b) || b.includes(a) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4));
+      return normalizeSubject(s1) === normalizeSubject(s2);
     };
 
     // Gather subjects strictly from DB Subject records when available
@@ -252,7 +267,7 @@ export class AnalyticsService {
     // Board Readiness Score formula: total proficiency score / total number of subjects or categories
     const totalProficiencyScore = masteryData.reduce((acc, curr) => acc + (curr.proficiency || 0), 0);
     const readinessScore = masteryData.length > 0 
-      ? Math.round(totalProficiencyScore / masteryData.length) 
+      ? Math.round((totalProficiencyScore / masteryData.length) * 10) / 10 
       : 0;
 
     // 3. Construct Performance Trend strictly from actual DB exam results
@@ -646,7 +661,12 @@ export class AnalyticsService {
 
     students.forEach((student: any) => {
       if (student.examResults && student.examResults.length > 0) {
-        const sum = student.examResults.reduce((acc: any, curr: any) => acc + curr.score, 0);
+        const sum = student.examResults.reduce((acc: any, curr: any) => {
+          const itemAcc = curr.accuracy !== undefined && curr.accuracy !== null
+            ? curr.accuracy
+            : (curr.total ? (curr.score / curr.total) * 100 : curr.score || 0);
+          return acc + itemAcc;
+        }, 0);
         const studentAvg = Math.round(sum / student.examResults.length);
         totalScoreSum += studentAvg;
         ratedStudentsCount++;

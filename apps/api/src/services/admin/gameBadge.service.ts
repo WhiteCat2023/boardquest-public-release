@@ -1,21 +1,27 @@
 import prisma from "../prisma";
-import { BadgeCategory } from "@prisma/client";
 import { ApiError } from "../../utils/apiError";
 
-export const ALLOWED_BADGE_CATEGORIES: BadgeCategory[] = [
+export const ALLOWED_BADGE_CATEGORIES = [
   "QUEST",
   "STREAK",
   "BOSS",
   "SUBJECT",
   "EXAM",
-];
+  "PERFORMANCE",
+  "SPEED",
+  "MASTERY",
+  "SPECIAL",
+] as const;
+
+export type AllowedBadgeCategory = typeof ALLOWED_BADGE_CATEGORIES[number];
 
 export interface CreateBadgeInput {
   badgeId?: string;
   title: string;
   name: string;
   description: string;
-  category?: BadgeCategory | string;
+  category?: string;
+  tier?: string;
   icon: string;
   spriteUrl?: string | null;
   color: string;
@@ -57,7 +63,12 @@ export class GameBadgeService {
     }
 
     if (options?.badgeType && options.badgeType !== "ALL") {
-      andConditions.push({ badgeType: options.badgeType });
+      andConditions.push({
+        OR: [
+          { tier: { equals: options.badgeType, mode: "insensitive" } },
+          { badgeId: { equals: options.badgeType, mode: "insensitive" } },
+        ],
+      });
     }
 
     if (options?.search && options.search.trim()) {
@@ -65,6 +76,8 @@ export class GameBadgeService {
       andConditions.push({
         OR: [
           { name: { contains: q, mode: "insensitive" } },
+          { title: { contains: q, mode: "insensitive" } },
+          { badgeId: { contains: q, mode: "insensitive" } },
           { description: { contains: q, mode: "insensitive" } },
           { category: { contains: q, mode: "insensitive" } },
         ],
@@ -73,28 +86,46 @@ export class GameBadgeService {
 
     const where: any = andConditions.length > 0 ? { AND: andConditions } : {};
 
-    let badges = await prisma.badge.findMany({
-      where,
-      include: {
-        _count: {
-          select: { userBadges: true },
+    const [badges, userBadgeCounts] = await Promise.all([
+      prisma.badge.findMany({
+        where,
+        include: {
+          _count: {
+            select: { userBadges: true },
+          },
         },
-      },
-      orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.userBadge.groupBy({
+        by: ["badgeSlug"],
+        _count: { _all: true },
+      }).catch(() => []),
+    ]);
+
+    const slugCountMap = new Map<string, number>();
+    userBadgeCounts.forEach((ub: any) => {
+      if (ub.badgeSlug) {
+        slugCountMap.set(ub.badgeSlug.toLowerCase().trim(), ub._count?._all || 0);
+      }
     });
 
-    return badges.map((badge: any) => ({
-      ...badge,
-      unlockedCount: badge._count?.userBadges ?? 0,
-    }));
+    return badges.map((badge: any) => {
+      const relCount = badge._count?.userBadges ?? 0;
+      const slugCount = slugCountMap.get(badge.badgeId.toLowerCase().trim()) ?? 0;
+      return {
+        ...badge,
+        unlockedCount: Math.max(relCount, slugCount),
+      };
+    });
   }
 
   /**
-   * Get single badge by ID
+   * Get single badge by ID or badgeId slug
    */
   async getBadgeById(id: string) {
-    const badge = await prisma.badge.findUnique({
-      where: { id },
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    const badge = await prisma.badge.findFirst({
+      where: isObjectId ? { OR: [{ id }, { badgeId: id }] } : { badgeId: id },
       include: {
         _count: {
           select: { userBadges: true },
@@ -106,51 +137,62 @@ export class GameBadgeService {
       throw new ApiError(404, "Badge not found");
     }
 
+    const slugCount = await prisma.userBadge.count({
+      where: { badgeSlug: badge.badgeId },
+    }).catch(() => 0);
+
     return {
       ...badge,
-      unlockedCount: badge._count?.userBadges ?? 0,
+      unlockedCount: Math.max(badge._count?.userBadges ?? 0, slugCount),
     };
   }
 
   /**
-   * Create new badge
+   * Create new badge with full BoardQuesters slug compatibility & UserBadge auto-linking
    */
   async createBadge(data: CreateBadgeInput) {
     if (!data.name || !data.description || !data.unlockCondition) {
       throw new ApiError(400, "Name, description, and unlockCondition are required");
     }
 
-    const badgeId =
-      data.badgeId ||
-      data.name
+    let badgeId: string;
+    if (data.badgeId && data.badgeId.trim()) {
+      badgeId = data.badgeId
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") + `-${Date.now().toString(36)}`;
+        .trim()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    } else {
+      const baseSlug = (data.title || data.name)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const existingBase = await prisma.badge.findUnique({ where: { badgeId: baseSlug } });
+      badgeId = existingBase ? `${baseSlug}-${Date.now().toString(36)}` : baseSlug;
+    }
 
     const existing = await prisma.badge.findUnique({
       where: { badgeId },
     });
 
     if (existing) {
-      throw new ApiError(409, "A badge with this badgeId already exists");
+      throw new ApiError(409, `A badge with badgeId '${badgeId}' already exists`);
     }
 
-    const rawCategory = data.category ? String(data.category).toUpperCase() : "QUEST";
-    if (!ALLOWED_BADGE_CATEGORIES.includes(rawCategory as BadgeCategory)) {
-      throw new ApiError(
-        400,
-        `Invalid category '${data.category}'. Allowed categories are: ${ALLOWED_BADGE_CATEGORIES.join(", ")}`
-      );
-    }
-    const category = rawCategory as BadgeCategory;
+    const rawCategory = data.category ? String(data.category).toUpperCase().trim() : "QUEST";
+    const category = ALLOWED_BADGE_CATEGORIES.includes(rawCategory as any)
+      ? rawCategory
+      : "QUEST";
 
-    return prisma.badge.create({
+    const newBadge = await prisma.badge.create({
       data: {
         badgeId,
         title: data.title || data.name,
         name: data.name,
         description: data.description,
         category,
+        tier: data.tier || "STANDARD",
         icon: data.icon || "trophy",
         spriteUrl: data.spriteUrl || null,
         color: data.color || "#FFD700",
@@ -160,42 +202,74 @@ export class GameBadgeService {
         isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
       },
     });
+
+    // Auto-link any existing UserBadge records that were earned in game with this slug
+    await prisma.userBadge.updateMany({
+      where: { badgeSlug: newBadge.badgeId },
+      data: { badgeId: newBadge.id },
+    }).catch((err) => console.warn("[GameBadgeService] Auto-linking UserBadges warning:", err));
+
+    return newBadge;
   }
 
   /**
-   * Update existing badge
+   * Update existing badge with slug & UserBadge auto-sync
    */
   async updateBadge(id: string, data: UpdateBadgeInput) {
-    await this.getBadgeById(id);
+    const existing = await this.getBadgeById(id);
 
-    let category: BadgeCategory | undefined = undefined;
-    if (data.category !== undefined) {
-      const rawCategory = String(data.category).toUpperCase();
-      if (!ALLOWED_BADGE_CATEGORIES.includes(rawCategory as BadgeCategory)) {
-        throw new ApiError(
-          400,
-          `Invalid category '${data.category}'. Allowed categories are: ${ALLOWED_BADGE_CATEGORIES.join(", ")}`
-        );
+    const updatePayload: any = {};
+
+    if (data.badgeId !== undefined && data.badgeId.trim()) {
+      const cleanSlug = data.badgeId
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      if (cleanSlug !== existing.badgeId) {
+        const slugCollision = await prisma.badge.findUnique({
+          where: { badgeId: cleanSlug },
+        });
+        if (slugCollision && slugCollision.id !== existing.id) {
+          throw new ApiError(409, `A badge with badgeId '${cleanSlug}' already exists`);
+        }
+        updatePayload.badgeId = cleanSlug;
       }
-      category = rawCategory as BadgeCategory;
     }
 
-    return prisma.badge.update({
-      where: { id },
-      data: {
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(category !== undefined && { category }),
-        ...(data.icon !== undefined && { icon: data.icon }),
-        ...(data.spriteUrl !== undefined && { spriteUrl: data.spriteUrl || null }),
-        ...(data.color !== undefined && { color: data.color }),
-        ...(data.unlockCondition !== undefined && { unlockCondition: data.unlockCondition }),
-        ...(data.xpReward !== undefined && { xpReward: Number(data.xpReward) }),
-        ...(data.confidenceFactor !== undefined && { confidenceFactor: Number(data.confidenceFactor) }),
-        ...(data.isActive !== undefined && { isActive: Boolean(data.isActive) }),
-      },
+    if (data.category !== undefined) {
+      const rawCategory = String(data.category).toUpperCase().trim();
+      updatePayload.category = ALLOWED_BADGE_CATEGORIES.includes(rawCategory as any)
+        ? rawCategory
+        : rawCategory || "QUEST";
+    }
+
+    if (data.title !== undefined) updatePayload.title = data.title.trim();
+    if (data.name !== undefined) updatePayload.name = data.name.trim();
+    if (data.description !== undefined) updatePayload.description = data.description.trim();
+    if (data.tier !== undefined) updatePayload.tier = data.tier;
+    if (data.icon !== undefined) updatePayload.icon = data.icon;
+    if (data.spriteUrl !== undefined) updatePayload.spriteUrl = data.spriteUrl || null;
+    if (data.color !== undefined) updatePayload.color = data.color;
+    if (data.unlockCondition !== undefined) updatePayload.unlockCondition = data.unlockCondition.trim();
+    if (data.xpReward !== undefined) updatePayload.xpReward = Number(data.xpReward);
+    if (data.confidenceFactor !== undefined) updatePayload.confidenceFactor = Number(data.confidenceFactor);
+    if (data.isActive !== undefined) updatePayload.isActive = Boolean(data.isActive);
+
+    const updated = await prisma.badge.update({
+      where: { id: existing.id },
+      data: updatePayload,
     });
+
+    // If slug changed or relink needed, link matching UserBadges
+    const targetSlug = updated.badgeId;
+    await prisma.userBadge.updateMany({
+      where: { badgeSlug: targetSlug },
+      data: { badgeId: updated.id },
+    }).catch((err) => console.warn("[GameBadgeService] Relinking UserBadges warning:", err));
+
+    return updated;
   }
 
   /**
@@ -205,7 +279,7 @@ export class GameBadgeService {
     const badge = await this.getBadgeById(id);
 
     return prisma.badge.update({
-      where: { id },
+      where: { id: badge.id },
       data: {
         isActive: !badge.isActive,
       },
@@ -213,13 +287,19 @@ export class GameBadgeService {
   }
 
   /**
-   * Delete badge
+   * Delete badge and cleanly unlink UserBadges
    */
   async deleteBadge(id: string) {
-    await this.getBadgeById(id);
+    const badge = await this.getBadgeById(id);
+
+    // Unlink UserBadges so user achievement records are safely preserved
+    await prisma.userBadge.updateMany({
+      where: { badgeId: badge.id },
+      data: { badgeId: null },
+    }).catch((err) => console.warn("[GameBadgeService] Unlinking UserBadges warning:", err));
 
     return prisma.badge.delete({
-      where: { id },
+      where: { id: badge.id },
     });
   }
 }

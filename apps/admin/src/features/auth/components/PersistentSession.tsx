@@ -5,7 +5,7 @@ import useAuth from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
 
 function PersistentSession() {
-    const { auth } = useAuth()
+    const { auth, logout } = useAuth();
     const refresh = useRefreshToken();
     const hasUserId = Boolean(auth?.data?.user?.id || (auth as any)?.user?.id || (auth as any)?.id);
     const [isLoading, setIsLoading] = useState(!hasUserId);
@@ -15,9 +15,15 @@ function PersistentSession() {
 
         const verifyRefreshToken = async () => {
             try {
-                await refresh();
+                const token = await refresh();
+                if (!token && isMounted) {
+                    await logout();
+                }
             } catch (err) {
                 console.error("Session refresh error:", err);
+                if (isMounted) {
+                    await logout();
+                }
             } finally {
                 if (isMounted) {
                     setIsLoading(false);
@@ -28,8 +34,7 @@ function PersistentSession() {
         if (!hasUserId) {
             verifyRefreshToken();
         } else {
-            // Silently verify/refresh session in background without blocking UI
-            verifyRefreshToken();
+            setIsLoading(false);
         }
 
         return () => {

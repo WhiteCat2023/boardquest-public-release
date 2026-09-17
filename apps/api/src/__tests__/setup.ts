@@ -18,6 +18,14 @@ jest.mock('../services/prisma', () => ({
       update: jest.fn().mockResolvedValue({}),
       delete: jest.fn().mockResolvedValue({}),
     },
+    questionComment: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+      count: jest.fn().mockResolvedValue(0),
+    },
     category: {
       findUnique: jest.fn().mockResolvedValue(null),
       findFirst: jest.fn().mockResolvedValue(null),

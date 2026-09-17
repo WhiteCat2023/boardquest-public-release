@@ -8,7 +8,7 @@ export function useDashboardQuestionStats() {
     queryKey: ["dashboard-question-stats"],
     queryFn: async () => {
       const response = await axiosPrivate.get("/questions/stats");
-      return response.data?.data?.stats;
+      return response.data?.data;
     },
     staleTime: 1000 * 60 * 3,
   });

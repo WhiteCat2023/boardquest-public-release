@@ -31,7 +31,7 @@ export function useReviewSchedules(params?: { company?: string }) {
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
-    refetchInterval: 1000 * 5, // Automatically sync changes from DB every 5 seconds
+    refetchInterval: (query) => (query.state.error ? false : 1000 * 5),
   });
 }
 

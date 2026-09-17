@@ -8,7 +8,8 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { signJWT, verifyJWT } from "../../utils/jwt.utils";
 import prisma from "../../services/prisma";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
-import { isSuperAdmin } from "../../config/credentials";
+import { isSuperAdmin, getSuperAdminProfile } from "../../config/credentials";
+import { ensureSuperAdminExists } from "../../services/admin/bootstrap.service";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -162,8 +163,43 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   const tokenPayload = payload as { id: string; email: string; role: string };
 
+  let user: any = null;
+  if (isSuperAdmin(tokenPayload.id)) {
+    const dbSuperAdmin = await ensureSuperAdminExists();
+    user = dbSuperAdmin || getSuperAdminProfile();
+  } else {
+    user = await prisma.adminUser.findUnique({
+      where: { id: tokenPayload.id },
+      select: {
+        id: true,
+        employeeId: true,
+        email: true,
+        name: true,
+        role: true,
+        phoneNumber: true,
+        accountStatus: true,
+        isActive: true,
+        handledSubjectIds: true,
+        handledSubjects: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  if (!user) {
+    return new ApiResponse(401, null, "User not found").send(res);
+  }
+
+  if (user.accountStatus === "DEACTIVATED") {
+    return new ApiResponse(403, null, "Account is deactivated").send(res);
+  }
+
   const newAccessToken = signJWT(
-    { id: tokenPayload.id, email: tokenPayload.email, role: tokenPayload.role },
+    { id: user.id, email: user.email, role: user.role },
     "15m",
   );
 
@@ -177,8 +213,9 @@ export const refreshToken = async (req: Request, res: Response) => {
   return new ApiResponse(
     200,
     {
-      id: tokenPayload.id,
-      role: tokenPayload.role,
+      user,
+      id: user.id,
+      role: user.role,
       accessToken: newAccessToken,
     },
     "Token refreshed successfully",

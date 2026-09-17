@@ -44,10 +44,20 @@ export function useAddQuestionComment(questionId: string) {
       return response.data?.data?.comment as QuestionComment;
     },
     onSuccess: () => {
+      const prevQuestion = queryClient.getQueryData<any>(["questionDetail", questionId]);
+      const wasApproved = prevQuestion?.status === "APPROVED";
+
       queryClient.invalidateQueries({ queryKey: ["questionComments", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
-      toast.success("Comment added successfully.");
+      queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+      queryClient.invalidateQueries({ queryKey: ["questionStats"] });
+
+      if (wasApproved) {
+        toast.success("Comment posted. Question reopened and moved to Review Questions desk.");
+      } else {
+        toast.success("Comment added successfully.");
+      }
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to add comment.");
@@ -70,6 +80,8 @@ export function useToggleResolveComment(questionId: string) {
       queryClient.invalidateQueries({ queryKey: ["questionComments", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+      queryClient.invalidateQueries({ queryKey: ["questionStats"] });
       toast.success(
         updatedComment?.isResolved
           ? "Comment marked as resolved."
@@ -94,6 +106,8 @@ export function useDeleteQuestionComment(questionId: string) {
       queryClient.invalidateQueries({ queryKey: ["questionComments", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+      queryClient.invalidateQueries({ queryKey: ["questionStats"] });
       toast.success("Comment deleted.");
     },
     onError: (err: any) => {

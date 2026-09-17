@@ -19,14 +19,10 @@ export const completeGameSession = asyncHandler(
     }
 
     // Validate input
-    if (
-      typeof score !== "number" ||
-      typeof total !== "number" ||
-      !subject
-    ) {
+    if (typeof score !== "number" || typeof total !== "number" || !subject) {
       throw new ApiError(
         400,
-        "Invalid input: score, total, and subject are required"
+        "Invalid input: score, total, and subject are required",
       );
     }
 
@@ -40,19 +36,15 @@ export const completeGameSession = asyncHandler(
       score,
       total,
       subject,
-      difficulty as "easy" | "medium" | "hard"
+      difficulty as "easy" | "medium" | "hard",
     );
 
     res
       .status(200)
       .json(
-        new ApiResponse(
-          200,
-          result,
-          "Game session processed successfully"
-        )
+        new ApiResponse(200, result, "Game session processed successfully"),
       );
-  }
+  },
 );
 
 /**
@@ -71,9 +63,9 @@ export const getUserGameStats = asyncHandler(
     res
       .status(200)
       .json(
-        new ApiResponse(200, stats, "Game statistics retrieved successfully")
+        new ApiResponse(200, stats, "Game statistics retrieved successfully"),
       );
-  }
+  },
 );
 
 /**
@@ -85,41 +77,33 @@ export const getLeaderboard = asyncHandler(
 
     const leaderboard = await gameFacade.getLeaderboard(
       parseInt(limit as string) || 10,
-      subject as string
+      subject as string,
     );
 
     res
       .status(200)
       .json(
-        new ApiResponse(200, leaderboard, "Leaderboard retrieved successfully")
+        new ApiResponse(200, leaderboard, "Leaderboard retrieved successfully"),
       );
-  }
+  },
 );
 
 /**
  * Get user's current rank
  */
-export const getUserRank = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.body.user?.id;
+export const getUserRank = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.body.user?.id;
 
-    if (!userId) {
-      throw new ApiError(401, "Unauthorized");
-    }
-
-    const rank = await gameFacade.getUserRank(userId);
-
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          { rank },
-          "User rank retrieved successfully"
-        )
-      );
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized");
   }
-);
+
+  const rank = await gameFacade.getUserRank(userId);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, { rank }, "User rank retrieved successfully"));
+});
 
 /**
  * Reset user's streak (admin only or user action)
@@ -140,10 +124,10 @@ export const resetUserStreak = asyncHandler(
         new ApiResponse(
           200,
           { streak: newStreak },
-          "Streak reset successfully"
-        )
+          "Streak reset successfully",
+        ),
       );
-  }
+  },
 );
 
 /**
@@ -156,9 +140,13 @@ export const getGameConfig = asyncHandler(
     res
       .status(200)
       .json(
-        new ApiResponse(200, config, "Game configuration retrieved successfully")
+        new ApiResponse(
+          200,
+          config,
+          "Game configuration retrieved successfully",
+        ),
       );
-  }
+  },
 );
 
 /**
@@ -169,12 +157,7 @@ export const updateGameConfig = asyncHandler(
     const { baseXP, xpMultiplier, streakBonus, accuracyThreshold } = req.body;
 
     // Validate at least one field is provided
-    if (
-      !baseXP &&
-      !xpMultiplier &&
-      !streakBonus &&
-      !accuracyThreshold
-    ) {
+    if (!baseXP && !xpMultiplier && !streakBonus && !accuracyThreshold) {
       throw new ApiError(400, "At least one configuration value is required");
     }
 
@@ -191,8 +174,8 @@ export const updateGameConfig = asyncHandler(
         new ApiResponse(
           200,
           gameFacade.getConfig(),
-          "Game configuration updated successfully"
-        )
+          "Game configuration updated successfully",
+        ),
       );
-  }
+  },
 );

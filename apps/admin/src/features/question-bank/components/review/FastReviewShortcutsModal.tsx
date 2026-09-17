@@ -53,6 +53,13 @@ export default function FastReviewShortcutsModal({
       color: "text-amber-500",
     },
     {
+      key: "Esc",
+      label: "Back to Table View",
+      desc: "Exit fast review workspace and return to questions table.",
+      icon: ArrowLeft,
+      color: "text-blue-500",
+    },
+    {
       key: "?",
       label: "Show Shortcuts Guide",
       desc: "Open this keyboard shortcuts reference at any time.",

@@ -15,7 +15,11 @@ export type BadgeCategory =
   | "STREAK"
   | "BOSS"
   | "SUBJECT"
-  | "EXAM";
+  | "EXAM"
+  | "PERFORMANCE"
+  | "SPEED"
+  | "MASTERY"
+  | "SPECIAL";
 
 export interface GameBadge {
   id: string;
@@ -23,7 +27,8 @@ export interface GameBadge {
   title: string; // e.g. 'Master', 'Adept', 'Swift Solver'
   name: string; // e.g. 'Gold Quest Badge', 'Silver Quest Badge'
   description: string;
-  category: BadgeCategory; // 'QUEST' | 'STREAK' | 'BOSS' | 'SUBJECT' | 'EXAM'
+  category: BadgeCategory | string; // 'QUEST' | 'STREAK' | 'BOSS' | 'SUBJECT' | 'EXAM' | 'PERFORMANCE' | 'SPEED' | 'MASTERY'
+  tier?: string; // 'GOLD' | 'SILVER' | 'BRONZE' | 'STANDARD' | 'MYTHIC'
   icon: string; // 'trophy', 'flame', 'zap', 'shield', 'crown', etc.
   spriteUrl?: string | null; // Cloudinary or sprite image URL
   color: string; // Hex color code ('#FFD700', etc.)
@@ -56,4 +61,34 @@ export interface GameConfigSettings {
   accuracyThreshold: number;
   levelUpXpBase: number;
   maxLevelCap: number;
+}
+
+export interface RankTier {
+  id: string;
+  rankId: string;
+  title: string;
+  name: string;
+  description: string;
+  minLevel: number;
+  maxLevel: number | null;
+  minXp: number;
+  icon: string;
+  color: string;
+  spriteUrl?: string | null;
+  perks?: string[];
+  isActive: boolean;
+  studentCount?: number;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface RankStudent {
+  id: string;
+  name: string;
+  email: string;
+  level: number;
+  xp: number;
+  streak: number;
+  verified?: boolean;
+  createdAt?: string | Date;
 }

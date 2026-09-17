@@ -83,6 +83,29 @@ export const getAllowedRolesToCreate = (
 };
 
 /**
+ * Returns role options that can be filtered based on the current user's role.
+ * - Superadmin: Dean, Team Lead, Teacher
+ * - Dean: Team Lead, Teacher
+ * - Teamlead: No filter (only manages Teacher accounts)
+ */
+const MANAGED_ROLES_MAP: Record<string, { value: string; label: string }[]> = {
+  SUPERADMIN: [
+    { value: "DEAN", label: "Dean" },
+    { value: "TEAMLEAD", label: "Team Lead" },
+    { value: "TEACHER", label: "Teacher" },
+  ],
+  DEAN: [
+    { value: "TEAMLEAD", label: "Team Lead" },
+    { value: "TEACHER", label: "Teacher" },
+  ],
+  TEAMLEAD: [],
+};
+export const getManagedRolesForFilter = (role?: RoleType | string) => {
+  const norm = normalizeRole(role);
+  return MANAGED_ROLES_MAP[norm] || [];
+};
+
+/**
  * Checks if creator role has permissions to manage (e.g. delete) target role.
  */
 export const isAllowedToManageRole = (

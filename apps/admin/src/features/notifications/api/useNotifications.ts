@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import useAuth from "@/hooks/useAuth";
 import type { NotificationItem } from "../types/types";
 
 interface UseNotificationsParams {
@@ -14,6 +15,8 @@ export function useNotifications({
   type,
 }: UseNotificationsParams = {}) {
   const axiosPrivate = useAxiosPrivate();
+  const { auth } = useAuth();
+  const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
 
   return useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
     queryKey: ["notifications", { unreadOnly, search, type }],
@@ -31,12 +34,26 @@ export function useNotifications({
           notifications: data.notifications || [],
           unreadCount: data.unreadCount ?? (data.notifications || []).filter((n: NotificationItem) => !n.isRead).length,
         };
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error?.response?.status === 401 ||
+          error?.response?.status === 403 ||
+          error?.status === 401 ||
+          error?.status === 403
+        ) {
+          throw error;
+        }
         console.warn("Failed to fetch notifications:", error);
         return { notifications: [], unreadCount: 0 };
       }
     },
-    refetchInterval: 10000,
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      if (!isAuthenticated || query.state.error) {
+        return false;
+      }
+      return 10000;
+    },
   });
 }
 
