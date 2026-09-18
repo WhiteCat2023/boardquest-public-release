@@ -16,7 +16,7 @@ router.use(authenticateToken);
 
 router.post(
   "/",
-  requireRoles(["SUPERADMIN", "DEAN"]),
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   createGuidanceAssignment
 );
 

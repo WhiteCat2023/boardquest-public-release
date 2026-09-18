@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { isAxiosError } from "axios";
 import rcAxios from "../lib/axios";
-import { ReviewCenterAuthContext, type ReviewCenterUser } from "./AuthContext";
+import { ReviewCenterAuthContext, type ReviewCenterUser, type UpdateProfilePayload } from "./AuthContext";
 
 export function ReviewCenterAuthProvider({
   children,
@@ -85,6 +85,29 @@ export function ReviewCenterAuthProvider({
     }
   };
 
+  const updateProfile = async (data: UpdateProfilePayload) => {
+    try {
+      const res = await rcAxios.put("/auth/profile", data);
+      const updatedUser = res.data?.data?.user || res.data?.user;
+      if (updatedUser) {
+        setUser(updatedUser);
+        return updatedUser;
+      }
+      throw new Error("Invalid response from server");
+    } catch (err: unknown) {
+      let msg = "Failed to update profile";
+      if (isAxiosError(err)) {
+        msg =
+          (err.response?.data as { message?: string } | undefined)?.message ||
+          err.message ||
+          msg;
+      } else if (err instanceof Error) {
+        msg = err.message || msg;
+      }
+      throw new Error(msg, { cause: err });
+    }
+  };
+
   return (
     <ReviewCenterAuthContext.Provider
       value={{
@@ -92,6 +115,7 @@ export function ReviewCenterAuthProvider({
         isLoading,
         login,
         logout,
+        updateProfile,
         isError,
         errorMessage,
       }}

@@ -21,6 +21,7 @@ import {
   LessonCompletionService,
   recordLessonCompletionSchema,
 } from "./lessonCompletion.service";
+import { assessmentService } from "../review-center/assessment.service";
 
 // ============ Validation Schemas ============
 
@@ -714,9 +715,32 @@ export class StudentService {
       // Compute performance metrics and target periods matching BoardQuesters
       const performanceData = this.computePerformanceAndTargets(sanitizedStudent, userSettings, dbSubjects);
 
+      // Fetch Review Center candidate transcript if enrolled
+      let reviewCenterTranscript: any = null;
+      try {
+        const candidate = await (this.db as any).reviewCenterCandidate.findFirst({
+          where: {
+            OR: [
+              { studentId: student.id },
+              { email: { equals: student.email, mode: "insensitive" } },
+            ],
+          },
+        });
+
+        if (candidate) {
+          reviewCenterTranscript = await assessmentService.getCandidateScoreTranscript(
+            candidate.id,
+            "",
+          );
+        }
+      } catch (err) {
+        // Silently fallback if review center scores unavailable
+      }
+
       return {
         ...sanitizedStudent,
         ...performanceData,
+        reviewCenterTranscript,
       };
     } catch (err: any) {
       if (err instanceof ApiError) throw err;

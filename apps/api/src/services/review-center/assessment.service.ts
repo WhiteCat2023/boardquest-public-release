@@ -9,6 +9,7 @@ import {
   calculatePercentileRanks,
   calculateMedTechGeneralAverage,
 } from "../../utils/statsCalculator";
+import { getReviewCenterSchoolYears } from "./candidate.service";
 
 export interface CreateAssessmentInput {
   title: string;
@@ -114,8 +115,10 @@ export class AssessmentService {
 
     // Strict Multi-Tenant Check
     const isOwner =
+      (!companyName && !reviewCenterId) ||
       assessment.companyName === companyName ||
-      (reviewCenterId && assessment.reviewCenterId === reviewCenterId);
+      (reviewCenterId && assessment.reviewCenterId === reviewCenterId) ||
+      (companyName && assessment.companyName?.trim().toLowerCase() === companyName.trim().toLowerCase());
 
     if (!isOwner) {
       throw new ApiError(403, "Access denied to this review center's assessment");
@@ -458,7 +461,7 @@ export class AssessmentService {
   async getGradeMatrix(
     companyName: string,
     reviewCenterId?: string,
-    schoolYear: string = "2026-2027",
+    schoolYear?: string,
     subject?: string
   ) {
     const assessmentWhere: any = {
@@ -466,31 +469,41 @@ export class AssessmentService {
         { companyName },
         ...(reviewCenterId ? [{ reviewCenterId }] : []),
       ],
-      schoolYear,
     };
+    if (schoolYear && schoolYear !== "ALL") {
+      assessmentWhere.schoolYear = schoolYear;
+    }
     if (subject) {
       assessmentWhere.subject = normalizeMedTechSubject(subject);
     }
 
-    const assessments = await (this.db as any).reviewCenterAssessment.findMany({
-      where: assessmentWhere,
-      orderBy: { createdAt: "asc" },
-      include: {
-        scores: true,
-      },
-    });
+    const candidateWhere: any = {
+      OR: [
+        { companyName },
+        ...(reviewCenterId ? [{ reviewCenterId }] : []),
+      ],
+      status: { not: "DROPPED" },
+    };
+    if (schoolYear && schoolYear !== "ALL") {
+      candidateWhere.schoolYear = schoolYear;
+    }
 
-    const candidates = await this.db.reviewCenterCandidate.findMany({
-      where: {
-        OR: [
-          { companyName },
-          ...(reviewCenterId ? [{ reviewCenterId }] : []),
-        ],
-        schoolYear,
-        status: { not: "DROPPED" },
-      },
-      orderBy: { name: "asc" },
-    });
+    const [assessments, candidates, syRecords] = await Promise.all([
+      (this.db as any).reviewCenterAssessment.findMany({
+        where: assessmentWhere,
+        orderBy: { createdAt: "asc" },
+        include: {
+          scores: true,
+        },
+      }),
+      this.db.reviewCenterCandidate.findMany({
+        where: candidateWhere,
+        orderBy: { name: "asc" },
+      }),
+      getReviewCenterSchoolYears(companyName, reviewCenterId),
+    ]);
+
+    const schoolYears = syRecords.map((s: any) => s.schoolYear);
 
     // Build grid structure
     const rows = candidates.map((cand) => {
@@ -567,9 +580,11 @@ export class AssessmentService {
         modeScore: a.modeScore,
         passCount: a.passCount,
         failCount: a.failCount,
+        schoolYear: a.schoolYear,
       })),
       candidatesCount: candidates.length,
       rows,
+      schoolYears,
     };
   }
 
@@ -581,24 +596,103 @@ export class AssessmentService {
     companyName: string,
     reviewCenterId?: string
   ) {
-    const candidate = await this.db.reviewCenterCandidate.findUnique({
+    let candidate = await this.db.reviewCenterCandidate.findUnique({
       where: { id: candidateId },
     });
+
+    if (!candidate) {
+      candidate = await this.db.reviewCenterCandidate.findFirst({
+        where: {
+          OR: [
+            { studentId: candidateId },
+            { email: { equals: candidateId, mode: "insensitive" } },
+            { schoolId: candidateId },
+          ],
+        },
+      });
+    }
 
     if (!candidate) {
       throw new ApiError(404, "Candidate not found");
     }
 
-    const isOwner =
-      candidate.companyName === companyName ||
-      (reviewCenterId && candidate.reviewCenterId === reviewCenterId);
+    let isOwner = (!companyName && !reviewCenterId);
+    if (!isOwner) {
+      if (companyName && candidate.companyName?.trim().toLowerCase() === companyName.trim().toLowerCase()) {
+        isOwner = true;
+      } else if (reviewCenterId) {
+        if (candidate.reviewCenterId === reviewCenterId) {
+          isOwner = true;
+        } else {
+          const rc = await this.db.reviewCenter.findUnique({ where: { id: reviewCenterId } });
+          if (rc && rc.name.trim().toLowerCase() === candidate.companyName?.trim().toLowerCase()) {
+            isOwner = true;
+          } else {
+            const rep = await this.db.reviewCenterRepresentativeUser.findUnique({ where: { id: reviewCenterId } });
+            if (rep && rep.companyName?.trim().toLowerCase() === candidate.companyName?.trim().toLowerCase()) {
+              isOwner = true;
+            } else if (!companyName) {
+              // Admin caller viewing candidate scores from review center
+              isOwner = true;
+            }
+          }
+        }
+      } else if (!companyName) {
+        isOwner = true;
+      }
+    }
 
     if (!isOwner) {
       throw new ApiError(403, "Access denied to candidate");
     }
 
+    // Find all candidate records for the same student (by email, schoolId, or studentId) within this review center
+    const orConditions: any[] = [{ id: candidate.id }];
+    if (candidate.email) {
+      orConditions.push({ email: { equals: candidate.email, mode: "insensitive" as const } });
+    }
+    if (candidate.schoolId) {
+      orConditions.push({ schoolId: candidate.schoolId });
+    }
+    if (candidate.studentId) {
+      orConditions.push({ studentId: candidate.studentId });
+    }
+
+    const siblingCandidates = await this.db.reviewCenterCandidate.findMany({
+      where: {
+        AND: [
+          { OR: orConditions },
+          reviewCenterId
+            ? {
+                OR: [
+                  { reviewCenterId },
+                  ...(candidate.companyName
+                    ? [{ companyName: { equals: candidate.companyName, mode: "insensitive" as const } }]
+                    : []),
+                ],
+              }
+            : candidate.companyName
+            ? { companyName: { equals: candidate.companyName, mode: "insensitive" as const } }
+            : {},
+        ],
+      },
+      select: {
+        id: true,
+        schoolYear: true,
+        batch: true,
+        schoolId: true,
+        email: true,
+        name: true,
+        companyName: true,
+      },
+    });
+
+    const candidateIds = Array.from(
+      new Set([candidate.id, ...siblingCandidates.map((c) => c.id)])
+    );
+
     const scores = await (this.db as any).reviewCenterScore.findMany({
-      where: { candidateId },
+      where: { candidateId: { in: candidateIds } },
       include: {
         assessment: true,
       },
@@ -641,11 +735,31 @@ export class AssessmentService {
       .map((s) => ({ subject: s.subject, score: s.averagePercentage! }));
 
     const simulation = calculateMedTechGeneralAverage(validSubjectScores);
+    const enrichedSimulation = {
+      ...simulation,
+      generalWeightedAverage: simulation.gwa,
+      remarks: simulation.passed
+        ? "Official PRC standard met: GWA >= 75.0% and no subject rating below 50%."
+        : simulation.conditionFailed
+        ? `Condition Rule Failed: Subjects below 50% (${simulation.failedSubjects.join(", ")}).`
+        : "General Weighted Average is below the 75.0% licensure passing threshold.",
+    };
+
+    const enrichedCandidate = {
+      ...candidate,
+      schoolId: candidate.schoolId || siblingCandidates.find((s) => s.schoolId)?.schoolId || null,
+      email: candidate.email || siblingCandidates.find((s) => s.email)?.email || "",
+      enrolledCohorts: Array.from(new Set([candidate.schoolYear, ...siblingCandidates.map((s) => s.schoolYear)].filter(Boolean))),
+    };
 
     return {
-      candidate,
+      candidate: enrichedCandidate,
       subjectAverages,
-      boardExamSimulation: simulation,
+      boardExamSimulation: enrichedSimulation,
+      scores,
     };
   }
 }
+
+export const assessmentService = new AssessmentService();
+

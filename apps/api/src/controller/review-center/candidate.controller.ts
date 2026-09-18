@@ -50,6 +50,33 @@ export const createMyReviewCenterSchoolYear = asyncHandler(
   },
 );
 
+export const updateMyReviewCenterSchoolYear = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as any;
+    const { schoolYear } = req.params;
+    const { newSchoolYear } = req.body;
+    const companyName = user?.companyName;
+    const reviewCenterId = user?.reviewCenterId;
+
+    if (!newSchoolYear) {
+      throw new ApiError(400, "New school year is required");
+    }
+
+    const updated = await candidateService.updateReviewCenterSchoolYear(
+      schoolYear as string,
+      newSchoolYear as string,
+      companyName,
+      reviewCenterId,
+    );
+
+    return new ApiResponse(
+      200,
+      { schoolYear: updated },
+      "School year updated successfully",
+    ).send(res);
+  },
+);
+
 export const deleteMyReviewCenterSchoolYear = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user as any;

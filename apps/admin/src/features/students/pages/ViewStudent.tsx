@@ -7,6 +7,7 @@ import {
   Target,
   Award,
   Calculator,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,8 +41,9 @@ import { PointScorecardModal } from "../components/profile/PointScorecardModal";
 import { AssignGuidanceModal } from "../components/AssignGuidanceModal";
 import { StudentBadgesSection } from "../components/profile/StudentBadgesSection";
 import { StudentAchievementHistory } from "../components/profile/StudentAchievementHistory";
+import StudentReviewCenterTab from "../components/profile/StudentReviewCenterTab";
 
-type StudentProfileTab = "overview" | "timeline" | "graphs" | "readiness" | "achievements";
+type StudentProfileTab = "overview" | "timeline" | "graphs" | "readiness" | "achievements" | "review-center";
 
 export default function ViewStudent() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -152,6 +154,12 @@ export default function ViewStudent() {
       label: "Achievements & Badges",
       icon: Award,
       badgeCount: unlockedBadgesCount,
+    },
+    {
+      id: "review-center" as StudentProfileTab,
+      label: "Review Center Scores",
+      icon: GraduationCap,
+      badgeCount: activeStudent.reviewCenterTranscript?.scores?.length || undefined,
     },
   ];
 
@@ -319,6 +327,11 @@ export default function ViewStudent() {
             />
           </Card>
         </div>
+      )}
+
+      {/* TAB 6: REVIEW CENTER SCORES & BOARD LICENSURE TRANSCRIPT */}
+      {activeTab === "review-center" && (
+        <StudentReviewCenterTab student={activeStudent} />
       )}
 
       {/* MODAL: Official Candidate Scorecard Printable Document */}

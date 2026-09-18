@@ -240,7 +240,6 @@ export function Sidebar({
           }}
           logout={logout}
           accountPath="/settings"
-          notificationsPath="/settings"
           settingsPath="/settings"
         />
       </SidebarFooter>

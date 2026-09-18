@@ -4,6 +4,8 @@ export interface ReviewCenterUser {
   id: string;
   employeeId: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   companyName: string;
   phonenumber?: string;
@@ -17,11 +19,24 @@ export interface ReviewCenterUser {
   };
 }
 
+export interface UpdateProfilePayload {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  employeeId?: string;
+  phonenumber?: string;
+  companyName?: string;
+  location?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 export interface ReviewCenterAuthContextType {
   user: ReviewCenterUser | null;
   isLoading: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: UpdateProfilePayload) => Promise<ReviewCenterUser>;
   isError: boolean;
   errorMessage: string | null;
 }

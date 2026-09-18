@@ -19,7 +19,8 @@ export default function StudentTableRow({
   student,
   onAssignGuidance,
 }: StudentTableRowProps) {
-  const { isAdminOrSuperAdmin } = useRoleFlags();
+  const { isAdminOrSuperAdmin, isTeamLead } = useRoleFlags();
+  const canAssignGuidance = (isAdminOrSuperAdmin || isTeamLead) && !!onAssignGuidance;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
@@ -137,7 +138,7 @@ export default function StudentTableRow({
       {/* Actions */}
       <TableCell className="py-2 px-4 text-right">
         <div className="flex items-center justify-end gap-1.5">
-          {isAdminOrSuperAdmin && onAssignGuidance && (
+          {canAssignGuidance && (
             <button
               type="button"
               onClick={() => onAssignGuidance(student)}

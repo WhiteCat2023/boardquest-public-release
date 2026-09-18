@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/custom/sidebar/Sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import HeaderBreadcrumb from "@/components/custom/breadcrumb/HeaderBreadcrumb";
-import UserProfileWidget from "@/components/custom/UserProfileWidget";
 
 export function DashboardLayout() {
   return (
@@ -20,7 +19,6 @@ export function DashboardLayout() {
               <HeaderBreadcrumb />
             </div>
           </div>
-          <UserProfileWidget />
         </div>
         <div className="md:border md:border-border h-full rounded-xl overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 bg-background">
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto flex flex-col p-4 md:p-6 lg:p-8">

@@ -33,7 +33,11 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { useReviewCenterCandidates } from "../../api/useReviewCenter";
+import {
+  useReviewCenterCandidates,
+  type ReviewCenterCandidateItem,
+} from "../../api/useReviewCenter";
+import ReviewCenterCandidateScoreModal from "./ReviewCenterCandidateScoreModal";
 import type { ReviewCenterRepresentative } from "../../types/types";
 
 interface ReviewCenterStudentsTabProps {
@@ -43,6 +47,8 @@ interface ReviewCenterStudentsTabProps {
 export default function ReviewCenterStudentsTab({
   reviewCenter,
 }: ReviewCenterStudentsTabProps) {
+  const [selectedCandidateForScores, setSelectedCandidateForScores] =
+    useState<ReviewCenterCandidateItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSchoolYear, setSelectedSchoolYear] = useState<string>("ALL");
   const [selectedGameStatus, setSelectedGameStatus] = useState<string>("ALL");
@@ -222,14 +228,19 @@ export default function ReviewCenterStudentsTab({
                     >
                       {/* Candidate Profile */}
                       <TableCell className="py-2.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar className="h-7 w-7 border border-primary/20 bg-primary/10 text-primary shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCandidateForScores(candidate)}
+                          className="flex items-center gap-2.5 text-left cursor-pointer group/cand w-fit"
+                          title="Click to view Review Center scores & transcript"
+                        >
+                          <Avatar className="h-7 w-7 border border-primary/20 bg-primary/10 text-primary shrink-0 group-hover/cand:scale-105 transition-transform">
                             <AvatarFallback className="font-bold text-[10px] bg-primary/10 text-primary uppercase">
                               {candidate.name.slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-foreground text-xs group-hover:text-primary transition-colors truncate max-w-[170px]">
+                            <span className="font-bold text-foreground text-xs group-hover/cand:text-primary transition-colors truncate max-w-[170px]">
                               {candidate.name}
                             </span>
                             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate max-w-[170px]">
@@ -244,7 +255,7 @@ export default function ReviewCenterStudentsTab({
                               )}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       </TableCell>
 
                       {/* School Year */}
@@ -322,13 +333,24 @@ export default function ReviewCenterStudentsTab({
                       {/* Actions */}
                       <TableCell className="py-2.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedCandidateForScores(candidate)}
+                            className="h-7 px-2.5 text-[11px] font-bold text-primary hover:bg-primary/10 rounded-lg gap-1.5 cursor-pointer"
+                            title="View Review Center Scores & Transcript"
+                          >
+                            <GraduationCap size={13} />
+                            <span>Scores</span>
+                          </Button>
+
                           {candidate.studentId ? (
                             <Link
                               to={`/student-management/${candidate.studentId}`}
                             >
                               <button
                                 className="size-7 p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-all cursor-pointer flex items-center justify-center"
-                                title="View Student Profile & Performance"
+                                title="View BoardQuest Game Profile & Progress"
                               >
                                 <Eye size={14} />
                               </button>
@@ -351,6 +373,16 @@ export default function ReviewCenterStudentsTab({
           </div>
         )}
       </Card>
+
+      {/* ── Candidate Score Transcript Modal ── */}
+      <ReviewCenterCandidateScoreModal
+        open={Boolean(selectedCandidateForScores)}
+        onOpenChange={(open) => !open && setSelectedCandidateForScores(null)}
+        candidateId={selectedCandidateForScores?.id || null}
+        candidateName={selectedCandidateForScores?.name}
+        candidateSchoolId={selectedCandidateForScores?.schoolId || null}
+        reviewCenterId={reviewCenter?.id}
+      />
     </div>
   );
 }

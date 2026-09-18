@@ -8,6 +8,7 @@ import {
   deleteMyReviewCenterCandidate,
   getMyReviewCenterSchoolYears,
   createMyReviewCenterSchoolYear,
+  updateMyReviewCenterSchoolYear,
   deleteMyReviewCenterSchoolYear,
 } from "../../controller/review-center/candidate.controller";
 
@@ -16,6 +17,7 @@ const router = Router();
 // School Years endpoints
 router.get("/school-years", authenticateReviewCenterToken, getMyReviewCenterSchoolYears);
 router.post("/school-years", authenticateReviewCenterToken, createMyReviewCenterSchoolYear);
+router.put("/school-years/:schoolYear", authenticateReviewCenterToken, updateMyReviewCenterSchoolYear);
 router.delete("/school-years/:schoolYear", authenticateReviewCenterToken, deleteMyReviewCenterSchoolYear);
 
 // Candidate endpoints for Review Center Representative

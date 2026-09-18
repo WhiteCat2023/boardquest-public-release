@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Award, BookOpen, BarChart3, TrendingUp, Users, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useReviewCenterAssessments } from "../../api/useReviewCenter";
+import { useReviewCenterAssessments, useReviewCenterCandidates } from "../../api/useReviewCenter";
+import ReviewCenterCandidateScoreModal from "./ReviewCenterCandidateScoreModal";
 import type { ReviewCenterRepresentative } from "../../types/types";
 
 interface ReviewCenterAssessmentsTabProps {
@@ -28,16 +29,27 @@ const MEDTECH_SUBJECTS = [
 export default function ReviewCenterAssessmentsTab({
   reviewCenter,
 }: ReviewCenterAssessmentsTabProps) {
-  const [selectedSchoolYear, setSelectedSchoolYear] = useState("2026-2027");
+  const [selectedSchoolYear, setSelectedSchoolYear] = useState<string>("ALL");
   const [selectedSubject, setSelectedSubject] = useState("ALL");
+  const [selectedCandidateForScores, setSelectedCandidateForScores] = useState<any | null>(null);
 
+  const { data: candidatesData } = useReviewCenterCandidates(reviewCenter?.id);
   const { data, isLoading } = useReviewCenterAssessments(reviewCenter?.id, {
-    schoolYear: selectedSchoolYear,
+    schoolYear: selectedSchoolYear !== "ALL" ? selectedSchoolYear : undefined,
     subject: selectedSubject !== "ALL" ? selectedSubject : undefined,
   });
 
   const assessments = data?.assessments || [];
   const rows = data?.rows || [];
+
+  // Dynamically extract all school years connected to this review center
+  const schoolYears = useMemo(() => {
+    const set = new Set<string>();
+    (data?.schoolYears || []).forEach((sy: string) => sy && set.add(sy));
+    (candidatesData?.schoolYears || []).forEach((sy: string) => sy && set.add(sy));
+    (assessments || []).forEach((a: any) => a.schoolYear && set.add(a.schoolYear));
+    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }, [data?.schoolYears, candidatesData?.schoolYears, assessments]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -45,13 +57,16 @@ export default function ReviewCenterAssessmentsTab({
       <div className="bg-card border border-border p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
           <Select value={selectedSchoolYear} onValueChange={setSelectedSchoolYear}>
-            <SelectTrigger className="w-36 h-8 text-xs font-bold">
+            <SelectTrigger className="w-44 h-8 text-xs font-bold">
               <SelectValue placeholder="School Year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2026-2027">2026-2027</SelectItem>
-              <SelectItem value="2025-2026">2025-2026</SelectItem>
-              <SelectItem value="2024-2025">2024-2025</SelectItem>
+              <SelectItem value="ALL">All School Years</SelectItem>
+              {schoolYears.map((sy) => (
+                <SelectItem key={sy} value={sy}>
+                  {sy}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -158,8 +173,22 @@ export default function ReviewCenterAssessmentsTab({
                   {rows.map((r: any) => (
                     <tr key={r.candidate.id} className="hover:bg-muted/20">
                       <td className="p-2.5 font-medium">
-                        <div>{r.candidate.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{r.candidate.schoolId || r.candidate.email}</div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCandidateForScores(r.candidate)}
+                          className="text-left group cursor-pointer hover:opacity-80 transition-opacity block"
+                          title="Click to view student review center grade report & transcript"
+                        >
+                          <div className="font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                            <span>{r.candidate.name}</span>
+                            <span className="text-[10px] text-primary underline font-normal opacity-0 group-hover:opacity-100 transition-opacity">
+                              View Scores
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-mono">
+                            {r.candidate.schoolId || r.candidate.email}
+                          </div>
+                        </button>
                       </td>
                       {assessments.map((a: any) => {
                         const scoreObj = r.scores[a.id];
@@ -192,6 +221,15 @@ export default function ReviewCenterAssessmentsTab({
           </div>
         </div>
       )}
+
+      {/* Candidate Score Transcript Modal */}
+      <ReviewCenterCandidateScoreModal
+        open={Boolean(selectedCandidateForScores)}
+        onOpenChange={(open) => !open && setSelectedCandidateForScores(null)}
+        candidateId={selectedCandidateForScores?.id || null}
+        candidateName={selectedCandidateForScores?.name}
+        reviewCenterId={reviewCenter?.id}
+      />
     </div>
   );
 }

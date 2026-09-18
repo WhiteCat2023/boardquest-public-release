@@ -6,6 +6,7 @@ import {
   reviewCenterRefreshToken,
   reviewCenterForgotPassword,
   reviewCenterResetPassword,
+  updateReviewCenterProfile,
 } from "../../controller/review-center/auth.controller";
 import {
   authLimiter,
@@ -22,5 +23,6 @@ router.post("/forgot-password", passwordResetLimiter, reviewCenterForgotPassword
 router.post("/reset-password", passwordResetLimiter, reviewCenterResetPassword);
 router.get("/refresh", reviewCenterRefreshToken);
 router.get("/me", authenticateReviewCenterToken, getReviewCenterMe);
+router.put("/profile", authenticateReviewCenterToken, updateReviewCenterProfile);
 
 export default router;

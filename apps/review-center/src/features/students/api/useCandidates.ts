@@ -202,6 +202,31 @@ export function useCreateSchoolYear() {
   });
 }
 
+export function useUpdateSchoolYear() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      oldSchoolYear,
+      newSchoolYear,
+    }: {
+      oldSchoolYear: string;
+      newSchoolYear: string;
+    }) => {
+      const response = await rcAxios.put(
+        `/candidates/school-years/${encodeURIComponent(oldSchoolYear)}`,
+        { newSchoolYear }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reviewCenterSchoolYears"] });
+      queryClient.invalidateQueries({ queryKey: ["reviewCenterCandidates"] });
+      queryClient.invalidateQueries({ queryKey: ["reviewCenterAssessments"] });
+    },
+  });
+}
+
 export function useDeleteSchoolYear() {
   const queryClient = useQueryClient();
 
@@ -215,6 +240,7 @@ export function useDeleteSchoolYear() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviewCenterSchoolYears"] });
       queryClient.invalidateQueries({ queryKey: ["reviewCenterCandidates"] });
+      queryClient.invalidateQueries({ queryKey: ["reviewCenterAssessments"] });
     },
   });
 }

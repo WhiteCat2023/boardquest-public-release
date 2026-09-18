@@ -183,3 +183,94 @@ export function useReviewCenterCandidates(
     refetchInterval: (query) => (query.state.error ? false : 1000 * 5),
   });
 }
+
+export interface CandidateScoreRecord {
+  id: string;
+  score: number | null;
+  percentage: number | null;
+  percentile: number | null;
+  status: string;
+  remarks?: string | null;
+  assessment: {
+    id: string;
+    title: string;
+    subject: string;
+    schoolYear: string;
+    maxScore: number;
+    passingScore: number;
+    passingRate: number;
+    assessmentDate?: string | null;
+    customLabel?: string | null;
+  };
+}
+
+export interface CandidateSubjectAverage {
+  subject: string;
+  averagePercentage: number | null;
+  totalScore: number;
+  maxScore: number;
+  assessmentsCount: number;
+  scores: any[];
+}
+
+export interface CandidateScoreTranscript {
+  candidate: {
+    id: string;
+    name: string;
+    email: string;
+    schoolId?: string | null;
+    schoolYear: string;
+    batch?: string;
+    companyName: string;
+    status: string;
+  };
+  boardExamSimulation: {
+    gwa?: number | null;
+    generalWeightedAverage?: number | null;
+    passed: boolean;
+    conditionFailed?: boolean;
+    remarks?: string;
+    failedSubjects: string[];
+    belowThresholdSubjects?: string[];
+  };
+  subjectAverages: CandidateSubjectAverage[];
+  scores: CandidateScoreRecord[];
+}
+
+export function useReviewCenterCandidateScores(
+  candidateId?: string,
+  reviewCenterId?: string,
+) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<CandidateScoreTranscript>({
+    queryKey: ["reviewCenterCandidateScores", candidateId, reviewCenterId],
+    queryFn: async () => {
+      if (!candidateId) throw new Error("Candidate ID is required");
+      const url = reviewCenterId
+        ? `/review-center/${reviewCenterId}/candidates/${candidateId}/scores`
+        : `/review-center/candidates/${candidateId}/scores`;
+      const response = await axiosPrivate.get(url);
+      return response.data?.data;
+    },
+    enabled: Boolean(candidateId),
+  });
+}
+
+export function useEmailGradeReports() {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      assessmentId: string;
+      candidateIds: string[];
+    }) => {
+      const response = await axiosPrivate.post(
+        `/review-center/assessments/${payload.assessmentId}/email-reports`,
+        { candidateIds: payload.candidateIds }
+      );
+      return response.data;
+    },
+  });
+}
+

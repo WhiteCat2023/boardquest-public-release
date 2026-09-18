@@ -12,18 +12,18 @@ export const teamLeadNavItem: NavItemProps[] = [
     ],
   },
   {
-    sideBarCategoryName: "LEARNING MANAGEMENT",
+    sideBarCategoryName: "User Management",
     content: [
       {
         title: "Users",
         path: "/faculty-management",
         icon: "Users",
       },
-      {
-        title: "Student",
-        path: "/student-management",
-        icon: "GraduationCap",
-      },
+    ]
+  },
+  {
+    sideBarCategoryName: "LEARNING MANAGEMENT",
+    content: [
       {
         title: "Subject",
         path: "/subject-management",
@@ -64,6 +64,11 @@ export const teamLeadNavItem: NavItemProps[] = [
   {
     sideBarCategoryName: "STUDENT MANAGEMENT",
     content: [
+      {
+        title: "Student",
+        path: "/student-management",
+        icon: "GraduationCap",
+      },
       {
         title: "Game Management",
         path: "/game-management",

@@ -93,7 +93,7 @@ export async function getReviewCenterSchoolYears(
     return [];
   }
 
-  const [dbSchoolYears, candidateSchoolYears] = await Promise.all([
+  const [dbSchoolYears, candidateSchoolYears, assessmentSchoolYears] = await Promise.all([
     dbSchoolYear
       ? dbSchoolYear.findMany({
           where: { OR: whereConditions },
@@ -101,6 +101,10 @@ export async function getReviewCenterSchoolYears(
         })
       : [],
     prisma.reviewCenterCandidate.findMany({
+      where: { OR: whereConditions },
+      select: { schoolYear: true },
+    }),
+    (prisma as any).reviewCenterAssessment.findMany({
       where: { OR: whereConditions },
       select: { schoolYear: true },
     }),
@@ -124,6 +128,19 @@ export async function getReviewCenterSchoolYears(
 
   for (const c of candidateSchoolYears) {
     const syName = c.schoolYear?.trim();
+    if (syName && !existingYearsSet.has(syName)) {
+      existingYearsSet.add(syName);
+      results.push({
+        id: syName,
+        schoolYear: syName,
+        isCurrent: false,
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  for (const a of (assessmentSchoolYears || [])) {
+    const syName = a.schoolYear?.trim();
     if (syName && !existingYearsSet.has(syName)) {
       existingYearsSet.add(syName);
       results.push({
@@ -216,9 +233,123 @@ export async function createReviewCenterSchoolYear(
   };
 }
 
+export async function updateReviewCenterSchoolYear(
+  oldSchoolYear: string,
+  newSchoolYear: string,
+  companyName?: string,
+  reviewCenterId?: string,
+) {
+  const cleanOld = oldSchoolYear.trim().replace(/^s\.?y\.?\s*/i, "");
+  const cleanNew = normalizeSchoolYearString(newSchoolYear);
+
+  if (!cleanNew) {
+    throw new ApiError(400, "New school year is required.");
+  }
+  if (!/^\d{4}-\d{4}$/.test(cleanNew)) {
+    throw new ApiError(
+      400,
+      "Invalid school year format. Please use YYYY-YYYY format (e.g. 2026-2027).",
+    );
+  }
+
+  let finalReviewCenterId = reviewCenterId;
+  if (!finalReviewCenterId && companyName) {
+    const rc = await prisma.reviewCenter.findFirst({
+      where: { name: { equals: companyName.trim(), mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (rc) {
+      finalReviewCenterId = rc.id;
+    }
+  }
+
+  const whereConditions: any[] = [];
+  if (finalReviewCenterId) {
+    whereConditions.push({ reviewCenterId: finalReviewCenterId });
+  }
+  if (companyName && companyName.trim()) {
+    whereConditions.push({
+      companyName: { equals: companyName.trim(), mode: "insensitive" },
+    });
+  }
+
+  if (whereConditions.length === 0) {
+    throw new ApiError(400, "Review center identification is required.");
+  }
+
+  // If old and new are identical, return early
+  if (cleanOld.toLowerCase() === cleanNew.toLowerCase()) {
+    return { schoolYear: cleanNew };
+  }
+
+  // Check if newSchoolYear already exists
+  if (dbSchoolYear) {
+    const existing = await dbSchoolYear.findFirst({
+      where: {
+        schoolYear: { equals: cleanNew, mode: "insensitive" },
+        OR: whereConditions,
+      },
+    });
+    if (existing) {
+      throw new ApiError(409, `School Year "${cleanNew}" already exists in database.`);
+    }
+  }
+
+  // 1. Update ReviewCenterSchoolYear
+  if (dbSchoolYear) {
+    const existingRecord = await dbSchoolYear.findFirst({
+      where: {
+        schoolYear: { equals: cleanOld, mode: "insensitive" },
+        OR: whereConditions,
+      },
+    });
+
+    if (existingRecord) {
+      await dbSchoolYear.update({
+        where: { id: existingRecord.id },
+        data: { schoolYear: cleanNew },
+      });
+    } else {
+      await dbSchoolYear.create({
+        data: {
+          schoolYear: cleanNew,
+          companyName: companyName ? companyName.trim() : "",
+          reviewCenterId: finalReviewCenterId || null,
+          isCurrent: false,
+          status: "ACTIVE",
+        },
+      });
+    }
+  }
+
+  // 2. Cascade update candidates
+  await prisma.reviewCenterCandidate.updateMany({
+    where: {
+      schoolYear: { equals: cleanOld, mode: "insensitive" },
+      OR: whereConditions,
+    },
+    data: {
+      schoolYear: cleanNew,
+    },
+  });
+
+  // 3. Cascade update assessments
+  await prisma.reviewCenterAssessment.updateMany({
+    where: {
+      schoolYear: { equals: cleanOld, mode: "insensitive" },
+      OR: whereConditions,
+    },
+    data: {
+      schoolYear: cleanNew,
+    },
+  });
+
+  return { schoolYear: cleanNew };
+}
+
 export async function deleteReviewCenterSchoolYear(
   schoolYear: string,
-  companyName: string,
+  companyName?: string,
   reviewCenterId?: string,
 ) {
   const cleanSY = schoolYear.trim().replace(/^s\.?y\.?\s*/i, "");
@@ -232,12 +363,55 @@ export async function deleteReviewCenterSchoolYear(
     });
   }
 
+  if (whereConditions.length === 0) {
+    throw new ApiError(400, "Review center identification is required.");
+  }
+
+  // 1. Delete from ReviewCenterSchoolYear
   if (dbSchoolYear) {
     await dbSchoolYear.deleteMany({
       where: {
         schoolYear: { equals: cleanSY, mode: "insensitive" },
         OR: whereConditions,
       },
+    });
+  }
+
+  // 2. Delete candidates and their associated scores
+  const candidatesToDelete = await prisma.reviewCenterCandidate.findMany({
+    where: {
+      schoolYear: { equals: cleanSY, mode: "insensitive" },
+      OR: whereConditions,
+    },
+    select: { id: true },
+  });
+
+  if (candidatesToDelete.length > 0) {
+    const candidateIds = candidatesToDelete.map((c) => c.id);
+    await prisma.reviewCenterScore.deleteMany({
+      where: { candidateId: { in: candidateIds } },
+    });
+    await prisma.reviewCenterCandidate.deleteMany({
+      where: { id: { in: candidateIds } },
+    });
+  }
+
+  // 3. Delete assessments and their associated scores
+  const assessmentsToDelete = await prisma.reviewCenterAssessment.findMany({
+    where: {
+      schoolYear: { equals: cleanSY, mode: "insensitive" },
+      OR: whereConditions,
+    },
+    select: { id: true },
+  });
+
+  if (assessmentsToDelete.length > 0) {
+    const assessmentIds = assessmentsToDelete.map((a) => a.id);
+    await prisma.reviewCenterScore.deleteMany({
+      where: { assessmentId: { in: assessmentIds } },
+    });
+    await prisma.reviewCenterAssessment.deleteMany({
+      where: { id: { in: assessmentIds } },
     });
   }
 

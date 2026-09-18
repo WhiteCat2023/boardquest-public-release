@@ -1,15 +1,19 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Users,
   Search,
   Plus,
   Edit3,
+  Pencil,
   Trash2,
   CheckCircle2,
   RotateCcw,
   ArrowLeft,
   GraduationCap,
+  AlertTriangle,
+  Loader2,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,22 +26,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   useCandidates,
   useDeleteCandidate,
+  useUpdateSchoolYear,
+  useDeleteSchoolYear,
   type Candidate,
 } from "../api/useCandidates";
+import {
+  formatSchoolYearInput,
+  normalizeSchoolYear,
+  isValidSchoolYear,
+} from "@/lib/utils";
 import EnrollCandidateModal from "../components/EnrollCandidateModal";
 import { CandidateScoreDrawer } from "@/features/scores/components/CandidateScoreDrawer";
 import { PdfPreviewModal } from "@/features/scores/components/PdfPreviewModal";
 import { ConfirmDialog } from "@/components/custom/ConfirmDialog";
 
 export function SchoolYearStudentsPage() {
+  const navigate = useNavigate();
   const { schoolYear = "2026-2027" } = useParams<{ schoolYear: string }>();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+
+  const [isEditYearOpen, setIsEditYearOpen] = useState(false);
+  const [editYearInput, setEditYearInput] = useState(schoolYear);
+
+  const [isDeleteYearOpen, setIsDeleteYearOpen] = useState(false);
+  const [deleteYearConfirmInput, setDeleteYearConfirmInput] = useState("");
 
   const { data, isLoading } = useCandidates({
     search: searchTerm,
@@ -46,6 +70,8 @@ export function SchoolYearStudentsPage() {
   });
 
   const deleteCandidateMutation = useDeleteCandidate();
+  const updateSchoolYearMutation = useUpdateSchoolYear();
+  const deleteSchoolYearMutation = useDeleteSchoolYear();
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -88,6 +114,58 @@ export function SchoolYearStudentsPage() {
     });
   };
 
+  const handleUpdateSchoolYear = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formatted = normalizeSchoolYear(editYearInput);
+
+    if (!isValidSchoolYear(formatted)) {
+      toast.error("Please enter a valid school year in YYYY-YYYY format (e.g. 2026-2027).");
+      return;
+    }
+
+    if (formatted === schoolYear) {
+      setIsEditYearOpen(false);
+      return;
+    }
+
+    updateSchoolYearMutation.mutate(
+      { oldSchoolYear: schoolYear, newSchoolYear: formatted },
+      {
+        onSuccess: () => {
+          toast.success(`School Year updated to ${formatted}!`);
+          setIsEditYearOpen(false);
+          navigate(`/candidates/${formatted}`, { replace: true });
+        },
+        onError: (err: any) => {
+          toast.error(
+            err.response?.data?.message || "Failed to update school year."
+          );
+        },
+      }
+    );
+  };
+
+  const handleDeleteSchoolYear = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (deleteYearConfirmInput.trim() !== schoolYear.trim()) {
+      toast.error(`Please type "${schoolYear}" exactly to confirm deletion.`);
+      return;
+    }
+
+    deleteSchoolYearMutation.mutate(schoolYear, {
+      onSuccess: () => {
+        toast.success(`School Year ${schoolYear} deleted successfully.`);
+        setIsDeleteYearOpen(false);
+        navigate("/candidates", { replace: true });
+      },
+      onError: (err: any) => {
+        toast.error(
+          err.response?.data?.message || "Failed to delete school year."
+        );
+      },
+    });
+  };
+
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedStatus("ALL");
@@ -125,6 +203,34 @@ export function SchoolYearStudentsPage() {
 
         {/* Action Button */}
         <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditYearInput(schoolYear);
+              setIsEditYearOpen(true);
+            }}
+            className="h-9 px-3 text-xs font-bold rounded-xl border-border hover:bg-muted text-foreground flex items-center gap-1.5 cursor-pointer"
+            title="Edit School Year"
+          >
+            <Pencil size={13} />
+            <span className="hidden sm:inline">Edit S.Y.</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDeleteYearConfirmInput("");
+              setIsDeleteYearOpen(true);
+            }}
+            className="h-9 px-3 text-xs font-bold rounded-xl border-destructive/30 hover:bg-destructive/10 text-destructive flex items-center gap-1.5 cursor-pointer"
+            title="Delete School Year"
+          >
+            <Trash2 size={13} />
+            <span className="hidden sm:inline">Delete S.Y.</span>
+          </Button>
+
           <Button
             asChild
             className="h-9 px-4 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs flex items-center gap-1.5 cursor-pointer"
@@ -376,6 +482,175 @@ export function SchoolYearStudentsPage() {
         isLoading={deleteCandidateMutation.isPending}
         onConfirm={handleConfirmDelete}
       />
+
+      {/* ── Edit School Year Modal ── */}
+      <Dialog
+        open={isEditYearOpen}
+        onOpenChange={(open) => !open && setIsEditYearOpen(false)}
+      >
+        <DialogContent className="max-w-[420px] p-0 overflow-hidden bg-card border-border rounded-2xl shadow-2xl font-sans">
+          <div className="px-5 pt-5 pb-3 border-b border-border/80 bg-muted/20">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+                <Pencil className="size-4.5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-foreground tracking-tight">
+                  Edit School Year
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Update School Year {schoolYear}. Enrolled candidates and assessments will be updated.
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleUpdateSchoolYear} className="px-5 py-4 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-muted-foreground" />
+                <span>School Year</span>
+                <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={editYearInput}
+                onChange={(e) => setEditYearInput(formatSchoolYearInput(e.target.value))}
+                onBlur={() => setEditYearInput(normalizeSchoolYear(editYearInput))}
+                placeholder="2026-2027"
+                maxLength={9}
+                className="h-9.5 text-xs font-mono rounded-xl bg-background border-border"
+                autoFocus
+                disabled={updateSchoolYearMutation.isPending}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditYearOpen(false)}
+                className="h-8.5 px-3.5 text-xs rounded-xl border-border cursor-pointer"
+                disabled={updateSchoolYearMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !editYearInput.trim() ||
+                  editYearInput === schoolYear ||
+                  updateSchoolYearMutation.isPending
+                }
+                className="h-8.5 px-4 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+              >
+                {updateSchoolYearMutation.isPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete School Year Confirmation Modal ── */}
+      <Dialog
+        open={isDeleteYearOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsDeleteYearOpen(false);
+            setDeleteYearConfirmInput("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-[440px] p-0 overflow-hidden bg-card border-border rounded-2xl shadow-2xl font-sans">
+          <div className="px-5 pt-5 pb-3 border-b border-border/80 bg-destructive/5">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="size-4.5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-destructive tracking-tight">
+                  Delete School Year
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Confirm deletion for School Year {schoolYear}.
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleDeleteSchoolYear} className="px-5 py-4 space-y-4">
+            {/* Warning Message */}
+            <div className="p-3.5 rounded-xl border border-destructive/30 bg-destructive/5 space-y-2">
+              <div className="flex items-start gap-2 text-destructive font-bold text-xs">
+                <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                <span>Notice: Make sure your data is backed up</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Please make sure you have backed up any data inside or that there is no data inside this school year before proceeding.
+              </p>
+              {total > 0 && (
+                <div className="text-[11.5px] font-semibold text-destructive bg-destructive/10 p-2 rounded-lg">
+                  Deleting this school year will permanently delete {total} enrolled candidate{total === 1 ? "" : "s"} and all their examination scores.
+                </div>
+              )}
+            </div>
+
+            {/* Confirmation input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground block">
+                To confirm, please type <span className="font-mono font-bold text-destructive select-all">{schoolYear}</span> below:
+              </label>
+              <Input
+                value={deleteYearConfirmInput}
+                onChange={(e) => setDeleteYearConfirmInput(e.target.value)}
+                placeholder={schoolYear || "YYYY-YYYY"}
+                className="h-9.5 text-xs font-mono rounded-xl bg-background border-border"
+                autoFocus
+                disabled={deleteSchoolYearMutation.isPending}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsDeleteYearOpen(false);
+                  setDeleteYearConfirmInput("");
+                }}
+                className="h-8.5 px-3.5 text-xs rounded-xl border-border cursor-pointer"
+                disabled={deleteSchoolYearMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !schoolYear ||
+                  deleteYearConfirmInput.trim() !== schoolYear.trim() ||
+                  deleteSchoolYearMutation.isPending
+                }
+                className="h-8.5 px-4 text-xs font-bold rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-xs cursor-pointer"
+              >
+                {deleteSchoolYearMutation.isPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete School Year"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
