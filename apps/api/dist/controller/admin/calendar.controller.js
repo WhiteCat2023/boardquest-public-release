@@ -7,7 +7,7 @@ export const getReviewSchedules = asyncHandler(async (req, res) => {
     return new ApiResponse(200, { schedules }, "Review schedules retrieved successfully").send(res);
 });
 export const createReviewSchedule = asyncHandler(async (req, res) => {
-    const { title, companyName, startDate, endDate, category, status, description } = req.body;
+    const { title, companyName, startDate, endDate, category, description } = req.body;
     if (!title || !startDate || !endDate) {
         throw new ApiError(400, "Title, start date, and end date are required.");
     }
@@ -17,7 +17,6 @@ export const createReviewSchedule = asyncHandler(async (req, res) => {
         startDate,
         endDate,
         category: category || "Board Review",
-        status: status || "UPCOMING",
         description,
     });
     return new ApiResponse(201, { schedule }, "Review schedule created successfully").send(res);

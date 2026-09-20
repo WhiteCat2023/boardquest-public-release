@@ -4,6 +4,7 @@ import { generateStudentGradeReportHtml } from "../../services/review-center/gra
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
+import prisma from "../../services/prisma";
 const assessmentService = new AssessmentService();
 function getStringParam(param) {
     if (Array.isArray(param))
@@ -86,8 +87,10 @@ export const emailAssessmentGradeReports = asyncHandler(async (req, res) => {
 });
 export const previewStudentGradeReport = asyncHandler(async (req, res) => {
     const user = req.user;
-    const companyName = user?.companyName;
-    const reviewCenterId = user?.reviewCenterId;
+    const userRole = user?.role;
+    const isAdmin = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"].includes(userRole);
+    const companyName = isAdmin ? "" : user?.companyName;
+    const reviewCenterId = isAdmin ? undefined : user?.reviewCenterId;
     const id = getStringParam(req.params.id);
     const candidateId = getStringParam(req.params.candidateId);
     const assessment = await assessmentService.getAssessmentById(id, companyName, reviewCenterId);
@@ -98,6 +101,21 @@ export const previewStudentGradeReport = asyncHandler(async (req, res) => {
     let scoreRecord = candidateId
         ? assessment.scores.find((s) => s.candidateId === candidateId)
         : assessment.scores.find((s) => s.score !== null) || assessment.scores[0];
+    if (candidateId && !scoreRecord) {
+        const targetCandidate = await prisma.reviewCenterCandidate.findUnique({
+            where: { id: candidateId },
+        });
+        if (targetCandidate) {
+            scoreRecord = assessment.scores.find((s) => {
+                const sc = s.candidate;
+                if (!sc)
+                    return false;
+                return ((targetCandidate.email && sc.email && targetCandidate.email.toLowerCase() === sc.email.toLowerCase()) ||
+                    (targetCandidate.schoolId && sc.schoolId && targetCandidate.schoolId === sc.schoolId) ||
+                    (targetCandidate.studentId && sc.studentId && targetCandidate.studentId === sc.studentId));
+            });
+        }
+    }
     if (!scoreRecord || scoreRecord.score === null) {
         throw new ApiError(400, "No score has been recorded for this student yet. Record a score first to generate a grade slip.");
     }
@@ -141,7 +159,7 @@ export const getGradeMatrix = asyncHandler(async (req, res) => {
     const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
     const { schoolYear, subject } = req.query;
-    const matrix = await assessmentService.getGradeMatrix(companyName, reviewCenterId, schoolYear || "2026-2027", typeof subject === "string" ? subject : undefined);
+    const matrix = await assessmentService.getGradeMatrix(companyName, reviewCenterId, typeof schoolYear === "string" ? schoolYear : undefined, typeof subject === "string" ? subject : undefined);
     return new ApiResponse(200, matrix, "Grade matrix retrieved successfully").send(res);
 });
 export const getCandidateScores = asyncHandler(async (req, res) => {
@@ -152,10 +170,16 @@ export const getCandidateScores = asyncHandler(async (req, res) => {
     const transcript = await assessmentService.getCandidateScoreTranscript(candidateId, companyName, reviewCenterId);
     return new ApiResponse(200, transcript, "Candidate score transcript retrieved successfully").send(res);
 });
-// Admin Visibility Handler
+// Admin Visibility Handlers
 export const getAdminReviewCenterAssessments = asyncHandler(async (req, res) => {
     const reviewCenterId = getStringParam(req.params.id);
     const { schoolYear, subject } = req.query;
-    const matrix = await assessmentService.getGradeMatrix("", reviewCenterId || undefined, schoolYear || "2026-2027", typeof subject === "string" ? subject : undefined);
+    const matrix = await assessmentService.getGradeMatrix("", reviewCenterId || undefined, typeof schoolYear === "string" ? schoolYear : undefined, typeof subject === "string" ? subject : undefined);
     return new ApiResponse(200, matrix, "Review Center assessments retrieved for admin").send(res);
+});
+export const getAdminCandidateScores = asyncHandler(async (req, res) => {
+    const candidateId = getStringParam(req.params.candidateId);
+    const reviewCenterId = getStringParam(req.params.id);
+    const transcript = await assessmentService.getCandidateScoreTranscript(candidateId, "", reviewCenterId || undefined);
+    return new ApiResponse(200, transcript, "Candidate score transcript retrieved successfully").send(res);
 });

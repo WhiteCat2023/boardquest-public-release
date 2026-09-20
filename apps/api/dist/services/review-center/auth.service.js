@@ -208,5 +208,137 @@ export class ReviewCenterAuthService {
         });
         return { message: "Password has been reset successfully." };
     }
+    async updateProfile(userId, data) {
+        const repUser = await this.db.reviewCenterRepresentativeUser.findUnique({
+            where: { id: userId },
+        });
+        if (!repUser) {
+            throw new ApiError(404, "Review center representative profile not found");
+        }
+        const updateData = {};
+        if (data.name && data.name.trim()) {
+            updateData.name = data.name.trim();
+            if (data.firstName === undefined && data.lastName === undefined) {
+                const parts = data.name.trim().split(" ");
+                if (parts.length > 1) {
+                    updateData.firstName = parts[0];
+                    updateData.lastName = parts.slice(1).join(" ");
+                }
+                else {
+                    updateData.firstName = data.name.trim();
+                    updateData.lastName = null;
+                }
+            }
+        }
+        if (data.firstName !== undefined) {
+            updateData.firstName = data.firstName.trim() || null;
+        }
+        if (data.lastName !== undefined) {
+            updateData.lastName = data.lastName.trim() || null;
+        }
+        if (!data.name && (data.firstName !== undefined || data.lastName !== undefined)) {
+            const fn = updateData.firstName !== undefined ? updateData.firstName : (repUser.firstName || "");
+            const ln = updateData.lastName !== undefined ? updateData.lastName : (repUser.lastName || "");
+            const combined = `${fn || ""} ${ln || ""}`.trim();
+            if (combined) {
+                updateData.name = combined;
+            }
+        }
+        if (data.phonenumber !== undefined) {
+            updateData.phonenumber = data.phonenumber.trim();
+        }
+        if (data.employeeId !== undefined && data.employeeId.trim()) {
+            updateData.employeeId = data.employeeId.trim();
+        }
+        if (data.location !== undefined) {
+            updateData.location = data.location.trim();
+        }
+        // Password change verification
+        if (data.newPassword && data.newPassword.trim()) {
+            if (!data.currentPassword) {
+                throw new ApiError(400, "Current password is required to set a new password.");
+            }
+            if (data.newPassword.length < 6) {
+                throw new ApiError(400, "New password must be at least 6 characters.");
+            }
+            const isCurrentValid = (await verifyPassword(repUser.password, data.currentPassword)) ||
+                repUser.password === data.currentPassword;
+            if (!isCurrentValid) {
+                throw new ApiError(400, "Current password does not match our records.");
+            }
+            updateData.password = await hashedPassword(data.newPassword);
+        }
+        // Handle companyName changes
+        if (data.companyName && data.companyName.trim()) {
+            const newCompanyName = data.companyName.trim();
+            const oldCompanyName = repUser.companyName;
+            updateData.companyName = newCompanyName;
+            if (oldCompanyName.toLowerCase() !== newCompanyName.toLowerCase()) {
+                // Sync ReviewCenter model if linked
+                if (repUser.reviewCenterId) {
+                    await this.db.reviewCenter.update({
+                        where: { id: repUser.reviewCenterId },
+                        data: {
+                            name: newCompanyName,
+                            ...(data.location ? { location: data.location.trim() } : {}),
+                        },
+                    });
+                }
+                // Sync candidates
+                const rcFilter = repUser.reviewCenterId
+                    ? { reviewCenterId: repUser.reviewCenterId }
+                    : { companyName: { equals: oldCompanyName, mode: "insensitive" } };
+                await this.db.reviewCenterCandidate.updateMany({
+                    where: rcFilter,
+                    data: { companyName: newCompanyName },
+                });
+                // Sync assessments
+                await this.db.reviewCenterAssessment.updateMany({
+                    where: rcFilter,
+                    data: { companyName: newCompanyName },
+                });
+                // Sync school years
+                if (this.db.reviewCenterSchoolYear) {
+                    await this.db.reviewCenterSchoolYear.updateMany({
+                        where: rcFilter,
+                        data: { companyName: newCompanyName },
+                    });
+                }
+            }
+            else if (data.location && repUser.reviewCenterId) {
+                // Update location on ReviewCenter
+                await this.db.reviewCenter.update({
+                    where: { id: repUser.reviewCenterId },
+                    data: { location: data.location.trim() },
+                });
+            }
+        }
+        else if (data.location && repUser.reviewCenterId) {
+            await this.db.reviewCenter.update({
+                where: { id: repUser.reviewCenterId },
+                data: { location: data.location.trim() },
+            });
+        }
+        const updated = await this.db.reviewCenterRepresentativeUser.update({
+            where: { id: userId },
+            data: updateData,
+            include: {
+                reviewCenter: {
+                    select: {
+                        id: true,
+                        name: true,
+                        location: true,
+                        contactEmail: true,
+                        contactPhone: true,
+                    },
+                },
+            },
+        });
+        const { password: _pw, ...sanitizedUser } = updated;
+        return {
+            ...sanitizedUser,
+            role: "REVIEW_CENTER_REPRESENTATIVE",
+        };
+    }
 }
 export const reviewCenterAuthService = new ReviewCenterAuthService();

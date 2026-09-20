@@ -20,6 +20,18 @@ export const createMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
     const created = await candidateService.createReviewCenterSchoolYear(companyName, schoolYear, reviewCenterId);
     return new ApiResponse(201, { schoolYear: created }, "School year created successfully in database").send(res);
 });
+export const updateMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { schoolYear } = req.params;
+    const { newSchoolYear } = req.body;
+    const companyName = user?.companyName;
+    const reviewCenterId = user?.reviewCenterId;
+    if (!newSchoolYear) {
+        throw new ApiError(400, "New school year is required");
+    }
+    const updated = await candidateService.updateReviewCenterSchoolYear(schoolYear, newSchoolYear, companyName, reviewCenterId);
+    return new ApiResponse(200, { schoolYear: updated }, "School year updated successfully").send(res);
+});
 export const deleteMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
     const user = req.user;
     const { schoolYear } = req.params;

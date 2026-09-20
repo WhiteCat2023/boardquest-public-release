@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { authenticateReviewCenterToken } from "../../middleware/reviewCenterAuth.middleware";
-import { getMyReviewCenterCandidates, enrollMyReviewCenterCandidate, bulkEnrollMyReviewCenterCandidates, updateMyReviewCenterCandidate, deleteMyReviewCenterCandidate, getMyReviewCenterSchoolYears, createMyReviewCenterSchoolYear, deleteMyReviewCenterSchoolYear, } from "../../controller/review-center/candidate.controller";
+import { getMyReviewCenterCandidates, enrollMyReviewCenterCandidate, bulkEnrollMyReviewCenterCandidates, updateMyReviewCenterCandidate, deleteMyReviewCenterCandidate, getMyReviewCenterSchoolYears, createMyReviewCenterSchoolYear, updateMyReviewCenterSchoolYear, deleteMyReviewCenterSchoolYear, } from "../../controller/review-center/candidate.controller";
 const router = Router();
 // School Years endpoints
 router.get("/school-years", authenticateReviewCenterToken, getMyReviewCenterSchoolYears);
 router.post("/school-years", authenticateReviewCenterToken, createMyReviewCenterSchoolYear);
+router.put("/school-years/:schoolYear", authenticateReviewCenterToken, updateMyReviewCenterSchoolYear);
 router.delete("/school-years/:schoolYear", authenticateReviewCenterToken, deleteMyReviewCenterSchoolYear);
 // Candidate endpoints for Review Center Representative
 router.get("/get", authenticateReviewCenterToken, getMyReviewCenterCandidates);

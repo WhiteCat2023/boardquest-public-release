@@ -3,8 +3,10 @@ import { ApiError } from "../../utils/apiError";
 import { GuidanceStatus, Role } from "../../types/prisma.types";
 import { createNotification } from "./notification.service";
 export const createGuidanceAssignment = async (assignedById, payload, creatorRole) => {
-    if (creatorRole !== Role.SUPERADMIN && creatorRole !== Role.DEAN) {
-        throw new ApiError(403, "Only Superadmin and Dean users can assign students to advisors.");
+    if (creatorRole !== Role.SUPERADMIN &&
+        creatorRole !== Role.DEAN &&
+        creatorRole !== Role.TEAMLEAD) {
+        throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
     }
     const { studentId, advisorId, subjectCategory, reason, guidanceNotes } = payload;
     if (!studentId || !advisorId || !reason?.trim()) {
@@ -119,7 +121,9 @@ export const updateGuidanceAssignment = async (assignmentId, userId, userRole, p
     }
     const isAssigner = existing.assignedById === userId;
     const isAdvisor = existing.advisorId === userId;
-    const isAdmin = userRole === Role.SUPERADMIN || userRole === Role.DEAN;
+    const isAdmin = userRole === Role.SUPERADMIN ||
+        userRole === Role.DEAN ||
+        userRole === Role.TEAMLEAD;
     if (!isAssigner && !isAdvisor && !isAdmin) {
         throw new ApiError(403, "You do not have permission to modify this guidance case.");
     }

@@ -238,7 +238,7 @@ export default function StudentReviewCenterTab({
         </h4>
 
         <div className="space-y-3">
-          {subjectAverages.map((subj) => {
+          {subjectAverages.map((subj: any) => {
             const weight =
               MEDTECH_SUBJECT_WEIGHTS[subj.subject] || 0.1667;
             const weightPct = (weight * 100).toFixed(0);

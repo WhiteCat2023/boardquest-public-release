@@ -154,3 +154,92 @@ export function calculateMedTechGeneralAverage(subjectScores) {
         failedSubjects,
     };
 }
+/**
+ * Unified calculation of subject proficiency, status, and completed lessons.
+ * Ensures consistent resolution priority across student profile and analytics engines:
+ * 1. Prioritize authoritative DB mastery record when available and positive (>0).
+ * 2. If exams exist, blend exam accuracy (60% score + 40% accuracy) with lesson completion (70/30 weight).
+ * 3. If only lessons completed, derive proficiency from lesson completion ratio.
+ * 4. Fallback to existing DB mastery record if 0, or default to 0.
+ */
+export function calculateSubjectProficiency(input) {
+    const { dbMastery, exams = [], completedLessons = 0, totalLessons = 5 } = input;
+    const safeTotalLessons = Math.max(totalLessons, 1);
+    const actualLessonsDone = Math.max(0, completedLessons);
+    let proficiency = 0;
+    if (dbMastery && typeof dbMastery.proficiency === "number" && dbMastery.proficiency > 0) {
+        proficiency = dbMastery.proficiency;
+    }
+    else if (exams && exams.length > 0) {
+        const examAvgScore = Math.round(exams.reduce((acc, curr) => acc + (curr.score || 0), 0) / exams.length);
+        const examAvgAccuracy = Math.round(exams.reduce((acc, curr) => acc + (curr.accuracy ?? curr.score ?? 0), 0) / exams.length);
+        const examBase = Math.round(examAvgScore * 0.6 + examAvgAccuracy * 0.4);
+        if (actualLessonsDone > 0) {
+            const lessonRatio = Math.round((actualLessonsDone / safeTotalLessons) * 100);
+            proficiency = Math.min(100, Math.round(examBase * 0.7 + lessonRatio * 0.3));
+        }
+        else {
+            proficiency = examBase;
+        }
+    }
+    else if (actualLessonsDone > 0) {
+        proficiency = Math.min(100, Math.round((actualLessonsDone / safeTotalLessons) * 100));
+    }
+    else if (dbMastery && typeof dbMastery.proficiency === "number") {
+        proficiency = dbMastery.proficiency;
+    }
+    // Derive completed lessons count
+    let lessonsDone = actualLessonsDone;
+    if (lessonsDone === 0 && proficiency > 0) {
+        lessonsDone = Math.min(safeTotalLessons, Math.round((proficiency / 100) * safeTotalLessons));
+    }
+    // Derive standardized status
+    let status = "Not Started";
+    if (dbMastery?.status) {
+        status = dbMastery.status;
+    }
+    else if (exams.length === 0 && actualLessonsDone === 0 && proficiency === 0) {
+        status = "Not Started";
+    }
+    else if (proficiency >= 80) {
+        status = "Mastered";
+    }
+    else if (proficiency >= 65) {
+        status = "Proficient";
+    }
+    else if (proficiency >= 35 || exams.length > 0 || actualLessonsDone > 0) {
+        status = "In Training";
+    }
+    else {
+        status = "Needs Focus";
+    }
+    return {
+        proficiency,
+        status,
+        lessonsDone,
+    };
+}
+/**
+ * Unified calculation of student board exam readiness score across all subjects.
+ * Takes an array of numeric scores or objects with a proficiency field and returns
+ * the canonical arithmetic mean rounded to 1 decimal place.
+ */
+export function calculateReadinessScore(items) {
+    if (!items || items.length === 0)
+        return 0;
+    const scores = items.map((item) => typeof item === "number" ? item : (item.proficiency ?? 0));
+    const total = scores.reduce((sum, s) => sum + (s || 0), 0);
+    return Math.round((total / scores.length) * 10) / 10;
+}
+/**
+ * Calculate standing tier based on average proficiency and total gamified points.
+ */
+export function calculateStandingTier(readinessScore, totalPoints = 0) {
+    if (readinessScore >= 85)
+        return "High Distinction";
+    if (readinessScore >= 70)
+        return "Proficient Standing";
+    if (readinessScore < 50 && totalPoints < 500)
+        return "Needs Focus";
+    return "In Training";
+}

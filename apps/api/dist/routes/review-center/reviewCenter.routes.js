@@ -1,16 +1,23 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
 import { getReviewCenters, getReviewCenterById, createReviewCenter, updateReviewCenter, deleteReviewCenter, getReviewCenterCandidatesForAdmin, } from "../../controller/review-center/reviewCenter.controller";
-import { getAdminReviewCenterAssessments } from "../../controller/review-center/assessment.controller";
+import { getAdminReviewCenterAssessments, getAdminCandidateScores, previewStudentGradeReport, emailAssessmentGradeReports, } from "../../controller/review-center/assessment.controller";
 import { getReviewSchedules, createReviewSchedule, updateReviewSchedule, deleteReviewSchedule, } from "../../controller/admin/calendar.controller";
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
+const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
 // Review Center Representative Directory Routes
 router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewCenters);
 router.get("/representatives/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);
+router.get("/candidates/:candidateId/scores", authenticateToken, requireRoles(allowedRoles), getAdminCandidateScores);
 router.get("/:id/candidates", authenticateToken, requireRoles(allowedRoles), getReviewCenterCandidatesForAdmin);
+router.get("/:id/candidates/:candidateId/scores", authenticateToken, requireRoles(allowedRoles), getAdminCandidateScores);
 router.get("/:id/students", authenticateToken, requireRoles(allowedRoles), getReviewCenterCandidatesForAdmin);
 router.get("/:id/assessments", authenticateToken, requireRoles(allowedRoles), getAdminReviewCenterAssessments);
+router.get("/assessments/:id/preview-report", authenticateToken, requireRoles(allowedRoles), previewStudentGradeReport);
+router.get("/assessments/:id/preview-report/:candidateId", authenticateToken, requireRoles(allowedRoles), previewStudentGradeReport);
+router.get("/assessments/:id/preview", authenticateToken, requireRoles(allowedRoles), previewStudentGradeReport);
+router.get("/assessments/:id/preview/:candidateId", authenticateToken, requireRoles(allowedRoles), previewStudentGradeReport);
+router.post("/assessments/:id/email-reports", authenticateToken, requireRoles(allowedRoles), emailAssessmentGradeReports);
 router.post("/", authenticateToken, requireRoles(allowedRoles), createReviewCenter);
 router.put("/:id", authenticateToken, requireRoles(allowedRoles), updateReviewCenter);
 router.delete("/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewCenter);

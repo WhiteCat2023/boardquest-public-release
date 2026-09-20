@@ -24,6 +24,7 @@ jest.mock("../services/review-center/candidate.service", () => {
         ...original,
         getReviewCenterSchoolYears: jest.fn(),
         createReviewCenterSchoolYear: jest.fn(),
+        updateReviewCenterSchoolYear: jest.fn(),
         deleteReviewCenterSchoolYear: jest.fn(),
         getReviewCenterCandidates: jest.fn(),
         enrollCandidate: jest.fn(),
@@ -87,6 +88,25 @@ describe("Review Center Candidate Routes & Formatting", () => {
         it("should return 400 if schoolYear field is missing", async () => {
             const response = await request(app)
                 .post("/api/review-center-app/candidates/school-years")
+                .send({});
+            expect(response.status).toBe(400);
+        });
+    });
+    describe("PUT /api/review-center-app/candidates/school-years/:schoolYear", () => {
+        it("should update school year successfully", async () => {
+            candidateService.updateReviewCenterSchoolYear.mockResolvedValue({
+                schoolYear: "2027-2028",
+            });
+            const response = await request(app)
+                .put("/api/review-center-app/candidates/school-years/2026-2027")
+                .send({ newSchoolYear: "2027-2028" });
+            expect(response.status).toBe(200);
+            expect(response.body.data.schoolYear).toBeDefined();
+            expect(response.body.message).toContain("updated successfully");
+        });
+        it("should return 400 if newSchoolYear is missing", async () => {
+            const response = await request(app)
+                .put("/api/review-center-app/candidates/school-years/2026-2027")
                 .send({});
             expect(response.status).toBe(400);
         });

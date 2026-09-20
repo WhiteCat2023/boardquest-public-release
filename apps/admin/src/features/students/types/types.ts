@@ -107,4 +107,5 @@ export interface Student {
   accuracyHistory?: SubjectAccuracyHistoryItem[];
   scorecardSummary?: StudentScorecardSummary;
   activeObjective?: ActiveStudyObjective | null;
+  reviewCenterTranscript?: any;
 }

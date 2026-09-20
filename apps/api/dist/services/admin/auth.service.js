@@ -308,8 +308,23 @@ export class AuthService {
             updateData.name = data.name;
         if (data.email)
             updateData.email = data.email;
-        if (data.phoneNumber)
+        if (data.phoneNumber !== undefined)
             updateData.phoneNumber = data.phoneNumber;
+        if (data.employeeId !== undefined && data.employeeId.trim()) {
+            const trimmedId = data.employeeId.trim();
+            if (trimmedId !== user.employeeId) {
+                const existing = await this.db.adminUser.findFirst({
+                    where: {
+                        employeeId: trimmedId,
+                        NOT: { id: userId },
+                    },
+                });
+                if (existing) {
+                    throw new ApiError(400, "Employee ID is already in use by another account.");
+                }
+            }
+            updateData.employeeId = trimmedId;
+        }
         if (data.password) {
             updateData.password = await hashedPassword(data.password);
         }

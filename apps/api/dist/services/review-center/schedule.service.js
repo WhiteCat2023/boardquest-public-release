@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
+import { evaluateScheduleStatus } from "../admin/calendar.service";
 function mapToSchedule(item) {
     return {
         id: item.id,
@@ -12,7 +13,7 @@ function mapToSchedule(item) {
         endDate: item.endDate
             ? new Date(item.endDate).toISOString().split("T")[0]
             : "2026-07-15",
-        status: item.status || "ACTIVE",
+        status: evaluateScheduleStatus(item.startDate, item.endDate),
         description: item.description || "",
         reviewCenterId: item.reviewCenterId || null,
         createdAt: item.createdAt,
@@ -80,7 +81,7 @@ export async function createReviewCenterSchedule(data) {
             category: data.category || "Board Review",
             startDate: new Date(data.startDate),
             endDate: new Date(data.endDate),
-            status: "UPCOMING",
+            status: evaluateScheduleStatus(data.startDate, data.endDate),
             description: data.description || "",
         },
     });
@@ -103,6 +104,9 @@ export async function updateReviewCenterSchedule(id, data, companyName, reviewCe
     if (!isOwner) {
         throw new ApiError(403, "Access denied: You can only modify schedules belonging to your review center.");
     }
+    const newStartDate = data.startDate ? new Date(data.startDate) : existing.startDate;
+    const newEndDate = data.endDate ? new Date(data.endDate) : existing.endDate;
+    const status = evaluateScheduleStatus(newStartDate, newEndDate);
     const updated = await prisma.reviewCenterProgram.update({
         where: { id },
         data: {
@@ -110,7 +114,7 @@ export async function updateReviewCenterSchedule(id, data, companyName, reviewCe
             ...(data.category && { category: data.category }),
             ...(data.startDate && { startDate: new Date(data.startDate) }),
             ...(data.endDate && { endDate: new Date(data.endDate) }),
-            ...(data.status && { status: data.status }),
+            status,
             ...(data.description !== undefined && { description: data.description }),
         },
     });

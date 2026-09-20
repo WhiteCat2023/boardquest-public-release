@@ -3,7 +3,9 @@ import request from "supertest";
 import express from "express";
 import gameRouter from "../routes/admin/game_module/game.routes";
 import { gameBadgeService } from "../services/admin/gameBadge.service";
+import { gameRankService } from "../services/admin/rank.service";
 jest.mock("../services/admin/gameBadge.service");
+jest.mock("../services/admin/rank.service");
 let app;
 beforeAll(() => {
     app = express();
@@ -122,6 +124,82 @@ describe("Game Module Routes", () => {
             const response = await request(app).get("/api/game/leaderboard");
             expect(response.status).toBe(200);
             expect(response.body.data).toBeDefined();
+        });
+    });
+    describe("GET /api/game/ranks", () => {
+        it("should return all ranks from service", async () => {
+            const mockRanks = [
+                {
+                    id: "rank-1",
+                    rankId: "apprentice",
+                    title: "Apprentice Technician",
+                    minLevel: 1,
+                    isActive: true,
+                    studentCount: 5,
+                },
+            ];
+            gameRankService.getAllRanks.mockResolvedValue(mockRanks);
+            const response = await request(app).get("/api/game/ranks");
+            expect(response.status).toBe(200);
+            expect(response.body.data).toBeDefined();
+            expect(response.body.data.length).toBe(1);
+            expect(response.body.data[0].title).toBe("Apprentice Technician");
+        });
+    });
+    describe("POST /api/game/ranks", () => {
+        it("should create a rank in the database", async () => {
+            const newRank = {
+                id: "rank-2",
+                rankId: "master",
+                title: "Master Specialist",
+                minLevel: 30,
+                isActive: true,
+            };
+            gameRankService.createRank.mockResolvedValue(newRank);
+            const response = await request(app).post("/api/game/ranks").send({
+                title: "Master Specialist",
+                minLevel: 30,
+            });
+            expect(response.status).toBe(201);
+            expect(response.body.data.title).toBe("Master Specialist");
+        });
+    });
+    describe("PUT /api/game/ranks/:id", () => {
+        it("should update a rank in the database", async () => {
+            const updated = {
+                id: "rank-1",
+                rankId: "apprentice",
+                title: "Senior Apprentice",
+            };
+            gameRankService.updateRank.mockResolvedValue(updated);
+            const response = await request(app).put("/api/game/ranks/rank-1").send({
+                title: "Senior Apprentice",
+            });
+            expect(response.status).toBe(200);
+            expect(response.body.data.title).toBe("Senior Apprentice");
+        });
+    });
+    describe("PATCH /api/game/ranks/:id/toggle", () => {
+        it("should toggle rank active status", async () => {
+            const toggled = {
+                id: "rank-1",
+                isActive: false,
+            };
+            gameRankService.toggleRankActive.mockResolvedValue(toggled);
+            const response = await request(app).patch("/api/game/ranks/rank-1/toggle");
+            expect(response.status).toBe(200);
+            expect(response.body.data.isActive).toBe(false);
+        });
+    });
+    describe("DELETE /api/game/ranks/:id", () => {
+        it("should delete rank from database", async () => {
+            gameRankService.deleteRank.mockResolvedValue({
+                success: true,
+                message: "Rank deleted successfully",
+            });
+            const response = await request(app).delete("/api/game/ranks/rank-1");
+            expect(response.status).toBe(200);
+            expect(response.body.message).toContain("successfully");
         });
     });
 });

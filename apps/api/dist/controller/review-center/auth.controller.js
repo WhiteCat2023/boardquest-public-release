@@ -105,3 +105,11 @@ export const reviewCenterResetPassword = asyncHandler(async (req, res) => {
     const result = await reviewCenterAuthService.resetPassword(req.body);
     return new ApiResponse(200, result, "Password has been reset successfully").send(res);
 });
+export const updateReviewCenterProfile = asyncHandler(async (req, res) => {
+    const userId = req.user?.id;
+    if (!userId) {
+        throw new ApiError(401, "Not authenticated");
+    }
+    const updatedUser = await reviewCenterAuthService.updateProfile(userId, req.body);
+    return new ApiResponse(200, { user: updatedUser }, "Profile updated successfully").send(res);
+});
