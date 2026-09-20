@@ -1,6 +1,10 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
 import crypto from "crypto";
+import {
+  calculateSubjectProficiency,
+  calculateReadinessScore,
+} from "../../utils/statsCalculator";
 
 export interface PerformanceTrendItem {
   id?: string;
@@ -223,52 +227,25 @@ export class AnalyticsService {
 
       // 4. Look at subject-specific exam results
       const subjectExams = (student.examResults || []).filter((e: any) => matchSubject(e?.subject, sub));
-      const examAvgScore = subjectExams.length > 0
-        ? Math.round(subjectExams.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0) / subjectExams.length)
-        : null;
-      const examAvgAccuracy = subjectExams.length > 0
-        ? Math.round(subjectExams.reduce((acc: number, curr: any) => acc + (curr.accuracy || curr.score || 0), 0) / subjectExams.length)
-        : null;
 
-      // Calculate Proficiency
-      let prof = 0;
-      if (existing && typeof existing.proficiency === "number" && existing.proficiency > 0) {
-        prof = existing.proficiency;
-      } else if (examAvgScore !== null) {
-        const examBase = Math.round((examAvgScore * 0.6) + ((examAvgAccuracy ?? examAvgScore) * 0.4));
-        if (actualLessonsDone > 0) {
-          const lessonRatio = Math.round((actualLessonsDone / totalLessons) * 100);
-          prof = Math.min(100, Math.round((examBase * 0.7) + (lessonRatio * 0.3)));
-        } else {
-          prof = examBase;
-        }
-      } else if (actualLessonsDone > 0) {
-        prof = Math.min(100, Math.round((actualLessonsDone / totalLessons) * 100));
-      }
-
-      // Calculate Lessons Done (real completed count, or fallback from proficiency ratio if admin set proficiency manually)
-      let lessonsDone = actualLessonsDone;
-      if (lessonsDone === 0 && prof > 0) {
-        lessonsDone = Math.min(totalLessons, Math.round((prof / 100) * totalLessons));
-      }
-
-      // Calculate Status
-      const status = existing?.status || (prof >= 75 ? "Mastered" : prof >= 55 ? "Competent" : "Needs Review");
+      const { proficiency, status, lessonsDone } = calculateSubjectProficiency({
+        dbMastery: existing,
+        exams: subjectExams,
+        completedLessons: actualLessonsDone,
+        totalLessons,
+      });
 
       return {
         subject: sub,
-        proficiency: prof,
+        proficiency,
         status,
         lessonsDone,
         totalLessons,
       };
     });
 
-    // Board Readiness Score formula: total proficiency score / total number of subjects or categories
-    const totalProficiencyScore = masteryData.reduce((acc, curr) => acc + (curr.proficiency || 0), 0);
-    const readinessScore = masteryData.length > 0 
-      ? Math.round((totalProficiencyScore / masteryData.length) * 10) / 10 
-      : 0;
+    // Board Readiness Score formula: unified calculation
+    const readinessScore = calculateReadinessScore(masteryData);
 
     // 3. Construct Performance Trend strictly from actual DB exam results
     const performanceTrend: PerformanceTrendItem[] = (student.examResults || []).map((e: any, index: number) => ({

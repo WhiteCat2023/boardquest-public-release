@@ -64,7 +64,6 @@ app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(cookieParser());
 
-// await seedAdminUserDb();
 await ensureSuperAdminExists();
 await startQueue();
 

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { useCalendar } from "../../api/useCalendar";
 import type { ReviewCenterRepresentative } from "../../types/types";
+import { evaluateScheduleStatus } from "../../utils/scheduleUtils";
 
 interface ReviewCenterSchedulesTabProps {
   reviewCenter: ReviewCenterRepresentative | null | undefined;
@@ -139,19 +140,30 @@ export default function ReviewCenterSchedulesTab({
 
                     {/* Schedule Status */}
                     <TableCell className="py-2.5 px-4 text-right sm:text-left">
-                      <Badge
-                        variant="outline"
-                        className={`text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          schedule.status === "ACTIVE"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                            : schedule.status === "COMPLETED"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                        }`}
-                      >
-                        <CheckCircle2 size={10} className="mr-1 inline" />
-                        {schedule.status || "UPCOMING"}
-                      </Badge>
+                      {(() => {
+                        const currentStatus =
+                          schedule.startDate && schedule.endDate
+                            ? evaluateScheduleStatus(schedule.startDate, schedule.endDate)
+                            : (schedule.status || "UPCOMING");
+                        const isOngoing = currentStatus === "ONGOING" || currentStatus === "ACTIVE";
+                        const isCompleted = currentStatus === "COMPLETED";
+
+                        return (
+                          <Badge
+                            variant="outline"
+                            className={`text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                              isOngoing
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : isCompleted
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                            }`}
+                          >
+                            <CheckCircle2 size={10} className="mr-1 inline" />
+                            {isOngoing ? "ONGOING" : currentStatus}
+                          </Badge>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}

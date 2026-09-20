@@ -2,6 +2,7 @@ import { ShieldCheck, Target, BookOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { formatReadinessScore, getReadinessTier } from "@/utils/readinessUtils";
 import type { StudentAnalyticsResult } from "../types/types";
 
 interface SyllabusReadinessTabProps {
@@ -10,6 +11,7 @@ interface SyllabusReadinessTabProps {
 
 export function SyllabusReadinessTab({ report }: SyllabusReadinessTabProps) {
   const readinessScore = report?.studentInfo?.readinessScore ?? 0;
+  const tierInfo = getReadinessTier(readinessScore);
   const examsCompleted = report?.weeklyGoals?.examsCompleted ?? 0;
   const examsTarget = report?.weeklyGoals?.examsTarget || 1;
   const lessonsCompleted = report?.weeklyGoals?.lessonsCompleted ?? 0;
@@ -55,26 +57,12 @@ export function SyllabusReadinessTab({ report }: SyllabusReadinessTabProps) {
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
               <span className="text-2xl sm:text-2.5xl font-black text-foreground">
-                {typeof readinessScore === "number"
-                  ? readinessScore % 1 !== 0
-                    ? readinessScore.toFixed(1)
-                    : readinessScore
-                  : readinessScore}%
+                {formatReadinessScore(readinessScore)}
               </span>
               <span
-                className={`text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider ${
-                  readinessScore >= 75
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : readinessScore >= 60
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-rose-600 dark:text-rose-400"
-                }`}
+                className={`text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider ${tierInfo.textColor}`}
               >
-                {readinessScore >= 75
-                  ? "High Probability"
-                  : readinessScore >= 60
-                  ? "In Training"
-                  : "Needs Remediation"}
+                {tierInfo.tier}
               </span>
             </div>
           </div>

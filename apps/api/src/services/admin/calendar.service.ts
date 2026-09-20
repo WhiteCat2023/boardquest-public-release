@@ -23,6 +23,27 @@ export interface UpdateReviewScheduleInput {
   description?: string;
 }
 
+export function evaluateScheduleStatus(
+  startDate?: Date | string | null,
+  endDate?: Date | string | null,
+  referenceDate: Date = new Date()
+): string {
+  if (!startDate || !endDate) return "UPCOMING";
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const current = new Date(referenceDate);
+  current.setHours(0, 0, 0, 0);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return "UPCOMING";
+
+  const currentTime = current.getTime();
+  if (currentTime < start.getTime()) return "UPCOMING";
+  if (currentTime > end.getTime()) return "COMPLETED";
+  return "ONGOING";
+}
+
 function mapProgramToSchedule(item: any) {
   return {
     id: item.id,
@@ -35,7 +56,7 @@ function mapProgramToSchedule(item: any) {
     endDate: item.endDate
       ? new Date(item.endDate).toISOString().split("T")[0]
       : "2026-07-15",
-    status: item.status || "ACTIVE",
+    status: evaluateScheduleStatus(item.startDate, item.endDate),
     description: item.description || "",
     createdAt: item.createdAt,
   };
@@ -60,15 +81,19 @@ export async function getReviewScheduleById(id: string) {
 }
 
 export async function createReviewSchedule(data: CreateReviewScheduleInput) {
+  const startDate = data.startDate ? new Date(data.startDate) : new Date();
+  const endDate = data.endDate ? new Date(data.endDate) : new Date();
+  const status = evaluateScheduleStatus(startDate, endDate);
+
   const created = await prisma.reviewCenterProgram.create({
     data: {
       title: data.title,
       companyName: data.companyName || "Institutional (BoardQuest)",
       reviewCenterId: null, // Admin only sets institutional game final review schedules
       category: data.category || "Final Comprehensive Review",
-      startDate: data.startDate ? new Date(data.startDate) : new Date(),
-      endDate: data.endDate ? new Date(data.endDate) : new Date(),
-      status: data.status || "UPCOMING",
+      startDate,
+      endDate,
+      status,
       description: data.description || "",
     },
   });
@@ -97,6 +122,10 @@ export async function updateReviewSchedule(id: string, data: UpdateReviewSchedul
     );
   }
 
+  const newStartDate = data.startDate ? new Date(data.startDate) : existing.startDate;
+  const newEndDate = data.endDate ? new Date(data.endDate) : existing.endDate;
+  const status = evaluateScheduleStatus(newStartDate, newEndDate);
+
   const updated = await prisma.reviewCenterProgram.update({
     where: { id },
     data: {
@@ -104,7 +133,7 @@ export async function updateReviewSchedule(id: string, data: UpdateReviewSchedul
       ...(data.category && { category: data.category }),
       ...(data.startDate && { startDate: new Date(data.startDate) }),
       ...(data.endDate && { endDate: new Date(data.endDate) }),
-      ...(data.status && { status: data.status }),
+      status,
       ...(data.description !== undefined && { description: data.description }),
     },
   });

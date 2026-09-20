@@ -9,6 +9,11 @@ export const adminNavItem: NavItemProps[] = [
         path: "/",
         icon: "LayoutDashboard",
       },
+      {
+        title: "Analytics",
+        path: "/analytics",
+        icon: "BarChart3",
+      },
     ],
   },
   {

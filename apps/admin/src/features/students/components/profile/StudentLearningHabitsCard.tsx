@@ -68,7 +68,7 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
       const endDate = match?.endDate ? new Date(match.endDate) : (match?.targetDate ? new Date(match.targetDate) : new Date(def.end));
 
       const now = new Date();
-      let status: "Active" | "Upcoming" | "Completed" = def.status;
+      let status: "Active" | "Upcoming" | "Completed";
       if (now >= startDate && now <= endDate) {
         status = "Active";
       } else if (now > endDate) {

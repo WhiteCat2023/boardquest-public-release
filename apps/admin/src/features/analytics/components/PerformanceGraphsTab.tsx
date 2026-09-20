@@ -20,7 +20,7 @@ export function PerformanceGraphsTab({ report }: PerformanceGraphsTabProps) {
 
   const trendData = useMemo<PerformanceTrendItem[]>(
     () => (Array.isArray(report?.performanceTrend) ? report.performanceTrend : []),
-    [report?.performanceTrend]
+    [report]
   );
   const masteryList = Array.isArray(report?.metrics?.mastery) ? report.metrics.mastery : [];
   const easyData = report?.difficultyBreakdown?.easy || { attempted: 0, accuracy: 0 };

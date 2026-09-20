@@ -89,9 +89,9 @@ export default function Dashboard() {
       {!isSuperAdmin && (
         <>
           {/* App Analytics: Line Graph & Performance Distribution */}
-          {/* <StudentPassingRateAnalytics /> */}
+          <StudentPassingRateAnalytics />
           {/* 6 Major Licensure Examination Subjects Overview */}
-          {/* <SubjectOverviewSection />/ */}
+          <SubjectOverviewSection />
 
           {/* Operational Grid: Recent Questions & Student Roster */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">

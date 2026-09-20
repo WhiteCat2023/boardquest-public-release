@@ -12,7 +12,11 @@ const gameFacade = getGameFacade();
 export const completeGameSession = asyncHandler(
   async (req: Request, res: Response) => {
     const { score, total, subject, difficulty = "medium" } = req.body;
-    const userId = req.body.user?.id;
+    const userId =
+      req.params.userId ||
+      (req as any).user?.id ||
+      req.body?.user?.id ||
+      req.body?.userId;
 
     if (!userId) {
       throw new ApiError(401, "Unauthorized");
@@ -52,7 +56,11 @@ export const completeGameSession = asyncHandler(
  */
 export const getUserGameStats = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.body.user?.id;
+    const userId =
+      req.params.userId ||
+      (req as any).user?.id ||
+      req.body?.user?.id ||
+      req.body?.userId;
 
     if (!userId) {
       throw new ApiError(401, "Unauthorized");
@@ -92,7 +100,11 @@ export const getLeaderboard = asyncHandler(
  * Get user's current rank
  */
 export const getUserRank = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.body.user?.id;
+  const userId =
+    req.params.userId ||
+    (req as any).user?.id ||
+    req.body?.user?.id ||
+    req.body?.userId;
 
   if (!userId) {
     throw new ApiError(401, "Unauthorized");
@@ -110,7 +122,11 @@ export const getUserRank = asyncHandler(async (req: Request, res: Response) => {
  */
 export const resetUserStreak = asyncHandler(
   async (req: Request, res: Response) => {
-    const userId = req.body.user?.id;
+    const userId =
+      req.params.userId ||
+      (req as any).user?.id ||
+      req.body?.user?.id ||
+      req.body?.userId;
 
     if (!userId) {
       throw new ApiError(401, "Unauthorized");

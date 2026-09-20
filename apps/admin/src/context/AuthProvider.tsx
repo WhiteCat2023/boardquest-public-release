@@ -107,7 +107,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAuth({});
       try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
-      } catch {}
+      } catch (err) {
+        console.error("Failed to clear auth storage:", err);
+      }
       queryClient.clear();
       navigate("/login", { replace: true });
     }

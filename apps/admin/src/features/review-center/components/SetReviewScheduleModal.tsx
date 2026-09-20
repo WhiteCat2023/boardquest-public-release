@@ -45,7 +45,6 @@ export default function SetReviewScheduleModal({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("Final Comprehensive Review");
-  const [status, setStatus] = useState("UPCOMING");
   const [description, setDescription] = useState("");
 
   const createMutation = useCreateReviewSchedule();
@@ -58,7 +57,6 @@ export default function SetReviewScheduleModal({
       setStartDate(initialData.startDate || "");
       setEndDate(initialData.endDate || "");
       setCategory(initialData.category || "Final Comprehensive Review");
-      setStatus(initialData.status || "UPCOMING");
       setDescription(initialData.description || "");
     } else {
       setTitle("");
@@ -67,7 +65,6 @@ export default function SetReviewScheduleModal({
       setStartDate(today);
       setEndDate(twoWeeksLater);
       setCategory("Final Comprehensive Review");
-      setStatus("UPCOMING");
       setDescription("");
     }
   }, [initialData, isOpen]);
@@ -115,7 +112,6 @@ export default function SetReviewScheduleModal({
             startDate,
             endDate,
             category,
-            status,
             description,
           },
         },
@@ -137,7 +133,6 @@ export default function SetReviewScheduleModal({
           startDate,
           endDate,
           category,
-          status,
           description,
         },
         {
@@ -191,52 +186,34 @@ export default function SetReviewScheduleModal({
             />
           </div>
 
-          {/* Grid Layout for Category & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Category */}
-            <div className="space-y-1.5 min-w-0">
-              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Tag size={14} className="text-muted-foreground shrink-0" />
-                Category / Mode
-              </label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="Final Comprehensive Review" className="text-xs font-medium">
-                    Final Comprehensive Review
-                  </SelectItem>
-                  <SelectItem value="Mock Board Examination" className="text-xs font-medium">
-                    Mock Board Examination
-                  </SelectItem>
-                  <SelectItem value="Pre-Board Diagnostic Drill" className="text-xs font-medium">
-                    Pre-Board Diagnostic Drill
-                  </SelectItem>
-                  <SelectItem value="Subject Intensive Coaching" className="text-xs font-medium">
-                    Subject Intensive Coaching
-                  </SelectItem>
-                  <SelectItem value="Speed & Mastery Challenge" className="text-xs font-medium">
-                    Speed & Mastery Challenge
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Schedule Status Selection */}
-            <div className="space-y-1.5 min-w-0">
-              <label className="text-xs font-bold text-foreground">Schedule Status</label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="UPCOMING" className="text-xs font-medium">Upcoming</SelectItem>
-                  <SelectItem value="ACTIVE" className="text-xs font-medium">Active (Ongoing)</SelectItem>
-                  <SelectItem value="COMPLETED" className="text-xs font-medium">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Category / Mode */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <Tag size={14} className="text-muted-foreground shrink-0" />
+              Category / Mode
+            </label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="h-10 w-full bg-muted/40 border border-border rounded-xl text-xs font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="Final Comprehensive Review" className="text-xs font-medium">
+                  Final Comprehensive Review
+                </SelectItem>
+                <SelectItem value="Mock Board Examination" className="text-xs font-medium">
+                  Mock Board Examination
+                </SelectItem>
+                <SelectItem value="Pre-Board Diagnostic Drill" className="text-xs font-medium">
+                  Pre-Board Diagnostic Drill
+                </SelectItem>
+                <SelectItem value="Subject Intensive Coaching" className="text-xs font-medium">
+                  Subject Intensive Coaching
+                </SelectItem>
+                <SelectItem value="Speed & Mastery Challenge" className="text-xs font-medium">
+                  Speed & Mastery Challenge
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* BEAUTIFIED START DATE & END DATE SECTION */}

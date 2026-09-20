@@ -2,6 +2,11 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
+import {
+  calculateSubjectProficiency,
+  calculateReadinessScore,
+  calculateStandingTier,
+} from "../../utils/statsCalculator";
 
 import { sendStudentCredentialsEmail } from "../mail.service";
 import { StudyPlanService, createStudyPlanSchema } from "./studyPlan.service";
@@ -457,25 +462,12 @@ export class StudentService {
 
       const dbMasteryRecord = allMastery.find((m: any) => normalize(m.subject || "") === subjectName);
 
-      let proficiency = 0;
-      if (totalQAnswered > 0) {
-        proficiency = Math.round(rawAccuracy * volumeWeight);
-      } else if (dbMasteryRecord && typeof dbMasteryRecord.proficiency === "number") {
-        proficiency = dbMasteryRecord.proficiency;
-      }
-
-      let status = "Not Started";
-      if (totalQAnswered === 0 && completion === 0) {
-        status = "Not Started";
-      } else if (proficiency >= 80 && totalQAnswered >= 25) {
-        status = "Mastered";
-      } else if (proficiency >= 65 && totalQAnswered >= 15) {
-        status = "Proficient";
-      } else if (proficiency >= 35 || totalQAnswered >= 1) {
-        status = "In Training";
-      } else {
-        status = "Needs Focus";
-      }
+      const { proficiency, status } = calculateSubjectProficiency({
+        dbMastery: dbMasteryRecord,
+        exams: matchedExams,
+        completedLessons: completedCount,
+        totalLessons,
+      });
 
       // BoardQuesters pointing formula: 25 Pts per correct question answered + 6 Pts per % completion (capped at 1,200 max)
       const points = Math.min(1200, Math.round(totalCorrect * 25 + completion * 6));
@@ -498,19 +490,14 @@ export class StudentService {
     // 2. Compute pointing system totals
     const disciplinePoints = subjectMetrics.reduce((acc, m) => acc + (m.points || 0), 0);
     const totalPoints = disciplinePoints + (student.xp || 0);
-    const avgProficiency = subjectMetrics.length > 0
-      ? subjectMetrics.reduce((acc, m) => acc + m.proficiency, 0) / subjectMetrics.length
-      : 0;
+    const avgProficiency = calculateReadinessScore(subjectMetrics);
     const avgCompletion = subjectMetrics.length > 0
       ? Math.round(subjectMetrics.reduce((acc, m) => acc + m.completion, 0) / subjectMetrics.length)
       : 0;
     const masteredCount = subjectMetrics.filter((m) => m.status === "Mastered").length;
 
     // Standing Tier
-    let tierStanding = "In Training";
-    if (avgProficiency >= 85) tierStanding = "High Distinction";
-    else if (avgProficiency >= 70) tierStanding = "Proficient Standing";
-    else if (avgProficiency < 50 && totalPoints < 500) tierStanding = "Needs Focus";
+    const tierStanding = calculateStandingTier(avgProficiency, totalPoints);
 
     // 3. Compute Accuracy History Bar Chart Data
     const accuracyHistory = STANDARD_SUBJECTS.map((subName) => {

@@ -373,9 +373,17 @@ function App() {
                   <Route path="analytics" element={<Analytics />} />
                 </Route>
 
-                {/* Admin and Teamlead Only Routes */}
+                {/* SuperAdmin, Dean, and Teamlead Routes */}
                 <Route
-                  element={<RequireAuth allowedRoles={[UserRole.DEAN, UserRole.TEAMLEAD]} />}
+                  element={
+                    <RequireAuth
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                      ]}
+                    />
+                  }
                 >
                   <Route path="game-management" element={<GameManagementPage />} />
                   <Route path="leaderboards" element={<LeaderboardPage />} />

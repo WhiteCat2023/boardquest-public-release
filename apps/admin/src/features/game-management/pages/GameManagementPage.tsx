@@ -4,7 +4,8 @@ import { BadgesManagementTab } from "../components/BadgesManagementTab";
 import { RanksManagementTab } from "../components/RanksManagementTab";
 import { BadgeEditorModal } from "../components/BadgeEditorModal";
 import { RankEditorModal } from "../components/RankEditorModal";
-import { Gamepad2, Award, Sparkles, Crown } from "lucide-react";
+import GameManagementHeader from "../components/GameManagementHeader";
+import { Award, Crown } from "lucide-react";
 import { toast } from "sonner";
 import {
   useGameBadges,
@@ -158,30 +159,9 @@ export function GameManagementPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 font-sans">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-border/80 bg-card/90 shadow-xs backdrop-blur-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/10 via-primary/5 to-transparent pointer-events-none" />
-
-        <div className="flex items-center gap-3 relative">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
-            <Gamepad2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
-                Study Games & Progression
-              </h1>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
-                <Sparkles className="w-3 h-3" /> Gamified
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Configure study game badges, aspirant rank tiers, and scoring thresholds.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
+      {/* Header */}
+      <GameManagementHeader />
 
       {/* Main Tabs Navigation */}
       <div className="flex items-center gap-2 border-b border-border/80 pb-2.5 overflow-x-auto">
@@ -194,7 +174,7 @@ export function GameManagementPage() {
               : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
-          <Award className="w-4 h-4" /> Badges Catalog ({badges.length})
+          <Award className="w-4 h-4" /> Badges Catalog
         </button>
 
         <button
@@ -206,7 +186,7 @@ export function GameManagementPage() {
               : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
-          <Crown className="w-4 h-4 text-amber-500" /> Aspirant Ranks ({ranks.length})
+          <Crown className="w-4 h-4 text-amber-500" /> Aspirant Ranks 
         </button>
       </div>
 

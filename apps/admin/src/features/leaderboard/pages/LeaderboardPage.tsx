@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -28,14 +29,23 @@ import {
   X,
   RotateCcw,
   Zap,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useStudents } from "@/features/students";
+import LeaderboardHeader from "../components/LeaderboardHeader";
 import type { LeaderboardStudent, LeaderboardCategory } from "../types/types";
 
 export function LeaderboardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<LeaderboardCategory>("overall");
   const [timeHorizon, setTimeHorizon] = useState<string>("all-time");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(5);
 
   const { data: studentsData, isLoading } = useStudents({ search: searchTerm });
   const rawStudents = studentsData?.students || [];
@@ -99,24 +109,40 @@ export function LeaderboardPage() {
   const top2 = filteredStudents[1];
   const top3 = filteredStudents[2];
 
+  // Reset page to 1 when filters or page size change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, category, timeHorizon, pageSize]);
+
+  const totalPages = Math.ceil(filteredStudents.length / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedStudents = useMemo(() => {
+    return filteredStudents.slice(startIndex, startIndex + pageSize);
+  }, [filteredStudents, startIndex, pageSize]);
+
+  // Generate visible page numbers for pagination buttons
+  const visiblePages = useMemo(() => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+      if (currentPage < totalPages - 2) pages.push("...");
+      if (!pages.includes(totalPages)) pages.push(totalPages);
+    }
+    return pages;
+  }, [currentPage, totalPages]);
+
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground max-w-7xl mx-auto">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-4 -mx-4 md:-mt-6 md:-mx-6 px-4 md:px-6 border-b border-border z-10 font-sans">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-2xs shrink-0">
-            <Trophy className="size-5" />
-          </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-              Leaderboards & Rankings
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Real-time student rankings compiled from activity and quiz performance.
-            </p>
-          </div>
-        </div>
-      </div>
+      <LeaderboardHeader />
 
       {isLoading ? (
         <Card className="border-border p-16 flex flex-col items-center justify-center text-center gap-3 bg-card rounded-2xl">
@@ -398,7 +424,15 @@ export function LeaderboardPage() {
                   <span>Live Candidate Rankings Roster</span>
                 </span>
                 <span className="text-xs text-muted-foreground font-normal">
-                  Showing <strong className="text-foreground">{filteredStudents.length}</strong> candidate(s)
+                  Showing{" "}
+                  <strong className="text-foreground">
+                    {filteredStudents.length > 0 ? startIndex + 1 : 0}
+                  </strong>
+                  -
+                  <strong className="text-foreground">
+                    {Math.min(startIndex + pageSize, filteredStudents.length)}
+                  </strong>{" "}
+                  of <strong className="text-foreground">{filteredStudents.length}</strong> candidate(s)
                 </span>
               </CardTitle>
             </CardHeader>
@@ -417,7 +451,7 @@ export function LeaderboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredStudents.map((student) => {
+                  {paginatedStudents.map((student) => {
                     const isTop3 = student.rank <= 3;
 
                     return (
@@ -528,6 +562,109 @@ export function LeaderboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* ── Pagination Footer ── */}
+            {filteredStudents.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-border bg-muted/20 text-xs font-sans">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <span>
+                    Page <strong className="text-foreground">{currentPage}</strong> of{" "}
+                    <strong className="text-foreground">{totalPages}</strong>
+                  </span>
+
+                  {/* Rows per page selector */}
+                  <div className="flex items-center gap-1.5 ml-1 sm:ml-2">
+                    <span className="text-[11px] text-muted-foreground">Per page:</span>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(val) => {
+                        setPageSize(Number(val));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-[68px] text-xs bg-background rounded-lg border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Page Navigation Controls */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                    title="First Page"
+                  >
+                    <ChevronsLeft size={14} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="h-7 px-2 rounded-lg flex items-center gap-1 text-xs font-semibold cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft size={14} />
+                    <span className="hidden sm:inline">Prev</span>
+                  </Button>
+
+                  {/* Dynamic Page Buttons */}
+                  <div className="flex items-center gap-1 mx-1">
+                    {visiblePages.map((page, idx) =>
+                      page === "..." ? (
+                        <span key={`dots-${idx}`} className="px-1 text-muted-foreground text-xs">
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={`page-${page}`}
+                          type="button"
+                          onClick={() => setCurrentPage(Number(page))}
+                          className={`h-7 min-w-[28px] px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            currentPage === page
+                              ? "bg-primary text-primary-foreground shadow-2xs"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="h-7 px-2 rounded-lg flex items-center gap-1 text-xs font-semibold cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                    title="Last Page"
+                  >
+                    <ChevronsRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         </>
       )}

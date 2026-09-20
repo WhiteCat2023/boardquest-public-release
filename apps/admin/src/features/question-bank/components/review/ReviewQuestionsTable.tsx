@@ -89,25 +89,6 @@ export default function ReviewQuestionsTable({
 
   return (
     <div className="w-full bg-card border border-border rounded-2xl shadow-2xs overflow-hidden flex flex-col font-sans animate-in fade-in duration-150">
-      {/* Table Header Bar */}
-      <div className="p-3 px-4 border-b border-border bg-muted/30 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-foreground">
-            Questions Awaiting Review
-          </span>
-          <Badge
-            variant="outline"
-            className="text-[10px] font-mono font-bold bg-muted text-muted-foreground border-border px-1.5 py-0"
-          >
-            {questions.length} item{questions.length !== 1 ? "s" : ""}
-          </Badge>
-        </div>
-
-        <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-          <Sparkles size={12} className="text-primary" />
-          <span>Click any row to open the interactive review workspace</span>
-        </div>
-      </div>
 
       {/* Table Content */}
       <div className="relative w-full overflow-x-auto">

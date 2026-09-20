@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import CalendarHeader from "../components/CalendarHeader";
 import { toast } from "sonner";
 import {
   useReviewSchedules,
@@ -45,27 +44,9 @@ export default function CalendarManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 md:p-8 pb-16 w-full max-w-7xl mx-auto font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
-            <CalendarIcon className="size-6 text-primary shrink-0" />
-            <span>Academic Calendar</span>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Set and manage institutional game final review periods, mock exams, and review center timelines.
-          </p>
-        </div>
-
-        <Button
-          onClick={handleOpenAddSchedule}
-          className="h-9 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:bg-primary/90 flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
-        >
-          <Plus size={14} />
-          <span>Schedule Review Period</span>
-        </Button>
-      </div>
+      <CalendarHeader onAddSchedule={handleOpenAddSchedule} />
 
       {/* Interactive Monthly Calendar & Schedule View */}
       <ReviewCalendarView

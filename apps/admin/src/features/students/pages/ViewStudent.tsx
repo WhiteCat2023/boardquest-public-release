@@ -226,7 +226,7 @@ export default function ViewStudent() {
               />
               <StudentPredictedOutcomesCard
                 student={activeStudent}
-                readinessScore={activeStudent.scorecardSummary?.avgProficiency ?? analyticsReport?.studentInfo?.readinessScore}
+                readinessScore={analyticsReport?.studentInfo?.readinessScore ?? activeStudent.scorecardSummary?.avgProficiency}
               />
             </div>
 

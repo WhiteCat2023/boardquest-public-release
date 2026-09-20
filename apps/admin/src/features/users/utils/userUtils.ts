@@ -39,12 +39,6 @@ export const getAllowedRolesToCreate = (
         description:
           "Academic staff allowed to create questions and manage course materials.",
       },
-      {
-        value: UserRole.REVIEWCENTER,
-        label: "Review Center",
-        description:
-          "External review center representative with access limited exclusively to the Review Center portal.",
-      },
     ];
   }
   if (norm === "DEAN" || currentUserRole === UserRole.DEAN) {
@@ -60,12 +54,6 @@ export const getAllowedRolesToCreate = (
         label: "Teacher",
         description:
           "Academic staff allowed to create questions and manage course materials.",
-      },
-      {
-        value: UserRole.REVIEWCENTER,
-        label: "Review Center",
-        description:
-          "External review center representative with access limited exclusively to the Review Center portal.",
       },
     ];
   }

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ReviewSchedule } from "../types/types";
+import { evaluateScheduleStatus } from "../utils/scheduleUtils";
 
 interface ReviewCalendarViewProps {
   schedules: ReviewSchedule[];
@@ -132,9 +133,10 @@ export default function ReviewCalendarView({
   const getStatusBadge = (status?: string) => {
     switch (status?.toUpperCase()) {
       case "ACTIVE":
+      case "ONGOING":
         return (
           <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
-            <CheckCircle2 size={10} /> Active
+            <CheckCircle2 size={10} /> Ongoing
           </span>
         );
       case "COMPLETED":
@@ -385,7 +387,11 @@ export default function ReviewCalendarView({
                         : sched.category || "Board Review"}
                     </span>
                   </div>
-                  {getStatusBadge(sched.status)}
+                  {getStatusBadge(
+                    sched.startDate && sched.endDate
+                      ? evaluateScheduleStatus(sched.startDate, sched.endDate)
+                      : sched.status
+                  )}
                 </div>
 
                 {/* Dates & Duration */}

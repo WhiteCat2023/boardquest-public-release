@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Percent } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { formatReadinessScore, getReadinessTier } from "@/utils/readinessUtils";
 import type { Student } from "../../types/types";
 
 interface StudentPredictedOutcomesCardProps {
@@ -14,11 +15,16 @@ export function StudentPredictedOutcomesCard({ student, readinessScore: propRead
   const settings = student.userSettings;
 
   // Accurate Readiness Score matching the KPI strip (scorecardSummary.avgProficiency)
-  const readinessScore = propReadinessScore ?? scorecard?.avgProficiency ?? (
+  const rawReadinessScore = propReadinessScore ?? scorecard?.avgProficiency ?? (
     metrics.length > 0
       ? Number((metrics.reduce((acc, m) => acc + (m.proficiency || 0), 0) / metrics.length).toFixed(1))
       : 0
   );
+  const readinessScore = typeof rawReadinessScore === "number"
+    ? Number(rawReadinessScore.toFixed(1))
+    : rawReadinessScore;
+
+  const tierInfo = getReadinessTier(readinessScore);
 
   // Weakest and strongest subjects
   const sorted = [...metrics].sort((a, b) => (a.proficiency || 0) - (b.proficiency || 0));
@@ -88,11 +94,7 @@ export function StudentPredictedOutcomesCard({ student, readinessScore: propRead
               y2={tick.y2}
               stroke={
                 tick.isActive
-                  ? readinessScore >= 75
-                    ? "oklch(0.6 0.18 145)" // emerald/green
-                    : readinessScore >= 60
-                    ? "oklch(0.7 0.18 80)" // amber
-                    : "oklch(0.6 0.22 25)" // red
+                  ? tierInfo.gaugeColor
                   : "var(--border)"
               }
               strokeWidth={tick.isActive ? 2.5 : 1.5}
@@ -113,7 +115,7 @@ export function StudentPredictedOutcomesCard({ student, readinessScore: propRead
         {/* Big centered stat */}
         <div className="absolute top-12 flex flex-col items-center justify-center text-center">
           <span className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
-            {readinessScore}%
+            {formatReadinessScore(readinessScore)}
           </span>
           <span className="text-[11px] font-semibold text-muted-foreground">
             Readiness Score

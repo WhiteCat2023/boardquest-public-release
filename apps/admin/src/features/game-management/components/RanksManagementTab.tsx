@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,10 +35,9 @@ import {
   Edit2,
   Trash2,
   Users,
-  LayoutGrid,
-  List,
-  ChevronRight,
   GraduationCap,
+  X,
+  Gift,
 } from "lucide-react";
 import type { RankTier } from "../types/types";
 import { useRankStudents } from "../api/useGameManagement";
@@ -78,7 +76,6 @@ export function RanksManagementTab({
 }: RanksManagementTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
   // Inspect Students Modal State
   const [inspectingRank, setInspectingRank] = useState<RankTier | null>(null);
@@ -100,6 +97,7 @@ export function RanksManagementTab({
       r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.rankId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       `level ${r.minLevel}`.includes(searchTerm.toLowerCase());
 
     const matchesStatus =
@@ -110,21 +108,39 @@ export function RanksManagementTab({
     return matchesSearch && matchesStatus;
   });
 
+  const hasActiveFilters = Boolean(searchTerm) || selectedStatus !== "ALL";
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedStatus("ALL");
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl border border-border/80 bg-card shadow-xs">
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div className="space-y-3.5 w-full">
+      {/* Search & Filter Toolbar - Full Width & Compact */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-2xl border border-border/80 bg-card shadow-xs w-full">
+        <div className="flex flex-wrap flex-1 items-center gap-2">
+          {/* Search Box */}
+          <div className="relative flex-1 sm:w-72 min-w-[200px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search rank title, level, criteria..."
-              className="pl-9 h-9 text-xs"
+              className="pl-8 pr-7 h-9 text-xs font-medium"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
+          {/* Status Filter */}
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
             <SelectTrigger className="w-32 h-9 text-xs font-medium">
               <SelectValue placeholder="Status" />
@@ -132,287 +148,223 @@ export function RanksManagementTab({
             <SelectContent>
               <SelectItem value="ALL">All Status</SelectItem>
               <SelectItem value="active">Active Only</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="inactive">Disabled</SelectItem>
             </SelectContent>
           </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilters}
+              className="h-9 text-xs text-muted-foreground hover:text-foreground px-2 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5 mr-1" /> Reset
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          {/* View Mode Toggle */}
-          <div className="flex items-center border border-border rounded-xl p-0.5 bg-muted/30">
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "grid"
-                  ? "bg-card text-foreground shadow-2xs font-bold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "table"
-                  ? "bg-card text-foreground shadow-2xs font-bold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Table View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Create Rank Button */}
+        {/* Primary Action Button */}
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             onClick={onAddRank}
-            className="h-9 text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+            size="sm"
+            className="h-9 text-xs font-bold gap-1.5 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-4 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Create Rank Tier
           </Button>
         </div>
       </div>
 
-      {/* Loading Skeleton */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-44 rounded-2xl border border-border/60 bg-muted/20 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : filteredRanks.length === 0 ? (
-        /* Empty State */
-        <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-card/50">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
-            <Crown className="w-6 h-6 text-amber-500" />
-          </div>
-          <h4 className="text-sm font-bold text-foreground">No rank tiers found</h4>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
-            {searchTerm || selectedStatus !== "ALL"
-              ? "No rank tiers match your current filter criteria."
-              : "No rank progression tiers have been configured yet."}
-          </p>
-          <Button
-            onClick={onAddRank}
-            variant="outline"
-            className="mt-4 text-xs font-bold gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" /> Create First Rank
-          </Button>
-        </div>
-      ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredRanks.map((rank) => {
-            const IconComp = ICON_MAP[rank.icon] || Award;
-            const studentCount = rank.studentCount ?? 0;
-
-            return (
-              <Card
-                key={rank.id}
-                className={`border-border/80 transition-all duration-200 overflow-hidden relative group hover:shadow-md ${
-                  rank.isActive ? "bg-card" : "bg-card/50 opacity-75"
-                }`}
-              >
-                {/* Accent Color Header Line */}
-                <div
-                  className="h-1.5 w-full"
-                  style={{ backgroundColor: rank.color }}
-                />
-
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3.5">
-                      {/* Icon Avatar */}
-                      <div
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md"
-                        style={{
-                          backgroundColor: rank.color,
-                          boxShadow: `0 8px 20px -4px ${rank.color}40`,
-                        }}
-                      >
-                        <IconComp className="w-6 h-6" />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-base font-bold text-foreground tracking-tight">
-                            {rank.title}
-                          </h4>
-                          <span
-                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                              rank.isActive
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
-                                : "bg-muted text-muted-foreground border-border"
-                            }`}
-                          >
-                            {rank.isActive ? "ACTIVE" : "INACTIVE"}
-                          </span>
+      {/* Ranks Compact Full-Width Table View */}
+      <div className="w-full rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="py-2.5 px-4 font-extrabold">Rank Tier & Artwork</th>
+                <th className="py-2.5 px-3 font-extrabold">Level Bracket</th>
+                <th className="py-2.5 px-3 font-extrabold">Min Required XP</th>
+                <th className="py-2.5 px-3 font-extrabold">Perks & Perks</th>
+                <th className="py-2.5 px-3 font-extrabold">Enrolled Students</th>
+                <th className="py-2.5 px-3 font-extrabold">Status</th>
+                <th className="py-2.5 px-4 font-extrabold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-muted shrink-0" />
+                        <div className="space-y-1.5 flex-1">
+                          <div className="h-3.5 bg-muted rounded w-28" />
+                          <div className="h-2.5 bg-muted rounded w-44" />
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                          {rank.description}
-                        </p>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Level & XP Chips */}
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <div className="flex items-center gap-1.5 text-xs font-extrabold px-2.5 py-1 rounded-lg bg-muted text-foreground border border-border/80">
-                      <Sparkles className="w-3.5 h-3.5 text-primary" />
-                      <span>
-                        Level {rank.minLevel}{" "}
-                        {rank.maxLevel ? `– ${rank.maxLevel}` : "+"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                      <span>{rank.minXp.toLocaleString()} Min XP</span>
-                    </div>
-
-                    {/* Enrolled Students Badge */}
-                    <button
-                      type="button"
-                      onClick={() => setInspectingRank(rank)}
-                      className="ml-auto flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg bg-secondary text-secondary-foreground hover:bg-accent border border-border/80 transition-all cursor-pointer"
-                      title="Inspect enrolled students"
-                    >
-                      <Users className="w-3.5 h-3.5 text-primary" />
-                      <span>{studentCount} Students</span>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  </div>
-
-                  {/* Card Actions Footer */}
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id={`toggle-${rank.id}`}
-                        checked={rank.isActive}
-                        onCheckedChange={() => onToggleActive(rank.id)}
-                      />
-                      <label
-                        htmlFor={`toggle-${rank.id}`}
-                        className="text-[11px] text-muted-foreground font-medium cursor-pointer"
-                      >
-                        {rank.isActive ? "Active in Game" : "Disabled"}
-                      </label>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setInspectingRank(rank)}
-                        className="h-8 px-2.5 text-xs font-semibold cursor-pointer"
-                      >
-                        Students
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => onEditRank(rank)}
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                        title="Edit Rank"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setDeletingRank(rank)}
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                        title="Delete Rank"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        /* TABLE VIEW */
-        <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="h-4 bg-muted rounded-full w-20" />
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="h-3.5 bg-muted rounded w-16" />
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="h-3.5 bg-muted rounded w-28" />
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="h-6 bg-muted rounded-lg w-24" />
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="h-4 bg-muted rounded-full w-10" />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="h-7 bg-muted rounded w-14 ml-auto" />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredRanks.length === 0 ? (
                 <tr>
-                  <th className="py-3 px-4">Tier & Badge</th>
-                  <th className="py-3 px-4">Level Bracket</th>
-                  <th className="py-3 px-4">Min Required XP</th>
-                  <th className="py-3 px-4">Enrolled Students</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <td colSpan={7} className="py-12 px-4 text-center">
+                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-2.5">
+                      <div className="w-12 h-12 rounded-2xl bg-muted/60 text-muted-foreground border border-border flex items-center justify-center">
+                        <Crown className="w-6 h-6 text-amber-500" />
+                      </div>
+                      <h3 className="text-sm font-bold text-foreground">
+                        {hasActiveFilters ? "No matching rank tiers found" : "No rank tiers created yet"}
+                      </h3>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {hasActiveFilters
+                          ? "Try clearing or modifying your search and filter criteria."
+                          : "Configure your first Aspirant rank tier to establish player progression."}
+                      </p>
+                      {hasActiveFilters ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResetFilters}
+                          className="mt-2 h-8 text-xs cursor-pointer"
+                        >
+                          Clear All Filters
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={onAddRank}
+                          className="mt-2 h-8 text-xs font-bold gap-1.5 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Create First Rank Tier
+                        </Button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {filteredRanks.map((rank) => {
+              ) : (
+                filteredRanks.map((rank) => {
                   const IconComp = ICON_MAP[rank.icon] || Award;
                   const studentCount = rank.studentCount ?? 0;
+                  const perksList = Array.isArray(rank.perks) ? rank.perks : [];
 
                   return (
                     <tr
                       key={rank.id}
-                      className="hover:bg-muted/20 transition-colors"
+                      className="hover:bg-muted/20 transition-colors group"
                     >
-                      <td className="py-3 px-4">
+                      {/* Rank Artwork & Title */}
+                      <td className="py-2.5 px-4 font-medium">
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-xs"
-                            style={{ backgroundColor: rank.color }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-2xs"
+                            style={{ backgroundColor: rank.color || "#3B82F6" }}
                           >
                             <IconComp className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="font-bold text-foreground">
-                              {rank.title}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs text-foreground">
+                                {rank.title}
+                              </span>
+                              {rank.rankId && (
+                                <span
+                                  className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-muted/80 text-muted-foreground border border-border/50"
+                                  title={`Slug: ${rank.rankId}`}
+                                >
+                                  {rank.rankId}
+                                </span>
+                              )}
                             </div>
-                            <div className="text-[11px] text-muted-foreground line-clamp-1 max-w-xs">
+                            <div className="text-[10px] text-muted-foreground line-clamp-1 max-w-xs sm:max-w-md">
                               {rank.description}
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 font-semibold text-foreground">
-                        <span className="px-2 py-0.5 rounded-md bg-muted text-[11px] font-bold border border-border">
+                      {/* Level Bracket */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold border border-border text-foreground">
                           Level {rank.minLevel}{" "}
                           {rank.maxLevel ? `– ${rank.maxLevel}` : "+"}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 font-bold text-primary">
+                      {/* Min Required XP */}
+                      <td className="py-2.5 px-3 font-extrabold text-primary whitespace-nowrap">
                         {rank.minXp.toLocaleString()} XP
                       </td>
 
-                      <td className="py-3 px-4">
+                      {/* Perks & Benefits */}
+                      <td className="py-2.5 px-3">
+                        {perksList.length > 0 ? (
+                          <div className="flex items-center gap-1 flex-wrap max-w-xs">
+                            {perksList.slice(0, 2).map((perk, i) => (
+                              <span
+                                key={i}
+                                className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/50 truncate max-w-[130px]"
+                                title={perk}
+                              >
+                                {perk}
+                              </span>
+                            ))}
+                            {perksList.length > 2 && (
+                              <span
+                                className="text-[9px] font-bold text-muted-foreground px-1"
+                                title={perksList.slice(2).join(", ")}
+                              >
+                                +{perksList.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground italic">
+                            No perks set
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Enrolled Students */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => setInspectingRank(rank)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary text-secondary-foreground font-bold hover:bg-accent border border-border transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary text-secondary-foreground font-bold hover:bg-accent border border-border transition-all cursor-pointer text-[11px]"
+                          title="Inspect enrolled students"
                         >
                           <Users className="w-3.5 h-3.5 text-primary" />
                           <span>{studentCount} Students</span>
                         </button>
                       </td>
 
-                      <td className="py-3 px-4">
+                      {/* Status Toggle */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={rank.isActive}
                             onCheckedChange={() => onToggleActive(rank.id)}
                           />
                           <span
-                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                            className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${
                               rank.isActive
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
                                 : "bg-muted text-muted-foreground border-border"
@@ -423,14 +375,15 @@ export function RanksManagementTab({
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
+                      {/* Actions */}
+                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-1">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => onEditRank(rank)}
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Edit"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+                            title="Edit Rank"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </Button>
@@ -438,8 +391,8 @@ export function RanksManagementTab({
                             size="icon"
                             variant="ghost"
                             onClick={() => setDeletingRank(rank)}
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                            title="Delete"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer rounded-lg"
+                            title="Delete Rank"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -447,12 +400,12 @@ export function RanksManagementTab({
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* Real Enrolled Students Inspection Modal */}
       <Dialog
@@ -567,7 +520,7 @@ export function RanksManagementTab({
               variant="outline"
               size="sm"
               onClick={() => setInspectingRank(null)}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Close Directory
             </Button>
@@ -600,7 +553,7 @@ export function RanksManagementTab({
               variant="outline"
               size="sm"
               onClick={() => setDeletingRank(null)}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Cancel
             </Button>
@@ -614,7 +567,7 @@ export function RanksManagementTab({
                   setDeletingRank(null);
                 }
               }}
-              className="text-xs font-bold"
+              className="text-xs font-bold cursor-pointer"
             >
               Confirm Delete
             </Button>

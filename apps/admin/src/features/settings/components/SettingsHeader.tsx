@@ -1,21 +1,18 @@
-import { Sliders } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
 
 export default function SettingsHeader() {
   return (
-    <div className="flex items-center justify-between gap-4 pb-3 border-b border-border font-sans">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 shrink-0">
-          <Sliders size={18} className="stroke-[2.5]" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-foreground tracking-tight">
-            System & Appearance Settings
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Manage application themes, notification preferences, and display density defaults.
-          </p>
-        </div>
+    <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-4 -mx-4 md:-mt-6 md:-mx-6 px-4 md:px-6 border-b border-border z-10 font-sans">
+      <div>
+        <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
+          <SettingsIcon className="text-primary size-5" />
+          System Settings
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Manage application themes, notification preferences, and display density defaults.
+        </p>
       </div>
     </div>
   );
 }
+
