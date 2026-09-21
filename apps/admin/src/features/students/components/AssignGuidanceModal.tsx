@@ -42,8 +42,22 @@ export function AssignGuidanceModal({
   const { data: advisors = [], isLoading: isLoadingAdvisors } = useQuery({
     queryKey: ["advisorsList"],
     queryFn: async () => {
-      const res = await axiosPrivate.get("/faculty");
-      return res.data?.data?.faculties || [];
+      const res = await axiosPrivate.get("/faculty", {
+        params: {
+          excludeExternal: true,
+          limit: 100,
+        },
+      });
+      const list = res.data?.data?.faculties || res.data?.data?.users || [];
+      return list.filter((adv: any) => {
+        const role = String(adv.role || "").toUpperCase().trim();
+        return (
+          role !== "REVIEWCENTER" &&
+          role !== "EXTERNAL" &&
+          !role.includes("REVIEW") &&
+          !role.includes("EXTERNAL")
+        );
+      });
     },
   });
 

@@ -117,6 +117,8 @@ export const refreshToken = async (req, res) => {
                 name: true,
                 role: true,
                 phoneNumber: true,
+                avatarUrl: true,
+                location: true,
                 accountStatus: true,
                 isActive: true,
                 handledSubjectIds: true,

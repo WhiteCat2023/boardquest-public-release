@@ -94,6 +94,9 @@ export default function ForgotPasswordPage() {
                       EMAIL ADDRESS
                     </FieldLabel>
                     <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Mail className="size-4 text-muted-foreground" />
+                      </InputGroupAddon>
                       <InputGroupInput
                         id="reset-email"
                         type="email"
@@ -101,11 +104,7 @@ export default function ForgotPasswordPage() {
                         placeholder="admin@swumedtech.edu.ph"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                       />
-                      <InputGroupAddon align="inline-start">
-                        <Mail className="text-muted-foreground" />
-                      </InputGroupAddon>
                     </InputGroup>
                   </Field>
 

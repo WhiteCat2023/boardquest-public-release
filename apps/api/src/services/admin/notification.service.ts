@@ -24,6 +24,7 @@ export interface GetNotificationsInput {
   role?: string;
   unreadOnly?: boolean;
   limit?: number;
+  skip?: number;
   search?: string;
   type?: string;
 }
@@ -44,6 +45,37 @@ function getOrConditions(userId?: string, role?: string) {
   }
 
   return OR_conditions;
+}
+
+export async function getUnreadNotificationsCount(userId?: string, role?: string): Promise<number> {
+  if (!userId) return 0;
+
+  try {
+    const unreadWhere: any = {
+      AND: [
+        { OR: getOrConditions(userId, role) },
+        { NOT: { deletedUserIds: { has: userId } } },
+        {
+          OR: [
+            { recipientId: userId, isRead: false },
+            {
+              recipientId: { not: userId },
+              NOT: { readUserIds: { has: userId } },
+            },
+            {
+              recipientId: null,
+              NOT: { readUserIds: { has: userId } },
+            },
+          ],
+        },
+      ],
+    };
+
+    return await (prisma as any).notification.count({ where: unreadWhere });
+  } catch (err: any) {
+    console.warn("getUnreadNotificationsCount error:", err?.message);
+    return 0;
+  }
 }
 
 export async function createNotification(input: CreateNotificationInput) {
@@ -92,7 +124,7 @@ export async function createNotification(input: CreateNotificationInput) {
 }
 
 export async function getUserNotifications(input: GetNotificationsInput) {
-  const { userId, role, unreadOnly = false, limit = 50, search, type } = input;
+  const { userId, role, unreadOnly = false, limit = 15, skip = 0, search, type } = input;
 
   const andConditions: any[] = [];
 
@@ -101,6 +133,22 @@ export async function getUserNotifications(input: GetNotificationsInput) {
       NOT: {
         deletedUserIds: { has: userId },
       },
+    });
+  }
+
+  if (unreadOnly && userId) {
+    andConditions.push({
+      OR: [
+        { recipientId: userId, isRead: false },
+        {
+          recipientId: { not: userId },
+          NOT: { readUserIds: { has: userId } },
+        },
+        {
+          recipientId: null,
+          NOT: { readUserIds: { has: userId } },
+        },
+      ],
     });
   }
 
@@ -124,28 +172,38 @@ export async function getUserNotifications(input: GetNotificationsInput) {
     AND: [{ OR: getOrConditions(userId, role) }, ...andConditions],
   };
 
-  const rawNotifications = await (prisma as any).notification.findMany({
-    where: whereClause,
-    orderBy: { createdAt: "desc" },
-    take: limit * 2,
+  const [rawNotifications, unreadCount] = await Promise.all([
+    (prisma as any).notification.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      skip: Math.max(0, skip),
+      take: limit + 1,
+    }),
+    getUnreadNotificationsCount(userId, role),
+  ]);
+
+  const hasMore = rawNotifications.length > limit;
+  const items = hasMore ? rawNotifications.slice(0, limit) : rawNotifications;
+
+  const processed = items.map((n: any) => {
+    const isReadForUser =
+      n.recipientId === userId
+        ? n.isRead
+        : (userId
+            ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId)
+            : false);
+
+    return {
+      ...n,
+      isRead: isReadForUser,
+    };
   });
 
-  const processed = rawNotifications
-    .map((n: any) => {
-      const isReadForUser =
-        n.isRead ||
-        (userId
-          ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId)
-          : false);
-
-      return {
-        ...n,
-        isRead: isReadForUser,
-      };
-    })
-    .filter((n: any) => !unreadOnly || !n.isRead);
-
-  return processed.slice(0, limit);
+  return {
+    notifications: processed,
+    unreadCount,
+    hasMore,
+  };
 }
 
 export async function markNotificationAsRead(

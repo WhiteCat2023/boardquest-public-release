@@ -51,29 +51,39 @@ export function StudentAiActionCenterCard({
   }
 
   // Sort metrics ascending (weakest first) and descending (strongest first)
-  const sortedAsc = [...metrics].sort((a, b) => (a.proficiency || 0) - (b.proficiency || 0));
-  const sortedDesc = [...metrics].sort((a, b) => (b.proficiency || 0) - (a.proficiency || 0));
+  const sortedAsc = [...metrics].sort(
+    (a, b) => (a.proficiency || 0) - (b.proficiency || 0),
+  );
+  const sortedDesc = [...metrics].sort(
+    (a, b) => (b.proficiency || 0) - (a.proficiency || 0),
+  );
 
   // Determine top strengths
-  const topStrengths = sortedDesc.filter((m) => (m.proficiency || 0) >= 50 || m.completion > 0);
-  const primaryStrength = topStrengths[0] || sortedDesc[0] || {
-    subject: "Clinical Chemistry",
-    proficiency: 68,
-    completion: 8,
-    mastery: 71,
-    status: "In Training",
-  };
+  const topStrengths = sortedDesc.filter(
+    (m) => (m.proficiency || 0) >= 50 || m.completion > 0,
+  );
+  const primaryStrength = topStrengths[0] ||
+    sortedDesc[0] || {
+      subject: "Clinical Chemistry",
+      proficiency: 68,
+      completion: 8,
+      mastery: 71,
+      status: "In Training",
+    };
   const secondaryStrength = topStrengths[1] || null;
 
   // Determine critical gaps & weaknesses (subjects below 75% benchmark or unstarted)
-  const weakSubjects = sortedAsc.filter((m) => (m.proficiency || 0) < 75 || m.completion < 50);
-  const primaryGap = weakSubjects[0] || sortedAsc[0] || {
-    subject: "Immunology & Serology and Immunohematology",
-    proficiency: 0,
-    completion: 0,
-    mastery: 0,
-    status: "Not Started",
-  };
+  const weakSubjects = sortedAsc.filter(
+    (m) => (m.proficiency || 0) < 75 || m.completion < 50,
+  );
+  const primaryGap = weakSubjects[0] ||
+    sortedAsc[0] || {
+      subject: "Immunology & Serology and Immunohematology",
+      proficiency: 0,
+      completion: 0,
+      mastery: 0,
+      status: "Not Started",
+    };
   const secondaryGap = weakSubjects[1] || sortedAsc[1] || null;
 
   const targetBatch = settings?.targetBatch || "March 2026 Batch";
@@ -89,7 +99,9 @@ export function StudentAiActionCenterCard({
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-extrabold text-foreground">AI Insights</h3>
+              <h3 className="text-sm font-extrabold text-foreground">
+                AI Insights
+              </h3>
               <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.2 rounded">
                 Mentor v2
               </span>
@@ -117,7 +129,7 @@ export function StudentAiActionCenterCard({
               : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
           }`}
         >
-          All Insights
+          Insights
         </button>
         <button
           type="button"
@@ -128,7 +140,6 @@ export function StudentAiActionCenterCard({
               : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10"
           }`}
         >
-          <TrendingUp size={12} />
           <span>Strengths</span>
         </button>
         <button
@@ -140,8 +151,7 @@ export function StudentAiActionCenterCard({
               : "text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10"
           }`}
         >
-          <AlertTriangle size={12} />
-          <span>Gaps &amp; Weaknesses</span>
+          <span>Weaknesses</span>
         </button>
         <button
           type="button"
@@ -152,7 +162,6 @@ export function StudentAiActionCenterCard({
               : "text-muted-foreground hover:text-primary hover:bg-primary/10"
           }`}
         >
-          <Lightbulb size={12} />
           <span>Suggestions</span>
         </button>
       </div>
@@ -186,7 +195,10 @@ export function StudentAiActionCenterCard({
               <div className="bg-card/80 border border-emerald-500/20 rounded-lg p-2.5 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <CheckCircle2
+                      size={13}
+                      className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                    />
                     <span className="text-xs font-bold text-foreground">
                       {primaryStrength.subject}
                     </span>
@@ -197,7 +209,10 @@ export function StudentAiActionCenterCard({
                 </div>
 
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Demonstrates consistent question accuracy ({primaryStrength.mastery || primaryStrength.proficiency}%) and active engagement. Serves as the candidate's core anchor subject for passing the board licensure threshold.
+                  Demonstrates consistent question accuracy (
+                  {primaryStrength.mastery || primaryStrength.proficiency}%) and
+                  active engagement. Serves as the candidate's core anchor
+                  subject for passing the board licensure threshold.
                 </p>
 
                 {/* Sub-metrics */}
@@ -237,7 +252,7 @@ export function StudentAiActionCenterCard({
                     <AlertTriangle size={13} />
                   </span>
                   <span className="text-xs font-black uppercase tracking-wider">
-                    Gaps &amp; Weaknesses
+                    Weaknesses
                   </span>
                 </div>
                 <Badge
@@ -260,7 +275,8 @@ export function StudentAiActionCenterCard({
                 </div>
 
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {primaryGap.completion === 0 && (primaryGap.totalQuestionsAnswered || 0) === 0
+                  {primaryGap.completion === 0 &&
+                  (primaryGap.totalQuestionsAnswered || 0) === 0
                     ? "Severe curriculum void: Candidate has not attempted diagnostic simulations or completed syllabus modules in this high-yield discipline."
                     : `Proficiency is currently at ${primaryGap.proficiency}%, significantly lagging the 75% PRC board exam standard with low module completion (${primaryGap.completion}%).`}
                 </p>
@@ -322,14 +338,17 @@ export function StudentAiActionCenterCard({
               <div className="bg-card/80 border border-primary/20 rounded-lg p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-foreground">
-                    1. Prescribe Diagnostic Drill in {primaryGap.subject.split(" ")[0]}
+                    1. Prescribe Diagnostic Drill in{" "}
+                    {primaryGap.subject.split(" ")[0]}
                   </span>
                   <span className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400">
                     +25% Pass Lift
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Assign an initial 15-minute diagnostic drill (15–20 high-yield questions) to establish baseline mastery and identify conceptual misconceptions.
+                  Assign an initial 15-minute diagnostic drill (15–20 high-yield
+                  questions) to establish baseline mastery and identify
+                  conceptual misconceptions.
                 </p>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-[9.5px] font-medium text-muted-foreground">
@@ -357,7 +376,10 @@ export function StudentAiActionCenterCard({
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Maintain {dailyQuota} questions/day quota pace for the {targetBatch}. Allocate 60% of daily volume to lagging topics ({primaryGap.subject.split(" ")[0]}) to achieve 94%+ syllabus completion.
+                  Maintain {dailyQuota} questions/day quota pace for the{" "}
+                  {targetBatch}. Allocate 60% of daily volume to lagging topics
+                  ({primaryGap.subject.split(" ")[0]}) to achieve 94%+ syllabus
+                  completion.
                 </p>
               </div>
 
@@ -372,7 +394,9 @@ export function StudentAiActionCenterCard({
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Require student review of detailed explanation rationales on incorrect answers immediately following simulation sets to prevent repeated mistakes.
+                  Require student review of detailed explanation rationales on
+                  incorrect answers immediately following simulation sets to
+                  prevent repeated mistakes.
                 </p>
               </div>
             </div>
@@ -383,10 +407,16 @@ export function StudentAiActionCenterCard({
         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 space-y-0.5 mt-2">
           <div className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
             <span>Projected Readiness Growth</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-black">+36% Expected</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-black">
+              +36% Expected
+            </span>
           </div>
           <div className="text-xs font-bold text-foreground">
-            Passing Probability: <span className="text-emerald-600 dark:text-emerald-400">48% &rarr; 84%</span> upon addressing top 2 gaps.
+            Passing Probability:{" "}
+            <span className="text-emerald-600 dark:text-emerald-400">
+              48% &rarr; 84%
+            </span>{" "}
+            upon addressing top 2 gaps.
           </div>
         </div>
 

@@ -25,6 +25,7 @@ export default function NotificationDropdown() {
 
   const { data, isLoading } = useNotifications({
     unreadOnly: filterTab === "UNREAD",
+    limit: 10,
   });
 
   const markAsReadMutation = useMarkNotificationAsRead();

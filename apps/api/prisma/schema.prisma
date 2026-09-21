@@ -80,6 +80,7 @@ model AdminUser {
   lastName  String?
   role      Role
   phoneNumber String
+  avatarUrl String?
 
   createdSubjects Subject[] @relation("SubjectAuthor")
   handledSubjects Subject[] @relation("HandledSubjects", fields: [handledSubjectIds], references: [id])
@@ -233,6 +234,7 @@ model ReviewCenterRepresentativeUser {
   phonenumber    String
   password       String
   location       String?       @default("Philippines")
+  avatarUrl      String?
   accountStatus  AccountStatus @default(ACTIVE)
   isActive       Boolean       @default(true)
   lastActiveAt   DateTime?     @default(now())
@@ -357,6 +359,7 @@ model User {
   inventory String?  @default("{}")
   equippedItem String? @default("none")
   location  String?  @default("Philippines")
+  avatarUrl String?
   createdAt DateTime @default(now())
 
   studyPlans         StudyPlan[]

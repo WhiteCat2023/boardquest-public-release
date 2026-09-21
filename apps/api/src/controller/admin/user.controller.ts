@@ -27,7 +27,7 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
     ).send(res);
   }
 
-  const user = await prisma.adminUser.findUnique({
+  const user = await (prisma as any).adminUser.findUnique({
     where: { id },
     select: {
       id: true,
@@ -35,6 +35,9 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
       name: true,
       email: true,
       role: true,
+      phoneNumber: true,
+      avatarUrl: true,
+      location: true,
       handledSubjectIds: true,
       handledSubjects: {
         select: {
@@ -64,7 +67,7 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
 
 export const getUsers = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { search, role, status, cursor, limit } = req.query;
+    const { search, role, status, cursor, limit, excludeExternal } = req.query;
     const requesterRole = req.user?.role;
 
     if (requesterRole === "TEACHER") {
@@ -88,6 +91,8 @@ export const getUsers = asyncHandler(
       cursor: cursor as string,
       limit: limit ? parseInt(limit as string, 10) : undefined,
       requesterRole,
+      excludeExternal:
+        excludeExternal === "true" || excludeExternal === "1",
     });
 
     if (result && typeof result === "object" && ("users" in result || "faculties" in result)) {

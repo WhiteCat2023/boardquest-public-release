@@ -38,6 +38,7 @@ import {
   type ReviewCenterCandidateItem,
 } from "../../api/useReviewCenter";
 import ReviewCenterCandidateScoreModal from "./ReviewCenterCandidateScoreModal";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import type { ReviewCenterRepresentative } from "../../types/types";
 
 interface ReviewCenterStudentsTabProps {
@@ -52,6 +53,8 @@ export default function ReviewCenterStudentsTab({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSchoolYear, setSelectedSchoolYear] = useState<string>("ALL");
   const [selectedGameStatus, setSelectedGameStatus] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const { data, isLoading } = useReviewCenterCandidates(reviewCenter?.id, {
     search: searchTerm,
@@ -74,10 +77,32 @@ export default function ReviewCenterStudentsTab({
     });
   }, [candidatesList, selectedGameStatus]);
 
+  const total = filteredCandidates.length;
+  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const hasNextPage = currentPage < totalPages;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCandidates = filteredCandidates.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
+
+  const handleNext = () => {
+    if (hasNextPage) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  const handlePageSelect = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedSchoolYear("ALL");
     setSelectedGameStatus("ALL");
+    setCurrentPage(1);
   };
 
   const hasActiveFilters =
@@ -109,12 +134,18 @@ export default function ReviewCenterStudentsTab({
             type="text"
             placeholder="Search enrolled candidates by name, email, ID..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-9 pr-8 h-9 bg-muted/30 border border-border/80 rounded-xl text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X size={13} />
@@ -127,7 +158,10 @@ export default function ReviewCenterStudentsTab({
           {/* School Year Filter */}
           <Select
             value={selectedSchoolYear}
-            onValueChange={setSelectedSchoolYear}
+            onValueChange={(v) => {
+              setSelectedSchoolYear(v);
+              setCurrentPage(1);
+            }}
           >
             <SelectTrigger className="h-9 w-[140px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="All School Years" />
@@ -145,7 +179,10 @@ export default function ReviewCenterStudentsTab({
           {/* Game Status Filter */}
           <Select
             value={selectedGameStatus}
-            onValueChange={setSelectedGameStatus}
+            onValueChange={(v) => {
+              setSelectedGameStatus(v);
+              setCurrentPage(1);
+            }}
           >
             <SelectTrigger className="h-9 w-[145px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
               <SelectValue placeholder="Game Status" />
@@ -215,7 +252,7 @@ export default function ReviewCenterStudentsTab({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-border">
-                {filteredCandidates.map((candidate, idx) => {
+                {paginatedCandidates.map((candidate, idx) => {
                   const isPlayingGame = Boolean(
                     candidate.studentId || candidate.studentDetails
                   );
@@ -373,6 +410,19 @@ export default function ReviewCenterStudentsTab({
           </div>
         )}
       </Card>
+
+      {/* Pagination Bar */}
+      {!isLoading && (
+        <QuestionListPagination
+          currentPage={currentPage}
+          hasNextPage={hasNextPage}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPageSelect={handlePageSelect}
+          maxPageReached={totalPages}
+          totalPages={totalPages}
+        />
+      )}
 
       {/* ── Candidate Score Transcript Modal ── */}
       <ReviewCenterCandidateScoreModal

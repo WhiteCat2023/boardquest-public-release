@@ -88,7 +88,11 @@ function LoginPage() {
                     EMAIL ADDRESS
                   </FieldLabel>
                   <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <Mail className="size-4 text-muted-foreground" />
+                    </InputGroupAddon>
                     <InputGroupInput
+                      id="admin-email"
                       aria-invalid={isLoginInvalid || undefined}
                       type="email"
                       required
@@ -100,11 +104,7 @@ function LoginPage() {
                           email: e.target.value,
                         })
                       }
-                      className="w-full bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                     />
-                    <InputGroupAddon align="inline-start">
-                      <Mail className="text-muted-foreground" />
-                    </InputGroupAddon>
                   </InputGroup>
                 </Field>
                 <Field>
@@ -113,7 +113,11 @@ function LoginPage() {
                   </FieldLabel>
 
                   <InputGroup data-invalid={isLoginInvalid || undefined}>
+                    <InputGroupAddon align="inline-start">
+                      <Lock className="size-4 text-muted-foreground" />
+                    </InputGroupAddon>
                     <InputGroupInput
+                      id="admin-password"
                       type={togglePassword ? "text" : "password"}
                       aria-invalid={isLoginInvalid || undefined}
                       required
@@ -125,20 +129,16 @@ function LoginPage() {
                           password: e.target.value,
                         })
                       }
-                      className="w-full bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                     />
-                    <InputGroupAddon align="inline-start">
-                      <Lock className="text-muted-foreground" />
-                    </InputGroupAddon>
-
                     <InputGroupAddon align="inline-end">
                       <Button
                         type="button"
                         variant="ghost"
+                        size="icon-xs"
                         onClick={() => setTogglePassword(!togglePassword)}
                         className="text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        {togglePassword ? <Eye /> : <EyeClosed />}
+                        {togglePassword ? <Eye className="size-4" /> : <EyeClosed className="size-4" />}
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>

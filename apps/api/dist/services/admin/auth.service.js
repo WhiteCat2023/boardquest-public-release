@@ -297,7 +297,28 @@ export class AuthService {
     }
     async updateProfile(userId, data) {
         if (isSuperAdmin(userId)) {
-            throw new ApiError(400, "Environment Super Admin account profile cannot be modified.");
+            const superAdmin = await ensureSuperAdminExists();
+            if (!superAdmin) {
+                throw new ApiError(404, "Super Admin account not found");
+            }
+            const updateData = {};
+            if (data.name)
+                updateData.name = data.name;
+            if (data.email)
+                updateData.email = data.email;
+            if (data.phoneNumber !== undefined)
+                updateData.phoneNumber = data.phoneNumber;
+            if (data.avatarUrl !== undefined)
+                updateData.avatarUrl = data.avatarUrl;
+            if (data.password) {
+                updateData.password = await hashedPassword(data.password);
+            }
+            const updated = await this.db.adminUser.update({
+                where: { id: superAdmin.id },
+                data: updateData,
+            });
+            const { password, ...sanitized } = updated;
+            return sanitized;
         }
         const user = await this.db.adminUser.findUnique({ where: { id: userId } });
         if (!user) {
@@ -310,6 +331,8 @@ export class AuthService {
             updateData.email = data.email;
         if (data.phoneNumber !== undefined)
             updateData.phoneNumber = data.phoneNumber;
+        if (data.avatarUrl !== undefined)
+            updateData.avatarUrl = data.avatarUrl;
         if (data.employeeId !== undefined && data.employeeId.trim()) {
             const trimmedId = data.employeeId.trim();
             if (trimmedId !== user.employeeId) {

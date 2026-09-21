@@ -405,16 +405,31 @@ export class AuthService {
       phoneNumber?: string;
       employeeId?: string;
       password?: string;
+      avatarUrl?: string | null;
     },
   ) {
     if (isSuperAdmin(userId)) {
-      throw new ApiError(
-        400,
-        "Environment Super Admin account profile cannot be modified.",
-      );
+      const superAdmin = await ensureSuperAdminExists();
+      if (!superAdmin) {
+        throw new ApiError(404, "Super Admin account not found");
+      }
+      const updateData: any = {};
+      if (data.name) updateData.name = data.name;
+      if (data.email) updateData.email = data.email;
+      if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+      if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+      if (data.password) {
+        updateData.password = await hashedPassword(data.password);
+      }
+      const updated = await (this.db as any).adminUser.update({
+        where: { id: superAdmin.id },
+        data: updateData,
+      });
+      const { password, ...sanitized } = updated as any;
+      return sanitized;
     }
 
-    const user = await this.db.adminUser.findUnique({ where: { id: userId } });
+    const user = await (this.db as any).adminUser.findUnique({ where: { id: userId } });
     if (!user) {
       throw new ApiError(404, "User account not found");
     }
@@ -423,10 +438,11 @@ export class AuthService {
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+    if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
     if (data.employeeId !== undefined && data.employeeId.trim()) {
       const trimmedId = data.employeeId.trim();
       if (trimmedId !== user.employeeId) {
-        const existing = await this.db.adminUser.findFirst({
+        const existing = await (this.db as any).adminUser.findFirst({
           where: {
             employeeId: trimmedId,
             NOT: { id: userId },
@@ -442,7 +458,7 @@ export class AuthService {
       updateData.password = await hashedPassword(data.password);
     }
 
-    const updated = await this.db.adminUser.update({
+    const updated = await (this.db as any).adminUser.update({
       where: { id: userId },
       data: updateData,
     });

@@ -124,6 +124,9 @@ export default function ResetPasswordPage() {
                       NEW PASSWORD
                     </FieldLabel>
                     <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Lock className="size-4 text-muted-foreground" />
+                      </InputGroupAddon>
                       <InputGroupInput
                         id="new-password"
                         type={togglePassword ? "text" : "password"}
@@ -131,19 +134,16 @@ export default function ResetPasswordPage() {
                         placeholder="**********"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                       />
-                      <InputGroupAddon align="inline-start">
-                        <Lock className="text-muted-foreground" />
-                      </InputGroupAddon>
                       <InputGroupAddon align="inline-end">
                         <Button
                           type="button"
                           variant="ghost"
+                          size="icon-xs"
                           onClick={() => setTogglePassword(!togglePassword)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground cursor-pointer"
                         >
-                          {togglePassword ? <Eye /> : <EyeClosed />}
+                          {togglePassword ? <Eye className="size-4" /> : <EyeClosed className="size-4" />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>
@@ -158,6 +158,9 @@ export default function ResetPasswordPage() {
                       CONFIRM PASSWORD
                     </FieldLabel>
                     <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Lock className="size-4 text-muted-foreground" />
+                      </InputGroupAddon>
                       <InputGroupInput
                         id="confirm-password"
                         type={toggleConfirmPassword ? "text" : "password"}
@@ -165,19 +168,16 @@ export default function ResetPasswordPage() {
                         placeholder="**********"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full h-auto bg-background border-border rounded-xl text-sm transition-colors placeholder:text-muted-foreground text-foreground"
                       />
-                      <InputGroupAddon align="inline-start">
-                        <Lock className="text-muted-foreground" />
-                      </InputGroupAddon>
                       <InputGroupAddon align="inline-end">
                         <Button
                           type="button"
                           variant="ghost"
+                          size="icon-xs"
                           onClick={() => setToggleConfirmPassword(!toggleConfirmPassword)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground cursor-pointer"
                         >
-                          {toggleConfirmPassword ? <Eye /> : <EyeClosed />}
+                          {toggleConfirmPassword ? <Eye className="size-4" /> : <EyeClosed className="size-4" />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>

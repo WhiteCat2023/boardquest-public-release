@@ -18,6 +18,7 @@ export const superAdminCredentials = {
     phoneNumber: "00000000000",
     role: "SUPERADMIN",
     location: "Main HQ",
+    avatarUrl: null,
     accountStatus: "ACTIVE",
     isActive: true,
 };
@@ -35,6 +36,7 @@ export function getSuperAdminProfile() {
         role: superAdminCredentials.role,
         phoneNumber: superAdminCredentials.phoneNumber,
         location: superAdminCredentials.location,
+        avatarUrl: superAdminCredentials.avatarUrl ?? null,
         accountStatus: "ACTIVE",
         isActive: true,
         lastActiveAt: new Date(),

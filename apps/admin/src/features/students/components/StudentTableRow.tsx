@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, MapPin, Calendar, Zap, UserCheck, Target } from "lucide-react";
+import { Eye, MapPin, Calendar, Zap, UserCheck } from "lucide-react";
 import type { Student } from "@/features/students";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -95,35 +95,6 @@ export default function StudentTableRow({
           <span className="truncate max-w-[110px]">
             {student.location || "Philippines"}
           </span>
-        </div>
-      </TableCell>
-
-      {/* Study Target / Batch */}
-      <TableCell className="hidden md:table-cell py-2 px-3">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          {student.userSettings?.targetBatch ? (
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold px-1.5 py-0 rounded-full w-fit truncate max-w-[120px]"
-            >
-              {student.userSettings.targetBatch}
-            </Badge>
-          ) : student.userSettings?.targetExamDate ? (
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold px-1.5 py-0 rounded-full w-fit truncate max-w-[120px]"
-            >
-              Exam: {formatDate(student.userSettings.targetExamDate)}
-            </Badge>
-          ) : (
-            <span className="text-[10px] text-muted-foreground/60 italic">No Target Set</span>
-          )}
-          {student.activeObjective && (
-            <span className="text-[9.5px] text-muted-foreground font-semibold truncate max-w-[130px] flex items-center gap-1">
-              <Target size={9} className="text-primary shrink-0" />
-              {student.activeObjective.subject} ({student.activeObjective.daysRemaining}d left)
-            </span>
-          )}
         </div>
       </TableCell>
 

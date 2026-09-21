@@ -207,14 +207,25 @@ export class UserService {
     cursor?: string;
     limit?: number;
     requesterRole?: string;
+    excludeExternal?: boolean;
   }) {
-    const { search, role, status, cursor, limit, requesterRole } =
-      filters || {};
+    const {
+      search,
+      role,
+      status,
+      cursor,
+      limit,
+      requesterRole,
+      excludeExternal,
+    } = filters || {};
 
     const limitNum = limit || 10;
 
     // 1. If role is explicitly "EXTERNAL", query exclusively from ReviewCenterRepresentativeUser collection
     if (role === "EXTERNAL") {
+      if (excludeExternal) {
+        return this.paginateResults([], limitNum, cursor);
+      }
       const repWhere: any = {};
       if (search && search.trim()) {
         const q = search.trim();
@@ -272,7 +283,7 @@ export class UserService {
     }
 
     // Role-based account visibility scoping rules:
-    // 1. SUPERADMIN -> Returns DEAN, TEAMLEAD, and TEACHER accounts
+    // 1. SUPERADMIN -> Returns DEAN, TEAMLEAD, and TEACHER accounts (or all internal admin roles if excludeExternal/advisors)
     // 2. DEAN -> Returns both TEAMLEAD and TEACHER accounts
     // 3. TEAMLEAD -> Only returns TEACHER accounts
     const normReq = requesterRole
@@ -287,17 +298,25 @@ export class UserService {
         normRole !== Role.EXTERNAL
       ) {
         where.role = normRole;
+      } else if (excludeExternal) {
+        where.role = { in: [Role.SUPERADMIN, Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
       } else {
         where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
       }
     } else if (normReq === "DEAN") {
       if (normRole && [Role.TEAMLEAD, Role.TEACHER].includes(normRole)) {
         where.role = normRole;
+      } else if (excludeExternal) {
+        where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
       } else {
         where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
       }
     } else if (normReq === "TEAMLEAD") {
-      where.role = Role.TEACHER;
+      if (excludeExternal) {
+        where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
+      } else {
+        where.role = Role.TEACHER;
+      }
     } else if (
       normRole &&
       normRole !== Role.REVIEWCENTER &&
@@ -334,8 +353,21 @@ export class UserService {
         : new Date().toISOString(),
     }));
 
+    if (excludeExternal) {
+      combinedList = combinedList.filter((u: any) => {
+        const r = String(u.role || "").toUpperCase().trim();
+        return (
+          r !== "REVIEWCENTER" &&
+          r !== "EXTERNAL" &&
+          !r.includes("REVIEW") &&
+          !r.includes("EXTERNAL")
+        );
+      });
+    }
+
     // If role is "ALL" or REVIEWCENTER/EXTERNAL and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
     if (
+      !excludeExternal &&
       (role === "ALL" ||
         !role ||
         normRole === Role.REVIEWCENTER ||

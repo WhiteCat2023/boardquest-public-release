@@ -60,31 +60,31 @@ export function StudentProfileHeader({
               </Badge>
 
               {/* Leaderboard Rank Badge */}
-              <Badge
+              {/* <Badge
                 variant="outline"
                 className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 text-xs font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs"
               >
                 <Trophy size={12} className="text-indigo-500 fill-indigo-500/20" />
                 <span>Rank #{leaderboardRank} in Leaderboards</span>
-              </Badge>
+              </Badge> */}
 
               {/* Total XP Badge */}
-              <Badge
+              {/* <Badge
                 variant="outline"
                 className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"
               >
                 <Sparkles size={11} className="text-purple-500" />
                 <span>{(student.xp || 0).toLocaleString()} Total XP</span>
-              </Badge>
+              </Badge> */}
             </div>
 
             {/* Subtitle: Candidate details, Rank & Level info */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
               <span>{student.email}</span>
-              <span>&bull;</span>
+              {/* <span>&bull;</span>
               <span className="font-semibold text-foreground/80">Level {student.level || 1} Aspirant</span>
               <span>&bull;</span>
-              <span className="text-primary font-bold">Rank #{leaderboardRank} on Leaderboards</span>
+              <span className="text-primary font-bold">Rank #{leaderboardRank} on Leaderboards</span> */}
               {student.location && (
                 <>
                   <span>&bull;</span>

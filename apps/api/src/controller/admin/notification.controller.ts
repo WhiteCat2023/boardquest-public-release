@@ -23,18 +23,36 @@ export async function getNotificationsHandler(req: AuthenticatedRequest, res: Re
     const userId = req.user?.id;
     const role = req.user?.role;
     const unreadOnly = req.query.unreadOnly === "true";
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 15;
+    const skip = req.query.skip ? parseInt(req.query.skip as string, 10) : 0;
     const search = req.query.search ? String(req.query.search) : undefined;
     const type = req.query.type ? String(req.query.type) : undefined;
 
-    const notifications = await getUserNotifications({ userId, role, unreadOnly, limit, search, type });
-    const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+    const result = await getUserNotifications({ userId, role, unreadOnly, limit, skip, search, type });
+
+    let notifications: any[];
+    let unreadCount: number;
+    let hasMore: boolean;
+
+    if (Array.isArray(result)) {
+      notifications = result;
+      unreadCount = notifications.filter((n: any) => !n.isRead).length;
+      hasMore = false;
+    } else {
+      notifications = result?.notifications || [];
+      unreadCount =
+        typeof result?.unreadCount === "number"
+          ? result.unreadCount
+          : notifications.filter((n: any) => !n.isRead).length;
+      hasMore = Boolean(result?.hasMore);
+    }
 
     return res.status(200).json({
       success: true,
       data: {
         notifications,
         unreadCount,
+        hasMore,
       },
     });
   } catch (error: any) {

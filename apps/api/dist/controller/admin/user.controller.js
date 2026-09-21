@@ -25,6 +25,9 @@ export const me = asyncHandler(async (req, res) => {
             name: true,
             email: true,
             role: true,
+            phoneNumber: true,
+            avatarUrl: true,
+            location: true,
             handledSubjectIds: true,
             handledSubjects: {
                 select: {

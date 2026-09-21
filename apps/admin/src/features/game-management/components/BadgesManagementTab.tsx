@@ -39,6 +39,7 @@ import {
 import type { GameBadge } from "../types/types";
 import { BADGE_TYPES } from "./BadgeEditorModal";
 import { useGameBadges } from "../api/useGameManagement";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
 interface BadgesManagementTabProps {
   badges: GameBadge[];
@@ -83,7 +84,10 @@ export function BadgesManagementTab({
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
   const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>({});
+
+  const ITEMS_PER_PAGE = 10;
 
   const { data: serverBadges } = useGameBadges({
     search: searchTerm,
@@ -93,6 +97,23 @@ export function BadgesManagementTab({
   });
 
   const filteredBadges = serverBadges || badges;
+  const total = filteredBadges.length;
+  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const hasNextPage = currentPage < totalPages;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedBadges = filteredBadges.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleNext = () => {
+    if (hasNextPage) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  const handlePageSelect = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
 
   const handleImageError = (url?: string | null) => {
     if (!url) return;
@@ -150,6 +171,7 @@ export function BadgesManagementTab({
     setSelectedCategory("ALL");
     setSelectedTier("ALL");
     setSelectedStatus("ALL");
+    setCurrentPage(1);
   };
 
   return (
@@ -163,13 +185,19 @@ export function BadgesManagementTab({
             <Input
               placeholder="Search badges, rules..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="pl-8 pr-7 h-9 text-xs font-medium"
             />
             {searchTerm && (
               <button
                 type="button"
-                onClick={() => setSearchTerm("")}
+                onClick={() => {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -178,7 +206,13 @@ export function BadgesManagementTab({
           </div>
 
           {/* Category Filter */}
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select
+            value={selectedCategory}
+            onValueChange={(v) => {
+              setSelectedCategory(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-36 h-9 text-xs font-medium">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -197,7 +231,13 @@ export function BadgesManagementTab({
           </Select>
 
           {/* Tier Filter */}
-          <Select value={selectedTier} onValueChange={setSelectedTier}>
+          <Select
+            value={selectedTier}
+            onValueChange={(v) => {
+              setSelectedTier(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-32 h-9 text-xs font-medium">
               <SelectValue placeholder="Tier" />
             </SelectTrigger>
@@ -212,7 +252,13 @@ export function BadgesManagementTab({
           </Select>
 
           {/* Status Filter */}
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <Select
+            value={selectedStatus}
+            onValueChange={(v) => {
+              setSelectedStatus(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-28 h-9 text-xs font-medium">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -336,7 +382,7 @@ export function BadgesManagementTab({
                   </td>
                 </tr>
               ) : (
-                filteredBadges.map((badge) => {
+                paginatedBadges.map((badge) => {
                   const tierMeta = getTierMeta(badge);
                   const IconComp = ICON_MAP[badge.icon || badge.iconName || ""] || Trophy;
                   const photoUrl = badge.spriteUrl || badge.imageUrl;
@@ -486,6 +532,19 @@ export function BadgesManagementTab({
           </table>
         </div>
       </div>
+
+      {/* Pagination Bar */}
+      {!isLoading && (
+        <QuestionListPagination
+          currentPage={currentPage}
+          hasNextPage={hasNextPage}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPageSelect={handlePageSelect}
+          maxPageReached={totalPages}
+          totalPages={totalPages}
+        />
+      )}
     </div>
   );
 }

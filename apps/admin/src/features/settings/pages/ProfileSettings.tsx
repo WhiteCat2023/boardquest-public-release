@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -17,10 +17,14 @@ import {
   AlertCircle,
   Pencil,
   X,
+  Camera,
+  Upload,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useAuth from "@/hooks/useAuth";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { toast } from "sonner";
@@ -36,6 +40,11 @@ export function ProfileSettings() {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("details");
 
+  // Avatar states
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl || null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Form states
   const [name, setName] = useState(user.name || "");
   const [email, setEmail] = useState(user.email || "");
@@ -48,7 +57,8 @@ export function ProfileSettings() {
     if (user.email) setEmail(user.email);
     if (user.phoneNumber) setPhoneNumber(user.phoneNumber);
     if (user.employeeId) setEmployeeId(user.employeeId);
-  }, [user.name, user.email, user.phoneNumber, user.employeeId]);
+    if (user.avatarUrl !== undefined) setAvatarUrl(user.avatarUrl || null);
+  }, [user.name, user.email, user.phoneNumber, user.employeeId, user.avatarUrl]);
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -156,6 +166,115 @@ export function ProfileSettings() {
     }
   };
 
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so the user can re-select the same file if needed
+    e.target.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (PNG, JPG, JPEG, WebP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file size should not exceed 5MB.");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      try {
+        const base64String = reader.result as string;
+
+        // 1. Upload to Supabase Storage via backend upload endpoint
+        const uploadRes = await axiosPrivate.post("/upload/profile-picture", {
+          image: base64String,
+          fileName: file.name,
+        });
+
+        const uploadedUrl =
+          uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl;
+
+        if (!uploadedUrl) {
+          throw new Error("Failed to receive image URL from server.");
+        }
+
+        // 2. Persist avatarUrl to admin user record
+        const response = await axiosPrivate.put("/auth/profile", {
+          avatarUrl: uploadedUrl,
+        });
+
+        const updatedUser = response.data?.data?.user || {
+          ...user,
+          avatarUrl: uploadedUrl,
+        };
+
+        // 3. Update global auth state
+        setAuth((prev: any) => ({
+          ...prev,
+          data: {
+            ...prev?.data,
+            user: updatedUser,
+          },
+        }));
+
+        setAvatarUrl(uploadedUrl);
+        toast.success("Profile picture updated successfully!");
+      } catch (err: any) {
+        toast.error(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to upload profile picture."
+        );
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    };
+
+    reader.onerror = () => {
+      setIsUploadingAvatar(false);
+      toast.error("Failed to read image file.");
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!avatarUrl) return;
+    setIsUploadingAvatar(true);
+    try {
+      const response = await axiosPrivate.put("/auth/profile", {
+        avatarUrl: null,
+      });
+
+      const updatedUser = response.data?.data?.user || {
+        ...user,
+        avatarUrl: null,
+      };
+
+      setAuth((prev: any) => ({
+        ...prev,
+        data: {
+          ...prev?.data,
+          user: updatedUser,
+        },
+      }));
+
+      setAvatarUrl(null);
+      toast.success("Profile picture removed successfully.");
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Failed to remove profile picture."
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const NAV_TABS = [
     { id: "details" as ProfileTab, label: "Personal Details", icon: User },
     { id: "security" as ProfileTab, label: "Security & Password", icon: Lock },
@@ -178,20 +297,61 @@ export function ProfileSettings() {
         {/* Main Header Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">
           {/* Left Side: Avatar, Name, Role Badges & Meta */}
-          <div className="flex items-center gap-3.5">
-            <div className="relative shrink-0">
-              <Avatar className="h-13 w-13 sm:h-15 sm:w-15 rounded-2xl border-2 border-border shadow-xs bg-muted text-foreground">
-                <AvatarFallback className="font-black text-lg sm:text-xl bg-primary/10 text-primary uppercase rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative shrink-0 group self-start">
+              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl border-2 border-border shadow-xs bg-muted text-foreground overflow-hidden">
+                {avatarUrl ? (
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={name || user.name}
+                    className="object-cover size-full"
+                  />
+                ) : null}
+                <AvatarFallback className="font-black text-xl sm:text-2xl bg-primary/10 text-primary uppercase rounded-2xl">
                   {initials}
                 </AvatarFallback>
               </Avatar>
+
+              {/* Hover camera upload overlay */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="absolute inset-0 rounded-2xl bg-black/55 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-xs disabled:cursor-not-allowed"
+                title="Change profile picture"
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 size={20} className="animate-spin text-white" />
+                ) : (
+                  <>
+                    <Camera size={18} className="stroke-[2.5]" />
+                    <span className="text-[9.5px] font-bold mt-1">Change</span>
+                  </>
+                )}
+              </button>
+
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveAvatar();
+                  }}
+                  disabled={isUploadingAvatar}
+                  className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer shadow-xs hover:bg-destructive/90 z-20"
+                  title="Remove profile picture"
+                >
+                  <Trash2 size={10} />
+                </button>
+              )}
+
               <span
-                className="absolute -bottom-1 -right-1 size-3.5 sm:size-4 rounded-full bg-emerald-500 border-2 border-card ring-2 ring-emerald-400/20"
+                className="absolute -bottom-1 -right-1 size-3.5 sm:size-4 rounded-full bg-emerald-500 border-2 border-card ring-2 ring-emerald-400/20 z-10"
                 title="Account Active"
               />
             </div>
 
-            <div className="space-y-1 min-w-0">
+            <div className="space-y-1.5 min-w-0">
               {/* Name + Role & Status Badges */}
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight capitalize truncate">
@@ -205,6 +365,14 @@ export function ProfileSettings() {
               </div>
             </div>
           </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            className="sr-only hidden"
+            onChange={handleAvatarFileSelect}
+          />
         </div>
       </div>
 

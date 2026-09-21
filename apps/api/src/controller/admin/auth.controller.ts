@@ -168,7 +168,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     const dbSuperAdmin = await ensureSuperAdminExists();
     user = dbSuperAdmin || getSuperAdminProfile();
   } else {
-    user = await prisma.adminUser.findUnique({
+    user = await (prisma as any).adminUser.findUnique({
       where: { id: tokenPayload.id },
       select: {
         id: true,
@@ -177,6 +177,8 @@ export const refreshToken = async (req: Request, res: Response) => {
         name: true,
         role: true,
         phoneNumber: true,
+        avatarUrl: true,
+        location: true,
         accountStatus: true,
         isActive: true,
         handledSubjectIds: true,

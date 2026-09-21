@@ -1,25 +1,47 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
 import type { NotificationItem } from "../types/types";
 
-interface UseNotificationsParams {
+export interface UseNotificationsParams {
   unreadOnly?: boolean;
   search?: string;
   type?: string;
+  limit?: number;
+  skip?: number;
+}
+
+export interface UseInfiniteNotificationsParams {
+  unreadOnly?: boolean;
+  search?: string;
+  type?: string;
+  limit?: number;
+}
+
+export interface NotificationPageResult {
+  notifications: NotificationItem[];
+  unreadCount: number;
+  hasMore: boolean;
+  nextSkip: number;
 }
 
 export function useNotifications({
   unreadOnly = false,
   search,
   type,
+  limit = 10,
+  skip = 0,
 }: UseNotificationsParams = {}) {
   const axiosPrivate = useAxiosPrivate();
   const { auth } = useAuth();
   const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
 
-  return useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
-    queryKey: ["notifications", { unreadOnly, search, type }],
+  return useQuery<{
+    notifications: NotificationItem[];
+    unreadCount: number;
+    hasMore: boolean;
+  }>({
+    queryKey: ["notifications", { unreadOnly, search, type, limit, skip }],
     queryFn: async () => {
       try {
         const response = await axiosPrivate.get("/notifications/get", {
@@ -27,12 +49,17 @@ export function useNotifications({
             unreadOnly,
             search: search?.trim() || undefined,
             type: type && type !== "ALL" ? type : undefined,
+            limit,
+            skip,
           },
         });
         const data = response.data?.data || response.data || {};
         return {
           notifications: data.notifications || [],
-          unreadCount: data.unreadCount ?? (data.notifications || []).filter((n: NotificationItem) => !n.isRead).length,
+          unreadCount:
+            data.unreadCount ??
+            (data.notifications || []).filter((n: NotificationItem) => !n.isRead).length,
+          hasMore: Boolean(data.hasMore),
         };
       } catch (error: any) {
         if (
@@ -44,9 +71,67 @@ export function useNotifications({
           throw error;
         }
         console.warn("Failed to fetch notifications:", error);
-        return { notifications: [], unreadCount: 0 };
+        return { notifications: [], unreadCount: 0, hasMore: false };
       }
     },
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      if (!isAuthenticated || query.state.error) {
+        return false;
+      }
+      return 10000;
+    },
+  });
+}
+
+export function useInfiniteNotifications({
+  unreadOnly = false,
+  search,
+  type,
+  limit = 15,
+}: UseInfiniteNotificationsParams = {}) {
+  const axiosPrivate = useAxiosPrivate();
+  const { auth } = useAuth();
+  const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
+
+  return useInfiniteQuery<NotificationPageResult>({
+    queryKey: ["notifications", "infinite", { unreadOnly, search, type, limit }],
+    queryFn: async ({ pageParam = 0 }) => {
+      try {
+        const skip = typeof pageParam === "number" ? pageParam : 0;
+        const response = await axiosPrivate.get("/notifications/get", {
+          params: {
+            unreadOnly,
+            search: search?.trim() || undefined,
+            type: type && type !== "ALL" ? type : undefined,
+            limit,
+            skip,
+          },
+        });
+        const data = response.data?.data || response.data || {};
+        const notifications: NotificationItem[] = data.notifications || [];
+        const hasMore = Boolean(data.hasMore);
+        return {
+          notifications,
+          unreadCount: data.unreadCount ?? 0,
+          hasMore,
+          nextSkip: skip + notifications.length,
+        };
+      } catch (error: any) {
+        if (
+          error?.response?.status === 401 ||
+          error?.response?.status === 403 ||
+          error?.status === 401 ||
+          error?.status === 403
+        ) {
+          throw error;
+        }
+        console.warn("Failed to fetch infinite notifications:", error);
+        return { notifications: [], unreadCount: 0, hasMore: false, nextSkip: 0 };
+      }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextSkip : undefined),
     enabled: isAuthenticated,
     refetchInterval: (query) => {
       if (!isAuthenticated || query.state.error) {
@@ -71,6 +156,21 @@ export function useMarkNotificationAsRead() {
 
       queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData: any) => {
         if (!oldData) return oldData;
+        if (Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => {
+              const updatedNotifications = (page.notifications || []).map((item: NotificationItem) =>
+                item.id === id ? { ...item, isRead: true } : item
+              );
+              return {
+                ...page,
+                notifications: updatedNotifications,
+                unreadCount: Math.max(0, (page.unreadCount || 0) - 1),
+              };
+            }),
+          };
+        }
         const updatedNotifications = (oldData.notifications || []).map((item: NotificationItem) =>
           item.id === id ? { ...item, isRead: true } : item
         );
@@ -102,6 +202,19 @@ export function useMarkAllNotificationsAsRead() {
 
       queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData: any) => {
         if (!oldData) return oldData;
+        if (Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              notifications: (page.notifications || []).map((item: NotificationItem) => ({
+                ...item,
+                isRead: true,
+              })),
+              unreadCount: 0,
+            })),
+          };
+        }
         const updatedNotifications = (oldData.notifications || []).map((item: NotificationItem) => ({
           ...item,
           isRead: true,
@@ -133,6 +246,20 @@ export function useDeleteNotification() {
 
       queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData: any) => {
         if (!oldData) return oldData;
+        if (Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => {
+              const updatedNotifications = (page.notifications || []).filter(
+                (item: NotificationItem) => item.id !== id
+              );
+              return {
+                ...page,
+                notifications: updatedNotifications,
+              };
+            }),
+          };
+        }
         const updatedNotifications = (oldData.notifications || []).filter(
           (item: NotificationItem) => item.id !== id
         );
@@ -164,10 +291,22 @@ export function useClearAllNotifications() {
 
       queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData: any) => {
         if (!oldData) return oldData;
+        if (Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              notifications: [],
+              unreadCount: 0,
+              hasMore: false,
+            })),
+          };
+        }
         return {
           ...oldData,
           notifications: [],
           unreadCount: 0,
+          hasMore: false,
         };
       });
     },

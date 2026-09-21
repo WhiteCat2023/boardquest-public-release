@@ -46,12 +46,16 @@ import { toast } from "sonner";
 import { IconPicker, getCategoryIcon } from "../components/IconPicker";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import { useConfirm } from "@/components/modal";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
 export default function CategoriesView() {
   const navigate = useNavigate();
   const { auth } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+
   const { data: categories = [], isLoading } = useSubjects({
     search: searchTerm,
   });
@@ -78,6 +82,26 @@ export default function CategoriesView() {
   } = useRoleFlags();
 
   const filteredCategories = categories;
+  const total = filteredCategories.length;
+  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const hasNextPage = currentPage < totalPages;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCategories = filteredCategories.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
+
+  const handleNext = () => {
+    if (hasNextPage) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  const handlePageSelect = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,12 +197,18 @@ export default function CategoriesView() {
             type="text"
             placeholder="Search subject or keywords..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-9 pr-8 h-8.5 bg-muted/30 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground w-full"
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X size={13} />
@@ -296,7 +326,7 @@ export default function CategoriesView() {
       ) : viewMode === "grid" ? (
         /* Cards / Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {filteredCategories.map((cat: any) => {
+          {paginatedCategories.map((cat: any) => {
             const IconComp = getCategoryIcon(cat.icon, cat.name);
             const targetId = cat.id || cat._id;
 
@@ -393,7 +423,7 @@ export default function CategoriesView() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-border/60">
-              {filteredCategories.map((cat: any) => {
+              {paginatedCategories.map((cat: any) => {
                 const IconComp = getCategoryIcon(cat.icon, cat.name);
                 const targetId = cat.id || cat._id;
 
@@ -469,6 +499,19 @@ export default function CategoriesView() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* Pagination Bar */}
+      {!isLoading && (
+        <QuestionListPagination
+          currentPage={currentPage}
+          hasNextPage={hasNextPage}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPageSelect={handlePageSelect}
+          maxPageReached={totalPages}
+          totalPages={totalPages}
+        />
       )}
 
       {/* Create Subject Category Modal */}

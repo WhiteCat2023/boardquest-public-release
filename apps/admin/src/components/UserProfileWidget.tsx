@@ -23,6 +23,7 @@ export default function UserProfileWidget() {
   const userName = user?.name || appContent.superadmin.name;
   const userEmail = user?.email || appContent.superadmin.email;
   const userRole = user?.role || appContent.superadmin.role;
+  const userAvatar = (user?.avatarUrl as string) || ((user as any)?.avatar as string) || "";
 
   const initials = userName
     ? userName
@@ -82,7 +83,7 @@ export default function UserProfileWidget() {
 
             <div className="relative">
               <Avatar className="h-9 w-9 border border-border shadow-2xs group-hover:border-primary/30 transition-colors bg-muted">
-                <AvatarImage src="" alt={userName} />
+                <AvatarImage src={userAvatar} alt={userName} className="object-cover" />
                 <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs">
                   {initials}
                 </AvatarFallback>
@@ -108,6 +109,7 @@ export default function UserProfileWidget() {
           <DropdownMenuLabel className="p-3 bg-muted/50 border border-border rounded-xl mb-1 flex items-start gap-3">
             <div className="relative shrink-0">
               <Avatar className="h-10 w-10 border border-border bg-primary/10 text-primary">
+                <AvatarImage src={userAvatar} alt={userName} className="object-cover" />
                 <AvatarFallback className="font-extrabold text-xs bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>

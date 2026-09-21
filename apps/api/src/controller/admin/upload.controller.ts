@@ -62,3 +62,29 @@ export const uploadModuleFile = asyncHandler(async (req: Request, res: Response)
   ).send(res);
 });
 
+export const uploadProfilePicture = asyncHandler(async (req: Request, res: Response) => {
+  const { image, fileName } = req.body;
+
+  if (!image) {
+    throw new ApiError(400, "Image payload is required (base64 string or image URI)");
+  }
+
+  const userId = (req as any).user?.id || Date.now();
+  const sanitizedFileName = `avatar_${userId}_${Date.now()}`;
+
+  const result = await uploadImage(image, sanitizedFileName, "profile_pictures");
+
+  return new ApiResponse(
+    200,
+    {
+      imageUrl: result.secure_url || result.url,
+      publicId: result.public_id,
+      format: result.format,
+      width: result.width,
+      height: result.height,
+      bytes: result.bytes,
+    },
+    "Profile picture uploaded successfully"
+  ).send(res);
+});
+

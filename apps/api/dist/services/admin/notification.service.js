@@ -16,6 +16,36 @@ function getOrConditions(userId, role) {
     }
     return OR_conditions;
 }
+export async function getUnreadNotificationsCount(userId, role) {
+    if (!userId)
+        return 0;
+    try {
+        const unreadWhere = {
+            AND: [
+                { OR: getOrConditions(userId, role) },
+                { NOT: { deletedUserIds: { has: userId } } },
+                {
+                    OR: [
+                        { recipientId: userId, isRead: false },
+                        {
+                            recipientId: { not: userId },
+                            NOT: { readUserIds: { has: userId } },
+                        },
+                        {
+                            recipientId: null,
+                            NOT: { readUserIds: { has: userId } },
+                        },
+                    ],
+                },
+            ],
+        };
+        return await prisma.notification.count({ where: unreadWhere });
+    }
+    catch (err) {
+        console.warn("getUnreadNotificationsCount error:", err?.message);
+        return 0;
+    }
+}
 export async function createNotification(input) {
     const { recipientId, recipientRole = "ALL", title, message, type = "INFO", link, metadata, } = input;
     const metadataStr = metadata
@@ -51,13 +81,28 @@ export async function createNotification(input) {
     return notif;
 }
 export async function getUserNotifications(input) {
-    const { userId, role, unreadOnly = false, limit = 50, search, type } = input;
+    const { userId, role, unreadOnly = false, limit = 15, skip = 0, search, type } = input;
     const andConditions = [];
     if (userId) {
         andConditions.push({
             NOT: {
                 deletedUserIds: { has: userId },
             },
+        });
+    }
+    if (unreadOnly && userId) {
+        andConditions.push({
+            OR: [
+                { recipientId: userId, isRead: false },
+                {
+                    recipientId: { not: userId },
+                    NOT: { readUserIds: { has: userId } },
+                },
+                {
+                    recipientId: null,
+                    NOT: { readUserIds: { has: userId } },
+                },
+            ],
         });
     }
     if (type && type !== "ALL") {
@@ -77,24 +122,33 @@ export async function getUserNotifications(input) {
     const whereClause = {
         AND: [{ OR: getOrConditions(userId, role) }, ...andConditions],
     };
-    const rawNotifications = await prisma.notification.findMany({
-        where: whereClause,
-        orderBy: { createdAt: "desc" },
-        take: limit * 2,
-    });
-    const processed = rawNotifications
-        .map((n) => {
-        const isReadForUser = n.isRead ||
-            (userId
+    const [rawNotifications, unreadCount] = await Promise.all([
+        prisma.notification.findMany({
+            where: whereClause,
+            orderBy: { createdAt: "desc" },
+            skip: Math.max(0, skip),
+            take: limit + 1,
+        }),
+        getUnreadNotificationsCount(userId, role),
+    ]);
+    const hasMore = rawNotifications.length > limit;
+    const items = hasMore ? rawNotifications.slice(0, limit) : rawNotifications;
+    const processed = items.map((n) => {
+        const isReadForUser = n.recipientId === userId
+            ? n.isRead
+            : (userId
                 ? Array.isArray(n.readUserIds) && n.readUserIds.includes(userId)
                 : false);
         return {
             ...n,
             isRead: isReadForUser,
         };
-    })
-        .filter((n) => !unreadOnly || !n.isRead);
-    return processed.slice(0, limit);
+    });
+    return {
+        notifications: processed,
+        unreadCount,
+        hasMore,
+    };
 }
 export async function markNotificationAsRead(id, userId, role) {
     if (!id)

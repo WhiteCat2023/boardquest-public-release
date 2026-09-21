@@ -1,22 +1,48 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
-import { Mail, Lock, Eye, EyeOff, Building2, Loader2, ShieldAlert } from "lucide-react";
+import { Mail, Lock, EyeClosed, Eye, UserX, ShieldAlert } from "lucide-react";
+import boardQuestLogo from "@/assets/boardquest.png";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function ReviewCenterLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || "/";
   const { user, login, isLoading } = useReviewCenterAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+
+  const [loginInputs, setLoginInputs] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [togglePassword, setTogglePassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isDeactivatedDialogOpen, setIsDeactivatedDialogOpen] = useState(false);
   const [deactivatedMsg, setDeactivatedMsg] = useState(
-    "Your partner account is currently deactivated. Please contact your system administrator or Dean for assistance."
+    "Your partner account has been deactivated. Please contact your system administrator or Dean for assistance."
   );
 
   useEffect(() => {
@@ -29,7 +55,7 @@ export function ReviewCenterLoginPage() {
     e.preventDefault();
     setLocalError(null);
     try {
-      await login({ email, password });
+      await login(loginInputs);
       navigate(from, { replace: true });
     } catch (err: unknown) {
       const errorObj = err as {
@@ -45,160 +71,181 @@ export function ReviewCenterLoginPage() {
         if (message) setDeactivatedMsg(message);
         setIsDeactivatedDialogOpen(true);
       } else {
-        setLocalError(message || "Failed to sign in. Please verify your credentials.");
+        if (
+          !message ||
+          message.includes("invocation") ||
+          message.includes("Prisma") ||
+          message.includes("Internal Server")
+        ) {
+          setLocalError(
+            "Invalid email or password. Please check your credentials and try again."
+          );
+        } else {
+          setLocalError(message);
+        }
       }
     }
   };
 
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4 select-none relative overflow-hidden">
-      {/* Subtle ambient maroon top and bottom decorative glows */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[540px] h-[540px] bg-primary/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 right-1/4 w-[420px] h-[420px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+  const isLoginInvalid = Boolean(localError) && !isDeactivatedDialogOpen;
 
-      <div className="relative z-10 w-full max-w-[420px] bg-card border border-border/80 rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
-        {/* Brand Header */}
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4">
+      <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
+        {/* Logo Section */}
         <div className="flex flex-col items-center mb-6">
-          <div className="relative flex items-center justify-center h-16 w-24 mb-1">
-            <span className="text-6xl font-black text-foreground absolute left-2 z-10 font-sans tracking-tighter">
-              B
-            </span>
-            <span className="text-6xl font-black text-primary absolute right-1 z-20 top-2 font-sans tracking-tighter drop-shadow-xs">
-              Q
-            </span>
-          </div>
-          <h1 className="text-xl font-extrabold tracking-widest text-foreground">
-            BOARDQUEST
-          </h1>
-          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-0.5 rounded-full border border-primary/20 shadow-2xs">
-            <Building2 className="w-3 h-3 text-primary" /> Review Center Portal
-          </div>
+          <img
+            src={boardQuestLogo}
+            alt="BoardQuest Logo"
+            className="h-16 sm:h-20 w-auto object-contain mb-1"
+          />
         </div>
 
-        {/* Login Form */}
+        {/* Form Section */}
         <form onSubmit={handleSubmit} className="w-full space-y-5">
-          <div className="text-center mb-6">
-            <h2 className="text-lg font-extrabold text-foreground mb-1 tracking-tight">
-              REVIEW CENTER <span className="text-primary">LOG IN</span>
-            </h2>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[260px] mx-auto leading-snug">
-              ENTER YOUR REPRESENTATIVE CREDENTIALS TO CONTINUE
+          <FieldGroup>
+            <FieldSet className="text-center mb-8">
+              <FieldLegend className="text-lg font-extrabold text-foreground mb-1">
+                REVIEW CENTER <span className="text-primary">LOG IN</span>
+              </FieldLegend>
+              <FieldDescription className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[250px] mx-auto leading-snug">
+                ENTER YOUR CREDENTIALS TO ACCESS YOUR PORTAL
+              </FieldDescription>
+              <FieldGroup>
+                <Field data-invalid={isLoginInvalid || undefined}>
+                  <FieldLabel
+                    className="text-[11px] font-bold text-foreground uppercase tracking-wide"
+                    htmlFor="input-invalid"
+                  >
+                    EMAIL ADDRESS
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <Mail className="size-4 text-muted-foreground" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="input-email"
+                      aria-invalid={isLoginInvalid || undefined}
+                      type="email"
+                      required
+                      placeholder="rep@reviewcenter.edu.ph"
+                      value={loginInputs.email}
+                      onChange={(e) => {
+                        setLoginInputs({
+                          ...loginInputs,
+                          email: e.target.value,
+                        });
+                        if (localError) setLocalError(null);
+                      }}
+                    />
+                  </InputGroup>
+                </Field>
+                <Field>
+                  <FieldLabel className="text-[11px] font-bold text-foreground uppercase tracking-wide">
+                    PASSWORD
+                  </FieldLabel>
+
+                  <InputGroup data-invalid={isLoginInvalid || undefined}>
+                    <InputGroupAddon align="inline-start">
+                      <Lock className="size-4 text-muted-foreground" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="input-password"
+                      type={togglePassword ? "text" : "password"}
+                      aria-invalid={isLoginInvalid || undefined}
+                      required
+                      placeholder="**********"
+                      value={loginInputs.password}
+                      onChange={(e) => {
+                        setLoginInputs({
+                          ...loginInputs,
+                          password: e.target.value,
+                        });
+                        if (localError) setLocalError(null);
+                      }}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => setTogglePassword(!togglePassword)}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        {togglePassword ? <Eye className="size-4" /> : <EyeClosed className="size-4" />}
+                      </Button>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <div className="flex justify-end w-full mt-1.5">
+                    <Link
+                      to="/forgot-password"
+                      className="text-[11px] font-bold text-primary hover:underline uppercase tracking-wide transition-colors"
+                    >
+                      FORGOT PASSWORD?
+                    </Link>
+                  </div>
+                </Field>
+                <Button
+                  className="w-full bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 cursor-pointer shadow-xs font-semibold"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Logging in..." : "Login"}
+                </Button>
+
+                {isLoginInvalid && (
+                  <div className="mt-4 text-xs font-bold text-destructive text-center">
+                    {localError}
+                  </div>
+                )}
+              </FieldGroup>
+            </FieldSet>
+          </FieldGroup>
+        </form>
+      </div>
+
+      {/* Account Deactivated Notification Modal Dialog */}
+      <AlertDialog
+        open={isDeactivatedDialogOpen}
+        onOpenChange={setIsDeactivatedDialogOpen}
+      >
+        <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-2xl max-w-md text-foreground font-sans animate-in zoom-in-95 duration-200">
+          <AlertDialogHeader className="flex flex-row items-start gap-4 text-left">
+            <div className="p-3 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shrink-0 mt-0.5">
+              <UserX size={24} className="stroke-[2.5]" />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <AlertDialogTitle className="text-base font-bold text-foreground">
+                Account Deactivated
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                Your partner account is currently <strong className="text-destructive font-bold">deactivated</strong>. You cannot access the BoardQuest review center platform while your status is inactive.
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="p-3.5 bg-muted/40 rounded-2xl border border-border/80 text-xs text-muted-foreground flex items-start gap-2.5 my-2">
+            <ShieldAlert
+              size={18}
+              className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+            />
+            <p className="leading-relaxed">
+              {deactivatedMsg.includes("administrator")
+                ? deactivatedMsg
+                : "Please contact your system administrator or Dean to restore access to your account."}
             </p>
           </div>
 
-          <div className="space-y-4">
-            {/* Email / ID Field */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-foreground uppercase tracking-wide block">
-                EMAIL ADDRESS / EMPLOYEE ID
-              </label>
-              <div className="relative flex items-center">
-                <Input
-                  type="text"
-                  required
-                  placeholder="rep@reviewcenter.edu.ph"
-                  value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  className="pl-10"
-                />
-                <Mail className="w-4 h-4 text-muted-foreground absolute left-3 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-foreground uppercase tracking-wide block">
-                  PASSWORD
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-[11px] font-bold text-primary hover:underline transition-colors"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-              <div className="relative flex items-center">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                <Lock className="w-4 h-4 text-muted-foreground absolute left-3 pointer-events-none" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {localError && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold rounded-xl text-center">
-              {localError}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-11 text-xs uppercase tracking-wider font-extrabold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 transition-all cursor-pointer"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>AUTHENTICATING...</span>
-              </>
-            ) : (
-              "SIGN IN TO PORTAL"
-            )}
-          </Button>
-        </form>
-
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>
-            Authorized Access Only. Powered by{" "}
-            <strong className="text-foreground">BoardQuest Evaluation Engine</strong>.
-          </p>
-        </div>
-      </div>
-
-      {/* Account Deactivated Modal Dialog */}
-      {isDeactivatedDialogOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in-0 duration-150">
-          <div className="bg-card border border-destructive/30 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-4">
-            <div className="size-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto border border-destructive/20">
-              <ShieldAlert className="size-6" />
-            </div>
-            <div className="text-center space-y-1.5">
-              <h3 className="text-base font-black text-foreground">
-                Account Deactivated
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {deactivatedMsg}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogAction
               onClick={() => setIsDeactivatedDialogOpen(false)}
-              className="w-full"
+              className="w-full rounded-xl text-xs font-semibold h-10 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
             >
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
+              Understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

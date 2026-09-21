@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import type { RankTier } from "../types/types";
 import { useRankStudents } from "../api/useGameManagement";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
 interface RanksManagementTabProps {
   ranks: RankTier[];
@@ -76,6 +77,8 @@ export function RanksManagementTab({
 }: RanksManagementTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Inspect Students Modal State
   const [inspectingRank, setInspectingRank] = useState<RankTier | null>(null);
@@ -108,11 +111,30 @@ export function RanksManagementTab({
     return matchesSearch && matchesStatus;
   });
 
+  const total = filteredRanks.length;
+  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const hasNextPage = currentPage < totalPages;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedRanks = filteredRanks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleNext = () => {
+    if (hasNextPage) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  const handlePageSelect = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
   const hasActiveFilters = Boolean(searchTerm) || selectedStatus !== "ALL";
 
   const handleResetFilters = () => {
     setSearchTerm("");
     setSelectedStatus("ALL");
+    setCurrentPage(1);
   };
 
   return (
@@ -125,14 +147,20 @@ export function RanksManagementTab({
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Search rank title, level, criteria..."
               className="pl-8 pr-7 h-9 text-xs font-medium"
             />
             {searchTerm && (
               <button
                 type="button"
-                onClick={() => setSearchTerm("")}
+                onClick={() => {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -141,7 +169,13 @@ export function RanksManagementTab({
           </div>
 
           {/* Status Filter */}
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <Select
+            value={selectedStatus}
+            onValueChange={(v) => {
+              setSelectedStatus(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-32 h-9 text-xs font-medium">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -261,7 +295,7 @@ export function RanksManagementTab({
                   </td>
                 </tr>
               ) : (
-                filteredRanks.map((rank) => {
+                paginatedRanks.map((rank) => {
                   const IconComp = ICON_MAP[rank.icon] || Award;
                   const studentCount = rank.studentCount ?? 0;
                   const perksList = Array.isArray(rank.perks) ? rank.perks : [];
@@ -406,6 +440,19 @@ export function RanksManagementTab({
           </table>
         </div>
       </div>
+
+      {/* Pagination Bar */}
+      {!isLoading && (
+        <QuestionListPagination
+          currentPage={currentPage}
+          hasNextPage={hasNextPage}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPageSelect={handlePageSelect}
+          maxPageReached={totalPages}
+          totalPages={totalPages}
+        />
+      )}
 
       {/* Real Enrolled Students Inspection Modal */}
       <Dialog

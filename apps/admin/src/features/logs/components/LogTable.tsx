@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import type { LogItem, LogLevelType } from "@/features/logs";
 
 interface LogTableProps {
@@ -102,9 +101,9 @@ export default function LogTable({
   const endIdx = Math.min(currentPage * 20, totalLogs);
 
   return (
-    <Card className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs font-sans p-0">
+    <Card className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs font-sans p-0 flex flex-col">
       {/* Table Header */}
-      <div className="p-2.5 px-4 border-b border-border bg-muted/50 flex items-center justify-between">
+      <div className="p-2.5 px-4 border-b border-border bg-muted/50 flex items-center justify-between shrink-0">
         <span className="text-[9.5px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
           <Terminal size={14} className="text-primary" />
           Live Audit Stream ({startIdx}–{endIdx} of {totalLogs} Entries)
@@ -130,7 +129,7 @@ export default function LogTable({
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border overflow-y-auto max-h-[460px] md:max-h-[520px] xl:max-h-[600px] scroll-smooth">
           {logs.map((log: LogItem) => {
             const isExpanded = expandedLogId === log.id;
             const formattedDate = new Date(log.createdAt).toLocaleString("en-US", {
@@ -279,7 +278,7 @@ export default function LogTable({
 
       {/* Pagination Bar */}
       {!isLoading && totalPages > 1 && (
-        <div className="p-3.5 px-5 border-t border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3 font-sans">
+        <div className="p-3.5 px-5 border-t border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3 font-sans shrink-0">
           <span className="text-xs text-muted-foreground font-medium">
             Showing <strong className="text-foreground">{startIdx}</strong> to{" "}
             <strong className="text-foreground">{endIdx}</strong> of{" "}

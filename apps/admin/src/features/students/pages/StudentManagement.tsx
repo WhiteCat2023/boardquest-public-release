@@ -244,7 +244,7 @@ export default function StudentManagement() {
           />
 
           {/* 5. Pagination Bar */}
-          {!isLoading && totalPages > 1 && (
+          {!isLoading && (
             <QuestionListPagination
               currentPage={currentPage}
               hasNextPage={hasNextPage}
@@ -252,6 +252,7 @@ export default function StudentManagement() {
               onPrevious={handlePrevious}
               onPageSelect={handlePageSelect}
               maxPageReached={totalPages}
+              totalPages={totalPages}
             />
           )}
         </>

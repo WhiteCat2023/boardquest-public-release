@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useDeferredValue } from "react";
 import { isToday, isYesterday, format } from "date-fns";
 import {
   Bell,
@@ -8,13 +8,16 @@ import {
   Inbox,
   RefreshCw,
   Calendar,
+  ChevronDown,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  useNotifications,
+  useInfiniteNotifications,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
   useDeleteNotification,
@@ -25,13 +28,22 @@ import type { NotificationItem } from "../types/types";
 
 export default function NotificationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearch = useDeferredValue(searchTerm);
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [unreadOnly, setUnreadOnly] = useState(false);
 
-  const { data, isLoading, refetch } = useNotifications({
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteNotifications({
     unreadOnly,
-    search: searchTerm,
+    search: deferredSearch,
     type: selectedType,
+    limit: 15,
   });
 
   const markAsReadMutation = useMarkNotificationAsRead();
@@ -39,8 +51,8 @@ export default function NotificationsPage() {
   const deleteNotificationMutation = useDeleteNotification();
   const clearAllNotificationsMutation = useClearAllNotifications();
 
-  const allNotifications = data?.notifications || [];
-  const unreadCount = data?.unreadCount || 0;
+  const allNotifications = data?.pages.flatMap((page) => page.notifications) || [];
+  const unreadCount = data?.pages[0]?.unreadCount ?? 0;
 
   // Group notifications directly by date (filtering is done on backend)
   const groupedNotifications = (() => {
@@ -238,6 +250,39 @@ export default function NotificationsPage() {
                 </div>
               );
             })}
+
+            {/* View More / Load More Section */}
+            {hasNextPage ? (
+              <div className="p-3.5 flex justify-center items-center bg-muted/10 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isFetchingNextPage}
+                  onClick={() => fetchNextPage()}
+                  className="h-8.5 px-5 rounded-xl border-border bg-card hover:bg-accent text-foreground text-xs font-semibold shadow-2xs gap-2 transition-all cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin text-primary" />
+                      <span>Loading more notifications...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} className="text-muted-foreground" />
+                      <span>View More Notifications</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : allNotifications.length > 0 ? (
+              <div className="py-3 px-4 text-center border-t border-border/60 bg-muted/5">
+                <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1.5">
+                  <CheckCircle2 size={12} className="text-emerald-500/80" />
+                  <span>You're all caught up. No more notifications to load.</span>
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </Card>
