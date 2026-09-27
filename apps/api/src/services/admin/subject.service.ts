@@ -462,10 +462,11 @@ export class SubjectService {
 
     // External accounts (Review Center) cannot be assigned to handle subjects
     if (handlerIds.length > 0) {
-      const externalReps = await this.db.reviewCenterRepresentativeUser.findMany({
-        where: { id: { in: handlerIds } },
-        select: { id: true },
-      });
+      const externalReps =
+        await this.db.reviewCenterRepresentativeUser.findMany({
+          where: { id: { in: handlerIds } },
+          select: { id: true },
+        });
       if (externalReps.length > 0) {
         throw new ApiError(
           400,
@@ -479,8 +480,7 @@ export class SubjectService {
       });
       const invalidExternalUser = users.find(
         (u) =>
-          u.role === ("REVIEWCENTER" as any) ||
-          u.role === ("EXTERNAL" as any),
+          u.role === ("REVIEWCENTER" as any) || u.role === ("EXTERNAL" as any),
       );
       if (invalidExternalUser) {
         throw new ApiError(
@@ -583,12 +583,10 @@ export const getSubjectById =
   subjectService.getSubjectById.bind(subjectService);
 export const getCategoryById = getSubjectById;
 
-export const updateSubject =
-  subjectService.updateSubject.bind(subjectService);
+export const updateSubject = subjectService.updateSubject.bind(subjectService);
 export const updateCategory = updateSubject;
 
-export const deleteSubject =
-  subjectService.deleteSubject.bind(subjectService);
+export const deleteSubject = subjectService.deleteSubject.bind(subjectService);
 export const deleteCategory = deleteSubject;
 
 export const getSubjectsTotalCount =

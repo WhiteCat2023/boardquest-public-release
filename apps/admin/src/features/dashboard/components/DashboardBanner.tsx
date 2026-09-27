@@ -3,26 +3,10 @@ import { Plus, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import appContent from "@/constants/appContent";
+import useRoleFlags from "@/hooks/useRoleFlags";
 
-export type UserRole = "SUPERADMIN" | "DEAN" | "TEAMLEAD" | "TEACHER" | number | string;
-
-interface DashboardBannerProps {
-  userRole: UserRole;
-  userName?: string;
-}
-
-export function DashboardBanner({
-  userRole,
-  userName = appContent.dashboard.banner.greetings.defaultUser,
-}: DashboardBannerProps) {
-  const getNormalizedKey = (): string => {
-    const s = String(userRole || "").toUpperCase();
-    if (s === "SUPERADMIN") return "SUPERADMIN";
-    if (s === "DEAN") return "DEAN";
-    if (s === "TEAMLEAD") return "TEAMLEAD";
-    if (s === "TEACHER") return "TEACHER";
-    return "DEAN";
-  };
+export function DashboardBanner() {
+  const {isTeacher, isDean, isSuperAdmin, isTeamLead, currentUser} = useRoleFlags();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -31,39 +15,19 @@ export function DashboardBanner({
     return appContent.dashboard.banner.greetings.evening;
   };
 
-  const getPortalTitle = () => {
-    const key = getNormalizedKey();
-    return (
-      (appContent.dashboard.banner.portals as any)[key] ||
-      appContent.dashboard.banner.portals.DEFAULT
-    );
-  };
-
   const getPortalDescription = () => {
-    const key = getNormalizedKey();
-    return (
-      (appContent.dashboard.banner.descriptions as any)[key] ||
-      appContent.dashboard.banner.descriptions.DEAN
-    );
+    if(isTeacher)return appContent.dashboard.banner.descriptions.TEACHER;
+    if(isDean)return appContent.dashboard.banner.descriptions.DEAN;
+    if(isSuperAdmin)return appContent.dashboard.banner.descriptions.SUPERADMIN;
+    if(isTeamLead)return appContent.dashboard.banner.descriptions.TEAMLEAD;
+    return appContent.dashboard.banner.descriptions.TEAMLEAD;
   };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card font-sans">
       <div className="space-y-0.5">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge
-            variant="outline"
-            className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md tracking-wider"
-          >
-            {getPortalTitle()}
-          </Badge>
-          <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
-            {appContent.dashboard.banner.systemStatus}
-          </span>
-        </div>
         <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
-          {getGreeting()}, {userName}
+          {getGreeting()}, {currentUser?.name}
         </h1>
         <p className="text-xs text-muted-foreground">
           {getPortalDescription()}

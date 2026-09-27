@@ -3,6 +3,7 @@ import { type QuestionFilters } from "@/features/question-bank";
 import QuestionTable from "./QuestionTable";
 import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { useQuestionListActions } from "@/features/question-bank";
+import BulkParaphraseDialog from "../dialog/BulkParaphraseDialog";
 
 interface QuestionListProps {
   filters?: QuestionFilters;
@@ -27,6 +28,7 @@ export default function QuestionList({
     cursorsStack,
     itemsPerPage,
     rowSelection,
+    selectedQuestions,
     canManageBulk,
     bulkApproveMutation,
     bulkDeleteMutation,
@@ -39,6 +41,10 @@ export default function QuestionList({
     handlePrevious,
     handlePageSelect,
     setRowSelection,
+    isParaphraseOpen,
+    setIsParaphraseOpen,
+    handleOpenParaphrase,
+    handleParaphraseSuccess,
   } = useQuestionListActions(filters);
 
   const questions = overrideQuestions ?? hookQuestions;
@@ -100,6 +106,7 @@ export default function QuestionList({
               isApprovePending={bulkApproveMutation.isPending}
               isDeletePending={bulkDeleteMutation.isPending}
               isBankView={isBank}
+              onParaphrase={handleOpenParaphrase}
             />
           )}
 
@@ -114,6 +121,14 @@ export default function QuestionList({
           />
         </div>
       </phantom-ui>
+
+      {/* Bulk Paraphrase Dialog */}
+      <BulkParaphraseDialog
+        open={isParaphraseOpen}
+        onOpenChange={setIsParaphraseOpen}
+        selectedQuestions={selectedQuestions}
+        onSuccess={handleParaphraseSuccess}
+      />
     </>
   );
 }

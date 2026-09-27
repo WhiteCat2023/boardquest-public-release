@@ -3,15 +3,23 @@ import { UserCheck, GraduationCap, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import appContent from "@/constants/appContent";
+import { useStudents } from "@/features/students";
 
 interface StudentRosterCardProps {
-  students: any[];
+  students?: any[];
 }
 
-export function StudentRosterCard({ students }: StudentRosterCardProps) {
+export function StudentRosterCard({ students: propStudents }: StudentRosterCardProps = {}) {
   const content = appContent.dashboard.studentRoster;
-  const displayStudents = students.slice(0, 5);
+
+  // Colocated query: fetch students if not passed via props
+  const shouldFetch = propStudents === undefined;
+  const { data: studentData, isLoading } = useStudents({ skip: 0, take: 5 });
+
+  const rawStudents = propStudents ?? (studentData?.students || []);
+  const displayStudents = rawStudents.slice(0, 5);
 
   return (
     <Card className="lg:col-span-1 bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
@@ -28,7 +36,22 @@ export function StudentRosterCard({ students }: StudentRosterCardProps) {
         </Link>
       </div>
 
-      {students.length === 0 ? (
+      {isLoading && shouldFetch ? (
+        <div className="flex flex-col gap-2 py-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between p-1.5 px-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6.5 w-6.5 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-2 w-16" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-12 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : displayStudents.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground">
           <GraduationCap size={30} className="mx-auto text-muted-foreground/40 mb-1.5" />
           <p className="text-xs font-semibold">{content.emptyState}</p>

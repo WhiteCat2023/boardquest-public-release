@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Building2, 
   User, 
@@ -10,25 +11,27 @@ import {
   AlertCircle,
   IdCard
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserRole } from "@/types/question";
-import type { CreateUserPayload } from "@/features/users";
+import type { CreateUserPayload } from "@/features/users/types/types";
+import { useCreateUser } from "@/features/users/api/useUsers";
+import type { UserCredentialsInfo } from "./UserCredentialsModal";
 
 interface AddExternalUserTabProps {
-  errorMsg: string;
-  isPending: boolean;
-  onSubmitExternal: (payload: CreateUserPayload) => void;
-  onCancel: () => void;
+  onSuccess: (credentials: UserCredentialsInfo) => void;
+  onCancel?: () => void;
 }
 
 export default function AddExternalUserTab({
-  errorMsg,
-  isPending,
-  onSubmitExternal,
+  onSuccess,
   onCancel,
 }: AddExternalUserTabProps) {
+  const navigate = useNavigate();
+  const createMutation = useCreateUser();
+
   const [companyName, setCompanyName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -36,7 +39,7 @@ export default function AddExternalUserTab({
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [location, setLocation] = useState("Philippines");
-  const [localError, setLocalError] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     // Generate a default Partner ID
@@ -45,22 +48,22 @@ export default function AddExternalUserTab({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError("");
+    setErrorMsg("");
 
     if (!companyName.trim()) {
-      setLocalError("Review Center / Company name is required.");
+      setErrorMsg("Review Center / Company name is required.");
       return;
     }
     if (!firstName.trim() || !lastName.trim()) {
-      setLocalError("Representative First Name and Last Name are required.");
+      setErrorMsg("Representative First Name and Last Name are required.");
       return;
     }
     if (!email.trim()) {
-      setLocalError("Official contact email address is required.");
+      setErrorMsg("Official contact email address is required.");
       return;
     }
     if (!phoneNumber.trim()) {
-      setLocalError("Contact phone number is required.");
+      setErrorMsg("Contact phone number is required.");
       return;
     }
 
@@ -78,17 +81,42 @@ export default function AddExternalUserTab({
       role: UserRole.EXTERNAL,
     };
 
-    onSubmitExternal(payload);
+    createMutation.mutate(payload, {
+      onSuccess: (res: any) => {
+        const createdUser = res?.data?.data?.user || res?.data?.user;
+        const tempPass = createdUser?.temporaryPassword;
+        const credentials: UserCredentialsInfo = {
+          name: createdUser?.name || payload.name,
+          email: createdUser?.email || payload.email,
+          employeeId: createdUser?.employeeId || payload.employeeId,
+          companyName: createdUser?.companyName || payload.companyName,
+          role: "EXTERNAL",
+          temporaryPassword: tempPass,
+          portalUrl: "http://localhost:5174/login",
+        };
+        toast.success(
+          "Review Center representative account created successfully!",
+        );
+        onSuccess(credentials);
+      },
+      onError: (err: any) => {
+        const msg =
+          err.response?.data?.message ||
+          "Failed to create external partner account.";
+        setErrorMsg(msg);
+        toast.error(msg);
+      },
+    });
   };
 
-  const displayedError = errorMsg || localError;
+  const handleCancel = onCancel || (() => navigate("/faculty-management"));
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      {displayedError && (
+      {errorMsg && (
         <div className="flex items-center gap-2.5 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-xs font-semibold animate-in fade-in duration-150">
           <AlertCircle size={16} className="shrink-0" />
-          <span>{displayedError}</span>
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -242,18 +270,18 @@ export default function AddExternalUserTab({
         <Button
           type="button"
           variant="outline"
-          onClick={onCancel}
-          disabled={isPending}
+          onClick={handleCancel}
+          disabled={createMutation.isPending}
           className="cursor-pointer border-border hover:bg-accent text-foreground font-semibold px-4 py-2 rounded-lg h-9 text-xs"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          disabled={isPending}
+          disabled={createMutation.isPending}
           className="bg-purple-600 text-white hover:bg-purple-700 cursor-pointer font-semibold px-6 py-2 rounded-lg h-9 text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
-          {isPending ? (
+          {createMutation.isPending ? (
             <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />
           ) : (
             <Sparkles size={14} />

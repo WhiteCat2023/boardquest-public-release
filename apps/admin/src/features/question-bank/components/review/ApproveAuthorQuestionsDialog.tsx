@@ -9,23 +9,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { PendingReviewAuthor } from "@/features/question-bank";
+import type { PendingReviewAuthor } from "../../api/useQuestionBank";
+import { useApproveAuthorQuestions } from "../../api/useApproveAuthorQuestions";
 
 interface ApproveAuthorQuestionsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   author: PendingReviewAuthor | null;
-  isLoading?: boolean;
-  onConfirm: () => void;
 }
 
-export default function ApproveAuthorQuestionsDialog({
+export function ApproveAuthorQuestionsDialog({
   isOpen,
   onOpenChange,
   author,
-  isLoading = false,
-  onConfirm,
 }: ApproveAuthorQuestionsDialogProps) {
+  const approveAuthorMutation = useApproveAuthorQuestions();
+
   if (!author) return null;
 
   const initials = author.name
@@ -34,6 +33,15 @@ export default function ApproveAuthorQuestionsDialog({
     .join("")
     .substring(0, 2)
     .toUpperCase();
+
+  const handleConfirm = async () => {
+    try {
+      await approveAuthorMutation.mutateAsync(author.id);
+      onOpenChange(false);
+    } catch {
+      // Error handled by mutation toast
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -65,10 +73,16 @@ export default function ApproveAuthorQuestionsDialog({
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1 leading-tight">
-                <span className="text-xs sm:text-sm font-bold text-foreground block truncate" title={author.name}>
+                <span
+                  className="text-xs sm:text-sm font-bold text-foreground block truncate"
+                  title={author.name}
+                >
                   {author.name}
                 </span>
-                <span className="text-[11px] text-muted-foreground block truncate mt-0.5" title={author.email}>
+                <span
+                  className="text-[11px] text-muted-foreground block truncate mt-0.5"
+                  title={author.email}
+                >
                   {author.email}
                 </span>
               </div>
@@ -87,15 +101,23 @@ export default function ApproveAuthorQuestionsDialog({
             <p className="break-words">
               Are you sure you want to approve all{" "}
               <strong className="text-foreground font-semibold">
-                {author.pendingCount} pending question{author.pendingCount !== 1 ? "s" : ""}
+                {author.pendingCount} pending question
+                {author.pendingCount !== 1 ? "s" : ""}
               </strong>{" "}
               submitted by{" "}
-              <strong className="text-foreground font-semibold">{author.name}</strong>?
+              <strong className="text-foreground font-semibold">
+                {author.name}
+              </strong>
+              ?
             </p>
             <div className="flex items-start gap-2 text-[11.5px] text-muted-foreground/90 pt-0.5 min-w-0">
-              <Sparkles size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+              <Sparkles
+                size={14}
+                className="text-emerald-600 shrink-0 mt-0.5"
+              />
               <span className="min-w-0 flex-1 leading-normal break-words">
-                Approved questions will be marked as active and made immediately available in the question bank.
+                Approved questions will be marked as active and made immediately
+                available in the question bank.
               </span>
             </div>
           </div>
@@ -108,7 +130,7 @@ export default function ApproveAuthorQuestionsDialog({
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
-            disabled={isLoading}
+            disabled={approveAuthorMutation.isPending}
             className="h-8.5 px-4 rounded-xl text-xs font-semibold border-border bg-card hover:bg-muted text-foreground cursor-pointer shadow-2xs"
           >
             Cancel
@@ -117,11 +139,11 @@ export default function ApproveAuthorQuestionsDialog({
           <Button
             type="button"
             size="sm"
-            onClick={onConfirm}
-            disabled={isLoading}
+            onClick={handleConfirm}
+            disabled={approveAuthorMutation.isPending}
             className="h-8.5 px-4 rounded-xl !bg-emerald-600 hover:!bg-emerald-700 !text-white text-xs font-bold gap-1.5 cursor-pointer shadow-2xs border border-emerald-600/30"
           >
-            {isLoading ? (
+            {approveAuthorMutation.isPending ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
                 <span>Approving...</span>
@@ -138,3 +160,5 @@ export default function ApproveAuthorQuestionsDialog({
     </Dialog>
   );
 }
+
+export default ApproveAuthorQuestionsDialog;

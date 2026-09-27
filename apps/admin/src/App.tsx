@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import { RequireAuth } from "@/features/auth";
 import { PersistentSession } from "@/features/auth";
@@ -38,11 +38,6 @@ const StudentManagement = lazy(() =>
 );
 const EnrollStudentPage = lazy(() =>
   import("@/features/students").then((m) => ({ default: m.EnrollStudentPage })),
-);
-const AddedStudentUsingCSV = lazy(() =>
-  import("@/features/students").then((m) => ({
-    default: m.AddedStudentUsingCSV,
-  })),
 );
 const ViewStudent = lazy(() =>
   import("@/features/students").then((m) => ({ default: m.ViewStudent })),
@@ -232,7 +227,7 @@ function App() {
                   />
                   <Route
                     path="student-management/import"
-                    element={<AddedStudentUsingCSV />}
+                    element={<Navigate to="/student-management/create?tab=bulk" replace />}
                   />
                 </Route>
 

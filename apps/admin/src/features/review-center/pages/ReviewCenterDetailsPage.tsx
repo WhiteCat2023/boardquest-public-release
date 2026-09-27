@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import { useReviewCenter, useReviewCenterCandidates } from "../api/useReviewCenter";
 import { useCalendar } from "../api/useCalendar";
-import ReviewCenterHeader from "../components/details/ReviewCenterHeader";
-import ReviewCenterOverviewTab from "../components/details/ReviewCenterOverviewTab";
-import ReviewCenterStudentsTab from "../components/details/ReviewCenterStudentsTab";
-import ReviewCenterSchedulesTab from "../components/details/ReviewCenterSchedulesTab";
-import AddEditReviewCenterModal from "../components/AddEditReviewCenterModal";
+import {
+  ReviewCenterDetailsHeader,
+  ReviewCenterTabsContent,
+  AddEditReviewCenterModal,
+} from "../components";
 
 export function ReviewCenterDetailsPage() {
   const { reviewCenterId } = useParams<{ reviewCenterId: string }>();
@@ -17,22 +16,17 @@ export function ReviewCenterDetailsPage() {
   const canManage = isAdminOrSuperAdmin || isTeamLead;
 
   const [activeTab, setActiveTab] = useState<"overview" | "students" | "schedules">("overview");
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // Fetch Review Center Data
+  // Direct queries
   const { data: reviewCenter, isLoading: isCenterLoading } = useReviewCenter(reviewCenterId);
-
-  // Fetch Enrolled Candidates for this review center
   const { data: candidatesData } = useReviewCenterCandidates(reviewCenterId);
-  const studentsCount = candidatesData?.candidates?.length ?? candidatesData?.total ?? 0;
-
-  // Fetch Schedules count for this review center
   const { data: schedules = [] } = useCalendar({
     company: reviewCenter?.companyName,
   });
-  const schedulesCount = schedules.length;
 
-  // Edit Review Center Modal State
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  const studentsCount = candidatesData?.candidates?.length ?? candidatesData?.total ?? 0;
+  const schedulesCount = schedules.length;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
@@ -50,7 +44,7 @@ export function ReviewCenterDetailsPage() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-5xl mx-auto min-h-full font-sans bg-background text-foreground animate-in fade-in duration-200">
       {/* Top Header & Navigation Bar */}
-      <ReviewCenterHeader
+      <ReviewCenterDetailsHeader
         reviewCenter={reviewCenter}
         isLoading={isCenterLoading}
         canManage={canManage}
@@ -63,25 +57,16 @@ export function ReviewCenterDetailsPage() {
       />
 
       {/* Main Tab Content Area */}
-      {isCenterLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-24 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-        </div>
-      ) : activeTab === "overview" ? (
-        <ReviewCenterOverviewTab
-          reviewCenter={reviewCenter}
-          studentsCount={studentsCount}
-          schedulesCount={schedulesCount}
-          formatDate={formatDate}
-          onNavigateStudentsTab={() => setActiveTab("students")}
-          onNavigateSchedulesTab={() => setActiveTab("schedules")}
-        />
-      ) : activeTab === "students" ? (
-        <ReviewCenterStudentsTab reviewCenter={reviewCenter} />
-      ) : (
-        <ReviewCenterSchedulesTab reviewCenter={reviewCenter} />
-      )}
+      <ReviewCenterTabsContent
+        activeTab={activeTab}
+        isLoading={isCenterLoading}
+        reviewCenter={reviewCenter}
+        studentsCount={studentsCount}
+        schedulesCount={schedulesCount}
+        formatDate={formatDate}
+        onNavigateStudentsTab={() => setActiveTab("students")}
+        onNavigateSchedulesTab={() => setActiveTab("schedules")}
+      />
 
       {/* Edit Review Center Modal */}
       {isEditOpen && reviewCenter && (

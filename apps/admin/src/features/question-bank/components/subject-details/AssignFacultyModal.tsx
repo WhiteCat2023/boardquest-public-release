@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,25 +52,36 @@ export function AssignFacultyModal({
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
   const saveMutation = useMutation({
     mutationFn: async (handlerIds: string[]) => {
-      return await axiosPrivate.put(`/questions/category/single/${categoryId}/handlers`, {
-        handlerIds,
-      });
+      return await axiosPrivate.put(
+        `/questions/category/single/${categoryId}/handlers`,
+        {
+          handlerIds,
+        },
+      );
     },
     onMutate: async (newHandlerIds: string[]) => {
       onClose();
 
-      await queryClient.cancelQueries({ queryKey: ["categoryDetail", categoryId] });
+      await queryClient.cancelQueries({
+        queryKey: ["categoryDetail", categoryId],
+      });
       await queryClient.cancelQueries({ queryKey: ["category", categoryId] });
       await queryClient.cancelQueries({ queryKey: ["categories"] });
 
-      const previousCategoryDetail = queryClient.getQueryData(["categoryDetail", categoryId]);
-      const previousCategory = queryClient.getQueryData(["category", categoryId]);
+      const previousCategoryDetail = queryClient.getQueryData([
+        "categoryDetail",
+        categoryId,
+      ]);
+      const previousCategory = queryClient.getQueryData([
+        "category",
+        categoryId,
+      ]);
       const previousCategories = queryClient.getQueryData(["categories"]);
 
       const selectedHandlers = faculties
@@ -86,18 +104,25 @@ export function AssignFacultyModal({
         return old.data ? { ...old, data: updated } : updated;
       };
 
-      queryClient.setQueryData(["categoryDetail", categoryId], updateCategoryObj);
+      queryClient.setQueryData(
+        ["categoryDetail", categoryId],
+        updateCategoryObj,
+      );
       queryClient.setQueryData(["category", categoryId], updateCategoryObj);
 
       queryClient.setQueryData(["categories"], (old: any) => {
         if (!old) return old;
-        const list = Array.isArray(old) ? old : old.categories || old.data || [];
+        const list = Array.isArray(old)
+          ? old
+          : old.categories || old.data || [];
         const updatedList = list.map((cat: any) =>
           cat.id === categoryId
             ? { ...cat, handlerIds: newHandlerIds, handlers: selectedHandlers }
-            : cat
+            : cat,
         );
-        return Array.isArray(old) ? updatedList : { ...old, categories: updatedList };
+        return Array.isArray(old)
+          ? updatedList
+          : { ...old, categories: updatedList };
       });
 
       toast.success(`Updated faculty handlers for ${categoryName}`);
@@ -106,18 +131,29 @@ export function AssignFacultyModal({
     },
     onError: (err: any, _variables, context) => {
       if (context?.previousCategoryDetail) {
-        queryClient.setQueryData(["categoryDetail", categoryId], context.previousCategoryDetail);
+        queryClient.setQueryData(
+          ["categoryDetail", categoryId],
+          context.previousCategoryDetail,
+        );
       }
       if (context?.previousCategory) {
-        queryClient.setQueryData(["category", categoryId], context.previousCategory);
+        queryClient.setQueryData(
+          ["category", categoryId],
+          context.previousCategory,
+        );
       }
       if (context?.previousCategories) {
         queryClient.setQueryData(["categories"], context.previousCategories);
       }
-      toast.error(err.response?.data?.message || "Failed to update assigned faculty handlers");
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to update assigned faculty handlers",
+      );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["categoryDetail", categoryId] });
+      queryClient.invalidateQueries({
+        queryKey: ["categoryDetail", categoryId],
+      });
       queryClient.invalidateQueries({ queryKey: ["category", categoryId] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
@@ -135,10 +171,12 @@ export function AssignFacultyModal({
       <DialogContent className="max-w-md sm:max-w-lg p-5">
         <DialogHeader className="pb-2 border-b border-border">
           <DialogTitle className="text-base font-bold flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-primary" /> Assign Subject Handlers
+            <ShieldCheck className="w-4 h-4 text-primary" /> Assign Subject
+            Handlers
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Select users authorized to manage questions and modules for <strong className="text-foreground">{categoryName}</strong>.
+            Select users authorized to manage questions and modules for{" "}
+            <strong className="text-foreground">{categoryName}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -157,14 +195,17 @@ export function AssignFacultyModal({
           {/* Selected count info */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
             <span>Users</span>
-            <span className="font-semibold text-primary">{selectedIds.length} Selected</span>
+            <span className="font-semibold text-primary">
+              {selectedIds.length} Selected
+            </span>
           </div>
 
           {/* User list container */}
           <div className="max-h-60 overflow-y-auto border border-border rounded-xl divide-y divide-border/60 bg-muted/20">
             {isLoading ? (
               <div className="p-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" /> Loading users roster...
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />{" "}
+                Loading users roster...
               </div>
             ) : filteredFaculties.length === 0 ? (
               <div className="p-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-1">
@@ -199,12 +240,19 @@ export function AssignFacultyModal({
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate">{faculty.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{faculty.email}</p>
+                        <p className="text-xs font-bold text-foreground truncate">
+                          {faculty.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {faculty.email}
+                        </p>
                       </div>
                     </div>
 
-                    <Badge variant="outline" className="text-[9px] uppercase font-mono shrink-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] uppercase font-mono shrink-0"
+                    >
                       {faculty.role || "TEACHER"}
                     </Badge>
                   </label>
@@ -215,7 +263,13 @@ export function AssignFacultyModal({
         </div>
 
         <DialogFooter className="pt-2 border-t border-border flex items-center justify-between sm:justify-between">
-          <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8 text-xs">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            className="h-8 text-xs"
+          >
             Cancel
           </Button>
           <Button

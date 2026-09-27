@@ -1,7 +1,7 @@
 import { useBulkUploadQuestionStore, useExtractedQuestionsStore } from "@/store/QuestionBankStore";
 import { toast } from "sonner";
 import { createProgressToast } from "@/utils/toast";
-import { queryClient } from "@/main";
+import { queryClient } from "@/lib/queryClient";
 
 export const downloadSampleCSV = () => {
     const csvContent =

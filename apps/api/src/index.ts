@@ -4,19 +4,19 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 
 const cwd = process.cwd();
-const possiblePaths = [
-  path.resolve(cwd, ".env"),
-  path.resolve(cwd, "apps/api/.env"),
-  path.resolve(cwd, "../.env"),
-  path.resolve(cwd, "../../.env"),
-];
+// const possiblePaths = [
+//   path.resolve(cwd, ".env"),
+//   path.resolve(cwd, "apps/api/.env"),
+//   path.resolve(cwd, "../.env"),
+//   path.resolve(cwd, "../../.env"),
+// ];
 
-for (const p of possiblePaths) {
-  if (fs.existsSync(p)) {
-    dotenv.config({ path: p, override: true });
-  }
-}
-dotenv.config({ override: true });
+// for (const p of possiblePaths) {
+//   if (fs.existsSync(p)) {
+//     dotenv.config({ path: p, override: true });
+//   }
+// }
+// dotenv.config({ override: true });
 
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -65,7 +65,7 @@ app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(cookieParser());
 
 await ensureSuperAdminExists();
-await startQueue();
+await startQueue(); 
 
 app.use("/api", apiLimiter, apiRoutes);
 

@@ -1,9 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import {
-  HelpCircle,
-  BookOpen,
-  GraduationCap,
-  Users,
   MoreHorizontal,
   ExternalLink,
 } from "lucide-react";
@@ -13,29 +9,74 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { UserRole } from "./DashboardBanner";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  kpiContentForAdmin,
+  kpiContentForTeachers,
+} from "./list/kpiCardContent";
+import useRoleFlags from "@/hooks/useRoleFlags";
+import { useDashboardQuestionStats } from "../../api/useDashboardQuestions";
+import { useSubjects } from "@/features/users";
+import { useSubjectsTotalCount } from "@/features/question-bank";
+import { useStudents } from "@/features/students";
+import { useUsers } from "@/features/users";
 
 interface DashboardKpiCardsProps {
-  userRole: UserRole;
-  teacherAuthoredCount: number;
-  totalQuestions: number;
-  handledCategoriesCount: number;
-  totalCategories: number;
-  totalStudents: number;
-  totalFaculties: number;
+  teacherAuthoredCount?: number;
+  totalQuestions?: number;
+  handledCategoriesCount?: number;
+  totalCategories?: number;
+  totalStudents?: number;
+  totalFaculties?: number;
 }
 
 export function DashboardKpiCards({
-  userRole,
-  teacherAuthoredCount,
-  totalQuestions,
-  handledCategoriesCount,
-  totalCategories,
-  totalStudents,
-  totalFaculties,
-}: DashboardKpiCardsProps) {
+  teacherAuthoredCount: propTeacherAuthoredCount,
+  totalQuestions: propTotalQuestions,
+  handledCategoriesCount: propHandledCategoriesCount,
+  totalStudents: propTotalStudents,
+  totalFaculties: propTotalFaculties,
+}: DashboardKpiCardsProps = {}) {
   const navigate = useNavigate();
-  const isTeacher = userRole === "TEACHER";
+  const { isTeacher, currentUser } = useRoleFlags();
+
+  // Colocated queries for KPI metrics
+  const shouldFetchStats = propTotalQuestions === undefined;
+  const { data: statsData, isLoading: isStatsLoading } = useDashboardQuestionStats();
+  const { data: dbCategories = [] } = useSubjects();
+  const { data: categoriesTotalCount } = useSubjectsTotalCount();
+  const { data: studentData, isLoading: isStudentsLoading } = useStudents({ skip: 0, take: 1 });
+  const { data: facultyData, isLoading: isFacultiesLoading } = useUsers({ limit: 1 });
+
+  const teacherAuthoredCount =
+    propTeacherAuthoredCount ?? (statsData?.teacherAuthoredCount ?? 0);
+  const totalQuestions =
+    propTotalQuestions ??
+    (isTeacher
+      ? statsData?.teacherAuthoredCount ?? 0
+      : statsData?.totalQuestions ?? 0);
+
+  const handledCategoriesCount =
+    propHandledCategoriesCount ??
+    (Array.isArray(dbCategories)
+      ? dbCategories.length
+      : currentUser?.handledCategories?.length || 0);
+
+  const totalStudents =
+    propTotalStudents ??
+    ((studentData as any)?.total ??
+      (Array.isArray(studentData)
+        ? studentData.length
+        : (studentData as any)?.students?.length || 0));
+
+  const totalFaculties =
+    propTotalFaculties ??
+    ((facultyData as any)?.total ??
+      (Array.isArray(facultyData)
+        ? facultyData.length
+        : (facultyData as any)?.faculties?.length || 0));
+
+  const isDataLoading = shouldFetchStats && isStatsLoading;
 
   const formatCount = (count: number) => {
     if (count >= 0 && count < 10) {
@@ -44,40 +85,19 @@ export function DashboardKpiCards({
     return count.toLocaleString();
   };
 
-  const cards = [
-    {
-      id: "questions",
-      title: isTeacher ? "MY QUESTIONS" : "QUESTION BANK",
-      count: isTeacher ? teacherAuthoredCount : totalQuestions,
-      subtitle: isTeacher ? "Authored in draft & review" : "In question repository",
-      icon: HelpCircle,
-      link: isTeacher ? "/question-bank/my-questions" : "/question-bank/shared-library",
-    },
-    {
-      id: "curriculum",
-      title: isTeacher ? "HANDLED SUBJECTS" : "EXAM SUBJECTS",
-      count: isTeacher ? handledCategoriesCount : totalCategories,
-      subtitle: isTeacher ? "Assigned subject areas" : "Board licensure subjects",
-      icon: BookOpen,
-      link: "/subject-management",
-    },
-    {
-      id: "students",
-      title: "ENROLLED STUDENTS",
-      count: totalStudents,
-      subtitle: "Across all active cohorts",
-      icon: GraduationCap,
-      link: "/student-management",
-    },
-    {
-      id: "users",
-      title: isTeacher ? "FACULTY PEERS" : "ACTIVE FACULTY",
-      count: totalFaculties,
-      subtitle: "Registered teaching staff",
-      icon: Users,
-      link: "/faculty-management",
-    },
-  ];
+  const cards = isTeacher
+    ? kpiContentForTeachers(
+        teacherAuthoredCount,
+        handledCategoriesCount,
+        totalStudents,
+        totalFaculties,
+      )
+    : kpiContentForAdmin(
+        totalQuestions,
+        handledCategoriesCount,
+        totalStudents,
+        totalFaculties,
+      );
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 font-sans">
@@ -130,9 +150,13 @@ export function DashboardKpiCards({
 
             {/* Middle Row: Large Value */}
             <div className="mt-3 sm:mt-3.5">
-              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground block truncate">
-                {formatCount(card.count)}
-              </span>
+              {isDataLoading ? (
+                <Skeleton className="h-8 w-16 rounded mt-1" />
+              ) : (
+                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground block truncate font-mono">
+                  {formatCount(card.count)}
+                </span>
+              )}
             </div>
 
             {/* Bottom Row: Context Subtitle */}

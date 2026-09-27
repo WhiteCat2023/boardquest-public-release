@@ -3,6 +3,7 @@ import {
   X,
   SlidersHorizontal,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import CustomDrawer from "@/components/custom/drawer/Drawer";
 import { QuestionFilter } from "@/features/question-bank/components/QuestionFilter";
@@ -19,6 +20,7 @@ interface UnifiedToolbarProps {
   isApprovePending?: boolean;
   isDeletePending: boolean;
   isBankView?: boolean;
+  onParaphrase?: () => void;
 }
 
 export default function BulkActionsToolbar({
@@ -33,6 +35,7 @@ export default function BulkActionsToolbar({
   isApprovePending,
   isDeletePending,
   isBankView = false,
+  onParaphrase,
 }: UnifiedToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between w-full border-b border-border bg-muted/40 px-4 py-3 gap-3 transition-all duration-200 font-sans">
@@ -71,6 +74,18 @@ export default function BulkActionsToolbar({
         {/* Bulk Action Buttons — ONLY SHOWN WHEN selectedCount > 0 */}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 animate-in fade-in duration-150">
+            {onParaphrase && (
+              <button
+                type="button"
+                onClick={onParaphrase}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-all cursor-pointer shadow-2xs"
+                title="Paraphrase selected questions with AI"
+              >
+                <Sparkles size={13} />
+                Paraphrase
+              </button>
+            )}
+
             {canManageBulk && onApprove && !isBankView && (
               <button
                 type="button"

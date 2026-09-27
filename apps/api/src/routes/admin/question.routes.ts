@@ -24,6 +24,8 @@ import {
   createQuestionComment,
   deleteQuestionComment,
   toggleResolveComment,
+  bulkParaphraseQuestions,
+  bulkApplyParaphrase,
 } from "../../controller/admin/question.controller";
 
 import {
@@ -54,6 +56,8 @@ router.post("/bulk/delete", authenticateToken, requireRoles(["SUPERADMIN", "DEAN
 router.post("/bulk/approve", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkApproveQuestions);
 router.post("/bulk/status", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), bulkUpdateStatusQuestions);
 router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkFeedbackQuestions);
+router.post("/bulk/paraphrase", authenticateToken, bulkParaphraseQuestions);
+router.post("/bulk/paraphrase/apply", authenticateToken, bulkApplyParaphrase);
 router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);

@@ -10,6 +10,10 @@ import {
   questionSynthesizerService,
   SynthesizeQuestionInput,
 } from "./questionSynthesizer.service";
+import {
+  questionParaphraserService,
+  ParaphraseItemInput,
+} from "./questionParaphraser.service";
 import { createNotification } from "./notification.service";
 import { sseService } from "./sse.service";
 import pusherService from "./pusher.service";
@@ -134,7 +138,8 @@ export class QuestionService {
         computedStatus = QuestionStatus.PENDING_REVIEW;
       } else if (
         authorUser?.role === "SUPERADMIN" ||
-        authorUser?.role === "DEAN"
+        authorUser?.role === "DEAN" ||
+        authorUser?.role === "TEAMLEAD"
       ) {
         computedStatus = status || QuestionStatus.APPROVED;
       } else {
@@ -667,6 +672,10 @@ export class QuestionService {
       const qStatus =
         authorUser?.role === "TEACHER"
           ? QuestionStatus.PENDING_REVIEW
+          : authorUser?.role === "SUPERADMIN" ||
+            authorUser?.role === "DEAN" ||
+            authorUser?.role === "TEAMLEAD"
+          ? q.status || QuestionStatus.APPROVED
           : q.status || resolvedStatus;
 
       return this.db.question.create({
@@ -1235,6 +1244,90 @@ export class QuestionService {
       }
     }
   }
+
+  async bulkParaphraseQuestions(items: ParaphraseItemInput[]) {
+    return await questionParaphraserService.paraphraseBatch(items);
+  }
+
+  async bulkApplyParaphrase(
+    updates: Array<{ id: string; question: string }>,
+    user: any,
+  ) {
+    if (!Array.isArray(updates) || updates.length === 0) {
+      throw new ApiError(400, "Updates array must not be empty");
+    }
+
+    const ids = updates.map((u) => u.id);
+    const existingQuestions = await this.db.question.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const isPrivileged =
+      user.role === "SUPERADMIN" ||
+      user.role === "DEAN" ||
+      user.role === "TEAMLEAD";
+
+    const updateMap = new Map<string, string>();
+    updates.forEach((u) => {
+      if (u.id && u.question && u.question.trim().length > 0) {
+        updateMap.set(u.id, u.question.trim());
+      }
+    });
+
+    const updatedList: any[] = [];
+
+    for (const q of existingQuestions) {
+      const isAuthor = q.authorId && q.authorId === user.id;
+      if (!isPrivileged && !isAuthor) {
+        throw new ApiError(
+          403,
+          `You do not have permission to modify question ID ${q.id}`,
+        );
+      }
+
+      if (user.role === "TEACHER" && q.status === QuestionStatus.APPROVED) {
+        throw new ApiError(
+          403,
+          "Approved questions cannot be modified by teachers.",
+        );
+      }
+
+      const newStem = updateMap.get(q.id);
+      if (newStem && newStem !== q.question) {
+        const updated = await this.db.question.update({
+          where: { id: q.id },
+          data: {
+            question: newStem,
+            ...(user.role === "TEACHER" &&
+            q.status !== QuestionStatus.PENDING_REVIEW
+              ? { status: QuestionStatus.PENDING_REVIEW }
+              : {}),
+          },
+        });
+        updatedList.push(updated);
+      }
+    }
+
+    if (updatedList.length > 0) {
+      try {
+        const eventPayload = {
+          type: "QUESTIONS_UPDATED",
+          count: updatedList.length,
+          updatedIds: updatedList.map((u) => u.id),
+        };
+        sseService.broadcastEvent("questions-updated", eventPayload);
+        pusherService.broadcastEvent(
+          "admin-events",
+          "questions-updated",
+          eventPayload,
+        );
+      } catch (err) {
+        console.warn("Broadcast error:", err);
+      }
+    }
+
+    return updatedList;
+  }
 }
 
 export const questionService = new QuestionService();
@@ -1275,6 +1368,10 @@ export const synthesizeQuestion =
   questionService.synthesizeQuestion.bind(questionService);
 export const createSynthesizedQuestion =
   questionService.createSynthesizedQuestion.bind(questionService);
+export const bulkParaphraseQuestions =
+  questionService.bulkParaphraseQuestions.bind(questionService);
+export const bulkApplyParaphrase =
+  questionService.bulkApplyParaphrase.bind(questionService);
 export const getPendingReviewAuthors =
   questionService.getPendingReviewAuthors.bind(questionService);
 export const getQuestionStats =
@@ -1287,3 +1384,4 @@ export const deleteQuestionComment =
   questionService.deleteQuestionComment.bind(questionService);
 export const toggleResolveComment =
   questionService.toggleResolveComment.bind(questionService);
+

@@ -21,6 +21,7 @@ export interface UserMember {
   email: string;
   role: RoleType;
   phoneNumber: string;
+  avatarUrl?: string;
   companyName?: string;
   location?: string;
   handledSubjects?: Subject[];

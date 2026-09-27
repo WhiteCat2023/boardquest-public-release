@@ -2,7 +2,7 @@ import { createContext, useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AxiosInstance } from "@/utils/AxiosInstance";
-import { queryClient } from "@/main";
+import { queryClient } from "@/lib/queryClient";
 import { type LoginRequest } from "@/types/types";
 import { ValidateLoginInput } from "../utils/ValidateInput";
 

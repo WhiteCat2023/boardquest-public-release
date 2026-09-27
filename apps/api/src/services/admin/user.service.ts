@@ -299,7 +299,9 @@ export class UserService {
       ) {
         where.role = normRole;
       } else if (excludeExternal) {
-        where.role = { in: [Role.SUPERADMIN, Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
+        where.role = {
+          in: [Role.SUPERADMIN, Role.DEAN, Role.TEAMLEAD, Role.TEACHER],
+        };
       } else {
         where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
       }
@@ -355,7 +357,9 @@ export class UserService {
 
     if (excludeExternal) {
       combinedList = combinedList.filter((u: any) => {
-        const r = String(u.role || "").toUpperCase().trim();
+        const r = String(u.role || "")
+          .toUpperCase()
+          .trim();
         return (
           r !== "REVIEWCENTER" &&
           r !== "EXTERNAL" &&
@@ -558,10 +562,12 @@ export class UserService {
 
       if (!reviewCenter) {
         const randSuffix = Math.floor(1000 + Math.random() * 9000);
-        const centerCode = `RC-${cleanCompany
-          .replace(/[^a-zA-Z0-9]/g, "")
-          .slice(0, 6)
-          .toUpperCase() || "CTR"}-${randSuffix}`;
+        const centerCode = `RC-${
+          cleanCompany
+            .replace(/[^a-zA-Z0-9]/g, "")
+            .slice(0, 6)
+            .toUpperCase() || "CTR"
+        }-${randSuffix}`;
         try {
           reviewCenter = await this.db.reviewCenter.create({
             data: {
@@ -959,7 +965,7 @@ export class UserService {
         Boolean(item.companyName && item.companyName.trim().length > 0);
       const targetRole = isExternal
         ? Role.REVIEWCENTER
-        : (rawRole || Role.TEACHER);
+        : rawRole || Role.TEACHER;
 
       if (!name || !email) {
         errors.push({
@@ -996,7 +1002,8 @@ export class UserService {
           errors.push({
             email,
             name,
-            error: "Review center account already exists (email or partner ID collision).",
+            error:
+              "Review center account already exists (email or partner ID collision).",
           });
           continue;
         }
@@ -1008,10 +1015,12 @@ export class UserService {
 
           if (!reviewCenter) {
             const randSuffix = Math.floor(1000 + Math.random() * 9000);
-            const centerCode = `RC-${compName
-              .replace(/[^a-zA-Z0-9]/g, "")
-              .slice(0, 6)
-              .toUpperCase() || "CTR"}-${randSuffix}`;
+            const centerCode = `RC-${
+              compName
+                .replace(/[^a-zA-Z0-9]/g, "")
+                .slice(0, 6)
+                .toUpperCase() || "CTR"
+            }-${randSuffix}`;
             try {
               reviewCenter = await this.db.reviewCenter.create({
                 data: {

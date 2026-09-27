@@ -1,95 +1,42 @@
-import { useNavigate } from "react-router-dom";
-import type { ReviewCenterRepresentative } from "../types/types";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import {
-  useReviewCenters,
-  useDeleteReviewCenter,
-} from "../api/useReviewCenter";
-
-import ReviewCenterHeader from "../components/ReviewCenterHeader";
-import ReviewCenterFilters from "../components/ReviewCenterFilters";
-import ReviewCenterGrid from "../components/ReviewCenterGrid";
-import AddEditReviewCenterModal from "../components/AddEditReviewCenterModal";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 import { useConfirm } from "@/components/modal";
+import type { ReviewCenterRepresentative } from "../types/types";
+import { useDeleteReviewCenter } from "../api/useReviewCenter";
+import { useReviewCenterDirectory } from "../api/useReviewCenterDirectory";
+import {
+  ReviewCenterHeader,
+  ReviewCenterFilters,
+  ReviewCenterGrid,
+  AddEditReviewCenterModal,
+} from "../components";
+import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
 
 export default function ReviewCenterManagement() {
   const navigate = useNavigate();
-
-  // Search & Filter State
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
-  const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
-
-  const { data: rawReviewCenters = [], isLoading: isCentersLoading } = useReviewCenters({
-    search: searchTerm,
-    location: selectedLocation,
-    company: selectedCompany,
-  });
+  const { confirm } = useConfirm();
   const deleteCenterMutation = useDeleteReviewCenter();
 
-  const reviewCenters = Array.isArray(rawReviewCenters) ? rawReviewCenters : [];
-  const total = reviewCenters.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
-  const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedReviewCenters = reviewCenters.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE,
-  );
+  const {
+    searchTerm,
+    handleSearchChange,
+    selectedLocation,
+    handleLocationChange,
+    uniqueLocations,
+    currentPage,
+    totalPages,
+    hasNextPage,
+    handleNextPage,
+    handlePreviousPage,
+    handlePageSelect,
+    paginatedReviewCenters,
+    isCentersLoading,
+    resetFilters,
+    hasActiveFilters,
+  } = useReviewCenterDirectory();
 
-  const handleNext = () => {
-    if (hasNextPage) setCurrentPage((p) => p + 1);
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) setCurrentPage((p) => p - 1);
-  };
-
-  const handlePageSelect = (page: number) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
-  };
-
-  const { confirm } = useConfirm();
-
-  // Modals & Dialogs State
-  const [isAddEditOpen, setIsAddEditOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ReviewCenterRepresentative | null>(null);
-
-  // Dynamic filter option dropdown lists
-  const uniqueLocations = Array.from(
-    new Set(reviewCenters.map((rc) => rc?.location || "Philippines").filter(Boolean))
-  );
-
-  const uniqueCompanies = Array.from(
-    new Set(reviewCenters.map((rc) => rc?.companyName).filter((name): name is string => Boolean(name)))
-  );
-
-  const resetFilters = () => {
-    setSearchTerm("");
-    setSelectedLocation("ALL");
-    setSelectedCompany("ALL");
-    setCurrentPage(1);
-  };
-
-  const hasActiveFilters =
-    searchTerm.trim() !== "" ||
-    selectedLocation !== "ALL" ||
-    selectedCompany !== "ALL";
-
-  const handleOpenEdit = (item: ReviewCenterRepresentative) => {
-    setEditingItem(item);
-    setIsAddEditOpen(true);
-  };
-
-  const handleOpenView = (item: ReviewCenterRepresentative) => {
-    navigate(`/review-center/${item.id}`);
-  };
-
-  const handleOpenDelete = async (item: ReviewCenterRepresentative) => {
+  const handleDelete = async (item: ReviewCenterRepresentative) => {
     const confirmed = await confirm({
       title: "Remove Review Center",
       description: (
@@ -116,6 +63,19 @@ export default function ReviewCenterManagement() {
     });
   };
 
+  // Modals & Dialogs State
+  const [isAddEditOpen, setIsAddEditOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ReviewCenterRepresentative | null>(null);
+
+  const handleOpenEdit = (item: ReviewCenterRepresentative) => {
+    setEditingItem(item);
+    setIsAddEditOpen(true);
+  };
+
+  const handleOpenView = (item: ReviewCenterRepresentative) => {
+    navigate(`/review-center/${item.id}`);
+  };
+
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* Header */}
@@ -124,15 +84,9 @@ export default function ReviewCenterManagement() {
       {/* Search & Filters Bar Component */}
       <ReviewCenterFilters
         searchTerm={searchTerm}
-        onSearchChange={(val) => {
-          setSearchTerm(val);
-          setCurrentPage(1);
-        }}
+        onSearchChange={handleSearchChange}
         selectedLocation={selectedLocation}
-        onLocationChange={(val) => {
-          setSelectedLocation(val);
-          setCurrentPage(1);
-        }}
+        onLocationChange={handleLocationChange}
         uniqueLocations={uniqueLocations}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
@@ -146,7 +100,7 @@ export default function ReviewCenterManagement() {
         onResetFilters={resetFilters}
         onView={handleOpenView}
         onEdit={handleOpenEdit}
-        onDelete={handleOpenDelete}
+        onDelete={handleDelete}
       />
 
       {/* Pagination Bar */}
@@ -154,8 +108,8 @@ export default function ReviewCenterManagement() {
         <QuestionListPagination
           currentPage={currentPage}
           hasNextPage={hasNextPage}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
+          onNext={handleNextPage}
+          onPrevious={handlePreviousPage}
           onPageSelect={handlePageSelect}
           maxPageReached={totalPages}
           totalPages={totalPages}

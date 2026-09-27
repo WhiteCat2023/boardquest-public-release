@@ -1,7 +1,6 @@
 // Pages
 export { default as StudentManagement } from "./pages/StudentManagement";
 export { default as EnrollStudentPage } from "./pages/EnrollStudentPage";
-export { default as AddedStudentUsingCSV } from "./pages/AddedStudentUsingCSV";
 export { default as ViewStudent } from "./pages/ViewStudent";
 
 // Components
@@ -24,7 +23,9 @@ export * from "./components/profile/StudentPerformanceCard";
 export * from "./components/profile/StudentBadgesSection";
 export * from "./components/profile/StudentAchievementHistory";
 export * from "./components/profile/StudentSubjectProgressCard";
+export * from "./components/enroll";
 
 // API & Types
 export * from "./api/useStudent";
 export * from "./types/types";
+export * from "./utils/csvParser";

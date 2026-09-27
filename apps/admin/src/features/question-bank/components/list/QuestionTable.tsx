@@ -33,6 +33,7 @@ interface QuestionTableProps {
   isApprovePending?: boolean;
   isDeletePending: boolean;
   isBankView?: boolean;
+  onParaphrase?: () => void;
 }
 
 export default function QuestionTable({
@@ -50,6 +51,7 @@ export default function QuestionTable({
   isApprovePending,
   isDeletePending,
   isBankView = false,
+  onParaphrase,
 }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
@@ -95,6 +97,7 @@ export default function QuestionTable({
           isApprovePending={isApprovePending}
           isDeletePending={isDeletePending}
           isBankView={isBankView}
+          onParaphrase={onParaphrase}
         />
 
         <Table className="w-full table-fixed">

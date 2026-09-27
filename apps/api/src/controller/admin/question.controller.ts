@@ -31,7 +31,7 @@ export const createQuestion = asyncHandler(
       req.body.status = "PENDING_REVIEW";
     } else if (!req.body.status) {
       req.body.status =
-        user.role === "SUPERADMIN" || user.role === "DEAN"
+        user.role === "SUPERADMIN" || user.role === "DEAN" || user.role === "TEAMLEAD"
           ? "APPROVED"
           : "PENDING_REVIEW";
     }
@@ -320,7 +320,7 @@ export const bulkUploadQuestions = asyncHandler(
       uploadStatus = QuestionStatus.PENDING_REVIEW;
     } else if (!uploadStatus) {
       uploadStatus =
-        user.role === "SUPERADMIN" || user.role === "DEAN"
+        user.role === "SUPERADMIN" || user.role === "DEAN" || user.role === "TEAMLEAD"
           ? QuestionStatus.APPROVED
           : QuestionStatus.PENDING_REVIEW;
     }
@@ -679,3 +679,74 @@ export const toggleResolveComment = asyncHandler(
     ).send(res);
   },
 );
+
+export const bulkParaphraseQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const { questions, tone } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new ApiError(400, "questions must be a non-empty array");
+    }
+
+    const items = questions.map((q: any) => ({
+      id: String(q.id),
+      question: String(q.question),
+      topic: q.topic || "General",
+      subject: q.subject || "Board Exam",
+      difficulty: q.difficulty,
+      tone: tone || "BOARD_EXAM",
+      variationIndex: typeof q.variationIndex === "number" ? q.variationIndex : 0,
+    }));
+
+    const results = await QuestionService.bulkParaphraseQuestions(items);
+
+    await logInfo(
+      "BULK_PARAPHRASE_QUESTIONS",
+      `Paraphrased ${results.length} question(s) in bulk`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(
+      200,
+      { results },
+      `Successfully paraphrased ${results.length} question(s)`,
+    ).send(res);
+  },
+);
+
+export const bulkApplyParaphrase = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      throw new ApiError(400, "updates must be a non-empty array");
+    }
+
+    const updated = await QuestionService.bulkApplyParaphrase(updates, user);
+
+    await logInfo(
+      "BULK_APPLY_PARAPHRASE",
+      `Applied paraphrased stems to ${updated.length} question(s)`,
+      "QuestionService",
+      user.email,
+      req.ip,
+    );
+
+    return new ApiResponse(
+      200,
+      { updatedCount: updated.length, questions: updated },
+      `Successfully updated ${updated.length} question(s)`,
+    ).send(res);
+  },
+);
+

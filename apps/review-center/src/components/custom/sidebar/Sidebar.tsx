@@ -236,7 +236,7 @@ export function Sidebar({
           user={{
             name: user?.name || "Representative",
             email: user?.email || "rep@reviewcenter.edu.ph",
-            avatar: (user as any)?.avatarUrl || "",
+            avatar: (user as any)?.avatarUrl || undefined,
           }}
           logout={logout}
           accountPath="/settings"

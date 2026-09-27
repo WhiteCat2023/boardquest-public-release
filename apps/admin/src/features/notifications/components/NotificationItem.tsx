@@ -14,6 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { NotificationItem, NotificationType } from "../types/types";
+import {
+  useMarkNotificationAsRead,
+  useDeleteNotification,
+} from "../api/useNotifications";
 
 interface NotificationItemProps {
   notification: NotificationItem;
@@ -27,6 +31,8 @@ export default function NotificationCard({
   onDelete,
 }: NotificationItemProps) {
   const navigate = useNavigate();
+  const markAsReadMutation = useMarkNotificationAsRead();
+  const deleteNotificationMutation = useDeleteNotification();
 
   const getIconAndStyle = (type: NotificationType) => {
     switch (type) {
@@ -34,13 +40,15 @@ export default function NotificationCard({
       case "QUESTION_APPROVED":
         return {
           icon: CheckCircle2,
-          bgStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          bgStyle:
+            "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
           badgeLabel: "Approved",
         };
       case "WARNING":
         return {
           icon: AlertTriangle,
-          bgStyle: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          bgStyle:
+            "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
           badgeLabel: "Warning",
         };
       case "ERROR":
@@ -52,13 +60,15 @@ export default function NotificationCard({
       case "STUDENT_ASSIGNED":
         return {
           icon: UserCheck,
-          bgStyle: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+          bgStyle:
+            "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
           badgeLabel: "Guidance",
         };
       case "SYSTEM_UPDATE":
         return {
           icon: Sparkles,
-          bgStyle: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+          bgStyle:
+            "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
           badgeLabel: "System",
         };
       case "INFO":
@@ -71,11 +81,15 @@ export default function NotificationCard({
     }
   };
 
-  const { icon: Icon, bgStyle, badgeLabel } = getIconAndStyle(notification.type);
+  const { icon: Icon, bgStyle, badgeLabel } = getIconAndStyle(
+    notification.type,
+  );
 
   const formattedTime = (() => {
     try {
-      return formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true });
+      return formatDistanceToNow(new Date(notification.createdAt), {
+        addSuffix: true,
+      });
     } catch {
       return "recently";
     }
@@ -87,12 +101,24 @@ export default function NotificationCard({
       return;
     }
 
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification.id);
+    }
+
     if (onMarkAsRead) {
       onMarkAsRead(notification.id);
     }
 
     if (notification.link) {
       navigate(notification.link);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteNotificationMutation.mutate(notification.id);
+    if (onDelete) {
+      onDelete(notification.id);
     }
   };
 
@@ -113,7 +139,11 @@ export default function NotificationCard({
       {/* Main Notification Content */}
       <div className="flex-1 min-w-0 pr-6">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={`text-xs font-bold ${notification.isRead ? "text-foreground/90" : "text-foreground"}`}>
+          <span
+            className={`text-xs font-bold ${
+              notification.isRead ? "text-foreground/90" : "text-foreground"
+            }`}
+          >
             {notification.title}
           </span>
 
@@ -125,7 +155,10 @@ export default function NotificationCard({
           </Badge>
 
           {!notification.isRead && (
-            <span className="size-1.5 rounded-full bg-primary inline-block shrink-0 animate-pulse" title="Unread" />
+            <span
+              className="size-1.5 rounded-full bg-primary inline-block shrink-0 animate-pulse"
+              title="Unread"
+            />
           )}
         </div>
 
@@ -147,21 +180,16 @@ export default function NotificationCard({
       </div>
 
       {/* Compact Delete Button */}
-      {onDelete && (
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(notification.id);
-          }}
-          className="size-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2.5 top-2.5"
-          title="Delete Notification"
-        >
-          <Trash2 size={12} />
-        </Button>
-      )}
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        onClick={handleDelete}
+        className="size-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2.5 top-2.5 cursor-pointer"
+        title="Delete Notification"
+      >
+        <Trash2 size={12} />
+      </Button>
     </div>
   );
 }

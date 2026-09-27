@@ -3,13 +3,27 @@ import { Users, ShieldCheck, ArrowRight, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useUsers } from "@/features/users";
 
 interface FacultyRosterCardProps {
-  faculties: any[];
+  faculties?: any[];
 }
 
-export function FacultyRosterCard({ faculties }: FacultyRosterCardProps) {
-  const displayFaculties = (Array.isArray(faculties) ? faculties : []).slice(0, 5);
+export function FacultyRosterCard({ faculties: propFaculties }: FacultyRosterCardProps = {}) {
+  // Colocated query: fetch users if not passed via props
+  const shouldFetch = propFaculties === undefined;
+  const { data: facultyData, isLoading } = useUsers({ limit: 5 });
+
+  const rawFaculties =
+    propFaculties ??
+    (Array.isArray((facultyData as any)?.faculties)
+      ? (facultyData as any).faculties
+      : Array.isArray(facultyData)
+        ? facultyData
+        : []);
+
+  const displayFaculties = rawFaculties.slice(0, 5);
 
   return (
     <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans hover:border-primary/30 transition-all">
@@ -26,7 +40,22 @@ export function FacultyRosterCard({ faculties }: FacultyRosterCardProps) {
         </Link>
       </div>
 
-      {displayFaculties.length === 0 ? (
+      {isLoading && shouldFetch ? (
+        <div className="flex flex-col gap-2 py-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between p-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-7 w-7 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-2 w-20" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-14 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : displayFaculties.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground">
           <User size={30} className="mx-auto text-muted-foreground/40 mb-1.5" />
           <p className="text-xs font-semibold">No users found</p>

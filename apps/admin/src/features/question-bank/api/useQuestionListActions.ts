@@ -276,6 +276,22 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         }
     };
 
+    // Paraphrase Dialog state
+    const [isParaphraseOpen, setIsParaphraseOpen] = useState(false);
+
+    const handleOpenParaphrase = () => {
+        if (selectedQuestions.length === 0) {
+            toast.error("Please select at least one question to paraphrase.");
+            return;
+        }
+        setIsParaphraseOpen(true);
+    };
+
+    const handleParaphraseSuccess = () => {
+        clearRowSelection();
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
+    };
+
     return {
         questions,
         hasNextPage,
@@ -287,6 +303,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         itemsPerPage,
         rowSelection,
         selectedIds,
+        selectedQuestions,
         canManageBulk,
         bulkApproveMutation,
         bulkDeleteMutation,
@@ -299,5 +316,9 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         handlePrevious,
         handlePageSelect,
         setRowSelection,
+        isParaphraseOpen,
+        setIsParaphraseOpen,
+        handleOpenParaphrase,
+        handleParaphraseSuccess,
     };
 }

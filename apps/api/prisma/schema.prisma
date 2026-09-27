@@ -84,7 +84,7 @@ model AdminUser {
 
   createdSubjects Subject[] @relation("SubjectAuthor")
   handledSubjects Subject[] @relation("HandledSubjects", fields: [handledSubjectIds], references: [id])
-  handledSubjectIds String[] @db.ObjectId @map("handledCategoryIds")
+  handledSubjectIds String[] @db.ObjectId @map("handledSubjectIds")
   authoredModules LearningModule[] @relation("ModuleAuthor")
 
   questionPermissions Json?

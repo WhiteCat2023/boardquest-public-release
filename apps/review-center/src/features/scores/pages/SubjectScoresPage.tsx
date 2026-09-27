@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Award,
@@ -51,6 +51,7 @@ import { CandidateScoreDrawer } from "../components/CandidateScoreDrawer";
 import { PdfPreviewModal } from "../components/PdfPreviewModal";
 import { ConfirmDialog } from "@/components/custom/ConfirmDialog";
 import { DeleteAssessmentModal } from "../components/DeleteAssessmentModal";
+import { Pagination } from "@/components/custom/Pagination";
 
 export function SubjectScoresPage() {
   const { subjectSlug, schoolYear: routeSchoolYear } = useParams<{
@@ -84,12 +85,24 @@ export function SubjectScoresPage() {
 
   const selectedSchoolYear = searchParams.get("sy") || routeSchoolYear || allSchoolYears[0] || "2026-2027";
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+
   const handleSchoolYearChange = (sy: string) => {
     setSearchParams({ sy });
+    setCurrentPage(1);
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"assessments" | "matrix">("assessments");
+  const handleSearchChange = (val: string) => {
+    setSearchTerm(val);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -113,6 +126,23 @@ export function SubjectScoresPage() {
   const emailReportsMutation = useEmailGradeReports();
 
   const assessments = assessmentsData?.assessments || [];
+
+  const totalAssessments = assessments.length;
+  const totalPages = Math.max(1, Math.ceil(totalAssessments / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+
+  // Clamp page if total pages shrink (e.g. after deletion)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // Paginated assessments for the current page
+  const paginatedAssessments = useMemo(() => {
+    const start = (validCurrentPage - 1) * pageSize;
+    return assessments.slice(start, start + pageSize);
+  }, [assessments, validCurrentPage, pageSize]);
 
   // Aggregated Statistical Metrics for this specific subject
   const aggregateStats = useMemo(() => {
@@ -376,7 +406,7 @@ export function SubjectScoresPage() {
             <Input
               placeholder="Search title, label (e.g. Mock Board, Quiz 1)..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-8"
             />
           </div>
@@ -429,123 +459,137 @@ export function SubjectScoresPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {assessments.map((a) => {
-                return (
-                  <Card
-                    key={a.id}
-                    onClick={() =>
-                      navigate(
-                        `/scores/subject/${subjectDetail?.slug || "clinical-chemistry"}/assessment/${a.id}?sy=${selectedSchoolYear}`
-                      )
-                    }
-                    className="group bg-card border-border hover:border-primary hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
-                  >
-                    <CardHeader className="p-4 pb-2 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <Badge
-                          variant="secondary"
-                          className="font-bold text-[10px] bg-primary/10 text-primary border-primary/20"
-                        >
-                          {a.subject}
-                        </Badge>
-                        {a.customLabel && (
-                          <Badge variant="outline" className="text-[10px] font-semibold">
-                            {a.customLabel}
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedAssessments.map((a) => {
+                  return (
+                    <Card
+                      key={a.id}
+                      onClick={() =>
+                        navigate(
+                          `/scores/subject/${subjectDetail?.slug || "clinical-chemistry"}/assessment/${a.id}?sy=${selectedSchoolYear}`
+                        )
+                      }
+                      className="group bg-card border-border hover:border-primary hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
+                    >
+                      <CardHeader className="p-4 pb-2 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="font-bold text-[10px] bg-primary/10 text-primary border-primary/20"
+                          >
+                            {a.subject}
                           </Badge>
-                        )}
-                      </div>
-
-                      <div>
-                        <CardTitle className="text-base font-extrabold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                          {a.title}
-                        </CardTitle>
-                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                          Max: <strong>{a.maxScore} pts</strong> • Passing: <strong>{a.passingScore} pts ({a.passingRate}%)</strong>
-                        </CardDescription>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="p-4 pt-0 space-y-3">
-                      {/* Cohort Stats Mini Box */}
-                      <div className="bg-muted/40 rounded-xl p-2.5 grid grid-cols-3 gap-2 text-center text-xs">
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                            Mean
-                          </span>
-                          <p className="font-extrabold text-foreground">
-                            {a.meanScore !== null && a.meanScore !== undefined ? a.meanScore.toFixed(1) : "—"}
-                          </p>
+                          {a.customLabel && (
+                            <Badge variant="outline" className="text-[10px] font-semibold">
+                              {a.customLabel}
+                            </Badge>
+                          )}
                         </div>
+
                         <div>
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                            Median
-                          </span>
-                          <p className="font-extrabold text-foreground">
-                            {a.medianScore !== null && a.medianScore !== undefined ? a.medianScore.toFixed(1) : "—"}
-                          </p>
+                          <CardTitle className="text-base font-extrabold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                            {a.title}
+                          </CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                            Max: <strong>{a.maxScore} pts</strong> • Passing: <strong>{a.passingScore} pts ({a.passingRate}%)</strong>
+                          </CardDescription>
                         </div>
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                            Pass / Fail
-                          </span>
-                          <p className="font-extrabold text-foreground">
-                            <span className="text-green-600">{a.passCount}</span> /{" "}
-                            <span className="text-red-500">{a.failCount}</span>
-                          </p>
-                        </div>
-                      </div>
+                      </CardHeader>
 
-                      {/* Card Footer Actions */}
-                      {(() => {
-                        const hasScores = (a._count?.scores ?? 0) > 0 || ((a.passCount || 0) + (a.failCount || 0) > 0);
-                        return (
-                          <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-border">
-                            <div className="flex items-center gap-1 text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">
-                              <span>View &amp; Upload Scores</span>
-                              <ArrowRight className="size-3.5" />
-                            </div>
-
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!hasScores}
-                                onClick={() => setPdfPreviewData({ assessmentId: a.id })}
-                                title={hasScores ? "Preview Official Student PDF Grade Slip" : "Upload scores first to preview PDF grade slip"}
-                                className="h-7 px-2 text-xs font-bold text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                <Eye className="size-3.5" />
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!hasScores || emailReportsMutation.isPending}
-                                onClick={() => handleEmailCohortReports(a.id, a.title)}
-                                title={hasScores ? "Email Grade Reports to Students" : "Upload scores first to email reports"}
-                                className="h-7 px-2 text-xs font-bold text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                <Send className="size-3.5" />
-                              </Button>
-
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteAssessment(a.id, a.title)}
-                                className="h-7 px-2 text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            </div>
+                      <CardContent className="p-4 pt-0 space-y-3">
+                        {/* Cohort Stats Mini Box */}
+                        <div className="bg-muted/40 rounded-xl p-2.5 grid grid-cols-3 gap-2 text-center text-xs">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                              Mean
+                            </span>
+                            <p className="font-extrabold text-foreground">
+                              {a.meanScore !== null && a.meanScore !== undefined ? a.meanScore.toFixed(1) : "—"}
+                            </p>
                           </div>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                              Median
+                            </span>
+                            <p className="font-extrabold text-foreground">
+                              {a.medianScore !== null && a.medianScore !== undefined ? a.medianScore.toFixed(1) : "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                              Pass / Fail
+                            </span>
+                            <p className="font-extrabold text-foreground">
+                              <span className="text-green-600">{a.passCount}</span> /{" "}
+                              <span className="text-red-500">{a.failCount}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        {(() => {
+                          const hasScores = (a._count?.scores ?? 0) > 0 || ((a.passCount || 0) + (a.failCount || 0) > 0);
+                          return (
+                            <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-border">
+                              <div className="flex items-center gap-1 text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">
+                                <span>View &amp; Upload Scores</span>
+                                <ArrowRight className="size-3.5" />
+                              </div>
+
+                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={!hasScores}
+                                  onClick={() => setPdfPreviewData({ assessmentId: a.id })}
+                                  title={hasScores ? "Preview Official Student PDF Grade Slip" : "Upload scores first to preview PDF grade slip"}
+                                  className="h-7 px-2 text-xs font-bold text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Eye className="size-3.5" />
+                                </Button>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={!hasScores || emailReportsMutation.isPending}
+                                  onClick={() => handleEmailCohortReports(a.id, a.title)}
+                                  title={hasScores ? "Email Grade Reports to Students" : "Upload scores first to email reports"}
+                                  className="h-7 px-2 text-xs font-bold text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Send className="size-3.5" />
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteAssessment(a.id, a.title)}
+                                  className="h-7 px-2 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* ── Pagination Footer ── */}
+              <Pagination
+                currentPage={validCurrentPage}
+                totalPages={totalPages}
+                totalItems={totalAssessments}
+                pageSize={pageSize}
+                pageSizeOptions={[3, 6, 9, 12, 24]}
+                onPageChange={(p) => setCurrentPage(p)}
+                onPageSizeChange={handlePageSizeChange}
+                itemName="assessments"
+              />
+            </>
           )}
         </div>
 

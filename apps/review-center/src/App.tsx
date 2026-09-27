@@ -4,7 +4,6 @@ import MainLayout from "./layout/MainLayout";
 import { RequireAuth } from "@/features/auth";
 import { PersistentSession } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
-import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
 
 // Lazy-loaded page components for optimal bundle splitting
@@ -134,18 +133,7 @@ function App() {
                     element={<AssessmentScoresPage />}
                   />
                   <Route path="schedules" element={<SchedulesPage />} />
-                </Route>
-
-                <Route
-                  element={
-                    <RequireAuth
-                      allowedRoles={["REVIEW_CENTER_REPRESENTATIVE"]}
-                    />
-                  }
-                >
-                  <Route element={<SettingLayout />}>
-                    <Route path="settings" element={<SettingsPage />} />
-                  </Route>
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Route>
             </Route>

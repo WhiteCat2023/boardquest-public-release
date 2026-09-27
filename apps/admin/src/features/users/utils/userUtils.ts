@@ -156,3 +156,26 @@ export const isUserOnline = (
   const diffMinutes = (Date.now() - lastActiveDate.getTime()) / (1000 * 60);
   return diffMinutes <= 5;
 };
+
+/**
+ * Returns a human-friendly display title for a user role.
+ */
+export const getRoleTitle = (role?: RoleType | string | number): string => {
+  const r = String(role || "").toUpperCase();
+  switch (r) {
+    case "SUPERADMIN":
+      return "Super Administrator";
+    case "DEAN":
+      return "Dean";
+    case "TEAMLEAD":
+      return "Team Lead";
+    case "TEACHER":
+      return "Teacher";
+    case "REVIEWCENTER":
+    case "EXTERNAL":
+      return "Review Center Partner";
+    default:
+      return role ? String(role) : "User Member";
+  }
+};
+

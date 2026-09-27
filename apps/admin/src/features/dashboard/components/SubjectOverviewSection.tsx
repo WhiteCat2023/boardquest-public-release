@@ -83,7 +83,7 @@ export function SubjectOverviewSection() {
   const isLoading = isSubjectsLoading && isAnalyticsLoading && sourceSubjects.length === 0;
 
   return (
-    <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
+    <Card className="w-full shrink-0 min-h-fit bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
@@ -94,13 +94,6 @@ export function SubjectOverviewSection() {
             {description}
           </p>
         </div>
-
-        <Badge
-          variant="outline"
-          className="bg-muted text-muted-foreground border-border text-[10px] font-semibold px-2 py-0.5 rounded-md w-fit"
-        >
-          {sectionContent.benchmarkBadge}
-        </Badge>
       </div>
 
       {sourceSubjects.length === 0 && !isLoading ? (
@@ -129,7 +122,9 @@ export function SubjectOverviewSection() {
               ))
             : subjectsToDisplay.map((subj, index) => {
                 const isPassing = subj.proficiency >= 75;
-                const barColor = isPassing ? "bg-emerald-500" : subj.proficiency >= 55 ? "bg-amber-500" : "bg-rose-500";
+              const barColor = isPassing ? "bg-emerald-500"
+                : subj.proficiency >= 55 ? "bg-amber-500"
+                : "bg-rose-500";
                 return (
                   <div
                     key={subj.id || subj.code || index}
