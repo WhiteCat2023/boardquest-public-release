@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
-import { createQuestion, deleteQuestion, getQuestionById, getQuestions, getQuestionsByCategory, updateQuestion, bulkUploadQuestions, extractQuestions, bulkDeleteQuestions, bulkApproveQuestions, bulkUpdateStatusQuestions, bulkFeedbackQuestions, synthesizeQuestion, createSynthesizedQuestion, getPendingReviewAuthors, getQuestionStats, getQuestionComments, createQuestionComment, deleteQuestionComment, toggleResolveComment, } from "../../controller/admin/question.controller";
+import { createQuestion, deleteQuestion, getQuestionById, getQuestions, getQuestionsByCategory, updateQuestion, bulkUploadQuestions, extractQuestions, bulkDeleteQuestions, bulkApproveQuestions, bulkUpdateStatusQuestions, bulkFeedbackQuestions, synthesizeQuestion, createSynthesizedQuestion, getPendingReviewAuthors, getQuestionStats, getQuestionComments, createQuestionComment, deleteQuestionComment, toggleResolveComment, bulkParaphraseQuestions, bulkApplyParaphrase, } from "../../controller/admin/question.controller";
 import { createCategory, getCategories, getCategory, updateCategory, deleteCategory, getCategoriesTotalCount, getModulesByCategory, createModule, updateModule, deleteModule, assignCategoryHandlers, } from "../../controller/admin/subject.controller";
 const router = Router();
 router.get("/stats", authenticateToken, getQuestionStats);
@@ -13,6 +13,8 @@ router.post("/bulk/delete", authenticateToken, requireRoles(["SUPERADMIN", "DEAN
 router.post("/bulk/approve", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkApproveQuestions);
 router.post("/bulk/status", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), bulkUpdateStatusQuestions);
 router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkFeedbackQuestions);
+router.post("/bulk/paraphrase", authenticateToken, bulkParaphraseQuestions);
+router.post("/bulk/paraphrase/apply", authenticateToken, bulkApplyParaphrase);
 router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);

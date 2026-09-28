@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 import {
   calculateSubjectProficiency,
   calculateReadinessScore,
@@ -156,6 +157,8 @@ export class StudentService {
         streak: 0,
       },
     });
+
+    notifyAnalyticsUpdated();
 
     sendStudentCredentialsEmail({
       toEmail: email.toLowerCase().trim(),
@@ -823,6 +826,8 @@ export class StudentService {
       where: { id: studentId },
     });
 
+    notifyAnalyticsUpdated();
+
     return { message: "Student deleted successfully" };
   }
 
@@ -953,6 +958,10 @@ export class StudentService {
           error: err.message || "Failed to enroll student",
         });
       }
+    }
+
+    if (createdStudents.length > 0) {
+      notifyAnalyticsUpdated();
     }
 
     return {

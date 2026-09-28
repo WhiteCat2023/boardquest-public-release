@@ -28,7 +28,7 @@ export default function ParaphraseHeader({
               variant="outline"
               className="bg-primary/10 text-primary border-primary/25 font-bold px-2 py-0.2 text-[10.5px] rounded-full"
             >
-              {itemsCount} Selected
+              {itemsCount} / 5 Selected
             </Badge>
           </div>
         </div>

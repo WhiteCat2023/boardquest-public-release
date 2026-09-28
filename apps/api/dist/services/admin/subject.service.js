@@ -363,8 +363,7 @@ export class SubjectService {
                 where: { id: { in: handlerIds } },
                 select: { id: true, role: true },
             });
-            const invalidExternalUser = users.find((u) => u.role === "REVIEWCENTER" ||
-                u.role === "EXTERNAL");
+            const invalidExternalUser = users.find((u) => u.role === "REVIEWCENTER" || u.role === "EXTERNAL");
             if (invalidExternalUser) {
                 throw new ApiError(400, "External accounts (Review Center) cannot be assigned to handle subjects.");
             }

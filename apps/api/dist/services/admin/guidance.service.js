@@ -24,6 +24,13 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
     if (!advisor) {
         throw new ApiError(404, "Advisor profile not found.");
     }
+    const advisorRole = String(advisor.role || "").toUpperCase().trim();
+    if (advisorRole === "REVIEWCENTER" ||
+        advisorRole === "EXTERNAL" ||
+        advisorRole.includes("REVIEW") ||
+        advisorRole.includes("EXTERNAL")) {
+        throw new ApiError(400, "Review center or external accounts cannot be assigned as student advisors.");
+    }
     const assignment = await prisma.guidanceAssignment.create({
         data: {
             studentId,

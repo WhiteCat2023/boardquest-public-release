@@ -3,10 +3,11 @@ import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../types/prisma.types";
 import { questionSynthesizerService, } from "./questionSynthesizer.service";
+import { questionParaphraserService, } from "./questionParaphraser.service";
 import { createNotification } from "./notification.service";
 import { sseService } from "./sse.service";
 import pusherService from "./pusher.service";
-import { superAdminCredentials } from "../../config/credentials";
+import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
 // ============ Validation Schemas ============
 export const CreateQuestionSchema = z.object({
     question: z.string().min(1, "Question title is required"),
@@ -71,16 +72,37 @@ export class QuestionService {
                 computedStatus = QuestionStatus.PENDING_REVIEW;
             }
             else if (authorUser?.role === "SUPERADMIN" ||
-                authorUser?.role === "DEAN") {
+                authorUser?.role === "DEAN" ||
+                authorUser?.role === "TEAMLEAD") {
                 computedStatus = status || QuestionStatus.APPROVED;
             }
             else {
                 computedStatus = status || QuestionStatus.PENDING_REVIEW;
             }
         }
+        // Prevent duplicate questions within the same subject
+        const normalize = (str) => (str || "").toLowerCase().trim().replace(/\s+/g, " ");
+        const normalizedInput = normalize(question);
+        const existingInSubject = await this.db.question.findMany({
+            where: {
+                subjectId: categoryId.trim(),
+            },
+            select: {
+                id: true,
+                question: true,
+                status: true,
+            },
+        });
+        const existingDuplicate = existingInSubject.find((q) => normalize(q.question) === normalizedInput);
+        if (existingDuplicate) {
+            const statusLabel = existingDuplicate.status === QuestionStatus.APPROVED
+                ? "already approved"
+                : "currently pending review";
+            throw new ApiError(409, `This question already exists in this subject (${statusLabel}). Duplicate questions cannot be uploaded.`);
+        }
         const newQuestion = await this.db.question.create({
             data: {
-                question: question.toLowerCase().trim(),
+                question: question.trim(),
                 imageUrl: imageUrl || null,
                 choices,
                 choiceImages: choiceImages || [],
@@ -168,12 +190,28 @@ export class QuestionService {
                 throw new ApiError(400, "Questions in Pending Revision status cannot be approved until all comments are resolved and the author resubmits them for review.");
             }
         }
+        const normalize = (str) => (str || "").toLowerCase().trim().replace(/\s+/g, " ");
+        const normalizedInput = normalize(question);
+        const existingInSubject = await this.db.question.findMany({
+            where: {
+                subjectId: categoryId.trim(),
+            },
+            select: {
+                id: true,
+                question: true,
+                status: true,
+            },
+        });
+        const existingDuplicate = existingInSubject.find((q) => q.id !== questionId && normalize(q.question) === normalizedInput);
+        if (existingDuplicate) {
+            throw new ApiError(409, `Another question with the exact same wording already exists in this subject (${existingDuplicate.status}). Duplicate questions are not allowed.`);
+        }
         const updatedQuestion = await this.db.question.update({
             where: {
                 id: questionId,
             },
             data: {
-                question: question.toLowerCase().trim(),
+                question: question.trim(),
                 ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
                 choices,
                 ...(choiceImages !== undefined && { choiceImages }),
@@ -355,7 +393,11 @@ export class QuestionService {
     }
     async getQuestionStats(authorId) {
         const isValidObjectId = (id) => Boolean(id && /^[0-9a-fA-F]{24}$/.test(id));
-        const targetAuthorId = isValidObjectId(authorId) ? authorId : undefined;
+        let targetAuthorId = authorId;
+        if (targetAuthorId && isSuperAdmin(targetAuthorId)) {
+            targetAuthorId = superAdminCredentials.id;
+        }
+        targetAuthorId = isValidObjectId(targetAuthorId) ? targetAuthorId : undefined;
         const [totalQuestions, publishedQuestions, pendingReviewQuestions, teacherAuthoredCount, teacherPublishedCount, teacherDraftCount,] = await Promise.all([
             this.db.question.count(),
             this.db.question.count({
@@ -482,17 +524,64 @@ export class QuestionService {
             authorUser?.role === "DEAN") {
             resolvedStatus = defaultStatus || QuestionStatus.APPROVED;
         }
-        const queries = questions.map((q) => {
+        // Query all existing questions in this subject to check against duplicates
+        const existingInSubject = await this.db.question.findMany({
+            where: {
+                subjectId: categoryId.trim(),
+            },
+            select: {
+                question: true,
+            },
+        });
+        const normalize = (str) => (str || "").toLowerCase().trim().replace(/\s+/g, " ");
+        const existingSet = new Set(existingInSubject.map((q) => normalize(q.question)));
+        const seenInBatch = new Set();
+        const validQuestions = [];
+        const skippedDuplicates = [];
+        for (const q of questions) {
+            const norm = normalize(q.question);
+            if (!norm)
+                continue;
+            if (existingSet.has(norm)) {
+                skippedDuplicates.push({
+                    question: q.question,
+                    reason: "Already exists in this subject",
+                });
+                continue;
+            }
+            if (seenInBatch.has(norm)) {
+                skippedDuplicates.push({
+                    question: q.question,
+                    reason: "Duplicate question within the upload batch",
+                });
+                continue;
+            }
+            seenInBatch.add(norm);
+            validQuestions.push(q);
+        }
+        if (validQuestions.length === 0) {
+            const result = [];
+            result.createdQuestions = [];
+            result.count = 0;
+            result.skippedDuplicates = skippedDuplicates.length;
+            result.skippedDetails = skippedDuplicates;
+            return result;
+        }
+        const queries = validQuestions.map((q) => {
             let choices = q.choices || [];
             if (q.type === QuestionType.TRUE_FALSE && choices.length === 0) {
                 choices = ["True", "False"];
             }
             const qStatus = authorUser?.role === "TEACHER"
                 ? QuestionStatus.PENDING_REVIEW
-                : q.status || resolvedStatus;
+                : authorUser?.role === "SUPERADMIN" ||
+                    authorUser?.role === "DEAN" ||
+                    authorUser?.role === "TEAMLEAD"
+                    ? q.status || QuestionStatus.APPROVED
+                    : q.status || resolvedStatus;
             return this.db.question.create({
                 data: {
-                    question: q.question.toLowerCase().trim(),
+                    question: q.question.trim(),
                     choices: choices.map((c) => c.trim()),
                     correctAnswer: q.correctAnswer.toLowerCase().trim(),
                     subjectId: categoryId.trim(),
@@ -542,7 +631,12 @@ export class QuestionService {
         catch (err) {
             console.warn("Broadcast error:", err);
         }
-        return createdQuestions;
+        const result = createdQuestions;
+        result.createdQuestions = createdQuestions;
+        result.count = createdQuestions.length;
+        result.skippedDuplicates = skippedDuplicates.length;
+        result.skippedDetails = skippedDuplicates;
+        return result;
     }
     async bulkDeleteQuestions(ids, user) {
         const questions = await this.db.question.findMany({
@@ -914,6 +1008,72 @@ export class QuestionService {
             }
         }
     }
+    async bulkParaphraseQuestions(items) {
+        if (items.length > 5) {
+            throw new ApiError(400, "Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+        }
+        return await questionParaphraserService.paraphraseBatch(items);
+    }
+    async bulkApplyParaphrase(updates, user) {
+        if (!Array.isArray(updates) || updates.length === 0) {
+            throw new ApiError(400, "Updates array must not be empty");
+        }
+        if (updates.length > 5) {
+            throw new ApiError(400, "Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+        }
+        const ids = updates.map((u) => u.id);
+        const existingQuestions = await this.db.question.findMany({
+            where: { id: { in: ids } },
+        });
+        const isPrivileged = user.role === "SUPERADMIN" ||
+            user.role === "DEAN" ||
+            user.role === "TEAMLEAD";
+        const updateMap = new Map();
+        updates.forEach((u) => {
+            if (u.id && u.question && u.question.trim().length > 0) {
+                updateMap.set(u.id, u.question.trim());
+            }
+        });
+        const updatedList = [];
+        for (const q of existingQuestions) {
+            const isAuthor = q.authorId && q.authorId === user.id;
+            if (!isPrivileged && !isAuthor) {
+                throw new ApiError(403, `You do not have permission to modify question ID ${q.id}`);
+            }
+            if (user.role === "TEACHER" && q.status === QuestionStatus.APPROVED) {
+                throw new ApiError(403, "Approved questions cannot be modified by teachers.");
+            }
+            const newStem = updateMap.get(q.id);
+            if (newStem && newStem !== q.question) {
+                const updated = await this.db.question.update({
+                    where: { id: q.id },
+                    data: {
+                        question: newStem,
+                        ...(user.role === "TEACHER" &&
+                            q.status !== QuestionStatus.PENDING_REVIEW
+                            ? { status: QuestionStatus.PENDING_REVIEW }
+                            : {}),
+                    },
+                });
+                updatedList.push(updated);
+            }
+        }
+        if (updatedList.length > 0) {
+            try {
+                const eventPayload = {
+                    type: "QUESTIONS_UPDATED",
+                    count: updatedList.length,
+                    updatedIds: updatedList.map((u) => u.id),
+                };
+                sseService.broadcastEvent("questions-updated", eventPayload);
+                pusherService.broadcastEvent("admin-events", "questions-updated", eventPayload);
+            }
+            catch (err) {
+                console.warn("Broadcast error:", err);
+            }
+        }
+        return updatedList;
+    }
 }
 export const questionService = new QuestionService();
 export const createNewQuestion = questionService.createNewQuestion.bind(questionService);
@@ -934,6 +1094,8 @@ export const bulkUpdateStatusQuestions = questionService.bulkUpdateStatusQuestio
 export const bulkFeedbackQuestions = questionService.bulkFeedbackQuestions.bind(questionService);
 export const synthesizeQuestion = questionService.synthesizeQuestion.bind(questionService);
 export const createSynthesizedQuestion = questionService.createSynthesizedQuestion.bind(questionService);
+export const bulkParaphraseQuestions = questionService.bulkParaphraseQuestions.bind(questionService);
+export const bulkApplyParaphrase = questionService.bulkApplyParaphrase.bind(questionService);
 export const getPendingReviewAuthors = questionService.getPendingReviewAuthors.bind(questionService);
 export const getQuestionStats = questionService.getQuestionStats.bind(questionService);
 export const getQuestionComments = questionService.getQuestionComments.bind(questionService);

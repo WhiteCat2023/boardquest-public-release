@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 // ============================================
 // SCORING ENGINE (Subsystem 1)
 // ============================================
@@ -333,6 +334,7 @@ class GameFacade {
                         },
                     }),
             ]);
+            notifyAnalyticsUpdated();
             return {
                 userId,
                 score,

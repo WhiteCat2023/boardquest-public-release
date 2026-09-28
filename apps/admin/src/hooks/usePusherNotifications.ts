@@ -52,6 +52,7 @@ export function usePusherNotifications() {
         queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
         queryClient.invalidateQueries({ queryKey: ["categories"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
       }
     };
 
@@ -60,17 +61,24 @@ export function usePusherNotifications() {
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
+    };
+
+    const handleAnalyticsUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
     };
 
     subscribedChannels.forEach((ch) => {
       ch.bind("notification", handleNotification);
       ch.bind("questions-updated", handleQuestionsUpdated);
+      ch.bind("analytics-updated", handleAnalyticsUpdated);
     });
 
     return () => {
       subscribedChannels.forEach((ch) => {
         ch.unbind("notification", handleNotification);
         ch.unbind("questions-updated", handleQuestionsUpdated);
+        ch.unbind("analytics-updated", handleAnalyticsUpdated);
         pusher.unsubscribe(ch.name);
       });
     };

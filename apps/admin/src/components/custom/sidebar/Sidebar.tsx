@@ -78,7 +78,7 @@ function SidebarItem({
   if (!hasSubItems) {
     const isActive =
       location.pathname === content.path ||
-      (content.path === "/question-bank/my-questions" &&
+      (content.path === "/question-bank/shared-library" &&
         (location.pathname === "/question-bank" ||
           location.pathname === "/question-bank/"));
     return (

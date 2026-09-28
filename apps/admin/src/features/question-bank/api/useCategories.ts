@@ -26,12 +26,10 @@ export const useCategories = (params?: { search?: string }) => {
       const response = await axiosPrivate.get("/questions/category/get", {
         params: cleanParams,
       });
-      return (
-        response.data?.data?.categories ??
+      return (response.data?.data?.categories ??
         response.data?.data?.subjects ??
         response.data?.data ??
-        []
-      ) as Category[];
+        []) as Category[];
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

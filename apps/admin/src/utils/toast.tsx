@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, UploadCloud, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, AlertTriangle, UploadCloud, Loader2 } from "lucide-react";
 
 interface UndoToastOptions {
   /** The main header text of the toast (default: "Item Deleted") */
@@ -63,6 +63,7 @@ export const showUndoToast = ({
 export interface ProgressToastController {
   update: (currentCount: number, totalCount?: number, message?: string) => void;
   success: (message?: string, title?: string) => void;
+  warning: (message?: string, title?: string) => void;
   error: (message?: string, title?: string) => void;
   dismiss: () => void;
 }
@@ -84,7 +85,7 @@ export const createProgressToast = ({
   const render = (
     currentCount: number,
     total: number,
-    status: "uploading" | "success" | "error",
+    status: "uploading" | "success" | "warning" | "error",
     message: string,
     customTitle = title,
   ) => {
@@ -101,13 +102,17 @@ export const createProgressToast = ({
                 className={`p-2 rounded-xl border shrink-0 transition-colors ${
                   status === "success"
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                    : status === "error"
-                      ? "bg-destructive/10 border-destructive/30 text-destructive"
-                      : "bg-primary/10 border-primary/30 text-primary"
+                    : status === "warning"
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                      : status === "error"
+                        ? "bg-destructive/10 border-destructive/30 text-destructive"
+                        : "bg-primary/10 border-primary/30 text-primary"
                 }`}
               >
                 {status === "success" ? (
                   <CheckCircle2 size={18} className="stroke-[2.5]" />
+                ) : status === "warning" ? (
+                  <AlertTriangle size={18} className="stroke-[2.5]" />
                 ) : status === "error" ? (
                   <AlertCircle size={18} className="stroke-[2.5]" />
                 ) : (
@@ -129,9 +134,11 @@ export const createProgressToast = ({
               className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded-lg border shrink-0 ${
                 status === "success"
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                  : status === "error"
-                    ? "bg-destructive/10 border-destructive/20 text-destructive"
-                    : "bg-primary/10 border-primary/20 text-primary"
+                  : status === "warning"
+                    ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : status === "error"
+                      ? "bg-destructive/10 border-destructive/20 text-destructive"
+                      : "bg-primary/10 border-primary/20 text-primary"
               }`}
             >
               {Math.round(progress)}%
@@ -144,9 +151,11 @@ export const createProgressToast = ({
               className={`h-full transition-all duration-300 ease-out rounded-full ${
                 status === "success"
                   ? "bg-emerald-500 shadow-xs"
-                  : status === "error"
-                    ? "bg-destructive"
-                    : "bg-primary shadow-xs"
+                  : status === "warning"
+                    ? "bg-amber-500 shadow-xs"
+                    : status === "error"
+                      ? "bg-destructive"
+                      : "bg-primary shadow-xs"
               }`}
               style={{ width: `${progress}%` }}
             />
@@ -169,7 +178,7 @@ export const createProgressToast = ({
       ),
       {
         id: toastId,
-        duration: status === "uploading" ? Infinity : 4000,
+        duration: status === "uploading" ? Infinity : 4500,
       },
     );
   };
@@ -198,6 +207,15 @@ export const createProgressToast = ({
         "success",
         msg || `Successfully queued and saved ${totalCount} question(s).`,
         title || "Upload Complete",
+      );
+    },
+    warning: (msg?: string, title?: string) => {
+      render(
+        totalCount,
+        totalCount,
+        "warning",
+        msg || "Upload complete with duplicate questions skipped.",
+        title || "Upload Notice",
       );
     },
     error: (msg?: string, title?: string) => {

@@ -78,11 +78,24 @@ export default function BulkActionsToolbar({
               <button
                 type="button"
                 onClick={onParaphrase}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-all cursor-pointer shadow-2xs"
-                title="Paraphrase selected questions with AI"
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
+                  selectedCount > 5
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                    : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                }`}
+                title={
+                  selectedCount > 5
+                    ? `Bulk paraphrase is limited to 5 questions per batch (currently ${selectedCount} selected)`
+                    : "Paraphrase selected questions with AI (up to 5 questions)"
+                }
               >
                 <Sparkles size={13} />
-                Paraphrase
+                <span>Paraphrase</span>
+                {selectedCount > 5 && (
+                  <span className="text-[10px] font-bold bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded-full">
+                    Max 5
+                  </span>
+                )}
               </button>
             )}
 

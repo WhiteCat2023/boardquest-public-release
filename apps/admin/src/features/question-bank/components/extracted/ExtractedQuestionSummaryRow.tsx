@@ -9,6 +9,7 @@ interface ExtractedQuestionSummaryRowProps {
   question: ExtractedQuestionItem;
   choices: string[];
   isExpanded: boolean;
+  isDuplicate?: boolean;
   onToggleExpand: () => void;
   onDelete: () => void;
 }
@@ -18,6 +19,7 @@ export default function ExtractedQuestionSummaryRow({
   question,
   choices,
   isExpanded,
+  isDuplicate,
   onToggleExpand,
   onDelete,
 }: ExtractedQuestionSummaryRowProps) {
@@ -32,7 +34,9 @@ export default function ExtractedQuestionSummaryRow({
       className={`transition-colors cursor-pointer select-none ${
         isExpanded
           ? "bg-primary/5 hover:bg-primary/10 border-l-4 border-l-primary"
-          : "hover:bg-muted/40"
+          : isDuplicate
+            ? "bg-amber-500/5 hover:bg-amber-500/10 border-l-4 border-l-amber-500"
+            : "hover:bg-muted/40"
       }`}
       onClick={onToggleExpand}
     >
@@ -45,12 +49,19 @@ export default function ExtractedQuestionSummaryRow({
       {/* Question Wording Column */}
       <TableCell>
         <div className="flex flex-col gap-1 max-w-[420px]">
-          <span
-            className="text-xs font-semibold text-foreground line-clamp-2 leading-relaxed"
-            title={question.question}
-          >
-            {question.question || "Untitled Question"}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-xs font-semibold text-foreground line-clamp-2 leading-relaxed"
+              title={question.question}
+            >
+              {question.question || "Untitled Question"}
+            </span>
+            {isDuplicate && (
+              <span className="shrink-0 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                Duplicate (Skipped)
+              </span>
+            )}
+          </div>
 
           <div className="flex items-center gap-1.5 flex-wrap">
             {choicesDisplay && (

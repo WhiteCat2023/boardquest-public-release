@@ -27,8 +27,16 @@ export function useBulkParaphrase({
   // Initialize questions state whenever dialog opens
   useEffect(() => {
     if (open && selectedQuestions.length > 0) {
-      const initialItems: ParaphrasedItemState[] = selectedQuestions.map(
-        (q) => ({
+      if (selectedQuestions.length > 5) {
+        toast.error(
+          `Bulk paraphrasing has a limit of 5 questions per batch. You selected ${selectedQuestions.length} questions.`
+        );
+        onOpenChange(false);
+        return;
+      }
+
+      const initialItems: ParaphrasedItemState[] = selectedQuestions.slice(0, 5).map(
+        (q): ParaphrasedItemState => ({
           id: q.id,
           original: q.question || "",
           current: q.question || "",
@@ -55,6 +63,11 @@ export function useBulkParaphrase({
     selectedTone: ParaphraseTone
   ) => {
     if (targetItems.length === 0) return;
+
+    if (targetItems.length > 5) {
+      toast.error("Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+      return;
+    }
 
     setIsBulkLoading(true);
     setItems((prev) =>

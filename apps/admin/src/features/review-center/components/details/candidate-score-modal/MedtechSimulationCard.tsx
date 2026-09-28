@@ -3,11 +3,13 @@ import { Badge } from "@/components/ui/badge";
 
 interface MedtechSimulationCardProps {
   simulation?: {
-    gwa?: number;
-    generalWeightedAverage?: number;
+    gwa?: number | null;
+    generalWeightedAverage?: number | null;
     passed?: boolean;
     conditionFailed?: boolean;
+    remarks?: string;
     failedSubjects?: string[];
+    belowThresholdSubjects?: string[];
   } | null;
 }
 

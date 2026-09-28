@@ -50,7 +50,7 @@ export const me = asyncHandler(async (req, res) => {
     return new ApiResponse(200, { user: formattedUser }, "User retrieved successfully").send(res);
 });
 export const getUsers = asyncHandler(async (req, res) => {
-    const { search, role, status, cursor, limit } = req.query;
+    const { search, role, status, cursor, limit, excludeExternal } = req.query;
     const requesterRole = req.user?.role;
     if (requesterRole === "TEACHER") {
         return new ApiResponse(200, {
@@ -68,6 +68,7 @@ export const getUsers = asyncHandler(async (req, res) => {
         cursor: cursor,
         limit: limit ? parseInt(limit, 10) : undefined,
         requesterRole,
+        excludeExternal: excludeExternal === "true" || excludeExternal === "1",
     });
     if (result && typeof result === "object" && ("users" in result || "faculties" in result)) {
         const userList = result.users ?? result.faculties ?? [];

@@ -13,6 +13,7 @@ export interface ExtractedQuestionAccordionRowProps {
   index: number;
   question: ExtractedQuestionItem;
   isExpanded: boolean;
+  isDuplicate?: boolean;
   onToggleExpand: () => void;
   onUpdateQuestion: (updated: ExtractedQuestionItem) => void;
   onDelete: () => void;

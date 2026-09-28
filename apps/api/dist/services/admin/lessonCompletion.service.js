@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 // ============ Validation Schemas ============
 export const recordLessonCompletionSchema = z.object({
     studentId: z.string().min(1, "Student ID is required"),
@@ -42,6 +43,7 @@ export class LessonCompletionService {
                 status,
             },
         });
+        notifyAnalyticsUpdated();
         return completion;
     }
     /**

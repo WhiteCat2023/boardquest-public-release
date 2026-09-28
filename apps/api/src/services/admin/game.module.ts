@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -497,6 +498,8 @@ class GameFacade {
               },
             }),
       ]);
+
+      notifyAnalyticsUpdated();
 
       return {
         userId,

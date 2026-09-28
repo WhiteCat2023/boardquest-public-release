@@ -4,14 +4,19 @@ import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
 
 interface UseSubjectNavCategoriesOptions {
   authorId?: string;
+  status?: string;
 }
 
-export function useSubjectNavCategories(options?: UseSubjectNavCategoriesOptions) {
+export function useSubjectNavCategories(
+  options?: UseSubjectNavCategoriesOptions,
+) {
   const [categorySearch, setCategorySearch] = useState("");
-  const { selectedCategory, setSelectedCategory } = useQuestionBankFilterStore();
+  const { selectedCategory, setSelectedCategory } =
+    useQuestionBankFilterStore();
 
   const { data: categories = [], isLoading } = useSubjects({
     authorId: options?.authorId,
+    status: options?.status,
     search: categorySearch,
     all: !options?.authorId,
   });

@@ -114,6 +114,8 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
   }
 
   let processedCount = 0;
+  let totalUploaded = 0;
+  let totalSkippedDuplicates = 0;
   progressToast.update(0, totalCount, `Preparing ${totalCount} question(s) for queue...`);
 
   try {
@@ -129,18 +131,23 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
         `Queuing questions ${startNum}–${endNum} of ${totalCount}...`
       );
 
-      await axiosPrivate.post("/questions/bulk-upload", {
+      const res = await axiosPrivate.post("/questions/bulk-upload", {
         questions: chunk,
         categoryId: selectedCategoryId,
         silentNotification: !isLastChunk,
       });
+
+      const chunkUploaded = res.data?.data?.count ?? chunk.length;
+      const chunkSkipped = res.data?.data?.skippedDuplicates ?? 0;
+      totalUploaded += chunkUploaded;
+      totalSkippedDuplicates += chunkSkipped;
 
       processedCount += chunk.length;
 
       progressToast.update(
         processedCount,
         totalCount,
-        `Queued ${processedCount} of ${totalCount} question(s)...`
+        `Processed ${processedCount} of ${totalCount} question(s)...`
       );
 
       // Brief delay between chunks for ultra-smooth UI feedback
@@ -149,10 +156,22 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
       }
     }
 
-    progressToast.success(
-      `All ${totalCount} question(s) successfully queued and processed!`,
-      "Upload Complete"
-    );
+    if (totalUploaded > 0 && totalSkippedDuplicates > 0) {
+      progressToast.warning(
+        `Uploaded ${totalUploaded} question(s). ${totalSkippedDuplicates} duplicate question(s) already existed and were skipped.`,
+        "Upload Complete (Duplicates Skipped)"
+      );
+    } else if (totalUploaded === 0 && totalSkippedDuplicates > 0) {
+      progressToast.warning(
+        `No questions were added. All ${totalSkippedDuplicates} question(s) already exist in this subject.`,
+        "All Duplicates Skipped"
+      );
+    } else {
+      progressToast.success(
+        `All ${totalUploaded || totalCount} question(s) successfully queued and processed!`,
+        "Upload Complete"
+      );
+    }
 
     // Invalidate questions, review desk, and categories so question list updates automatically
     queryClient.invalidateQueries({ queryKey: ["questions"] });

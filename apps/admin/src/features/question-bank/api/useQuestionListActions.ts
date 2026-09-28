@@ -284,6 +284,12 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             toast.error("Please select at least one question to paraphrase.");
             return;
         }
+        if (selectedQuestions.length > 5) {
+            toast.error(
+                `Bulk paraphrasing has a limit of 5 questions per batch. You currently have ${selectedQuestions.length} questions selected.`
+            );
+            return;
+        }
         setIsParaphraseOpen(true);
     };
 

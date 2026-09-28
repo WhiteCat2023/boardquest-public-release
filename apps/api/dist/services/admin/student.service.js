@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import { hashedPassword } from "../../utils/hash";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 import { calculateSubjectProficiency, calculateReadinessScore, calculateStandingTier, } from "../../utils/statsCalculator";
 import { sendStudentCredentialsEmail } from "../mail.service";
 import { StudyPlanService, createStudyPlanSchema } from "./studyPlan.service";
@@ -100,6 +101,7 @@ export class StudentService {
                 streak: 0,
             },
         });
+        notifyAnalyticsUpdated();
         sendStudentCredentialsEmail({
             toEmail: email.toLowerCase().trim(),
             name: name || "Student",
@@ -676,6 +678,7 @@ export class StudentService {
         await this.db.user.delete({
             where: { id: studentId },
         });
+        notifyAnalyticsUpdated();
         return { message: "Student deleted successfully" };
     }
     /**
@@ -775,6 +778,9 @@ export class StudentService {
                     error: err.message || "Failed to enroll student",
                 });
             }
+        }
+        if (createdStudents.length > 0) {
+            notifyAnalyticsUpdated();
         }
         return {
             totalProcessed: students.length,

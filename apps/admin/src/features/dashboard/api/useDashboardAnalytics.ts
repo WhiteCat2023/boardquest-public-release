@@ -4,6 +4,7 @@ import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 export interface DashboardAnalyticsSummary {
   overallPassRate: number;
   overallAvgScore: number;
+  overallReadinessScore?: number;
   totalStudentsCount: number;
   passedCount: number;
   nearTargetCount: number;
@@ -20,8 +21,11 @@ export interface DashboardAnalyticsSummary {
   monthlyTrend: Array<{
     month: string;
     rate: number;
+    readinessScore?: number;
     avgScore: number;
     students: number;
+    tier?: "High Probability" | "In Training" | "Needs Remediation";
+    benchmarkMet?: boolean;
   }>;
   subjects: Array<{
     id: string;
@@ -31,15 +35,20 @@ export interface DashboardAnalyticsSummary {
   }>;
 }
 
+export const DASHBOARD_ANALYTICS_QUERY_KEY = ["dashboardAnalyticsSummary"];
+
 export function useDashboardAnalyticsSummary() {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery<DashboardAnalyticsSummary>({
-    queryKey: ["dashboardAnalyticsSummary"],
+    queryKey: DASHBOARD_ANALYTICS_QUERY_KEY,
     queryFn: async () => {
       const response = await axiosPrivate.get("/analytics/dashboard-summary");
       return response.data?.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes cache
+    staleTime: 5000, // 5 seconds fresh window
+    refetchInterval: 10000, // 10 seconds auto-polling fallback for real-time live sync
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }

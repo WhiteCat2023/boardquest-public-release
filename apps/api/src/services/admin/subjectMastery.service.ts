@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 
 // ============ Validation Schemas ============
 
@@ -57,6 +58,8 @@ export class SubjectMasteryService {
         status: status || "In Training",
       },
     });
+
+    notifyAnalyticsUpdated();
 
     return mastery;
   }

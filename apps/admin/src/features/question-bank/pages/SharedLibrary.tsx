@@ -27,7 +27,7 @@ export default function SharedLibrary() {
     getCategoryQuestionCount,
     totalAllQuestionsCount,
     badgeLabel,
-  } = useSubjectNavCategories();
+  } = useSubjectNavCategories({ status: "APPROVED" });
 
   const filters: any = {
     search,

@@ -15,6 +15,7 @@ export default function ExtractedQuestionAccordionRow({
   index,
   question,
   isExpanded,
+  isDuplicate,
   onToggleExpand,
   onUpdateQuestion,
   onDelete,
@@ -78,6 +79,7 @@ export default function ExtractedQuestionAccordionRow({
         question={question}
         choices={choices}
         isExpanded={isExpanded}
+        isDuplicate={isDuplicate}
         onToggleExpand={onToggleExpand}
         onDelete={onDelete}
       />

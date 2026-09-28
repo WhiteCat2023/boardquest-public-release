@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 
-export function useDashboardQuestionStats() {
+export function useDashboardQuestionStats(authorId?: string) {
   const axiosPrivate = useAxiosPrivate();
 
   return useQuery({
-    queryKey: ["dashboard-question-stats"],
+    queryKey: ["dashboard-question-stats", authorId],
     queryFn: async () => {
-      const response = await axiosPrivate.get("/questions/stats");
+      const params = authorId ? `?authorId=${authorId}` : "";
+      const response = await axiosPrivate.get(`/questions/stats${params}`);
       return response.data?.data;
     },
     staleTime: 1000 * 60 * 3,

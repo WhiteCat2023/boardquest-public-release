@@ -38,6 +38,7 @@ export function useNotificationStream() {
             queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
             queryClient.invalidateQueries({ queryKey: ["categories"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
           }
         } catch (err) {
           console.warn("Error parsing notification SSE payload:", err);
@@ -51,8 +52,18 @@ export function useNotificationStream() {
           queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
           queryClient.invalidateQueries({ queryKey: ["categories"] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
         } catch (err) {
           console.warn("Error processing questions-updated SSE event:", err);
+        }
+      });
+
+      eventSource.addEventListener("analytics-updated", (_event: MessageEvent) => {
+        try {
+          // Instantly refresh dashboard analytics summary
+          queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
+        } catch (err) {
+          console.warn("Error processing analytics-updated SSE event:", err);
         }
       });
 

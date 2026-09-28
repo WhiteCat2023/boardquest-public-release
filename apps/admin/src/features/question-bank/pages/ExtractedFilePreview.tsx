@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,14 @@ import {
   useExtractedQuestionsStore,
   useBulkUploadQuestionStore,
 } from "@/store/QuestionBankStore";
-import { CheckCircle2, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  AlertTriangle,
+  Trash2,
+} from "lucide-react";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -29,6 +36,44 @@ function ExtractedFilePreview() {
 
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
   const from = location.state?.from?.pathname || "/question-bank";
+
+  const normalize = (str: string) =>
+    (str || "").toLowerCase().trim().replace(/\s+/g, " ");
+
+  const duplicateInfo = useMemo(() => {
+    const seen = new Set<string>();
+    const duplicateIndices = new Set<number>();
+    extractedQuestions.forEach((q, idx) => {
+      const norm = normalize(q.question);
+      if (norm) {
+        if (seen.has(norm)) {
+          duplicateIndices.add(idx);
+        } else {
+          seen.add(norm);
+        }
+      }
+    });
+    return {
+      duplicateIndices,
+      count: duplicateIndices.size,
+    };
+  }, [extractedQuestions]);
+
+  const handleRemoveInFileDuplicates = () => {
+    const seen = new Set<string>();
+    const unique: any[] = [];
+    extractedQuestions.forEach((q) => {
+      const norm = normalize(q.question);
+      if (norm && !seen.has(norm)) {
+        seen.add(norm);
+        unique.push(q);
+      }
+    });
+    const removedCount = extractedQuestions.length - unique.length;
+    setExtractedQuestions(unique);
+    setExpandedIndices(new Set());
+    toast.success(`Removed ${removedCount} duplicate question(s) from the preview.`);
+  };
 
   const onUploadClick = () => {
     handleBulkUpload(axiosPrivate, navigate, from);
@@ -131,6 +176,33 @@ function ExtractedFilePreview() {
           </div>
         </div>
 
+        {/* In-File Duplicates Warning Banner */}
+        {duplicateInfo.count > 0 && (
+          <div className="mx-4 md:mx-5 my-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={17} />
+              <div className="text-xs">
+                <span className="font-bold text-amber-900 dark:text-amber-200 block sm:inline">
+                  {duplicateInfo.count} duplicate question(s) detected in this file.
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  Identical questions will be automatically skipped upon upload to prevent duplicates in the question bank.
+                </span>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRemoveInFileDuplicates}
+              className="h-7 px-3 text-xs font-semibold gap-1.5 rounded-lg border-amber-500/40 bg-background text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 cursor-pointer shrink-0 shadow-2xs"
+            >
+              <Trash2 size={12} />
+              <span>Remove {duplicateInfo.count} Duplicates</span>
+            </Button>
+          </div>
+        )}
+
         {/* Extracted Questions Table with Accordion Rows */}
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -174,6 +246,7 @@ function ExtractedFilePreview() {
                     index={idx}
                     question={q}
                     isExpanded={expandedIndices.has(idx)}
+                    isDuplicate={duplicateInfo.duplicateIndices.has(idx)}
                     onToggleExpand={() => toggleExpand(idx)}
                     onUpdateQuestion={(updated) =>
                       handleUpdateQuestion(idx, updated)
@@ -210,7 +283,10 @@ function ExtractedFilePreview() {
             ) : (
               <CheckCircle2 size={15} />
             )}
-            <span>Upload {extractedQuestions.length} Questions to Bank</span>
+            <span>
+              Upload {extractedQuestions.length} Questions to Bank
+              {duplicateInfo.count > 0 && ` (${duplicateInfo.count} duplicate${duplicateInfo.count > 1 ? "s" : ""} skipped)`}
+            </span>
           </Button>
         </div>
       </Card>

@@ -21,62 +21,36 @@ import { useSubjectsTotalCount } from "@/features/question-bank";
 import { useStudents } from "@/features/students";
 import { useUsers } from "@/features/users";
 
-interface DashboardKpiCardsProps {
-  teacherAuthoredCount?: number;
-  totalQuestions?: number;
-  handledCategoriesCount?: number;
-  totalCategories?: number;
-  totalStudents?: number;
-  totalFaculties?: number;
-}
 
-export function DashboardKpiCards({
-  teacherAuthoredCount: propTeacherAuthoredCount,
-  totalQuestions: propTotalQuestions,
-  handledCategoriesCount: propHandledCategoriesCount,
-  totalStudents: propTotalStudents,
-  totalFaculties: propTotalFaculties,
-}: DashboardKpiCardsProps = {}) {
+export function DashboardKpiCards() {
   const navigate = useNavigate();
   const { isTeacher, currentUser } = useRoleFlags();
 
+  const authorId = isTeacher
+    ? currentUser?.id || (currentUser as any)?._id
+    : undefined;
+
   // Colocated queries for KPI metrics
-  const shouldFetchStats = propTotalQuestions === undefined;
-  const { data: statsData, isLoading: isStatsLoading } = useDashboardQuestionStats();
+  const { data: statsData, isLoading: isStatsLoading } =
+    useDashboardQuestionStats(authorId);
   const { data: dbCategories = [] } = useSubjects();
   const { data: categoriesTotalCount } = useSubjectsTotalCount();
   const { data: studentData, isLoading: isStudentsLoading } = useStudents({ skip: 0, take: 1 });
   const { data: facultyData, isLoading: isFacultiesLoading } = useUsers({ limit: 1 });
 
-  const teacherAuthoredCount =
-    propTeacherAuthoredCount ?? (statsData?.teacherAuthoredCount ?? 0);
-  const totalQuestions =
-    propTotalQuestions ??
-    (isTeacher
+  const teacherAuthoredCount = statsData?.teacherAuthoredCount ?? 0;
+  const totalQuestions = isTeacher
       ? statsData?.teacherAuthoredCount ?? 0
-      : statsData?.totalQuestions ?? 0);
+      : statsData?.totalQuestions ?? 0;
 
-  const handledCategoriesCount =
-    propHandledCategoriesCount ??
-    (Array.isArray(dbCategories)
+  const handledCategoriesCount = (Array.isArray(dbCategories)
       ? dbCategories.length
       : currentUser?.handledCategories?.length || 0);
 
-  const totalStudents =
-    propTotalStudents ??
-    ((studentData as any)?.total ??
-      (Array.isArray(studentData)
-        ? studentData.length
-        : (studentData as any)?.students?.length || 0));
+  const totalStudents = ((studentData as any)?.total ?? (Array.isArray(studentData) ? studentData.length : (studentData as any)?.students?.length || 0));
+  const totalFaculties = ((facultyData as any)?.total ?? (Array.isArray(facultyData) ? facultyData.length : (facultyData as any)?.faculties?.length || 0));
 
-  const totalFaculties =
-    propTotalFaculties ??
-    ((facultyData as any)?.total ??
-      (Array.isArray(facultyData)
-        ? facultyData.length
-        : (facultyData as any)?.faculties?.length || 0));
-
-  const isDataLoading = shouldFetchStats && isStatsLoading;
+  const isDataLoading = isStatsLoading || isStudentsLoading || isFacultiesLoading;
 
   const formatCount = (count: number) => {
     if (count >= 0 && count < 10) {

@@ -21,7 +21,7 @@ export const createQuestion = asyncHandler(async (req, res) => {
     }
     else if (!req.body.status) {
         req.body.status =
-            user.role === "SUPERADMIN" || user.role === "DEAN"
+            user.role === "SUPERADMIN" || user.role === "DEAN" || user.role === "TEAMLEAD"
                 ? "APPROVED"
                 : "PENDING_REVIEW";
     }
@@ -145,7 +145,10 @@ export const deleteQuestion = asyncHandler(async (req, res) => {
 });
 export const getQuestionStats = asyncHandler(async (req, res) => {
     const { authorId } = req.query;
-    const stats = await QuestionService.getQuestionStats(authorId);
+    const user = req.user;
+    const targetAuthorId = authorId ||
+        (user?.role === "TEACHER" ? user?.id : undefined);
+    const stats = await QuestionService.getQuestionStats(targetAuthorId);
     return new ApiResponse(200, stats, "Question stats retrieved successfully").send(res);
 });
 export const bulkUploadQuestions = asyncHandler(async (req, res) => {
@@ -166,16 +169,23 @@ export const bulkUploadQuestions = asyncHandler(async (req, res) => {
     }
     else if (!uploadStatus) {
         uploadStatus =
-            user.role === "SUPERADMIN" || user.role === "DEAN"
+            user.role === "SUPERADMIN" || user.role === "DEAN" || user.role === "TEAMLEAD"
                 ? QuestionStatus.APPROVED
                 : QuestionStatus.PENDING_REVIEW;
     }
     const isSilent = Boolean(req.body.silentNotification);
     const imported = await QuestionService.importQuestions(questions, categoryId, user.id, uploadStatus, isSilent);
-    await logInfo("BULK_UPLOAD_QUESTIONS", `Uploaded and queued ${imported.length} question(s) into category ${categoryId} with status ${uploadStatus}`, "QuestionService", user.email, req.ip);
+    const uploadedCount = imported.length ?? imported.count ?? 0;
+    const skippedCount = imported.skippedDuplicates ?? 0;
+    let responseMsg = `${uploadedCount} question(s) uploaded successfully`;
+    if (skippedCount > 0) {
+        responseMsg += ` (${skippedCount} existing duplicate question(s) were skipped)`;
+    }
+    await logInfo("BULK_UPLOAD_QUESTIONS", `Uploaded and queued ${uploadedCount} question(s) into category ${categoryId} with status ${uploadStatus} (${skippedCount} duplicates skipped)`, "QuestionService", user.email, req.ip);
     return new ApiResponse(201, {
-        message: `${imported.length} question(s) uploaded successfully`,
-        count: imported.length,
+        message: responseMsg,
+        count: uploadedCount,
+        skippedDuplicates: skippedCount,
         status: uploadStatus,
     }).send(res);
 });
@@ -336,4 +346,45 @@ export const toggleResolveComment = asyncHandler(async (req, res) => {
     const { isResolved } = req.body;
     const comment = await QuestionService.toggleResolveComment(questionId, commentId, isResolved);
     return new ApiResponse(200, { comment }, `Comment marked as ${comment.isResolved ? "resolved" : "unresolved"}`).send(res);
+});
+export const bulkParaphraseQuestions = asyncHandler(async (req, res) => {
+    const user = req.user;
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+    const { questions, tone } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+        throw new ApiError(400, "questions must be a non-empty array");
+    }
+    if (questions.length > 5) {
+        throw new ApiError(400, "Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+    }
+    const items = questions.map((q) => ({
+        id: String(q.id),
+        question: String(q.question),
+        topic: q.topic || "General",
+        subject: q.subject || "Board Exam",
+        difficulty: q.difficulty,
+        tone: tone || "BOARD_EXAM",
+        variationIndex: typeof q.variationIndex === "number" ? q.variationIndex : 0,
+    }));
+    const results = await QuestionService.bulkParaphraseQuestions(items);
+    await logInfo("BULK_PARAPHRASE_QUESTIONS", `Paraphrased ${results.length} question(s) in bulk`, "QuestionService", user.email, req.ip);
+    return new ApiResponse(200, { results }, `Successfully paraphrased ${results.length} question(s)`).send(res);
+});
+export const bulkApplyParaphrase = asyncHandler(async (req, res) => {
+    const user = req.user;
+    if (!user) {
+        throw new ApiError(401, "Authentication required");
+    }
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0) {
+        throw new ApiError(400, "updates must be a non-empty array");
+    }
+    if (updates.length > 5) {
+        throw new ApiError(400, "Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+    }
+    const updated = await QuestionService.bulkApplyParaphrase(updates, user);
+    await logInfo("BULK_APPLY_PARAPHRASE", `Applied paraphrased stems to ${updated.length} question(s)`, "QuestionService", user.email, req.ip);
+    return new ApiResponse(200, { updatedCount: updated.length, questions: updated }, `Successfully updated ${updated.length} question(s)`).send(res);
 });

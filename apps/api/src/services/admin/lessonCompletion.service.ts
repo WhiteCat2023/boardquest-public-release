@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
+import { notifyAnalyticsUpdated } from "./analytics.service";
 
 // ============ Validation Schemas ============
 
@@ -53,6 +54,8 @@ export class LessonCompletionService {
         status,
       },
     });
+
+    notifyAnalyticsUpdated();
 
     return completion;
   }
