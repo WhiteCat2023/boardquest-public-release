@@ -26,19 +26,28 @@ export function GameManagementPage() {
     }
   }, [searchParams, location.pathname]);
 
+  const handleTabChange = (tab: "badges" | "ranks") => {
+    setActiveTab(tab);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", tab);
+      return next;
+    });
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* Header */}
       <GameManagementHeader />
 
       {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-border/80 pb-2.5 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-border/80 pb-3 pt-0.5 overflow-x-auto scrollbar-none shrink-0">
         <button
           type="button"
-          onClick={() => setActiveTab("badges")}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+          onClick={() => handleTabChange("badges")}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === "badges"
-              ? "bg-primary text-primary-foreground shadow-md"
+              ? "bg-primary text-primary-foreground shadow-sm"
               : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
@@ -47,19 +56,24 @@ export function GameManagementPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("ranks")}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+          onClick={() => handleTabChange("ranks")}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === "ranks"
-              ? "bg-primary text-primary-foreground shadow-md"
+              ? "bg-primary text-primary-foreground shadow-sm"
               : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
-          <Crown className="w-4 h-4 text-amber-500" /> Aspirant Ranks 
+          <Crown
+            className={`w-4 h-4 ${
+              activeTab === "ranks" ? "text-amber-300" : "text-amber-500"
+            }`}
+          />{" "}
+          Aspirant Ranks
         </button>
       </div>
 
       {/* Tab Contents - Independent Colocated Widgets */}
-      <div>
+      <div className="flex-1 min-h-0 w-full">
         {activeTab === "badges" && <BadgesManagementTab />}
         {activeTab === "ranks" && <RanksManagementTab />}
       </div>

@@ -8,6 +8,6 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: process.env.DATABASE_URL || "mongodb://localhost:27017/placeholder",
+    url: process.env.DATABASE_URL,
   },
 });

@@ -13,7 +13,6 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/admin/package.json apps/admin/
-COPY apps/game/package.json apps/game/
 COPY apps/review-center/package.json apps/review-center/
 
 # Install workspace dependencies
