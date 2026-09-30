@@ -7,7 +7,7 @@ import { Award, Crown } from "lucide-react";
 
 export function GameManagementPage() {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isRanksRoute = location.pathname.includes("rank");
   const tabParam = searchParams.get("tab");
   const initialTab =
