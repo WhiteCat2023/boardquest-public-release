@@ -84,6 +84,8 @@ export function useUserDirectory() {
     resetPaginationOnFilterChange,
     // Data & Pagination
     users,
+    totalUsers: userResponse?.total ?? users.length,
+    pageSize: ITEMS_PER_PAGE,
     isUsersLoading,
     currentPageIndex,
     hasNextPage,

@@ -9,7 +9,7 @@ import {
   useDeleteRank,
 } from "../api/useGameManagement";
 import { RankEditorModal } from "./RankEditorModal";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
 import {
   RanksFilterToolbar,
   RanksTable,
@@ -73,7 +73,7 @@ export function RanksManagementTab({
       toast.success("Aspirant rank tier deleted successfully.");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Failed to delete rank tier."
+        err?.response?.data?.message || "Failed to delete rank tier.",
       );
     }
   };
@@ -85,7 +85,7 @@ export function RanksManagementTab({
       toast.info("Rank tier active status updated.");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Failed to toggle rank status."
+        err?.response?.data?.message || "Failed to toggle rank status.",
       );
     }
   };
@@ -135,7 +135,7 @@ export function RanksManagementTab({
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedRanks = filteredRanks.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE
+    startIndex + ITEMS_PER_PAGE,
   );
 
   const hasActiveFilters = Boolean(searchTerm) || selectedStatus !== "ALL";
@@ -176,22 +176,23 @@ export function RanksManagementTab({
         onDeleteRank={setDeletingRank}
         onToggleRankActive={handleToggleRankActive}
         onInspectStudents={setInspectingRank}
+        pagination={
+          !isLoading && filteredRanks.length > 0 ? (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredRanks.length}
+              pageSize={ITEMS_PER_PAGE}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={currentPage > 1}
+              onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}
+              onPrevious={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
+              itemLabel="rank tiers"
+              variant="table-footer"
+            />
+          ) : null
+        }
       />
-
-      {/* Pagination Bar */}
-      {!isLoading && (
-        <QuestionListPagination
-          currentPage={currentPage}
-          hasNextPage={hasNextPage}
-          onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}
-          onPrevious={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
-          onPageSelect={(page) =>
-            page >= 1 && page <= totalPages && setCurrentPage(page)
-          }
-          maxPageReached={totalPages}
-          totalPages={totalPages}
-        />
-      )}
 
       {/* Real Enrolled Students Inspection Modal */}
       <RankStudentsModal

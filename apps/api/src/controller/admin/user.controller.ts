@@ -206,6 +206,17 @@ export const toggleUserStatus = asyncHandler(
 );
 export const toggleFacultyStatus = toggleUserStatus;
 
+export const getActiveDean = asyncHandler(
+  async (_req: AuthenticatedRequest, res: Response) => {
+    const activeDean = await userService.getActiveDean();
+    return new ApiResponse(
+      200,
+      { activeDean },
+      "Active dean retrieved successfully",
+    ).send(res);
+  },
+);
+
 export const updateUserSubjects = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const creatorRole = req.user?.role;

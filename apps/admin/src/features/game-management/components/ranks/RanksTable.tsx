@@ -13,6 +13,7 @@ interface RanksTableProps {
   onDeleteRank: (rank: RankTier) => void;
   onToggleRankActive: (id: string) => void;
   onInspectStudents: (rank: RankTier) => void;
+  pagination?: React.ReactNode;
 }
 
 export default function RanksTable({
@@ -25,6 +26,7 @@ export default function RanksTable({
   onDeleteRank,
   onToggleRankActive,
   onInspectStudents,
+  pagination,
 }: RanksTableProps) {
   return (
     <div className="w-full rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
@@ -127,6 +129,7 @@ export default function RanksTable({
           </tbody>
         </table>
       </div>
+      {pagination}
     </div>
   );
 }

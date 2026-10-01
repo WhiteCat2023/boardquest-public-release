@@ -1,6 +1,14 @@
-import { Clock, ShieldAlert } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Clock,
+  ShieldAlert,
+  ChevronDown,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useLogs, type LogItem } from "@/features/logs";
 import { isUserOnline } from "@/features/users/utils/userUtils";
 
@@ -9,15 +17,35 @@ interface UserActivityLogsTabProps {
   lastActiveAt?: string;
 }
 
+const PAGE_SIZE = 20;
+
 export default function UserActivityLogsTab({
   userEmail,
   lastActiveAt,
 }: UserActivityLogsTabProps) {
-  const { data: userLogs = [], isLoading: isLogsLoading } = useLogs({
+  const [limit, setLimit] = useState(PAGE_SIZE);
+
+  // Reset pagination when userEmail changes
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [userEmail]);
+
+  const {
+    data: userLogs = [],
+    isLoading: isLogsLoading,
+    isFetching,
+  } = useLogs({
     search: userEmail || "",
+    limit,
   });
 
   const isOnline = isUserOnline(lastActiveAt);
+  const hasMore = userLogs.length >= limit;
+  const isFetchingMore = isFetching && !isLogsLoading;
+
+  const handleViewMore = () => {
+    setLimit((prev) => prev + PAGE_SIZE);
+  };
 
   const formatLastActive = (dateStr?: string) => {
     if (!dateStr) return "Never";
@@ -125,7 +153,9 @@ export default function UserActivityLogsTab({
               </span>
             </div>
             <div className="text-xs font-semibold text-muted-foreground">
-              {userLogs.length} event{userLogs.length === 1 ? "" : "s"} recorded
+              {hasMore
+                ? `Showing ${userLogs.length} events`
+                : `${userLogs.length} event${userLogs.length === 1 ? "" : "s"} recorded`}
             </div>
           </div>
 
@@ -136,7 +166,10 @@ export default function UserActivityLogsTab({
             </div>
           ) : userLogs.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground flex flex-col items-center gap-2 bg-muted/20 rounded-2xl border border-border/60">
-              <ShieldAlert size={32} className="text-muted-foreground/40 mb-1" />
+              <ShieldAlert
+                size={32}
+                className="text-muted-foreground/40 mb-1"
+              />
               <div>
                 <p className="text-sm font-bold text-foreground">
                   No Activity Logs Found
@@ -147,33 +180,76 @@ export default function UserActivityLogsTab({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
-              {userLogs.map((log: LogItem) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between p-3 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border transition-colors gap-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {getLogLevelBadge(log.level)}
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-foreground leading-snug truncate max-w-[240px] sm:max-w-md">
-                        {log.action || log.message || "User Action"}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate max-w-[240px] sm:max-w-md">
-                        {log.message && log.message !== log.action
-                          ? log.message
-                          : log.source || "System"}
-                        {log.ipAddress ? ` • IP: ${log.ipAddress}` : ""}
-                      </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 pr-1">
+                {userLogs.map((log: LogItem) => (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between p-3 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border transition-colors gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {getLogLevelBadge(log.level)}
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground leading-snug truncate max-w-[240px] sm:max-w-md">
+                          {log.action || log.message || "User Action"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate max-w-[240px] sm:max-w-md">
+                          {log.message && log.message !== log.action
+                            ? log.message
+                            : log.source || "System"}
+                          {log.ipAddress ? ` • IP: ${log.ipAddress}` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0">
+                      <Clock size={12} />
+                      {formatLogDate(log.createdAt)}
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0">
-                    <Clock size={12} />
-                    {formatLogDate(log.createdAt)}
-                  </div>
+              {/* View More Button or Caught Up State */}
+              {hasMore ? (
+                <div className="p-3.5 flex justify-center items-center bg-muted/10 border-t border-border rounded-xl">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isFetchingMore}
+                    onClick={handleViewMore}
+                    className="h-8.5 px-5 rounded-xl border-border bg-card hover:bg-accent text-foreground text-xs font-semibold shadow-2xs gap-2 transition-all cursor-pointer"
+                  >
+                    {isFetchingMore ? (
+                      <>
+                        <Loader2
+                          size={14}
+                          className="animate-spin text-primary"
+                        />
+                        <span>Loading more activity logs...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown
+                          size={14}
+                          className="text-muted-foreground"
+                        />
+                        <span>View More Activity Logs</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
-              ))}
+              ) : userLogs.length > 0 ? (
+                <div className="py-3 px-4 text-center border-t border-border/60 bg-muted/5 rounded-xl">
+                  <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1.5">
+                    <CheckCircle2 size={12} className="text-emerald-500/80" />
+                    <span>
+                      You're all caught up. No more activity logs to load.
+                    </span>
+                  </p>
+                </div>
+              ) : null}
             </div>
           )}
         </div>

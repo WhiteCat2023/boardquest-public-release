@@ -22,7 +22,7 @@ import StudentHeader from "../components/StudentHeader";
 import StudentTable from "../components/StudentTable";
 import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
 import AssignGuidanceModal from "../components/AssignGuidanceModal";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import { DataTablePagination } from "@/components/custom/pagination";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -227,6 +227,7 @@ export default function StudentManagement() {
           </div>
 
           {/* 4. Student Directory Table */}
+          {/* 4. Student Directory Table with Integrated Footer */}
           <StudentTable
             students={studentsList}
             isLoading={isLoading}
@@ -241,20 +242,24 @@ export default function StudentManagement() {
                 ? "You currently do not have any students assigned to you for academic guidance."
                 : "No students match the selected filter criteria."
             }
+            pagination={
+              !isLoading && (
+                <DataTablePagination
+                  currentPage={currentPage}
+                  hasNextPage={hasNextPage}
+                  hasPreviousPage={currentPage > 1}
+                  onNext={handleNext}
+                  onPrevious={handlePrevious}
+                  onPageSelect={handlePageSelect}
+                  totalPages={totalPages}
+                  totalItems={total}
+                  pageSize={ITEMS_PER_PAGE}
+                  itemLabel="students"
+                  variant="table-footer"
+                />
+              )
+            }
           />
-
-          {/* 5. Pagination Bar */}
-          {!isLoading && (
-            <QuestionListPagination
-              currentPage={currentPage}
-              hasNextPage={hasNextPage}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onPageSelect={handlePageSelect}
-              maxPageReached={totalPages}
-              totalPages={totalPages}
-            />
-          )}
         </>
       ) : (
         <GuidanceAssignmentsDesk />

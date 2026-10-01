@@ -18,29 +18,18 @@ interface LeaderboardTableProps {
 export default function LeaderboardTable({
   students,
   totalCount,
-  startIndex,
   pageSize,
   currentPage,
   totalPages,
   onPageChange,
   onPageSizeChange,
 }: LeaderboardTableProps) {
-  const showingStart = totalCount > 0 ? startIndex + 1 : 0;
-  const showingEnd = Math.min(startIndex + pageSize, totalCount);
-
   return (
     <Card className="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden w-full p-0">
       <CardHeader className="border-b border-border bg-muted/40 py-3 px-4">
-        <CardTitle className="text-xs sm:text-sm font-bold flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <span>Live Candidate Rankings Roster</span>
-          </span>
-          <span className="text-xs text-muted-foreground font-normal">
-            Showing <strong className="text-foreground">{showingStart}</strong>-
-            <strong className="text-foreground">{showingEnd}</strong> of{" "}
-            <strong className="text-foreground">{totalCount}</strong> candidate(s)
-          </span>
+        <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-primary" />
+          <span>Live Candidate Rankings Roster</span>
         </CardTitle>
       </CardHeader>
 
@@ -71,6 +60,7 @@ export default function LeaderboardTable({
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
+          totalItems={totalCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />

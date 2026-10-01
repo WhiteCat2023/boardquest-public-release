@@ -15,6 +15,7 @@ interface CategoryTableProps {
   isLoading?: boolean;
   canManage?: boolean;
   onEdit?: (category: Category) => void;
+  pagination?: React.ReactNode;
 }
 
 export function CategoryTable({
@@ -22,6 +23,7 @@ export function CategoryTable({
   isLoading = false,
   canManage = false,
   onEdit,
+  pagination,
 }: CategoryTableProps) {
   if (isLoading) {
     return (
@@ -73,6 +75,7 @@ export function CategoryTable({
           ))}
         </TableBody>
       </Table>
+      {pagination}
     </div>
   );
 }

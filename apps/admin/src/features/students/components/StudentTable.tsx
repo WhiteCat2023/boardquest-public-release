@@ -19,6 +19,7 @@ interface StudentTableProps {
   onAssignGuidance?: (student: any) => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  pagination?: React.ReactNode;
 }
 
 export default function StudentTable({
@@ -27,6 +28,7 @@ export default function StudentTable({
   onAssignGuidance,
   emptyTitle = "No Enrolled Students Registered",
   emptyDescription = "No students match the selected filter criteria.",
+  pagination,
 }: StudentTableProps) {
   const { isTeacher } = useRoleFlags();
   const displayStudents = students;
@@ -98,6 +100,7 @@ export default function StudentTable({
           </div>
         )}
       </phantom-ui>
+      {pagination}
     </Card>
   );
 }

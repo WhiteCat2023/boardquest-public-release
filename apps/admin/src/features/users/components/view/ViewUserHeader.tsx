@@ -12,18 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useToggleUserStatus } from "@/features/users/api/useUsers";
+import ToggleUserStatusDialog from "../ToggleUserStatusDialog";
 import {
   getRoleBadgeColor,
   getRoleTitle,
@@ -44,7 +34,6 @@ export default function ViewUserHeader({
   currentUserRole,
 }: ViewUserHeaderProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const toggleStatusMutation = useToggleUserStatus();
 
   const isAccountActive =
     user.accountStatus === "ACTIVE" || user.accountStatus !== "DEACTIVATED";
@@ -64,25 +53,6 @@ export default function ViewUserHeader({
       return;
     }
     setIsConfirmOpen(true);
-  };
-
-  const handleToggleConfirm = async () => {
-    const nextStatus = !isAccountActive;
-    try {
-      await toggleStatusMutation.mutateAsync({
-        id: user.id,
-        accountStatus: nextStatus ? "ACTIVE" : "DEACTIVATED",
-        isActive: nextStatus,
-      });
-      toast.success(
-        `${user.name}'s account was ${nextStatus ? "activated" : "deactivated"}.`,
-      );
-      setIsConfirmOpen(false);
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Failed to update account status.",
-      );
-    }
   };
 
   return (
@@ -180,7 +150,6 @@ export default function ViewUserHeader({
           {canManage && (
             <Button
               onClick={handleOpenConfirm}
-              disabled={toggleStatusMutation.isPending}
               variant={isAccountActive ? "outline" : "default"}
               className={`h-9 rounded-xl font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs ${
                 isAccountActive
@@ -211,62 +180,21 @@ export default function ViewUserHeader({
         </div>
       </div>
 
-      {/* Activate/Deactivate Confirmation AlertDialog */}
-      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="bg-card rounded-3xl p-6 border border-border shadow-xl max-w-md text-foreground">
-          <AlertDialogHeader className="flex flex-row items-start gap-3.5 text-left">
-            <div
-              className={`p-2.5 rounded-2xl border shrink-0 mt-0.5 ${
-                isAccountActive
-                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                  : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-              }`}
-            >
-              {isAccountActive ? (
-                <XCircle size={20} />
-              ) : (
-                <CheckCircle2 size={20} />
-              )}
-            </div>
-            <div className="space-y-1">
-              <AlertDialogTitle className="text-base font-bold text-foreground">
-                {isAccountActive ? "Deactivate Account" : "Activate Account"}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
-                Are you sure you want to{" "}
-                {isAccountActive ? "deactivate" : "activate"}{" "}
-                <strong className="text-foreground">{user.name}</strong>?{" "}
-                {isAccountActive
-                  ? "This user will immediately lose access to all portals and systems."
-                  : "This user will regain full access according to their role privileges."}
-              </AlertDialogDescription>
-            </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 gap-2">
-            <AlertDialogCancel
-              disabled={toggleStatusMutation.isPending}
-              className="rounded-xl border-border hover:bg-accent text-foreground text-xs font-semibold h-9"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleToggleConfirm}
-              disabled={toggleStatusMutation.isPending}
-              className={`rounded-xl text-xs font-semibold h-9 shadow-xs text-white ${
-                isAccountActive
-                  ? "bg-destructive hover:bg-destructive/90"
-                  : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
-            >
-              {toggleStatusMutation.isPending
-                ? "Processing..."
-                : isAccountActive
-                  ? "Yes, Deactivate"
-                  : "Yes, Activate"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Account Status Confirmation Dialog */}
+      <ToggleUserStatusDialog
+        targetMember={
+          isConfirmOpen
+            ? {
+                id: user.id,
+                name: user.name,
+                currentStatus: isAccountActive,
+                role: user.role as string,
+                email: user.email,
+              }
+            : null
+        }
+        onClose={() => setIsConfirmOpen(false)}
+      />
     </>
   );
 }

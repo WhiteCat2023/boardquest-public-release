@@ -193,6 +193,14 @@ export const useExtractedQuestionsStore = create<ExtractedQuestionsProps>(
   }),
 );
 
+export interface QuestionUploadSummary {
+  isOpen: boolean;
+  totalCount: number;
+  uploadedCount: number;
+  skippedDuplicates: number;
+  from?: string;
+}
+
 export interface BulkUploadQuestionState {
   file: File | null;
   setFile: (file: File | null) => void;
@@ -205,6 +213,10 @@ export interface BulkUploadQuestionState {
 
   isUploading: boolean;
   setIsUploading: (isUploading: boolean) => void;
+
+  uploadSummary: QuestionUploadSummary | null;
+  setUploadSummary: (summary: QuestionUploadSummary | null) => void;
+  closeUploadSummary: () => void;
 
   handleBulkUpload: (axiosPrivate: any, navigate: any, from: string) => void;
   handleCancel: () => void;
@@ -226,11 +238,16 @@ export const useBulkUploadQuestionStore = create<BulkUploadQuestionState>(
     isUploading: false,
     setIsUploading: (isUploading: boolean) => set({ isUploading }),
 
+    uploadSummary: null,
+    setUploadSummary: (uploadSummary: QuestionUploadSummary | null) =>
+      set({ uploadSummary }),
+    closeUploadSummary: () => set({ uploadSummary: null }),
+
     handleBulkUpload: (axiosPrivate: any, navigate: any, from: string) =>
       bulkUploadQuestions(axiosPrivate, navigate, from),
     handleCancel: () => {
       useExtractedQuestionsStore.getState().setExtractedQuestions([]);
-      set({ file: null, selectedCategoryId: "" });
+      set({ file: null, selectedCategoryId: "", uploadSummary: null });
     },
     handleExtraction: (axiosPrivate: any) => extractQuestions(axiosPrivate),
   }),

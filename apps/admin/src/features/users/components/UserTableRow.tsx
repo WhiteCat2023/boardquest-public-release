@@ -13,7 +13,13 @@ import { TableRow, TableCell } from "@/components/ui/table";
 interface UserTableRowProps {
   member: UserMember;
   canManage: boolean;
-  onToggleStatus: (id: string, currentStatus: boolean, name: string) => void;
+  onToggleStatus: (
+    id: string,
+    currentStatus: boolean,
+    name: string,
+    role?: string,
+    email?: string,
+  ) => void;
 }
 
 export default function UserTableRow({
@@ -141,7 +147,13 @@ export default function UserTableRow({
           {canManage && !isSuperAdminAccount && (
             <button
               onClick={() =>
-                onToggleStatus(member.id, isAccountActive, member.name)
+                onToggleStatus(
+                  member.id,
+                  isAccountActive,
+                  member.name,
+                  member.role as string,
+                  member.email,
+                )
               }
               className={`size-7 p-1 rounded-md transition-all cursor-pointer flex items-center justify-center ${
                 isAccountActive

@@ -5,11 +5,10 @@ import {
   X,
   Plus,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
 import type { ReviewSchedule } from "../../types/types";
 import { ScheduleCardItem } from "./ScheduleCardItem";
 
@@ -158,39 +157,19 @@ export function ScheduledPeriodsList({
 
       {/* Pagination Footer */}
       {filteredSchedules.length > 0 && (
-        <div className="flex items-center justify-between pt-2.5 border-t border-border/80 text-xs shrink-0">
-          <span className="text-[11px] text-muted-foreground font-medium">
-            {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
-            {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchedules.length)}{" "}
-            of {filteredSchedules.length}
-          </span>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-1 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-              title="Previous Page"
-            >
-              <ChevronLeft size={14} />
-            </button>
-
-            <span className="text-[11px] font-bold text-foreground px-1.5 min-w-[3rem] text-center">
-              {currentPage} / {totalPages}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="p-1 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-              title="Next Page"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        <DataTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredSchedules.length}
+          pageSize={ITEMS_PER_PAGE}
+          hasNextPage={currentPage < totalPages}
+          hasPreviousPage={currentPage > 1}
+          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          itemLabel="periods"
+          variant="table-footer"
+          className="-mx-4 sm:-mx-5 -mb-4 sm:-mb-5 mt-2 rounded-b-2xl border-t border-border/80"
+        />
       )}
     </div>
   );

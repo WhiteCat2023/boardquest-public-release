@@ -16,6 +16,7 @@ interface ReviewCenterStudentsTableProps {
   searchTerm: string;
   companyName?: string;
   onSelectCandidateForScores: (candidate: ReviewCenterCandidateItem) => void;
+  pagination?: React.ReactNode;
 }
 
 export default function ReviewCenterStudentsTable({
@@ -24,6 +25,7 @@ export default function ReviewCenterStudentsTable({
   searchTerm,
   companyName,
   onSelectCandidateForScores,
+  pagination,
 }: ReviewCenterStudentsTableProps) {
   return (
     <Card className="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden w-full p-0">
@@ -80,6 +82,7 @@ export default function ReviewCenterStudentsTable({
           </Table>
         </div>
       )}
+      {pagination}
     </Card>
   );
 }

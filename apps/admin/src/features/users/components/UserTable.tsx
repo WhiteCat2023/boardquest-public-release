@@ -16,7 +16,14 @@ interface UserTableProps {
   isLoading: boolean;
   currentUserRole: RoleType;
   currentUserId: string;
-  onToggleStatus: (id: string, currentStatus: boolean, name: string) => void;
+  onToggleStatus: (
+    id: string,
+    currentStatus: boolean,
+    name: string,
+    role?: string,
+    email?: string,
+  ) => void;
+  pagination?: React.ReactNode;
 }
 
 export default function UserTable({
@@ -25,6 +32,7 @@ export default function UserTable({
   currentUserRole,
   currentUserId,
   onToggleStatus,
+  pagination,
 }: UserTableProps) {
   const displayUsers =
     isLoading && users.length === 0
@@ -99,6 +107,7 @@ export default function UserTable({
           </div>
         )}
       </phantom-ui>
+      {pagination}
     </Card>
   );
 }

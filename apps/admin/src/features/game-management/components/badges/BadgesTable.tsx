@@ -14,6 +14,7 @@ interface BadgesTableProps {
   onEditBadge: (badge: GameBadge) => void;
   onDeleteBadge: (id: string) => void;
   onToggleActive: (id: string) => void;
+  pagination?: React.ReactNode;
 }
 
 export default function BadgesTable({
@@ -27,6 +28,7 @@ export default function BadgesTable({
   onEditBadge,
   onDeleteBadge,
   onToggleActive,
+  pagination,
 }: BadgesTableProps) {
   return (
     <div className="w-full rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
@@ -137,6 +139,7 @@ export default function BadgesTable({
           </tbody>
         </table>
       </div>
+      {pagination}
     </div>
   );
 }

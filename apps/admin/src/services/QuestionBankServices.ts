@@ -156,33 +156,46 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
       }
     }
 
-    if (totalUploaded > 0 && totalSkippedDuplicates > 0) {
-      progressToast.warning(
-        `Uploaded ${totalUploaded} question(s). ${totalSkippedDuplicates} duplicate question(s) already existed and were skipped.`,
-        "Upload Complete (Duplicates Skipped)"
-      );
-    } else if (totalUploaded === 0 && totalSkippedDuplicates > 0) {
-      progressToast.warning(
-        `No questions were added. All ${totalSkippedDuplicates} question(s) already exist in this subject.`,
-        "All Duplicates Skipped"
-      );
-    } else {
-      progressToast.success(
-        `All ${totalUploaded || totalCount} question(s) successfully queued and processed!`,
-        "Upload Complete"
-      );
-    }
-
-    // Invalidate questions, review desk, and categories so question list updates automatically
+    // Invalidate questions, review desk, and categories so lists update automatically
     queryClient.invalidateQueries({ queryKey: ["questions"] });
     queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
     queryClient.invalidateQueries({ queryKey: ["categories"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
 
-    setExtractedQuestions([]);
-    setFile(null);
-    setSelectedCategoryId("");
-    navigate(from, { replace: true });
+    if (totalSkippedDuplicates > 0) {
+      // Partial or all-duplicate scenario: Show the comprehensive summary modal
+      useBulkUploadQuestionStore.getState().setUploadSummary({
+        isOpen: true,
+        totalCount,
+        uploadedCount: totalUploaded,
+        skippedDuplicates: totalSkippedDuplicates,
+        from,
+      });
+
+      // Keep toast brief so it does not clutter the screen behind the modal
+      if (totalUploaded > 0) {
+        progressToast.warning(
+          `Uploaded ${totalUploaded} of ${totalCount}. ${totalSkippedDuplicates} duplicate(s) skipped.`,
+          "Upload Complete (Duplicates Skipped)"
+        );
+      } else {
+        progressToast.warning(
+          `All ${totalSkippedDuplicates} question(s) already exist in this category.`,
+          "All Duplicates Skipped"
+        );
+      }
+    } else {
+      // 100% clean success: Toast only, auto-redirect immediately
+      progressToast.success(
+        `All ${totalUploaded || totalCount} question(s) successfully queued and processed!`,
+        "Upload Complete"
+      );
+
+      setExtractedQuestions([]);
+      setFile(null);
+      setSelectedCategoryId("");
+      navigate(from, { replace: true });
+    }
   } catch (err: any) {
     progressToast.error(
       err.response?.data?.message || `Failed to queue questions at question #${processedCount + 1}.`,

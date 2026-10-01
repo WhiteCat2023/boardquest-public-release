@@ -122,11 +122,32 @@ export function useToggleUserStatus() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
       queryClient.invalidateQueries({ queryKey: ["faculty"] });
+      queryClient.invalidateQueries({ queryKey: ["active-dean"] });
     },
   });
 }
 
 export const useToggleFacultyStatus = useToggleUserStatus;
+
+export function useActiveDean(enabled: boolean = true) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<{
+    id: string;
+    name: string;
+    email: string;
+    employeeId?: string;
+  } | null>({
+    queryKey: ["active-dean"],
+    queryFn: async () => {
+      const response = await axiosPrivate.get("/faculty/active-dean");
+      return response.data?.data?.activeDean || null;
+    },
+    enabled,
+    staleTime: 1000 * 30, // 30 seconds cache
+    refetchOnWindowFocus: true,
+  });
+}
 
 export function useSubjects(params?: {
   isPublished?: boolean;

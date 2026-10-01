@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import useRoleFlags from "@/hooks/useRoleFlags";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
 import { useCategories, type Category } from "../api/useCategories";
 import {
   CategoriesHeader,
@@ -69,31 +69,52 @@ export default function CategoriesView() {
       {categories.length === 0 && !isLoading ? (
         <CategoriesEmptyState searchTerm={searchTerm} />
       ) : viewMode === "grid" ? (
-        <CategoryCardGrid
-          categories={paginatedCategories}
-          isLoading={isLoading}
-          canManage={canManage}
-          onEdit={setEditingCategory}
-        />
+        <>
+          <CategoryCardGrid
+            categories={paginatedCategories}
+            isLoading={isLoading}
+            canManage={canManage}
+            onEdit={setEditingCategory}
+          />
+          {!isLoading && categories.length > 0 && (
+            <DataTablePagination
+              currentPage={currentPage}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={currentPage > 1}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onPageSelect={handlePageSelect}
+              totalPages={totalPages}
+              totalItems={categories.length}
+              pageSize={ITEMS_PER_PAGE}
+              itemLabel="subjects"
+              variant="card"
+            />
+          )}
+        </>
       ) : (
         <CategoryTable
           categories={paginatedCategories}
           isLoading={isLoading}
           canManage={canManage}
           onEdit={setEditingCategory}
-        />
-      )}
-
-      {/* Pagination Bar */}
-      {!isLoading && categories.length > 0 && (
-        <QuestionListPagination
-          currentPage={currentPage}
-          hasNextPage={hasNextPage}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onPageSelect={handlePageSelect}
-          maxPageReached={totalPages}
-          totalPages={totalPages}
+          pagination={
+            !isLoading && categories.length > 0 ? (
+              <DataTablePagination
+                currentPage={currentPage}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={currentPage > 1}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                onPageSelect={handlePageSelect}
+                totalPages={totalPages}
+                totalItems={categories.length}
+                pageSize={ITEMS_PER_PAGE}
+                itemLabel="subjects"
+                variant="table-footer"
+              />
+            ) : null
+          }
         />
       )}
 
@@ -115,4 +136,3 @@ export default function CategoriesView() {
     </div>
   );
 }
-

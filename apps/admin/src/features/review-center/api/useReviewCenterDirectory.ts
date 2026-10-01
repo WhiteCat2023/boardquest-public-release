@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useReviewCenters } from "./useReviewCenter";
 
-
 export function useReviewCenterDirectory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
@@ -9,11 +8,12 @@ export function useReviewCenterDirectory() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  const { data: rawReviewCenters = [], isLoading: isCentersLoading } = useReviewCenters({
-    search: searchTerm,
-    location: selectedLocation,
-    company: selectedCompany,
-  });
+  const { data: rawReviewCenters = [], isLoading: isCentersLoading } =
+    useReviewCenters({
+      search: searchTerm,
+      location: selectedLocation,
+      company: selectedCompany,
+    });
 
   const reviewCenters = Array.isArray(rawReviewCenters) ? rawReviewCenters : [];
   const total = reviewCenters.length;
@@ -26,11 +26,17 @@ export function useReviewCenterDirectory() {
   );
 
   const uniqueLocations = Array.from(
-    new Set(reviewCenters.map((rc) => rc?.location || "Philippines").filter(Boolean))
+    new Set(
+      reviewCenters.map((rc) => rc?.location || "Philippines").filter(Boolean),
+    ),
   );
 
   const uniqueCompanies = Array.from(
-    new Set(reviewCenters.map((rc) => rc?.companyName).filter((name): name is string => Boolean(name)))
+    new Set(
+      reviewCenters
+        .map((rc) => rc?.companyName)
+        .filter((name): name is string => Boolean(name)),
+    ),
   );
 
   const resetFilters = () => {
@@ -77,6 +83,8 @@ export function useReviewCenterDirectory() {
     currentPage,
     setCurrentPage,
     totalPages,
+    totalItems: total,
+    pageSize: ITEMS_PER_PAGE,
     hasNextPage,
     handleNextPage,
     handlePreviousPage,
@@ -91,4 +99,3 @@ export function useReviewCenterDirectory() {
 }
 
 export default useReviewCenterDirectory;
-

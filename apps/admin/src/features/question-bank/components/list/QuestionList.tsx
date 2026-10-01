@@ -1,7 +1,7 @@
 import { AlertCircle, FileQuestion } from "lucide-react";
 import { type QuestionFilters } from "@/features/question-bank";
 import QuestionTable from "./QuestionTable";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import { DataTablePagination } from "@/components/custom/pagination";
 import { useQuestionListActions } from "@/features/question-bank";
 import BulkParaphraseDialog from "../dialog/BulkParaphraseDialog";
 
@@ -59,7 +59,9 @@ export default function QuestionList({
         <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-destructive/20 bg-destructive/10 py-16 text-center text-foreground font-sans">
           <AlertCircle size={36} className="text-destructive" />
           <div>
-            <p className="font-semibold text-foreground">Something went wrong</p>
+            <p className="font-semibold text-foreground">
+              Something went wrong
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               {error instanceof Error
                 ? error.message
@@ -89,7 +91,7 @@ export default function QuestionList({
             </div>
           )}
 
-          {/* Data Table with Integrated Datagrid Header Toolbar */}
+          {/* Data Table with Integrated Datagrid Header Toolbar & Footer */}
           {questions.length > 0 && !loading && !error && (
             <QuestionTable
               questions={questions}
@@ -107,18 +109,21 @@ export default function QuestionList({
               isDeletePending={bulkDeleteMutation.isPending}
               isBankView={isBank}
               onParaphrase={handleOpenParaphrase}
+              pagination={
+                <DataTablePagination
+                  currentPage={currentPageIndex + 1}
+                  hasNextPage={!!hasNextPage}
+                  hasPreviousPage={currentPageIndex > 0}
+                  onNext={handleNext}
+                  onPrevious={handlePrevious}
+                  onPageSelect={handlePageSelect}
+                  pageSize={itemsPerPage}
+                  itemLabel="questions"
+                  variant="table-footer"
+                />
+              }
             />
           )}
-
-          {/* Pagination */}
-          <QuestionListPagination
-            currentPage={currentPageIndex + 1}
-            hasNextPage={!!hasNextPage}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            onPageSelect={handlePageSelect}
-            maxPageReached={cursorsStack.length}
-          />
         </div>
       </phantom-ui>
 

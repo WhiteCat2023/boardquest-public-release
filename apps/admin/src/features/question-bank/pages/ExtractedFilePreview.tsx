@@ -13,6 +13,7 @@ import {
   useExtractedQuestionsStore,
   useBulkUploadQuestionStore,
 } from "@/store/QuestionBankStore";
+import { BulkUploadSummaryModal } from "@/components/feedback";
 import {
   CheckCircle2,
   ChevronDown,
@@ -29,7 +30,12 @@ import ExtractedQuestionAccordionRow from "../components/ExtractedQuestionAccord
 function ExtractedFilePreview() {
   const { extractedQuestions, setExtractedQuestions } =
     useExtractedQuestionsStore();
-  const { isUploading, handleBulkUpload } = useBulkUploadQuestionStore();
+  const {
+    isUploading,
+    handleBulkUpload,
+    uploadSummary,
+    closeUploadSummary,
+  } = useBulkUploadQuestionStore();
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
   const location = useLocation();
@@ -290,6 +296,55 @@ function ExtractedFilePreview() {
           </Button>
         </div>
       </Card>
+
+      <BulkUploadSummaryModal
+        open={Boolean(uploadSummary?.isOpen)}
+        onOpenChange={(open) => {
+          if (!open) {
+            const redirectPath = uploadSummary?.from || from;
+            closeUploadSummary();
+            setExtractedQuestions([]);
+            navigate(redirectPath, { replace: true });
+          }
+        }}
+        title={
+          uploadSummary && uploadSummary.uploadedCount === 0
+            ? "All Duplicates Skipped"
+            : "Upload Complete with Notices"
+        }
+        description={
+          uploadSummary && uploadSummary.uploadedCount === 0
+            ? "All questions in this file already exist in this category and were skipped."
+            : undefined
+        }
+        stats={{
+          total: uploadSummary?.totalCount || 0,
+          successful: uploadSummary?.uploadedCount || 0,
+          skipped: uploadSummary?.skippedDuplicates || 0,
+        }}
+        skippedReasonText="Questions with identical question text already present in this subject were automatically skipped to prevent duplication."
+        primaryAction={{
+          label: "View Question Bank",
+          onClick: () => {
+            const redirectPath = uploadSummary?.from || from;
+            closeUploadSummary();
+            setExtractedQuestions([]);
+            navigate(redirectPath, { replace: true });
+          },
+        }}
+        secondaryAction={
+          uploadSummary && uploadSummary.uploadedCount === 0
+            ? {
+                label: "Re-upload File",
+                onClick: () => {
+                  closeUploadSummary();
+                  setExtractedQuestions([]);
+                  navigate("/question-bank/add");
+                },
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

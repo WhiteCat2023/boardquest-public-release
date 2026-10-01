@@ -4,7 +4,7 @@ import {
   type ReviewCenterCandidateItem,
 } from "../../api/useReviewCenter";
 import ReviewCenterCandidateScoreModal from "./ReviewCenterCandidateScoreModal";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import { DataTablePagination } from "@/components/custom/pagination";
 import {
   type ReviewCenterStudentsTabProps,
   ReviewCenterStudentsFilterToolbar,
@@ -51,7 +51,7 @@ export default function ReviewCenterStudentsTab({
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedCandidates = filteredCandidates.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE
+    startIndex + ITEMS_PER_PAGE,
   );
 
   const handleNext = () => {
@@ -102,27 +102,31 @@ export default function ReviewCenterStudentsTab({
         hasActiveFilters={hasActiveFilters}
       />
 
-      {/* ── Candidates Table ── */}
+      {/* ── Candidates Table with Integrated Footer ── */}
       <ReviewCenterStudentsTable
         candidates={paginatedCandidates}
         isLoading={isLoading}
         searchTerm={searchTerm}
         companyName={reviewCenter?.companyName}
         onSelectCandidateForScores={setSelectedCandidateForScores}
+        pagination={
+          !isLoading && (
+            <DataTablePagination
+              currentPage={currentPage}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={currentPage > 1}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onPageSelect={handlePageSelect}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={ITEMS_PER_PAGE}
+              itemLabel="candidates"
+              variant="table-footer"
+            />
+          )
+        }
       />
-
-      {/* Pagination Bar */}
-      {!isLoading && (
-        <QuestionListPagination
-          currentPage={currentPage}
-          hasNextPage={hasNextPage}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onPageSelect={handlePageSelect}
-          maxPageReached={totalPages}
-          totalPages={totalPages}
-        />
-      )}
 
       {/* ── Candidate Score Transcript Modal ── */}
       <ReviewCenterCandidateScoreModal

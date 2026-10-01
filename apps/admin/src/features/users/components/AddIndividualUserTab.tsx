@@ -132,6 +132,16 @@ export default function AddIndividualUserTab({
         onCategoryChange={handleCategoryChange}
       />
 
+      {/* Sole Active Dean Policy Banner */}
+      {String(formData.role || "").toUpperCase() === "DEAN" && (
+        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl text-xs text-amber-800 dark:text-amber-300">
+          <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+          <div className="leading-relaxed">
+            <span className="font-bold">Sole Active Dean Policy:</span> The institution permits only <strong>one active Dean</strong> at any given time. Adding this new Dean will automatically set their account to <strong>Active</strong> and deactivate any currently active Dean in the system.
+          </div>
+        </div>
+      )}
+
       {/* Action Bar */}
       <div className="flex items-center justify-end gap-3 pt-2 pb-6">
         <Button

@@ -9,6 +9,10 @@ import { parseStudentCSV, type ParsedStudentRow } from "../../utils/csvParser";
 import { BulkCsvDropzone } from "./BulkCsvDropzone";
 import { BulkCsvPreviewTable } from "./BulkCsvPreviewTable";
 import { BulkCsvRequirementsSidebar } from "./BulkCsvRequirementsSidebar";
+import {
+  BulkUploadSummaryModal,
+  type BulkUploadDetailItem,
+} from "@/components/feedback";
 
 export function BulkEnrollTab() {
   const navigate = useNavigate();
@@ -20,6 +24,13 @@ export function BulkEnrollTab() {
   const [parsedRows, setParsedRows] = useState<ParsedStudentRow[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadSummary, setUploadSummary] = useState<{
+    isOpen: boolean;
+    totalCount: number;
+    successfulCount: number;
+    skippedCount: number;
+    details?: BulkUploadDetailItem[];
+  } | null>(null);
 
   const processFile = (selectedFile: File) => {
     if (!selectedFile.name.endsWith(".csv")) {
@@ -86,16 +97,45 @@ export function BulkEnrollTab() {
       {
         onSuccess: (res: any) => {
           const result = res.data?.data;
-          toast.success(
-            `Successfully enrolled ${result?.createdCount || validStudents.length} student(s)! Credentials sent to emails.`
+          const createdCount = Number(result?.createdCount ?? 0);
+          const totalProcessed = Number(
+            result?.totalProcessed ?? validStudents.length,
           );
-          if (result?.skippedCount > 0) {
-            toast.warning(`${result.skippedCount} entry/entries skipped due to existing email.`);
+          const rawSkipped = Number(result?.skippedCount ?? 0);
+          const skippedCount =
+            rawSkipped > 0
+              ? rawSkipped
+              : Math.max(0, validStudents.length - createdCount);
+          const errors = result?.errors || [];
+
+          if (skippedCount > 0 || (createdCount === 0 && validStudents.length > 0)) {
+            setUploadSummary({
+              isOpen: true,
+              totalCount: totalProcessed,
+              successfulCount: createdCount,
+              skippedCount: Math.max(skippedCount, validStudents.length - createdCount),
+              details:
+                errors.length > 0
+                  ? errors.map((e: any) => ({
+                      label: e.email || e.name || "Student account",
+                      reason: e.error || "Student email already exists",
+                    }))
+                  : validStudents.map((s) => ({
+                      label: s.email || s.name || "Student account",
+                      reason: "Account with this email already exists",
+                    })),
+            });
+          } else {
+            toast.success(
+              `Successfully enrolled ${createdCount} student(s)! Credentials sent to emails.`,
+            );
+            navigate("/student-management");
           }
-          navigate("/student-management");
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.message || "Failed to import student accounts.");
+          toast.error(
+            err.response?.data?.message || "Failed to import student accounts.",
+          );
         },
       }
     );
@@ -105,6 +145,10 @@ export function BulkEnrollTab() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
+      
+      {/* Right Info Sidebar Card */}
+      <BulkCsvRequirementsSidebar />
+
       {/* Main Bulk Upload Card */}
       <div className="lg:col-span-2 bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden flex flex-col">
         {/* Header Bar */}
@@ -114,14 +158,19 @@ export function BulkEnrollTab() {
               <FileSpreadsheet size={18} className="stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-foreground">Bulk CSV Student Importer</h2>
+              <h2 className="text-sm font-bold text-foreground">
+                Bulk CSV Student Importer
+              </h2>
               <p className="text-[11px] text-muted-foreground font-medium">
                 Upload a .csv spreadsheet containing student accounts.
               </p>
             </div>
           </div>
 
-          <Badge variant="outline" className="text-[10px] font-bold uppercase px-2 py-0.5">
+          <Badge
+            variant="outline"
+            className="text-[10px] font-bold uppercase px-2 py-0.5"
+          >
             {currentUserRole || "DEAN"}
           </Badge>
         </div>
@@ -155,8 +204,40 @@ export function BulkEnrollTab() {
         </div>
       </div>
 
-      {/* Right Info Sidebar Card */}
-      <BulkCsvRequirementsSidebar />
+      {/* Bulk Upload Summary Modal */}
+      <BulkUploadSummaryModal
+        open={Boolean(uploadSummary?.isOpen)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUploadSummary(null);
+            navigate("/student-management");
+          }
+        }}
+        title={
+          uploadSummary && uploadSummary.successfulCount === 0
+            ? "All Students Skipped"
+            : "Student Enrollment Complete with Notices"
+        }
+        description={
+          uploadSummary && uploadSummary.successfulCount === 0
+            ? "All students in this CSV already exist in the database or failed validation."
+            : undefined
+        }
+        stats={{
+          total: uploadSummary?.totalCount || 0,
+          successful: uploadSummary?.successfulCount || 0,
+          skipped: uploadSummary?.skippedCount || 0,
+        }}
+        skippedReasonText="Students with emails already registered in the system were skipped to prevent duplicate accounts."
+        details={uploadSummary?.details}
+        primaryAction={{
+          label: "View Student Directory",
+          onClick: () => {
+            setUploadSummary(null);
+            navigate("/student-management");
+          },
+        }}
+      />
     </div>
   );
 }

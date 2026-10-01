@@ -34,6 +34,7 @@ interface QuestionTableProps {
   isDeletePending: boolean;
   isBankView?: boolean;
   onParaphrase?: () => void;
+  pagination?: React.ReactNode;
 }
 
 export default function QuestionTable({
@@ -52,6 +53,7 @@ export default function QuestionTable({
   isDeletePending,
   isBankView = false,
   onParaphrase,
+  pagination,
 }: QuestionTableProps) {
   const navigate = useNavigate();
   const { auth } = useAuth();
@@ -151,6 +153,7 @@ export default function QuestionTable({
             )}
           </TableBody>
         </Table>
+        {pagination}
       </div>
     </div>
   );

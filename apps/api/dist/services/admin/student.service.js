@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { hashedPassword } from "../../utils/hash";
+import { hashBcrypt } from "../../utils/hash";
 import { notifyAnalyticsUpdated } from "./analytics.service";
 import { calculateSubjectProficiency, calculateReadinessScore, calculateStandingTier, } from "../../utils/statsCalculator";
 import { sendStudentCredentialsEmail } from "../mail.service";
@@ -87,7 +87,7 @@ export class StudentService {
         const tempPassword = password && password.trim().length >= 6
             ? password.trim()
             : `BQ-STU-${randomChars}`;
-        const hashedPass = await hashedPassword(tempPassword);
+        const hashedPass = await hashBcrypt(tempPassword);
         const newStudent = await this.db.user.create({
             data: {
                 email: email.toLowerCase().trim(),
@@ -96,6 +96,7 @@ export class StudentService {
                 firstName: firstName || undefined,
                 lastName: lastName || undefined,
                 location: location || "Philippines",
+                verified: true,
                 level: 1,
                 xp: 0,
                 streak: 0,
@@ -748,7 +749,7 @@ export class StudentService {
                 Math.random().toString(36).substring(2, 6).toUpperCase();
             const tempPassword = `BQ-STU-${randomChars}`;
             try {
-                const hash = await hashedPassword(tempPassword);
+                const hash = await hashBcrypt(tempPassword);
                 const newStudent = await this.db.user.create({
                     data: {
                         email,
@@ -757,6 +758,7 @@ export class StudentService {
                         firstName: firstName || undefined,
                         lastName: lastName || undefined,
                         location: item.location?.trim() || "Philippines",
+                        verified: true,
                         level: 1,
                         xp: 0,
                         streak: 0,

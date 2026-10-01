@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
 
@@ -27,19 +27,20 @@ export interface LogStats {
 export interface UseLogsParams {
   level?: string;
   search?: string;
+  limit?: number;
 }
 
-export function useLogs({ level = "ALL", search = "" }: UseLogsParams = {}) {
+export function useLogs({ level = "ALL", search = "", limit = 200 }: UseLogsParams = {}) {
   const axiosPrivate = useAxiosPrivate();
   const { auth } = useAuth();
   const isAuthenticated = Boolean(auth?.accessToken || auth?.data?.user?.id || auth?.user?.id);
 
   return useQuery<LogItem[]>({
-    queryKey: ["system-logs", level, search],
+    queryKey: ["system-logs", level, search, limit],
     queryFn: async () => {
       try {
         const response = await axiosPrivate.get("/logs/get", {
-          params: { level, search, limit: 200 },
+          params: { level, search, limit },
         });
         return response.data?.data?.logs || response.data?.logs || [];
       } catch (error: any) {
@@ -55,6 +56,7 @@ export function useLogs({ level = "ALL", search = "" }: UseLogsParams = {}) {
         return [];
       }
     },
+    placeholderData: keepPreviousData,
     enabled: isAuthenticated,
     refetchInterval: (query) => {
       if (!isAuthenticated || query.state.error) {

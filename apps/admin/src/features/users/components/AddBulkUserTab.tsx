@@ -4,6 +4,7 @@ import { FileSpreadsheet, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import { useBulkUserUpload } from "../api/useBulkUserUpload";
+import { BulkUploadSummaryModal } from "@/components/feedback";
 import {
   BulkUserDropzone,
   BulkUserTablePreview,
@@ -33,6 +34,8 @@ export default function AddBulkUserTab({
     isParsing,
     dragActive,
     isPending,
+    uploadSummary,
+    closeUploadSummary,
     resetUpload,
     handleDragOver,
     handleDragLeave,
@@ -49,6 +52,12 @@ export default function AddBulkUserTab({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full font-sans">
+      {/* Right Info Sidebar Card */}
+      <BulkUserRequirementsSidebar
+        isExternal={isExternal}
+        onDownloadSampleCSV={handleDownloadSampleCSV}
+        onDownloadSampleXLSX={handleDownloadSampleXLSX}
+      />
       {/* Main Bulk Upload Card */}
       <div className="lg:col-span-2 bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden flex flex-col">
         {/* Header Bar */}
@@ -122,13 +131,6 @@ export default function AddBulkUserTab({
         </div>
       </div>
 
-      {/* Right Info Sidebar Card */}
-      <BulkUserRequirementsSidebar
-        isExternal={isExternal}
-        onDownloadSampleCSV={handleDownloadSampleCSV}
-        onDownloadSampleXLSX={handleDownloadSampleXLSX}
-      />
-
       {/* Edit Extracted User Dialog */}
       <EditParsedUserDialog
         isOpen={editingIndex !== null}
@@ -138,6 +140,41 @@ export default function AddBulkUserTab({
         accountCategory={accountCategory}
         onSave={(index, updatedRow) => {
           handleUpdateRow(index, updatedRow);
+        }}
+      />
+
+      {/* Bulk Upload Summary Modal */}
+      <BulkUploadSummaryModal
+        open={Boolean(uploadSummary?.isOpen)}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeUploadSummary();
+            navigate("/faculty-management");
+          }
+        }}
+        title={
+          uploadSummary && uploadSummary.successfulCount === 0
+            ? "All Accounts Skipped"
+            : "User Import Complete with Notices"
+        }
+        description={
+          uploadSummary && uploadSummary.successfulCount === 0
+            ? "All user accounts in this spreadsheet already exist or failed validation."
+            : undefined
+        }
+        stats={{
+          total: uploadSummary?.totalCount || 0,
+          successful: uploadSummary?.successfulCount || 0,
+          skipped: uploadSummary?.skippedCount || 0,
+        }}
+        skippedReasonText="Accounts with duplicate emails or employee IDs were automatically skipped."
+        details={uploadSummary?.details}
+        primaryAction={{
+          label: "View User List",
+          onClick: () => {
+            closeUploadSummary();
+            navigate("/faculty-management");
+          },
         }}
       />
     </div>

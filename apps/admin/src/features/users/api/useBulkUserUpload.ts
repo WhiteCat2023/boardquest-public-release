@@ -9,17 +9,31 @@ import {
   downloadSampleUserXLSX,
 } from "@/features/users/utils/userSpreadsheetParser";
 
+export interface UserUploadSummary {
+  isOpen: boolean;
+  totalCount: number;
+  successfulCount: number;
+  skippedCount: number;
+  details?: Array<{ label: string; reason?: string }>;
+}
+
 export function useBulkUserUpload(accountCategory: "internal" | "external") {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedUserRow[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadSummary, setUploadSummary] = useState<UserUploadSummary | null>(null);
   const bulkCreateMutation = useBulkCreateUser();
 
   const resetUpload = () => {
     setFile(null);
     setParsedRows([]);
+    setUploadSummary(null);
+  };
+
+  const closeUploadSummary = () => {
+    setUploadSummary(null);
   };
 
   const processFile = async (selectedFile: File) => {
@@ -92,16 +106,71 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
       })),
       {
         onSuccess: (res: any) => {
-          const createdCount =
-            res?.data?.data?.users?.createdCount ||
-            res?.createdCount ||
-            validMembers.length;
-          toast.success(
-            accountCategory === "external"
-              ? `Successfully registered ${createdCount} external review center account(s)!`
-              : `Successfully registered ${createdCount} internal user account(s)!`,
+          const payload = res?.data?.data || res?.data || res;
+          // The API controller returns { users: { totalProcessed, createdCount, skippedCount, errors } }
+          const usersData =
+            payload?.users ||
+            payload?.faculty ||
+            payload?.faculties ||
+            payload;
+
+          const createdCount = Number(
+            usersData?.createdCount ??
+              payload?.createdCount ??
+              0,
           );
-          navigate("/faculty-management");
+          const totalProcessed = Number(
+            usersData?.totalProcessed ??
+              payload?.totalProcessed ??
+              validMembers.length,
+          );
+          const rawSkipped = Number(
+            usersData?.skippedCount ??
+              payload?.skippedCount ??
+              0,
+          );
+          const skippedCount =
+            rawSkipped > 0
+              ? rawSkipped
+              : Math.max(0, validMembers.length - createdCount);
+          const errors = usersData?.errors || payload?.errors || [];
+
+          // If ANY accounts were skipped or none were created from the batch, show the summary modal
+          if (skippedCount > 0 || (createdCount === 0 && validMembers.length > 0)) {
+            const finalSkippedCount = Math.max(
+              skippedCount,
+              validMembers.length - createdCount,
+            );
+
+            setUploadSummary({
+              isOpen: true,
+              totalCount: totalProcessed,
+              successfulCount: createdCount,
+              skippedCount: finalSkippedCount,
+              details:
+                errors.length > 0
+                  ? errors.map((e: any) => ({
+                      label: e.email || e.name || "User account",
+                      reason:
+                        e.error ||
+                        "Account already exists (email or employee ID collision).",
+                    }))
+                  : validMembers.map((m) => ({
+                      label: m.email || m.name || "User account",
+                      reason:
+                        "Account with this email or employee ID already exists.",
+                    })),
+            });
+            // Do NOT navigate; user views the summary modal on the current screen
+          } else {
+            // 100% clean success: Toast only, auto-redirect immediately
+            toast.success(
+              accountCategory === "external"
+                ? `Successfully registered ${createdCount} external review center account(s)!`
+                : `Successfully registered ${createdCount} internal user account(s)!`,
+            );
+            navigate("/faculty-management");
+          }
         },
         onError: (err: any) => {
           const msg =
@@ -119,6 +188,8 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
     isParsing,
     dragActive,
     isPending: bulkCreateMutation.isPending,
+    uploadSummary,
+    closeUploadSummary,
     resetUpload,
     handleDragOver,
     handleDragLeave,

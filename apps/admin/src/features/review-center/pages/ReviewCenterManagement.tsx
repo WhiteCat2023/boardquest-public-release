@@ -26,6 +26,8 @@ export default function ReviewCenterManagement() {
     uniqueLocations,
     currentPage,
     totalPages,
+    totalItems,
+    pageSize,
     hasNextPage,
     handleNextPage,
     handlePreviousPage,
@@ -42,9 +44,11 @@ export default function ReviewCenterManagement() {
       description: (
         <>
           Are you sure you want to remove{" "}
-          <strong className="text-foreground">{item?.companyName}</strong> ({item?.name}) from the directory?
+          <strong className="text-foreground">{item?.companyName}</strong> (
+          {item?.name}) from the directory?
           <br />
-          This action will revoke representative credentials for this institution.
+          This action will revoke representative credentials for this
+          institution.
         </>
       ),
       variant: "destructive",
@@ -55,17 +59,22 @@ export default function ReviewCenterManagement() {
 
     deleteCenterMutation.mutate(item.id, {
       onSuccess: () => {
-        toast.success(`Review Center partner "${item?.companyName || item?.name}" removed.`);
+        toast.success(
+          `Review Center partner "${item?.companyName || item?.name}" removed.`,
+        );
       },
       onError: (err: any) => {
-        toast.error(err.response?.data?.message || "Failed to remove review center.");
+        toast.error(
+          err.response?.data?.message || "Failed to remove review center.",
+        );
       },
     });
   };
 
   // Modals & Dialogs State
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ReviewCenterRepresentative | null>(null);
+  const [editingItem, setEditingItem] =
+    useState<ReviewCenterRepresentative | null>(null);
 
   const handleOpenEdit = (item: ReviewCenterRepresentative) => {
     setEditingItem(item);
@@ -113,6 +122,9 @@ export default function ReviewCenterManagement() {
           onPageSelect={handlePageSelect}
           maxPageReached={totalPages}
           totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          itemLabel="review centers"
         />
       )}
 

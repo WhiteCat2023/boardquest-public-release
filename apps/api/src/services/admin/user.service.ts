@@ -665,6 +665,20 @@ export class UserService {
 
     const hash = await hashedPassword(tempPassword);
 
+    // Sole Active Dean Policy: If a new Dean is being added, deactivate all other active Deans
+    if (String(role).toUpperCase() === "DEAN") {
+      await this.db.adminUser.updateMany({
+        where: {
+          role: "DEAN",
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+          accountStatus: "DEACTIVATED" as any,
+        },
+      });
+    }
+
     const newUser = await this.db.adminUser.create({
       data: {
         employeeId,
@@ -786,6 +800,32 @@ export class UserService {
       };
     }
 
+    let replacedDean: any = null;
+    if (userToUpdate.role === "DEAN" && isActivating) {
+      replacedDean = await this.db.adminUser.findFirst({
+        where: {
+          role: "DEAN",
+          id: { not: userToUpdate.id },
+          isActive: true,
+        },
+        select: userSelect,
+      });
+
+      if (replacedDean) {
+        await this.db.adminUser.updateMany({
+          where: {
+            role: "DEAN",
+            id: { not: userToUpdate.id },
+            isActive: true,
+          },
+          data: {
+            isActive: false,
+            accountStatus: "DEACTIVATED" as any,
+          },
+        });
+      }
+    }
+
     const updatedAdmin = await this.db.adminUser.update({
       where: { id },
       data: {
@@ -798,7 +838,26 @@ export class UserService {
     return {
       ...updatedAdmin,
       accountStatus: updatedAdmin.accountStatus || nextAccountStatus,
+      replacedDean: replacedDean
+        ? {
+            id: replacedDean.id,
+            name: replacedDean.name,
+            email: replacedDean.email,
+            employeeId: replacedDean.employeeId,
+          }
+        : null,
     };
+  }
+
+  async getActiveDean() {
+    const activeDean = await this.db.adminUser.findFirst({
+      where: {
+        role: "DEAN",
+        isActive: true,
+      },
+      select: userSelect,
+    });
+    return activeDean;
   }
 
   async toggleFacultyStatus(
@@ -1112,7 +1171,21 @@ export class UserService {
 
         try {
           const hash = await hashedPassword(tempPassword);
-          const newUser = await this.db.adminUser.create({
+          // Sole Active Dean Policy: If adding a Dean in bulk, deactivate other active Deans
+        if (targetRole === Role.DEAN || String(targetRole).toUpperCase() === "DEAN") {
+          await this.db.adminUser.updateMany({
+            where: {
+              role: "DEAN",
+              isActive: true,
+            },
+            data: {
+              isActive: false,
+              accountStatus: "DEACTIVATED" as any,
+            },
+          });
+        }
+
+        const newUser = await this.db.adminUser.create({
             data: {
               employeeId: empId,
               name,
@@ -1182,6 +1255,7 @@ export const bulkCreateUsers = userService.bulkCreateUsers.bind(userService);
 export const bulkCreateFaculty = bulkCreateUsers;
 export const toggleUserStatus = userService.toggleUserStatus.bind(userService);
 export const toggleFacultyStatus = toggleUserStatus;
+export const getActiveDean = userService.getActiveDean.bind(userService);
 export const updateUserCategories =
   userService.updateUserCategories.bind(userService);
 export const updateUserSubjects =

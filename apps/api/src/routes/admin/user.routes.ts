@@ -9,11 +9,19 @@ import {
   toggleUserStatus,
   updateUserCategories,
   bulkCreateUsers,
+  getActiveDean,
 } from "../../controller/admin/user.controller";
 
 const router = Router();
 
 // Only SUPERADMIN, DEAN, and TEAMLEAD can list and create administrative accounts
+router.get(
+  "/active-dean",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  getActiveDean,
+);
+
 router.get(
   "/",
   authenticateToken,

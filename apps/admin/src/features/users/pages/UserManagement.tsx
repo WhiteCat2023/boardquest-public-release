@@ -8,7 +8,7 @@ import UserSearchFiltersBar from "../components/UserSearchFiltersBar";
 import ToggleUserStatusDialog, {
   type TargetMemberToToggle,
 } from "../components/ToggleUserStatusDialog";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import { DataTablePagination } from "@/components/custom/pagination";
 
 export default function UserManagement() {
   const {
@@ -23,6 +23,8 @@ export default function UserManagement() {
     resetFilters,
     resetPaginationOnFilterChange,
     users,
+    totalUsers,
+    pageSize,
     isUsersLoading,
     currentPageIndex,
     hasNextPage,
@@ -41,6 +43,8 @@ export default function UserManagement() {
     id: string,
     currentStatus: boolean,
     name: string,
+    role?: string,
+    email?: string,
   ) => {
     if (id === currentUserId) {
       toast.error("You cannot change your own account status.");
@@ -50,6 +54,8 @@ export default function UserManagement() {
       id,
       name,
       currentStatus,
+      role,
+      email,
     });
   };
 
@@ -78,26 +84,30 @@ export default function UserManagement() {
         onResetFilters={resetFilters}
       />
 
-      {/* Directory Table — Backend Paginated Response */}
+      {/* Directory Table — Backend Paginated Response with Integrated Footer */}
       <UserTable
         users={users}
         isLoading={isUsersLoading}
         currentUserRole={currentUserRole}
         currentUserId={currentUserId || ""}
         onToggleStatus={handleOpenToggleConfirm}
+        pagination={
+          !isUsersLoading && (
+            <DataTablePagination
+              currentPage={currentPageIndex + 1}
+              hasNextPage={!!hasNextPage}
+              hasPreviousPage={currentPageIndex > 0}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onPageSelect={handlePageSelect}
+              totalItems={totalUsers}
+              pageSize={pageSize}
+              itemLabel="users"
+              variant="table-footer"
+            />
+          )
+        }
       />
-
-      {/* Backend Cursor Pagination Bar */}
-      {!isUsersLoading && (
-        <QuestionListPagination
-          currentPage={currentPageIndex + 1}
-          hasNextPage={!!hasNextPage}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onPageSelect={handlePageSelect}
-          maxPageReached={cursorsStack.length}
-        />
-      )}
 
       {/* Account Status Confirmation Dialog */}
       <ToggleUserStatusDialog

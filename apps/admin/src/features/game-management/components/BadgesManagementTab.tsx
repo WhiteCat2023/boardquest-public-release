@@ -9,12 +9,8 @@ import {
   useToggleBadgeActive,
   useDeleteBadge,
 } from "../api/useGameManagement";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
-import {
-  BadgesFilterToolbar,
-  BadgesTable,
-  DeleteBadgeDialog,
-} from "./badges";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
+import { BadgesFilterToolbar, BadgesTable, DeleteBadgeDialog } from "./badges";
 
 interface BadgesManagementTabProps {
   badges?: GameBadge[];
@@ -38,7 +34,9 @@ export function BadgesManagementTab({
   const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>({});
+  const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const ITEMS_PER_PAGE = 10;
 
@@ -79,9 +77,7 @@ export function BadgesManagementTab({
       await deleteBadgeMutation.mutateAsync(id);
       toast.success("Gamification badge deleted successfully.");
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Failed to delete badge."
-      );
+      toast.error(err?.response?.data?.message || "Failed to delete badge.");
     }
   };
 
@@ -92,7 +88,7 @@ export function BadgesManagementTab({
       toast.info("Badge status updated.");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Failed to toggle badge status."
+        err?.response?.data?.message || "Failed to toggle badge status.",
       );
     }
   };
@@ -123,7 +119,7 @@ export function BadgesManagementTab({
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedBadges = filteredBadges.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE
+    startIndex + ITEMS_PER_PAGE,
   );
 
   const handleImageError = (url?: string | null) => {
@@ -193,22 +189,23 @@ export function BadgesManagementTab({
           }
         }}
         onToggleActive={handleToggleActive}
+        pagination={
+          !isLoading && filteredBadges.length > 0 ? (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredBadges.length}
+              pageSize={ITEMS_PER_PAGE}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={currentPage > 1}
+              onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}
+              onPrevious={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
+              itemLabel="badges"
+              variant="table-footer"
+            />
+          ) : null
+        }
       />
-
-      {/* Pagination Bar */}
-      {!isLoading && (
-        <QuestionListPagination
-          currentPage={currentPage}
-          hasNextPage={hasNextPage}
-          onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}
-          onPrevious={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
-          onPageSelect={(page) =>
-            page >= 1 && page <= totalPages && setCurrentPage(page)
-          }
-          maxPageReached={totalPages}
-          totalPages={totalPages}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       <DeleteBadgeDialog
@@ -224,7 +221,9 @@ export function BadgesManagementTab({
         onClose={() => setIsBadgeModalOpen(false)}
         badge={editingBadge}
         onSave={handleSaveBadge}
-        isSaving={createBadgeMutation.isPending || updateBadgeMutation.isPending}
+        isSaving={
+          createBadgeMutation.isPending || updateBadgeMutation.isPending
+        }
       />
     </div>
   );

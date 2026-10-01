@@ -130,6 +130,10 @@ export const toggleUserStatus = asyncHandler(async (req, res) => {
     return new ApiResponse(200, { user, faculty: user }, "User status updated successfully").send(res);
 });
 export const toggleFacultyStatus = toggleUserStatus;
+export const getActiveDean = asyncHandler(async (_req, res) => {
+    const activeDean = await userService.getActiveDean();
+    return new ApiResponse(200, { activeDean }, "Active dean retrieved successfully").send(res);
+});
 export const updateUserSubjects = asyncHandler(async (req, res) => {
     const creatorRole = req.user?.role;
     if (!creatorRole) {

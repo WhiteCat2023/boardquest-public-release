@@ -168,6 +168,9 @@ importers:
       axios:
         specifier: ^1.17.0
         version: 1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       cloudinary:
         specifier: ^2.10.0
         version: 2.10.0
@@ -217,6 +220,9 @@ importers:
       '@types/agenda':
         specifier: ^3.0.2
         version: 3.0.2(socks@2.8.9)
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@types/cookie-parser':
         specifier: ^1.4.10
         version: 1.4.10(@types/express@5.0.6)
@@ -2199,6 +2205,10 @@ packages:
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
+  '@types/bcryptjs@3.0.0':
+    resolution: {integrity: sha512-WRZOuCuaz8UcZZE4R5HXTco2goQSI2XxjGY3hbM/xDvwmqFWd4ivooImsMx65OKM6CtNKbnZ5YL+YwAwK7c1dg==}
+    deprecated: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
@@ -2693,6 +2703,10 @@ packages:
   baseline-browser-mapping@2.11.13:
     resolution: {integrity: sha512-k9HNuUVMlqVjQ9UHzfPjIqiDbWw7WqT1AoT7GL8VwvF3r0ZfArtgiSPAlmupyNquNgOJHTuH4CKYf8ttMTWBTQ==}
     engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  bcryptjs@3.0.3:
+    resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
     hasBin: true
 
   binary-extensions@2.3.0:
@@ -7786,6 +7800,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.8
 
+  '@types/bcryptjs@3.0.0':
+    dependencies:
+      bcryptjs: 3.0.3
+
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
@@ -8311,6 +8329,8 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.11.13: {}
+
+  bcryptjs@3.0.3: {}
 
   binary-extensions@2.3.0: {}
 

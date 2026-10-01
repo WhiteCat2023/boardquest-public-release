@@ -1,26 +1,26 @@
 $ jest
-PASS src/__tests__/assessment.test.ts (19.009 s)
-PASS src/__tests__/questionCommentReview.test.ts (20.322 s)
-PASS src/__tests__/calendar.test.ts (21.861 s)
-PASS src/__tests__/guidance.test.ts
-PASS src/__tests__/candidate.test.ts (22.02 s)
-PASS src/__tests__/game.test.ts (22.089 s)
-PASS src/__tests__/statsCalculator.test.ts
-PASS src/__tests__/user.test.ts (22.32 s)
-PASS src/__tests__/reviewCenter.test.ts (22.354 s)
-PASS src/__tests__/logs.test.ts
+PASS src/__tests__/assessment.test.ts (12.563 s)
+PASS src/__tests__/calendar.test.ts (17.157 s)
+PASS src/__tests__/candidate.test.ts (17.519 s)
 PASS src/__tests__/notification.test.ts
-PASS src/__tests__/reviewCenterAuth.test.ts
+PASS src/__tests__/guidance.test.ts (18.689 s)
+PASS src/__tests__/logs.test.ts
+PASS src/__tests__/statsCalculator.test.ts
 PASS src/__tests__/upload.test.ts
-PASS src/__tests__/auth.test.ts (23.039 s)
-PASS src/__tests__/question.test.ts (23.414 s)
-PASS src/__tests__/analytics.test.ts (24.243 s)
-PASS src/__tests__/student.test.ts (24.955 s)
+PASS src/__tests__/analytics.test.ts (21.829 s)
+PASS src/__tests__/reviewCenter.test.ts (22.128 s)
+PASS src/__tests__/game.test.ts (23.452 s)
+PASS src/__tests__/questionCommentReview.test.ts (23.719 s)
+PASS src/__tests__/user.test.ts (23.741 s)
+PASS src/__tests__/reviewCenterAuth.test.ts (6.773 s)
+PASS src/__tests__/auth.test.ts (11.399 s)
+PASS src/__tests__/student.test.ts (24.211 s)
+PASS src/__tests__/question.test.ts (24.401 s)
 A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
 
 Test Suites: 17 passed, 17 total
-Tests:       169 passed, 169 total
+Tests:       176 passed, 176 total
 Snapshots:   0 total
-Time:        28.382 s
+Time:        27.435 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

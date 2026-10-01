@@ -6,8 +6,6 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   Check,
   Flame,
@@ -20,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { DataTablePagination } from "@/components/custom/pagination";
 import type { LogItem, LogLevelType } from "@/features/logs";
 
 interface LogTableProps {
@@ -123,23 +122,29 @@ export default function LogTable({
       ) : logs.length === 0 ? (
         <div className="py-16 text-center flex flex-col items-center justify-center gap-2">
           <ScrollText size={32} className="text-muted-foreground/40" />
-          <h3 className="text-xs font-bold text-foreground">No Log Entries Found</h3>
+          <h3 className="text-xs font-bold text-foreground">
+            No Log Entries Found
+          </h3>
           <p className="text-[11px] text-muted-foreground max-w-xs">
-            There are no audit logs matching level filter "{selectedLevel}" and search term "{searchTerm}".
+            There are no audit logs matching level filter "{selectedLevel}" and
+            search term "{searchTerm}".
           </p>
         </div>
       ) : (
         <div className="divide-y divide-border overflow-y-auto max-h-[460px] md:max-h-[520px] xl:max-h-[600px] scroll-smooth">
           {logs.map((log: LogItem) => {
             const isExpanded = expandedLogId === log.id;
-            const formattedDate = new Date(log.createdAt).toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            });
+            const formattedDate = new Date(log.createdAt).toLocaleString(
+              "en-US",
+              {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              },
+            );
 
             return (
               <div
@@ -148,10 +153,10 @@ export default function LogTable({
                   log.level === "FATAL"
                     ? "bg-purple-950/10 hover:bg-purple-950/20"
                     : log.level === "ERROR"
-                    ? "bg-primary/5 hover:bg-primary/10"
-                    : log.level === "WARN"
-                    ? "bg-amber-500/5 hover:bg-amber-500/10"
-                    : "hover:bg-accent/50"
+                      ? "bg-primary/5 hover:bg-primary/10"
+                      : log.level === "WARN"
+                        ? "bg-amber-500/5 hover:bg-amber-500/10"
+                        : "hover:bg-accent/50"
                 }`}
               >
                 {/* Main Row Summary */}
@@ -160,7 +165,9 @@ export default function LogTable({
                   className="py-2 px-4 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer select-none"
                 >
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <div className="shrink-0">{renderLevelBadge(log.level)}</div>
+                    <div className="shrink-0">
+                      {renderLevelBadge(log.level)}
+                    </div>
 
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +213,11 @@ export default function LogTable({
                       variant="ghost"
                       className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
                     >
-                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      {isExpanded ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -258,14 +269,20 @@ export default function LogTable({
                         <pre className="p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-emerald-300 text-[10.5px] overflow-x-auto whitespace-pre-wrap">
                           {(() => {
                             try {
-                              return JSON.stringify(JSON.parse(log.metadata), null, 2);
+                              return JSON.stringify(
+                                JSON.parse(log.metadata),
+                                null,
+                                2,
+                              );
                             } catch {
                               return log.metadata;
                             }
                           })()}
                         </pre>
                       ) : (
-                        <span className="text-slate-500 italic text-[10px]">No extra metadata attached.</span>
+                        <span className="text-slate-500 italic text-[10px]">
+                          No extra metadata attached.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -278,43 +295,18 @@ export default function LogTable({
 
       {/* Pagination Bar */}
       {!isLoading && totalPages > 1 && (
-        <div className="p-3.5 px-5 border-t border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3 font-sans shrink-0">
-          <span className="text-xs text-muted-foreground font-medium">
-            Showing <strong className="text-foreground">{startIdx}</strong> to{" "}
-            <strong className="text-foreground">{endIdx}</strong> of{" "}
-            <strong className="text-foreground">{totalLogs}</strong> log entries
-          </span>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={onPrevious}
-              className="h-8 text-xs gap-1 rounded-full px-3.5 cursor-pointer font-medium border-border/80 hover:bg-accent text-foreground disabled:opacity-40"
-            >
-              <ChevronLeft size={14} />
-              Previous
-            </Button>
-
-            <div className="flex items-center gap-1 text-xs font-bold px-2">
-              <span className="text-foreground">{currentPage}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-muted-foreground">{totalPages}</span>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasNextPage}
-              onClick={onNext}
-              className="h-8 text-xs gap-1 rounded-full px-3.5 cursor-pointer font-medium border-border/80 hover:bg-accent text-foreground disabled:opacity-40"
-            >
-              Next
-              <ChevronRight size={14} />
-            </Button>
-          </div>
-        </div>
+        <DataTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalLogs}
+          pageSize={20}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={currentPage > 1}
+          onNext={onNext}
+          onPrevious={onPrevious}
+          itemLabel="log entries"
+          variant="table-footer"
+        />
       )}
     </Card>
   );
