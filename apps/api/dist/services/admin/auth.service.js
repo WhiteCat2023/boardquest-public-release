@@ -102,6 +102,11 @@ export class AuthService {
                     role: "SUPERADMIN",
                     phoneNumber: dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
                     location: "Main HQ",
+                    notificationPreferences: dbSuperAdmin.notificationPreferences || {
+                        emailNotifications: true,
+                        securityAlerts: true,
+                        weeklyDigest: false,
+                    },
                     accountStatus: "ACTIVE",
                     isActive: true,
                     lastActiveAt: new Date(),
@@ -121,6 +126,9 @@ export class AuthService {
                 name: true,
                 role: true,
                 phoneNumber: true,
+                avatarUrl: true,
+                location: true,
+                notificationPreferences: true,
                 accountStatus: true,
                 isActive: true,
                 lastActiveAt: true,
@@ -163,6 +171,11 @@ export class AuthService {
         const { password: _password, ...sanitizeUser } = user;
         return {
             ...sanitizeUser,
+            notificationPreferences: sanitizeUser.notificationPreferences || {
+                emailNotifications: true,
+                securityAlerts: true,
+                weeklyDigest: false,
+            },
             accountStatus,
             isActive: true,
         };
@@ -310,6 +323,9 @@ export class AuthService {
                 updateData.phoneNumber = data.phoneNumber;
             if (data.avatarUrl !== undefined)
                 updateData.avatarUrl = data.avatarUrl;
+            if (data.notificationPreferences !== undefined) {
+                updateData.notificationPreferences = data.notificationPreferences;
+            }
             if (data.password) {
                 updateData.password = await hashedPassword(data.password);
             }
@@ -318,6 +334,13 @@ export class AuthService {
                 data: updateData,
             });
             const { password, ...sanitized } = updated;
+            if (!sanitized.notificationPreferences) {
+                sanitized.notificationPreferences = {
+                    emailNotifications: true,
+                    securityAlerts: true,
+                    weeklyDigest: false,
+                };
+            }
             return sanitized;
         }
         const user = await this.db.adminUser.findUnique({ where: { id: userId } });
@@ -333,6 +356,9 @@ export class AuthService {
             updateData.phoneNumber = data.phoneNumber;
         if (data.avatarUrl !== undefined)
             updateData.avatarUrl = data.avatarUrl;
+        if (data.notificationPreferences !== undefined) {
+            updateData.notificationPreferences = data.notificationPreferences;
+        }
         if (data.employeeId !== undefined && data.employeeId.trim()) {
             const trimmedId = data.employeeId.trim();
             if (trimmedId !== user.employeeId) {
@@ -356,6 +382,13 @@ export class AuthService {
             data: updateData,
         });
         const { password, ...sanitized } = updated;
+        if (!sanitized.notificationPreferences) {
+            sanitized.notificationPreferences = {
+                emailNotifications: true,
+                securityAlerts: true,
+                weeklyDigest: false,
+            };
+        }
         return sanitized;
     }
 }

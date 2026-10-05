@@ -69,7 +69,7 @@ export async function getReviewCenterSchedules(
     where: {
       OR: whereConditions,
     },
-    orderBy: { startDate: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return list

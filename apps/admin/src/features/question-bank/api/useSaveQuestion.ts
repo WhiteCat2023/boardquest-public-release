@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { toast } from "sonner";
+import { useQuestionListStore } from "@/store/QuestionListStore";
 
 export interface SaveQuestionPayload {
   id?: string;
@@ -25,7 +26,13 @@ export function useCreateQuestion() {
       return response.data;
     },
     onSuccess: () => {
+      useQuestionListStore.getState().resetPagination();
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
+      queryClient.invalidateQueries({ queryKey: ["questionStats"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
       toast.success("New question added to repository!");
     },
     onError: (err: any) => {

@@ -180,3 +180,22 @@ export function streamNotificationsHandler(req: AuthenticatedRequest, res: Respo
   const role = req.user?.role;
   sseService.addClient(userId, role, res);
 }
+
+export async function sendDigestHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { dispatchWeeklyDigest } = await import("../../services/queue.service");
+    const targetUserId = req.body?.forSelfOnly ? req.user?.id : req.body?.userId;
+    const result = await dispatchWeeklyDigest(targetUserId);
+    return res.status(200).json({
+      success: true,
+      message: "Weekly performance digest dispatched successfully.",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to dispatch weekly performance digest.",
+    });
+  }
+}
+

@@ -5,6 +5,7 @@ import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../types/p
 import { questionSynthesizerService, } from "./questionSynthesizer.service";
 import { questionParaphraserService, } from "./questionParaphraser.service";
 import { createNotification } from "./notification.service";
+import { sendQuestionStatusNotificationEmail } from "../mail.service";
 import { sseService } from "./sse.service";
 import pusherService from "./pusher.service";
 import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
@@ -240,7 +241,7 @@ export class QuestionService {
                     subject: true,
                     author: { select: { name: true } },
                 },
-                orderBy: { id: "asc" },
+                orderBy: { createdAt: "desc" },
             });
             const questions = rawQuestions.map((q) => ({
                 ...q,
@@ -263,7 +264,7 @@ export class QuestionService {
                 skip: cursor ? 1 : undefined,
                 cursor: cursor ? { id: cursor } : undefined,
                 include: { subject: true },
-                orderBy: { id: "asc" },
+                orderBy: { createdAt: "desc" },
             });
             const questions = rawQuestions.map((q) => ({
                 ...q,
@@ -324,7 +325,7 @@ export class QuestionService {
                     author: { select: { name: true } },
                     _count: { select: { comments: true } },
                 },
-                orderBy: { id: "asc" },
+                orderBy: { createdAt: "desc" },
             });
             // Auto-heal and sync questions that are in PENDING_REVISION status with 0 comments
             const stalePendingRevisionIds = rawQuestions
@@ -374,7 +375,7 @@ export class QuestionService {
                 skip: cursor ? 1 : undefined,
                 cursor: cursor ? { id: cursor } : undefined,
                 include: { subject: true },
-                orderBy: { id: "asc" },
+                orderBy: { createdAt: "desc" },
             });
             const questions = rawQuestions.map((q) => ({
                 ...q,
@@ -472,6 +473,7 @@ export class QuestionService {
             where: {
                 OR: [{ subjectId: categoryId }, { categoryId }],
             },
+            orderBy: { createdAt: "desc" },
         });
         return questions;
     }
@@ -480,6 +482,7 @@ export class QuestionService {
             where: {
                 difficulty,
             },
+            orderBy: { createdAt: "desc" },
         });
         return questions;
     }
@@ -488,6 +491,7 @@ export class QuestionService {
             where: {
                 type,
             },
+            orderBy: { createdAt: "desc" },
         });
         return questions;
     }
@@ -496,6 +500,7 @@ export class QuestionService {
             where: {
                 status,
             },
+            orderBy: { createdAt: "desc" },
         });
         return questions;
     }
@@ -506,6 +511,7 @@ export class QuestionService {
                     contains: search,
                 },
             },
+            orderBy: { createdAt: "desc" },
         });
         return questions;
     }
@@ -688,13 +694,39 @@ export class QuestionService {
             .filter((id) => Boolean(id))));
         for (const authorId of uniqueAuthorIds) {
             const count = targetQuestions.filter((q) => q.authorId === authorId).length;
+            const notifMsg = `Your ${count === 1 ? "question has" : `${count} questions have`} been reviewed, approved, and added to the official Question Bank.`;
             createNotification({
                 recipientId: authorId,
                 title: "Question Approved",
-                message: `Your ${count === 1 ? "question has" : `${count} questions have`} been reviewed, approved, and added to the official Question Bank.`,
+                message: notifMsg,
                 type: "SUCCESS",
                 link: "/question-bank/my-questions",
             }).catch(() => { });
+            // Dispatch Email Notification if author has emailNotifications enabled
+            (async () => {
+                try {
+                    const author = await this.db.adminUser.findUnique({
+                        where: { id: authorId },
+                        select: { email: true, name: true, notificationPreferences: true },
+                    });
+                    if (author?.email) {
+                        const prefs = author.notificationPreferences;
+                        const emailAllowed = prefs?.emailNotifications !== false;
+                        if (emailAllowed) {
+                            await sendQuestionStatusNotificationEmail({
+                                toEmail: author.email,
+                                userName: author.name,
+                                status: "APPROVED",
+                                message: notifMsg,
+                                linkUrl: `${process.env.ADMIN_URL || "http://localhost:5173"}/question-bank`,
+                            });
+                        }
+                    }
+                }
+                catch (err) {
+                    console.warn("Failed to dispatch approval email notification:", err?.message);
+                }
+            })();
         }
         createNotification({
             recipientRole: "ALL",
@@ -748,19 +780,62 @@ export class QuestionService {
         if (!canFeedback) {
             throw new ApiError(403, "Only administrators and team leads can provide revision feedback.");
         }
+        const targetQuestions = await this.db.question.findMany({
+            where: { id: { in: ids } },
+            select: { id: true, authorId: true, topic: true },
+        });
         await this.db.question.updateMany({
             where: { id: { in: ids } },
             data: {
                 status: QuestionStatus.PENDING_REVISION,
             },
         });
+        const reviewerName = user?.name || "Reviewer";
         createNotification({
             recipientRole: "ALL",
             title: "Revision Requested",
-            message: `Revision feedback was provided for ${ids.length} question(s) by ${user?.name || "Reviewer"}.`,
+            message: `Revision feedback was provided for ${ids.length} question(s) by ${reviewerName}.`,
             type: "WARNING",
             link: "/question-bank?view=my-questions",
         }).catch((err) => console.warn("Notification error:", err?.message));
+        // Notify authors individually via in-app & email
+        const uniqueAuthorIds = Array.from(new Set(targetQuestions.map((q) => q.authorId).filter(Boolean)));
+        for (const authorId of uniqueAuthorIds) {
+            const authorQuestions = targetQuestions.filter((q) => q.authorId === authorId);
+            const notifMsg = `Revision feedback was provided for ${authorQuestions.length} of your question(s) by ${reviewerName}.`;
+            createNotification({
+                recipientId: authorId,
+                title: "Revision Requested",
+                message: notifMsg,
+                type: "WARNING",
+                link: "/question-bank?view=my-questions",
+            }).catch(() => { });
+            (async () => {
+                try {
+                    const author = await this.db.adminUser.findUnique({
+                        where: { id: authorId },
+                        select: { email: true, name: true, notificationPreferences: true },
+                    });
+                    if (author?.email) {
+                        const prefs = author.notificationPreferences;
+                        const emailAllowed = prefs?.emailNotifications !== false;
+                        if (emailAllowed) {
+                            await sendQuestionStatusNotificationEmail({
+                                toEmail: author.email,
+                                userName: author.name,
+                                status: "PENDING_REVISION",
+                                message: notifMsg,
+                                feedback: feedback,
+                                linkUrl: `${process.env.ADMIN_URL || "http://localhost:5173"}/question-bank?view=my-questions`,
+                            });
+                        }
+                    }
+                }
+                catch (err) {
+                    console.warn("Failed to dispatch revision email notification:", err?.message);
+                }
+            })();
+        }
     }
     async getPendingReviewAuthors(options) {
         const pendingQuestions = await this.db.question.findMany({
@@ -917,6 +992,35 @@ export class QuestionService {
                     type: isApprovedReopened ? "WARNING" : "INFO",
                     link: `/question-bank/view/${questionId}`,
                 });
+                // Dispatch email notification to question author
+                (async () => {
+                    try {
+                        const author = await this.db.adminUser.findUnique({
+                            where: { id: question.authorId },
+                            select: { email: true, name: true, notificationPreferences: true },
+                        });
+                        if (author?.email) {
+                            const prefs = author.notificationPreferences;
+                            const emailAllowed = prefs?.emailNotifications !== false;
+                            if (emailAllowed) {
+                                await sendQuestionStatusNotificationEmail({
+                                    toEmail: author.email,
+                                    userName: author.name,
+                                    status: isApprovedReopened ? "PENDING_REVISION" : "COMMENT",
+                                    questionTitle: question.topic || "Question",
+                                    message: isApprovedReopened
+                                        ? `${commenterName} (${roleLabel}) requested revisions on your approved question.`
+                                        : `${commenterName} (${roleLabel}) commented on your question.`,
+                                    feedback: content.trim(),
+                                    linkUrl: `${process.env.ADMIN_URL || "http://localhost:5173"}/question-bank/view/${questionId}`,
+                                });
+                            }
+                        }
+                    }
+                    catch (emailErr) {
+                        console.warn("Failed to dispatch comment email notification:", emailErr?.message);
+                    }
+                })();
             }
             catch (err) {
                 // notification failure shouldn't block comment creation

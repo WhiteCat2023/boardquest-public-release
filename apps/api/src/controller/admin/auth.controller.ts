@@ -10,6 +10,7 @@ import prisma from "../../services/prisma";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
 import { isSuperAdmin, getSuperAdminProfile } from "../../config/credentials";
 import { ensureSuperAdminExists } from "../../services/admin/bootstrap.service";
+import { sendSecurityAlertEmail } from "../../services/mail.service";
 
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
@@ -85,6 +86,29 @@ export const login = asyncHandler(async (req, res) => {
     user.email,
     req.ip,
   );
+
+  try {
+    const prefs = (user as any)?.notificationPreferences;
+    const securityAlertsEnabled =
+      prefs?.securityAlerts !== false && prefs?.securityAlerts !== undefined
+        ? Boolean(prefs.securityAlerts)
+        : true;
+
+    if (securityAlertsEnabled && user.email) {
+      sendSecurityAlertEmail({
+        toEmail: user.email,
+        userName: user.name,
+        loginTime: new Date(),
+        ipAddress: req.ip || (req.headers["x-forwarded-for"] as string) || "127.0.0.1",
+        userAgent: (req.headers["user-agent"] as string) || "Browser",
+        location: (user as any).location || "Philippines",
+      }).catch((err) =>
+        console.warn("Failed to send security alert email:", err?.message),
+      );
+    }
+  } catch (alertErr) {
+    console.warn("Security alert dispatch error:", alertErr);
+  }
 
   return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
@@ -182,6 +206,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         accountStatus: true,
         isActive: true,
         handledSubjectIds: true,
+        notificationPreferences: true,
         handledSubjects: {
           select: {
             id: true,
@@ -194,6 +219,14 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   if (!user) {
     return new ApiResponse(401, null, "User not found").send(res);
+  }
+
+  if (!user.notificationPreferences) {
+    user.notificationPreferences = {
+      emailNotifications: true,
+      securityAlerts: true,
+      weeklyDigest: false,
+    };
   }
 
   if (user.accountStatus === "DEACTIVATED") {

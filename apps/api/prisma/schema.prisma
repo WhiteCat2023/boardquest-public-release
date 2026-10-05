@@ -88,6 +88,7 @@ model AdminUser {
   authoredModules LearningModule[] @relation("ModuleAuthor")
 
   questionPermissions Json?
+  notificationPreferences Json?
 
   location  String?  @default("Philippines")
   accountStatus AccountStatus @default(ACTIVE)

@@ -1,4 +1,5 @@
 import { useBulkUploadQuestionStore, useExtractedQuestionsStore } from "@/store/QuestionBankStore";
+import { useQuestionListStore } from "@/store/QuestionListStore";
 import { toast } from "sonner";
 import { createProgressToast } from "@/utils/toast";
 import { queryClient } from "@/lib/queryClient";
@@ -157,10 +158,13 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
     }
 
     // Invalidate questions, review desk, and categories so lists update automatically
+    useQuestionListStore.getState().resetPagination();
     queryClient.invalidateQueries({ queryKey: ["questions"] });
     queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
     queryClient.invalidateQueries({ queryKey: ["categories"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+    queryClient.invalidateQueries({ queryKey: ["questionStats"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
 
     if (totalSkippedDuplicates > 0) {
       // Partial or all-duplicate scenario: Show the comprehensive summary modal

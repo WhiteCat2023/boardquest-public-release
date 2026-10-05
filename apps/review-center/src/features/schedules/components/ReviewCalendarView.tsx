@@ -76,10 +76,19 @@ export default function ReviewCalendarView({
 
   const activeSchedules = schedules || [];
 
+  const sortedSchedules = useMemo(() => {
+    return [...activeSchedules].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+      return (b.id || "").localeCompare(a.id || "");
+    });
+  }, [activeSchedules]);
+
   const filteredSchedules = useMemo(() => {
-    if (!searchQuery.trim()) return activeSchedules;
+    if (!searchQuery.trim()) return sortedSchedules;
     const q = searchQuery.toLowerCase().trim();
-    return activeSchedules.filter((sched) => {
+    return sortedSchedules.filter((sched) => {
       return (
         sched.title?.toLowerCase().includes(q) ||
         sched.category?.toLowerCase().includes(q) ||
@@ -88,7 +97,7 @@ export default function ReviewCalendarView({
         sched.description?.toLowerCase().includes(q)
       );
     });
-  }, [activeSchedules, searchQuery]);
+  }, [sortedSchedules, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSchedules.length / ITEMS_PER_PAGE));
 

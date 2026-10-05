@@ -103,6 +103,7 @@ export function BadgesManagementTab({
         toast.success("Badge updated successfully!");
       } else {
         await createBadgeMutation.mutateAsync(badgeData);
+        setCurrentPage(1);
         toast.success("New gamification badge created!");
       }
       setIsBadgeModalOpen(false);

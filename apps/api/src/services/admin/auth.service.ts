@@ -138,6 +138,12 @@ export class AuthService {
           phoneNumber:
             dbSuperAdmin.phoneNumber || superAdminCredentials.phoneNumber,
           location: "Main HQ",
+          notificationPreferences:
+            (dbSuperAdmin as any).notificationPreferences || {
+              emailNotifications: true,
+              securityAlerts: true,
+              weeklyDigest: false,
+            },
           accountStatus: "ACTIVE",
           isActive: true,
           lastActiveAt: new Date(),
@@ -158,6 +164,9 @@ export class AuthService {
         name: true,
         role: true,
         phoneNumber: true,
+        avatarUrl: true,
+        location: true,
+        notificationPreferences: true,
         accountStatus: true,
         isActive: true,
         lastActiveAt: true,
@@ -212,6 +221,11 @@ export class AuthService {
     const { password: _password, ...sanitizeUser } = user;
     return {
       ...sanitizeUser,
+      notificationPreferences: sanitizeUser.notificationPreferences || {
+        emailNotifications: true,
+        securityAlerts: true,
+        weeklyDigest: false,
+      },
       accountStatus,
       isActive: true,
     };
@@ -406,6 +420,11 @@ export class AuthService {
       employeeId?: string;
       password?: string;
       avatarUrl?: string | null;
+      notificationPreferences?: {
+        emailNotifications?: boolean;
+        securityAlerts?: boolean;
+        weeklyDigest?: boolean;
+      };
     },
   ) {
     if (isSuperAdmin(userId)) {
@@ -418,6 +437,9 @@ export class AuthService {
       if (data.email) updateData.email = data.email;
       if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
       if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+      if (data.notificationPreferences !== undefined) {
+        updateData.notificationPreferences = data.notificationPreferences;
+      }
       if (data.password) {
         updateData.password = await hashedPassword(data.password);
       }
@@ -426,6 +448,13 @@ export class AuthService {
         data: updateData,
       });
       const { password, ...sanitized } = updated as any;
+      if (!sanitized.notificationPreferences) {
+        sanitized.notificationPreferences = {
+          emailNotifications: true,
+          securityAlerts: true,
+          weeklyDigest: false,
+        };
+      }
       return sanitized;
     }
 
@@ -439,6 +468,9 @@ export class AuthService {
     if (data.email) updateData.email = data.email;
     if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
     if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+    if (data.notificationPreferences !== undefined) {
+      updateData.notificationPreferences = data.notificationPreferences;
+    }
     if (data.employeeId !== undefined && data.employeeId.trim()) {
       const trimmedId = data.employeeId.trim();
       if (trimmedId !== user.employeeId) {
@@ -464,6 +496,13 @@ export class AuthService {
     });
 
     const { password, ...sanitized } = updated as any;
+    if (!sanitized.notificationPreferences) {
+      sanitized.notificationPreferences = {
+        emailNotifications: true,
+        securityAlerts: true,
+        weeklyDigest: false,
+      };
+    }
     return sanitized;
   }
 }

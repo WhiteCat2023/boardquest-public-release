@@ -32,12 +32,19 @@ export function ScheduledPeriodsList({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const activeSchedules = schedules || [];
+  const sortedSchedules = useMemo(() => {
+    return [...(schedules || [])].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+      return (b.id || "").localeCompare(a.id || "");
+    });
+  }, [schedules]);
 
   const filteredSchedules = useMemo(() => {
-    if (!searchQuery.trim()) return activeSchedules;
+    if (!searchQuery.trim()) return sortedSchedules;
     const q = searchQuery.toLowerCase().trim();
-    return activeSchedules.filter((sched) => {
+    return sortedSchedules.filter((sched) => {
       return (
         sched.title?.toLowerCase().includes(q) ||
         sched.companyName?.toLowerCase().includes(q) ||
@@ -47,7 +54,7 @@ export function ScheduledPeriodsList({
         sched.description?.toLowerCase().includes(q)
       );
     });
-  }, [activeSchedules, searchQuery]);
+  }, [sortedSchedules, searchQuery]);
 
   const totalPages = Math.max(
     1,
@@ -107,7 +114,7 @@ export function ScheduledPeriodsList({
             <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <span className="text-xs">Loading review schedules...</span>
           </div>
-        ) : activeSchedules.length === 0 ? (
+        ) : sortedSchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-border rounded-xl">
             <AlertCircle className="size-8 text-muted-foreground/50 mb-2" />
             <p className="text-xs font-bold text-foreground">

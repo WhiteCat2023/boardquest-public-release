@@ -9,6 +9,9 @@ interface SendPasswordResetMailOptions {
 }
 
 function getResendClient(): Resend | null {
+  if (process.env.NODE_ENV === "test") {
+    return null;
+  }
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey || apiKey.trim() === "") {
     return null;
@@ -638,6 +641,571 @@ export async function sendReviewCenterCredentialsEmail({
     );
     console.log(
       `[MailService Credentials Log]: Email=${toEmail}, Password=${password}, Partner=${companyName}`,
+    );
+    return null;
+  }
+}
+
+export interface SendQuestionStatusMailOptions {
+  toEmail: string;
+  userName?: string;
+  status: "APPROVED" | "PENDING_REVISION" | "COMMENT" | string;
+  questionTitle?: string;
+  subjectName?: string;
+  message: string;
+  feedback?: string;
+  linkUrl?: string;
+}
+
+export async function sendQuestionStatusNotificationEmail({
+  toEmail,
+  userName,
+  status,
+  questionTitle,
+  subjectName,
+  message,
+  feedback,
+  linkUrl: customLinkUrl,
+}: SendQuestionStatusMailOptions) {
+  const adminUrl =
+    process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+  const targetUrl = customLinkUrl || `${adminUrl}/question-bank`;
+
+  const isApproved = status === "APPROVED";
+  const isRevision = status === "PENDING_REVISION";
+  const isComment = status === "COMMENT";
+
+  const badgeBg = isApproved ? "#dcfce7" : isRevision ? "#fef3c7" : "#e0f2fe";
+  const badgeColor = isApproved ? "#15803d" : isRevision ? "#b45309" : "#0369a1";
+  const badgeBorder = isApproved ? "#86efac" : isRevision ? "#fde68a" : "#bae6fd";
+  const badgeText = isApproved
+    ? "APPROVED & PUBLISHED"
+    : isRevision
+      ? "REVISIONS REQUESTED"
+      : isComment
+        ? "REVIEWER COMMENT"
+        : "QUESTION UPDATE";
+
+  const subjectLine = isApproved
+    ? "Question Approved and Published - BoardQuest"
+    : isRevision
+      ? "Revision Requested on Question - BoardQuest"
+      : isComment
+        ? "New Feedback on Your Question - BoardQuest"
+        : "Question Status Update - BoardQuest";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subjectLine}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="520" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td align="center" style="padding: 36px 30px 20px 30px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 14px; font-weight: 900; letter-spacing: 4px; color: #111827; margin-top: 6px;">
+                BOARDQUEST
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px 32px 28px 32px; text-align: left;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <span style="display: inline-block; padding: 6px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: ${badgeColor}; background-color: ${badgeBg}; border: 1px solid ${badgeBorder}; border-radius: 9999px;">
+                  ${badgeText}
+                </span>
+              </div>
+
+              <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 800; color: #111827; text-align: center;">
+                Question Bank Notification
+              </h2>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Hello <strong>${userName || "Educator"}</strong>,
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #374151; line-height: 1.6;">
+                ${message}
+              </p>
+
+              <!-- Details Box -->
+              <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 18px 20px; margin-bottom: 24px;">
+                ${
+                  subjectName
+                    ? `
+                <div style="margin-bottom: 10px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Subject</span>
+                  <div style="font-size: 13px; font-weight: 700; color: #111827; margin-top: 2px;">${subjectName}</div>
+                </div>`
+                    : ""
+                }
+                ${
+                  questionTitle
+                    ? `
+                <div style="margin-bottom: 10px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Question / Topic</span>
+                  <div style="font-size: 13px; font-weight: 600; color: #1f2937; margin-top: 2px; font-style: italic;">"${questionTitle}"</div>
+                </div>`
+                    : ""
+                }
+                ${
+                  feedback
+                    ? `
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db;">
+                  <span style="font-size: 11px; font-weight: 700; color: #a60b0b; text-transform: uppercase; letter-spacing: 0.5px;">Reviewer Notes</span>
+                  <div style="font-size: 13px; color: #374151; margin-top: 4px; background-color: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.5;">${feedback}</div>
+                </div>`
+                    : ""
+                }
+              </div>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 28px auto;">
+                <tr>
+                  <td align="center" style="background-color: #a60b0b; border-radius: 14px;">
+                    <a href="${targetUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 13px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 1px; text-transform: uppercase;">
+                      View Question in Portal
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5; text-align: center;">
+                You received this email because <em>Email Notifications</em> are enabled on your BoardQuest profile. You can change your preferences anytime under Settings.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 32px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Evaluation System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`,
+    );
+    console.log(`\n==================================================`);
+    console.log(`📧 [QUESTION STATUS EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`🏷️ Status: ${status}`);
+    console.log(`📝 Message: ${message}`);
+    if (feedback) console.log(`💬 Feedback: ${feedback}`);
+    console.log(`🔗 Link: ${targetUrl}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: subjectLine,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send question status email to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Question status email sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending question status email to ${toEmail}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+export interface SendSecurityAlertMailOptions {
+  toEmail: string;
+  userName?: string;
+  loginTime?: Date | string;
+  ipAddress?: string;
+  userAgent?: string;
+  location?: string;
+}
+
+export async function sendSecurityAlertEmail({
+  toEmail,
+  userName,
+  loginTime,
+  ipAddress,
+  userAgent,
+  location,
+}: SendSecurityAlertMailOptions) {
+  const adminUrl =
+    process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+  const resetUrl = `${adminUrl}/forgot-password`;
+
+  const formattedTime = loginTime
+    ? new Date(loginTime).toUTCString()
+    : new Date().toUTCString();
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Alert: New Sign-In to BoardQuest</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="520" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td align="center" style="padding: 36px 30px 20px 30px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 14px; font-weight: 900; letter-spacing: 4px; color: #111827; margin-top: 6px;">
+                BOARDQUEST
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px 32px 28px 32px; text-align: left;">
+              <div style="text-align: center; margin-bottom: 16px;">
+                <span style="display: inline-block; padding: 6px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #991b1b; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 9999px;">
+                  SECURITY ALERT
+                </span>
+              </div>
+
+              <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 800; color: #111827; text-align: center;">
+                New Account Sign-In Detected
+              </h2>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Hello <strong>${userName || "User"}</strong>, your BoardQuest account was recently signed into. If this was you, no action is required.
+              </p>
+
+              <!-- Details Box -->
+              <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 18px 20px; margin-bottom: 24px;">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px; color: #374151;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600; width: 110px;">Date & Time:</td>
+                    <td style="padding: 6px 0; font-weight: 700; color: #111827;">${formattedTime}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">IP Address:</td>
+                    <td style="padding: 6px 0; font-weight: 700; color: #111827;">${ipAddress || "Unknown / Localhost"}</td>
+                  </tr>
+                  ${
+                    location
+                      ? `
+                  <tr>
+                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Approx. Region:</td>
+                    <td style="padding: 6px 0; font-weight: 700; color: #111827;">${location}</td>
+                  </tr>`
+                      : ""
+                  }
+                  ${
+                    userAgent
+                      ? `
+                  <tr>
+                    <td style="padding: 6px 0; color: #6b7280; font-weight: 600;">Client Device:</td>
+                    <td style="padding: 6px 0; color: #4b5563; font-size: 12px; word-break: break-all;">${userAgent}</td>
+                  </tr>`
+                      : ""
+                  }
+                </table>
+              </div>
+
+              <!-- Warning Box -->
+              <div style="background-color: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 14px 16px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 12px; color: #9f1239; line-height: 1.5;">
+                  <strong>Did not recognize this activity?</strong> Your credentials may be compromised. Please secure your account immediately by resetting your password.
+                </p>
+              </div>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 20px auto 10px auto;">
+                <tr>
+                  <td align="center" style="background-color: #111827; border-radius: 14px;">
+                    <a href="${resetUrl}" target="_blank" style="display: inline-block; padding: 12px 28px; font-size: 12px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 1px; text-transform: uppercase;">
+                      Secure My Account
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5; text-align: center;">
+                You received this security alert because <em>Security & Login Alerts</em> are active on your account. Manage alerts in Account Settings.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 32px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Evaluation System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`,
+    );
+    console.log(`\n==================================================`);
+    console.log(`🛡️ [SECURITY LOGIN ALERT EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`⏰ Time: ${formattedTime}`);
+    console.log(`🌐 IP: ${ipAddress || "Unknown"}`);
+    if (userAgent) console.log(`💻 Device: ${userAgent}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: "Security Alert: New Sign-In to BoardQuest",
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send security alert email to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Security alert email sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending security alert email to ${toEmail}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+export interface WeeklyDigestMetrics {
+  questionsCreated: number;
+  questionsApproved: number;
+  questionsPending: number;
+  activeContributors: number;
+  studentAttempts: number;
+  averagePassingRate: number;
+  periodLabel?: string;
+}
+
+export interface SendWeeklyDigestMailOptions {
+  toEmail: string;
+  userName?: string;
+  metrics: WeeklyDigestMetrics;
+}
+
+export async function sendWeeklyDigestEmail({
+  toEmail,
+  userName,
+  metrics,
+}: SendWeeklyDigestMailOptions) {
+  const adminUrl =
+    process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+  const dashboardUrl = `${adminUrl}/`;
+
+  const periodText = metrics.periodLabel || "Past 7 Days";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your BoardQuest Weekly Performance Digest</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="540" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td align="center" style="padding: 36px 30px 20px 30px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 14px; font-weight: 900; letter-spacing: 4px; color: #111827; margin-top: 6px;">
+                BOARDQUEST
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px 32px 28px 32px; text-align: left;">
+              <div style="text-align: center; margin-bottom: 16px;">
+                <span style="display: inline-block; padding: 6px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #1e40af; background-color: #dbeafe; border: 1px solid #bfdbfe; border-radius: 9999px;">
+                  WEEKLY DIGEST &bull; ${periodText.toUpperCase()}
+                </span>
+              </div>
+
+              <h2 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: #111827; text-align: center;">
+                Academic & Review Performance Digest
+              </h2>
+              <p style="margin: 0 0 24px 0; font-size: 13px; color: #6b7280; text-align: center;">
+                Executive summary of faculty authoring, question reviews, and student engagement.
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Hello <strong>${userName || "Educator"}</strong>, here is your weekly breakdown of activity across BoardQuest:
+              </p>
+
+              <!-- Metrics Grid -->
+              <table width="100%" border="0" cellspacing="8" cellpadding="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td width="50%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center;">
+                    <div style="font-size: 26px; font-weight: 900; color: #a60b0b;">${metrics.questionsCreated}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-top: 4px;">New Questions</div>
+                  </td>
+                  <td width="50%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center;">
+                    <div style="font-size: 26px; font-weight: 900; color: #15803d;">${metrics.questionsApproved}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-top: 4px;">Approved & Published</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center;">
+                    <div style="font-size: 26px; font-weight: 900; color: #b45309;">${metrics.questionsPending}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-top: 4px;">Awaiting Review</div>
+                  </td>
+                  <td width="50%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center;">
+                    <div style="font-size: 26px; font-weight: 900; color: #1d4ed8;">${metrics.studentAttempts}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-top: 4px;">Student Attempts</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Average Accuracy / Passing Rate Banner -->
+              <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; text-align: center;">
+                <div style="font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">Student Cohort Passing / Accuracy Rate</div>
+                <div style="font-size: 28px; font-weight: 900; color: #15803d; margin-top: 4px;">${metrics.averagePassingRate}%</div>
+                <div style="font-size: 12px; color: #166534; margin-top: 2px;">Measured across all completed questions and assessments this period.</div>
+              </div>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 28px auto;">
+                <tr>
+                  <td align="center" style="background-color: #a60b0b; border-radius: 14px;">
+                    <a href="${dashboardUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 13px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 1px; text-transform: uppercase;">
+                      Open Admin Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5; text-align: center;">
+                You received this digest because <em>Weekly Performance Digest</em> is turned on. Manage your delivery settings under Notification Preferences.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 32px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Evaluation System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`,
+    );
+    console.log(`\n==================================================`);
+    console.log(`📊 [WEEKLY PERFORMANCE DIGEST EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail}`);
+    console.log(`📈 Metrics:`, metrics);
+    console.log(`🔗 Dashboard: ${dashboardUrl}`);
+    console.log(`==================================================\n`);
+    return null;
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject: `BoardQuest Weekly Digest: ${metrics.questionsCreated} new questions, ${metrics.questionsApproved} approved`,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send weekly digest email to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Weekly digest email sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending weekly digest email to ${toEmail}:`,
+      error,
     );
     return null;
   }

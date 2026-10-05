@@ -7,6 +7,7 @@ import prisma from "../../services/prisma";
 import { logInfo, logWarn } from "../../services/admin/logger.service";
 import { isSuperAdmin, getSuperAdminProfile } from "../../config/credentials";
 import { ensureSuperAdminExists } from "../../services/admin/bootstrap.service";
+import { sendSecurityAlertEmail } from "../../services/mail.service";
 // export const login = asyncHandler(async (req, res) => {
 //   const user = await authService.login(req.body);
 //   var accesstoken = "";
@@ -47,6 +48,25 @@ export const login = asyncHandler(async (req, res) => {
     res.cookie("accessToken", accesstoken, cookieOptions);
     res.cookie("refreshToken", refreshtoken, cookieOptions);
     await logInfo("USER_LOGIN_SUCCESS", `${user.role || "User"} (${user.email}) logged in successfully.`, "AuthService", user.email, req.ip);
+    try {
+        const prefs = user?.notificationPreferences;
+        const securityAlertsEnabled = prefs?.securityAlerts !== false && prefs?.securityAlerts !== undefined
+            ? Boolean(prefs.securityAlerts)
+            : true;
+        if (securityAlertsEnabled && user.email) {
+            sendSecurityAlertEmail({
+                toEmail: user.email,
+                userName: user.name,
+                loginTime: new Date(),
+                ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+                userAgent: req.headers["user-agent"] || "Browser",
+                location: user.location || "Philippines",
+            }).catch((err) => console.warn("Failed to send security alert email:", err?.message));
+        }
+    }
+    catch (alertErr) {
+        console.warn("Security alert dispatch error:", alertErr);
+    }
     return new ApiResponse(200, { user }, "User login successfully").send(res);
 });
 export const signup = asyncHandler(async (req, res) => {
@@ -122,6 +142,7 @@ export const refreshToken = async (req, res) => {
                 accountStatus: true,
                 isActive: true,
                 handledSubjectIds: true,
+                notificationPreferences: true,
                 handledSubjects: {
                     select: {
                         id: true,
@@ -133,6 +154,13 @@ export const refreshToken = async (req, res) => {
     }
     if (!user) {
         return new ApiResponse(401, null, "User not found").send(res);
+    }
+    if (!user.notificationPreferences) {
+        user.notificationPreferences = {
+            emailNotifications: true,
+            securityAlerts: true,
+            weeklyDigest: false,
+        };
     }
     if (user.accountStatus === "DEACTIVATED") {
         return new ApiResponse(403, null, "Account is deactivated").send(res);

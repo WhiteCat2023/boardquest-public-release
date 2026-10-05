@@ -195,14 +195,90 @@ export function useProfileMutations() {
     }
   };
 
+  const [isUpdatingPreferences, setIsUpdatingPreferences] = useState(false);
+  const [isSendingTestDigest, setIsSendingTestDigest] = useState(false);
+
+  const updateNotificationPreferences = async (
+    newPrefs: Partial<{
+      emailNotifications: boolean;
+      securityAlerts: boolean;
+      weeklyDigest: boolean;
+    }>,
+  ) => {
+    setIsUpdatingPreferences(true);
+    try {
+      const currentPrefs = {
+        emailNotifications: user.notificationPreferences?.emailNotifications ?? true,
+        securityAlerts: user.notificationPreferences?.securityAlerts ?? true,
+        weeklyDigest: user.notificationPreferences?.weeklyDigest ?? false,
+      };
+
+      const mergedPrefs = {
+        ...currentPrefs,
+        ...newPrefs,
+      };
+
+      const response = await axiosPrivate.put("/auth/profile", {
+        notificationPreferences: mergedPrefs,
+      });
+
+      const updatedUser = response.data?.data?.user || {
+        ...user,
+        notificationPreferences: mergedPrefs,
+      };
+
+      setAuth((prev: any) => ({
+        ...prev,
+        data: {
+          ...prev?.data,
+          user: updatedUser,
+        },
+        user: updatedUser,
+      }));
+
+      return true;
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Failed to update notification preferences.",
+      );
+      return false;
+    } finally {
+      setIsUpdatingPreferences(false);
+    }
+  };
+
+  const sendTestDigest = async () => {
+    setIsSendingTestDigest(true);
+    try {
+      const response = await axiosPrivate.post("/notifications/send-digest", {
+        forSelfOnly: true,
+      });
+      toast.success(
+        response.data?.message || "Weekly digest dispatched to your email!",
+      );
+      return true;
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Failed to send weekly digest test.",
+      );
+      return false;
+    } finally {
+      setIsSendingTestDigest(false);
+    }
+  };
+
   return {
     user,
     isSavingProfile,
     isSavingPassword,
     isUploadingAvatar,
+    isUpdatingPreferences,
+    isSendingTestDigest,
     updateProfile,
     updatePassword,
     uploadAvatar,
     removeAvatar,
+    updateNotificationPreferences,
+    sendTestDigest,
   };
 }

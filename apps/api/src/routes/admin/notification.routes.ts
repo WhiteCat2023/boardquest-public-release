@@ -8,6 +8,7 @@ import {
   clearAllNotificationsHandler,
   createNotificationHandler,
   streamNotificationsHandler,
+  sendDigestHandler,
 } from "../../controller/admin/notification.controller";
 
 const router = Router();
@@ -21,5 +22,6 @@ router.patch("/read-all", markAllAsReadHandler);
 router.delete("/:id", deleteNotificationHandler);
 router.delete("/clear-all", clearAllNotificationsHandler);
 router.post("/create", requireRoles(["DEAN", "SUPERADMIN", "TEAMLEAD"]), createNotificationHandler);
+router.post("/send-digest", requireRoles(["DEAN", "SUPERADMIN", "TEAMLEAD"]), sendDigestHandler);
 
 export default router;

@@ -60,7 +60,7 @@ export class GameBadgeService {
                         select: { userBadges: true },
                     },
                 },
-                orderBy: { createdAt: "asc" },
+                orderBy: { createdAt: "desc" },
             }),
             prisma.userBadge.groupBy({
                 by: ["badgeSlug"],
