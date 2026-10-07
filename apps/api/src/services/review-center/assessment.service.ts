@@ -10,6 +10,7 @@ import {
   calculateMedTechGeneralAverage,
 } from "../../utils/statsCalculator";
 import { getReviewCenterSchoolYears } from "./candidate.service";
+import { createNotification } from "../admin/notification.service";
 
 export interface CreateAssessmentInput {
   title: string;
@@ -159,6 +160,21 @@ export class AssessmentService {
         isPublished: Boolean(data.isPublished),
       },
     });
+
+    createNotification({
+      recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+      recipientId: reviewCenterId || undefined,
+      title: "Assessment Record Created",
+      message: `"${data.title}" (${normalizedSubject}) has been recorded.`,
+      type: "INFO",
+      link: "/scores",
+      metadata: {
+        reviewCenterId,
+        companyName,
+        subject: normalizedSubject,
+        assessmentId: assessment.id,
+      },
+    }).catch((err) => console.warn("Assessment notification error:", err?.message));
 
     return assessment;
   }

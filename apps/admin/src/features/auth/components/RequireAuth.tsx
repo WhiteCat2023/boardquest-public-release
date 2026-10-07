@@ -18,10 +18,11 @@ const RequireAuth = ({ allowedRoles }: { allowedRoles: (string | number)[] }) =>
     const currentUser = auth?.data?.user || auth?.user;
     const userRole = currentUser?.role;
 
-    const isAllowed = userRole && allowedRoles?.some((allowed) => {
+    const isSuperAdmin = normalizeRole(userRole) === 'SUPERADMIN';
+    const isAllowed = isSuperAdmin || Boolean(userRole && allowedRoles?.some((allowed) => {
       if (allowed === userRole || String(allowed) === String(userRole)) return true;
       return normalizeRole(allowed) === normalizeRole(userRole);
-    });
+    }));
 
     return (
       isAllowed

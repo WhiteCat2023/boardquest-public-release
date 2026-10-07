@@ -2,6 +2,7 @@ import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
 import { MEDTECH_SUBJECTS, normalizeMedTechSubject, calculateMean, calculateMedian, calculateMode, calculatePercentileRanks, calculateMedTechGeneralAverage, } from "../../utils/statsCalculator";
 import { getReviewCenterSchoolYears } from "./candidate.service";
+import { createNotification } from "../admin/notification.service";
 /**
  * Service to manage review center assessments and student score records with strict multi-tenant isolation.
  */
@@ -95,6 +96,20 @@ export class AssessmentService {
                 isPublished: Boolean(data.isPublished),
             },
         });
+        createNotification({
+            recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+            recipientId: reviewCenterId || undefined,
+            title: "Assessment Record Created",
+            message: `"${data.title}" (${normalizedSubject}) has been recorded.`,
+            type: "INFO",
+            link: "/scores",
+            metadata: {
+                reviewCenterId,
+                companyName,
+                subject: normalizedSubject,
+                assessmentId: assessment.id,
+            },
+        }).catch((err) => console.warn("Assessment notification error:", err?.message));
         return assessment;
     }
     /**

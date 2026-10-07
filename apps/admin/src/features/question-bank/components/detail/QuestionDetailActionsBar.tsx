@@ -78,9 +78,9 @@ export function QuestionDetailActionsBar({
         {canDelete && (
           <Button
             type="button"
-            variant="outline"
+            variant="destructive-outline"
             onClick={handleDelete}
-            className="cursor-pointer border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive font-semibold px-3.5 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5"
+            className="cursor-pointer font-semibold px-3.5 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5"
           >
             <Trash2 size={13} />
             Delete
@@ -90,8 +90,9 @@ export function QuestionDetailActionsBar({
         {canEdit && (
           <Button
             type="button"
+            variant="default"
             onClick={() => navigate(`/question-bank/edit/${question.id}`)}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 shadow-xs"
+            className="cursor-pointer font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5"
           >
             <Edit size={13} />
             Edit
@@ -101,9 +102,10 @@ export function QuestionDetailActionsBar({
         {question.status === QuestionStatus.PENDING_REVIEW && canApprove && (
           <Button
             type="button"
+            variant="success"
             onClick={() => approveMutation.mutate()}
             disabled={approveMutation.isPending}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs border border-emerald-600/20"
+            className="font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer"
           >
             {approveMutation.isPending ? (
               <Spinner size="sm" variant="current" />
@@ -120,12 +122,11 @@ export function QuestionDetailActionsBar({
           (question.status as string) === "NEEDS_REVISION") && (
           <Button
             type="button"
+            variant="warning"
             onClick={() => handleSubmitRevisions(unresolvedCommentsCount)}
             disabled={submitRevisionMutation.isPending}
-            className={`font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
-              hasUnresolvedComments
-                ? "bg-amber-600/80 hover:bg-amber-600 text-white opacity-90"
-                : "bg-amber-600 hover:bg-amber-700 text-white"
+            className={`font-semibold px-4 py-1 rounded-lg h-8 text-xs flex items-center gap-1.5 cursor-pointer transition-all ${
+              hasUnresolvedComments ? "opacity-75" : ""
             }`}
             title={
               hasUnresolvedComments

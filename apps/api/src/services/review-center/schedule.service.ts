@@ -1,6 +1,7 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
 import { evaluateScheduleStatus } from "../admin/calendar.service";
+import { createNotification } from "../admin/notification.service";
 
 export interface CreateReviewScheduleDTO {
   title: string;
@@ -10,6 +11,7 @@ export interface CreateReviewScheduleDTO {
   description?: string;
   companyName: string;
   reviewCenterId?: string;
+  schoolYear?: string;
 }
 
 export interface UpdateReviewScheduleDTO {
@@ -19,9 +21,36 @@ export interface UpdateReviewScheduleDTO {
   category?: string;
   description?: string;
   status?: string;
+  schoolYear?: string;
+}
+
+export function inferSchoolYearFromDate(date: Date | string | null | undefined): string {
+  if (!date) return "2026-2027";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "2026-2027";
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 1-12
+  // June onwards belongs to year-(year+1); Jan-May belongs to (year-1)-year
+  return month >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
+
+export function extractSchoolYearFromSchedule(item: any): string {
+  if (item.description) {
+    const match = item.description.match(/\[SY:(\d{4}-\d{4})\]/);
+    if (match && match[1]) return match[1];
+  }
+  return inferSchoolYearFromDate(item.startDate || item.createdAt);
+}
+
+export function cleanScheduleDescription(rawDesc?: string | null): string {
+  if (!rawDesc) return "";
+  return rawDesc.replace(/\[SY:\d{4}-\d{4}\]\s*/g, "").trim();
 }
 
 function mapToSchedule(item: any) {
+  const schoolYear = extractSchoolYearFromSchedule(item);
+  const description = cleanScheduleDescription(item.description);
+
   return {
     id: item.id,
     title: item.title,
@@ -34,7 +63,8 @@ function mapToSchedule(item: any) {
       ? new Date(item.endDate).toISOString().split("T")[0]
       : "2026-07-15",
     status: evaluateScheduleStatus(item.startDate, item.endDate),
-    description: item.description || "",
+    description,
+    schoolYear,
     reviewCenterId: item.reviewCenterId || null,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -47,6 +77,7 @@ function mapToSchedule(item: any) {
 export async function getReviewCenterSchedules(
   companyName?: string,
   reviewCenterId?: string,
+  schoolYear?: string,
 ) {
   const whereConditions: any[] = [];
   
@@ -72,8 +103,14 @@ export async function getReviewCenterSchedules(
     orderBy: { createdAt: "desc" },
   });
 
-  return list
-    .map(mapToSchedule);
+  const mapped = list.map(mapToSchedule);
+
+  if (schoolYear && schoolYear.trim() && schoolYear.toUpperCase() !== "ALL") {
+    const targetSy = schoolYear.trim();
+    return mapped.filter((s) => s.schoolYear === targetSy);
+  }
+
+  return mapped;
 }
 
 /**
@@ -108,6 +145,10 @@ export async function createReviewCenterSchedule(data: CreateReviewScheduleDTO) 
     }
   }
 
+  const schoolYear = data.schoolYear || inferSchoolYearFromDate(data.startDate);
+  const cleanDesc = cleanScheduleDescription(data.description);
+  const finalDescription = `[SY:${schoolYear}] ${cleanDesc}`.trim();
+
   const created = await prisma.reviewCenterProgram.create({
     data: {
       title: data.title,
@@ -117,9 +158,24 @@ export async function createReviewCenterSchedule(data: CreateReviewScheduleDTO) 
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
       status: evaluateScheduleStatus(data.startDate, data.endDate),
-      description: data.description || "",
+      description: finalDescription,
     },
   });
+
+  createNotification({
+    recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+    recipientId: finalReviewCenterId || undefined,
+    title: "Evaluation Schedule Added",
+    message: `"${data.title}" scheduled for ${new Date(data.startDate).toLocaleDateString()}.`,
+    type: "INFO",
+    link: "/schedules",
+    metadata: {
+      reviewCenterId: finalReviewCenterId,
+      companyName: data.companyName,
+      scheduleId: created.id,
+    },
+  }).catch((err) => console.warn("Schedule notification error:", err?.message));
+
   return mapToSchedule(created);
 }
 
@@ -157,6 +213,13 @@ export async function updateReviewCenterSchedule(
   const newEndDate = data.endDate ? new Date(data.endDate) : existing.endDate;
   const status = evaluateScheduleStatus(newStartDate, newEndDate);
 
+  let finalDescription: string | undefined = undefined;
+  if (data.schoolYear || data.description !== undefined) {
+    const currentSchoolYear = data.schoolYear || extractSchoolYearFromSchedule(existing);
+    const cleanDesc = cleanScheduleDescription(data.description !== undefined ? data.description : existing.description);
+    finalDescription = `[SY:${currentSchoolYear}] ${cleanDesc}`.trim();
+  }
+
   const updated = await prisma.reviewCenterProgram.update({
     where: { id },
     data: {
@@ -165,7 +228,7 @@ export async function updateReviewCenterSchedule(
       ...(data.startDate && { startDate: new Date(data.startDate) }),
       ...(data.endDate && { endDate: new Date(data.endDate) }),
       status,
-      ...(data.description !== undefined && { description: data.description }),
+      ...(finalDescription !== undefined && { description: finalDescription }),
     },
   });
   return mapToSchedule(updated);

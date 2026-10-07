@@ -45,6 +45,7 @@ export function useQuestionBank(filters?: QuestionFilters) {
             questions: questionsList as Question[],
             nextCursor: rawData?.nextCursor as string | null,
             hasNextPage: !!rawData?.hasNextPage,
+            total: typeof rawData?.total === "number" ? rawData.total : undefined,
         };
     };
 

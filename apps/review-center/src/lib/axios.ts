@@ -10,4 +10,12 @@ export const rcAxios = axios.create({
   },
 });
 
+export const apiAxios = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export default rcAxios;

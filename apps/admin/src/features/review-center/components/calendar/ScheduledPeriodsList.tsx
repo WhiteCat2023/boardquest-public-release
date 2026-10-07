@@ -14,7 +14,11 @@ import { ScheduleCardItem } from "./ScheduleCardItem";
 
 interface ScheduledPeriodsListProps {
   schedules: ReviewSchedule[];
+  selectedScheduleId?: string | null;
+  onSelectSchedule?: (schedule: ReviewSchedule) => void;
+  onClearSelection?: () => void;
   isLoading: boolean;
+  canManage?: boolean;
   onAddSchedule: () => void;
   onEditSchedule: (schedule: ReviewSchedule) => void;
   onDeleteSchedule: (schedule: ReviewSchedule) => void;
@@ -24,7 +28,11 @@ const ITEMS_PER_PAGE = 10;
 
 export function ScheduledPeriodsList({
   schedules,
+  selectedScheduleId,
+  onSelectSchedule,
+  onClearSelection,
   isLoading,
+  canManage = true,
   onAddSchedule,
   onEditSchedule,
   onDeleteSchedule,
@@ -80,9 +88,20 @@ export function ScheduledPeriodsList({
             Scheduled Review Periods
           </h3>
         </div>
-        <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-          {filteredSchedules.length}
-        </span>
+        <div className="flex items-center gap-2">
+          {selectedScheduleId && (
+            <button
+              type="button"
+              onClick={onClearSelection}
+              className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+            >
+              Clear Filter
+            </button>
+          )}
+          <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+            {filteredSchedules.length}
+          </span>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -121,16 +140,19 @@ export function ScheduledPeriodsList({
               No Review Periods
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Click &quot;Schedule Review Period&quot; to set review dates and
-              timelines.
+              {canManage
+                ? 'Click "Schedule Review Period" to set review dates and timelines.'
+                : "No review periods have been scheduled yet."}
             </p>
-            <Button
-              size="sm"
-              onClick={onAddSchedule}
-              className="mt-3 h-7.5 text-xs rounded-lg bg-primary text-primary-foreground font-semibold cursor-pointer"
-            >
-              <Plus size={13} className="mr-1" /> Set Schedule
-            </Button>
+            {canManage && (
+              <Button
+                size="sm"
+                onClick={onAddSchedule}
+                className="mt-3 h-7.5 text-xs rounded-lg bg-primary text-primary-foreground font-semibold cursor-pointer"
+              >
+                <Plus size={13} className="mr-1" /> Set Schedule
+              </Button>
+            )}
           </div>
         ) : filteredSchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-6 text-center space-y-2 border border-dashed border-border rounded-xl bg-muted/20">
@@ -155,6 +177,9 @@ export function ScheduledPeriodsList({
             <ScheduleCardItem
               key={sched.id}
               schedule={sched}
+              isSelected={selectedScheduleId === sched.id}
+              canManage={canManage}
+              onSelect={onSelectSchedule}
               onEdit={onEditSchedule}
               onDelete={onDeleteSchedule}
             />

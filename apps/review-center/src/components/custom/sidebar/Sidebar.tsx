@@ -22,6 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
+import { SidebarSchoolYearDropdown } from "./SidebarSchoolYearDropdown";
 
 type LucideIconName = keyof typeof LucideIcons;
 
@@ -201,6 +202,9 @@ export function Sidebar({
           </div>
         </Link>
       </SidebarHeader>
+
+      {/* ── School Year Context Switcher (Dropdown with CMS) ── */}
+      <SidebarSchoolYearDropdown />
 
       {/* ── 2. Navigation Content ── */}
       <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">

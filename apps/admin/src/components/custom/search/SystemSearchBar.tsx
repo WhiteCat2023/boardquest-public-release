@@ -475,8 +475,13 @@ export function SystemSearchBar() {
     const query = searchQuery.trim().toLowerCase();
 
     return SYSTEM_SEARCH_ITEMS.filter((item) => {
-      // Role access check
-      if (item.roles && currentUserRole && !item.roles.includes(currentUserRole)) {
+      // Role access check (SUPERADMIN has universal access)
+      if (
+        currentUserRole?.toUpperCase() !== "SUPERADMIN" &&
+        item.roles &&
+        currentUserRole &&
+        !item.roles.includes(currentUserRole)
+      ) {
         return false;
       }
 

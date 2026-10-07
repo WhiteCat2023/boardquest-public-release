@@ -3,6 +3,8 @@ import { Response } from "express";
 export interface SseClient {
   userId?: string;
   role?: string;
+  reviewCenterId?: string;
+  companyName?: string;
   res: Response;
 }
 
@@ -16,7 +18,13 @@ class SseService {
     }, 30000);
   }
 
-  addClient(userId: string | undefined, role: string | undefined, res: Response) {
+  addClient(
+    userId: string | undefined,
+    role: string | undefined,
+    res: Response,
+    reviewCenterId?: string,
+    companyName?: string,
+  ) {
     // Set SSE headers
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -29,7 +37,13 @@ class SseService {
     res.write("retry: 5000\n\n");
     res.write(`data: ${JSON.stringify({ type: "CONNECTED", message: "SSE connected successfully" })}\n\n`);
 
-    const client: SseClient = { userId, role: role?.toUpperCase(), res };
+    const client: SseClient = {
+      userId,
+      role: role?.toUpperCase(),
+      reviewCenterId,
+      companyName,
+      res,
+    };
     this.clients.push(client);
 
     // Clean up when client disconnects
@@ -60,32 +74,95 @@ class SseService {
 
     this.clients.forEach((client) => {
       const clientUserId = client.userId;
-      const clientRole = client.role;
+      const clientRole = client.role ? client.role.toUpperCase() : "";
+      const isReviewCenterClient =
+        clientRole === "REVIEW_CENTER_REPRESENTATIVE" ||
+        clientRole === "REVIEWCENTER";
+
+      // If client is review center, strictly forbid question bank events
+      if (isReviewCenterClient) {
+        if (notification.link && notification.link.includes("question-bank")) {
+          return;
+        }
+        if (notification.type === "QUESTION_APPROVED") {
+          return;
+        }
+        if (
+          notification.title &&
+          notification.title.toLowerCase().includes("question bank")
+        ) {
+          return;
+        }
+      }
 
       let isTargeted = false;
 
-      // 1. Direct notification to specific user
+      // 1. Direct notification to specific user or specific review center
       if (recipientId && clientUserId && recipientId === clientUserId) {
         isTargeted = true;
+      } else if (
+        recipientId &&
+        client.reviewCenterId &&
+        recipientId === client.reviewCenterId
+      ) {
+        isTargeted = true;
       }
-      // 2. Broadcast to ALL
+      // 2. Broadcast to ALL (ONLY for internal roles, NEVER for Review Center)
       else if (recipientRole === "ALL") {
-        isTargeted = true;
+        if (!isReviewCenterClient) {
+          isTargeted = true;
+        }
       }
-      // 3. Broadcast to specific role (e.g. TEACHER, DEAN, SUPERADMIN)
-      else if (clientRole && recipientRole === clientRole) {
-        isTargeted = true;
-      }
-      // 4. Broadcast to REVIEWER role (SUPERADMIN, DEAN, TEAMLEAD)
+      // 3. Broadcast to review center role
       else if (
+        isReviewCenterClient &&
+        (recipientRole === "REVIEW_CENTER_REPRESENTATIVE" ||
+          recipientRole === "REVIEWCENTER")
+      ) {
+        // Verify tenant scope if metadata provides specific review center info
+        if (notification.metadata) {
+          try {
+            const meta =
+              typeof notification.metadata === "string"
+                ? JSON.parse(notification.metadata)
+                : notification.metadata;
+            if (
+              meta.reviewCenterId &&
+              client.reviewCenterId &&
+              meta.reviewCenterId !== client.reviewCenterId
+            ) {
+              return;
+            }
+            if (
+              meta.companyName &&
+              client.companyName &&
+              meta.companyName.trim().toLowerCase() !==
+                client.companyName.trim().toLowerCase()
+            ) {
+              return;
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+        isTargeted = true;
+      }
+      // 4. Broadcast to specific role (e.g. TEACHER, DEAN, SUPERADMIN)
+      else if (!isReviewCenterClient && clientRole && recipientRole === clientRole) {
+        isTargeted = true;
+      }
+      // 5. Broadcast to REVIEWER role (SUPERADMIN, DEAN, TEAMLEAD)
+      else if (
+        !isReviewCenterClient &&
         recipientRole === "REVIEWER" &&
         clientRole &&
         ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(clientRole)
       ) {
         isTargeted = true;
       }
-      // 5. Broadcast to STAFF role (SUPERADMIN, DEAN, TEAMLEAD)
+      // 6. Broadcast to STAFF role (SUPERADMIN, DEAN, TEAMLEAD)
       else if (
+        !isReviewCenterClient &&
         recipientRole === "STAFF" &&
         clientRole &&
         ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(clientRole)

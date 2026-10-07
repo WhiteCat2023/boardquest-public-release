@@ -15,6 +15,7 @@ import rcAuthRoutes from "./review-center/auth.routes.js";
 import rcScheduleRoutes from "./review-center/schedule.routes.js";
 import rcCandidateRoutes from "./review-center/candidate.routes.js";
 import rcAssessmentRoutes from "./review-center/assessment.routes.js";
+import rcNotificationRoutes from "./review-center/rcNotification.routes.js";
 
 const router = Router();
 
@@ -47,5 +48,7 @@ router.use("/review-center-app/assessments", rcAssessmentRoutes);
 router.use("/review-center-app/scores", rcAssessmentRoutes);
 router.use("/review-center/assessments", rcAssessmentRoutes);
 router.use("/review-center/scores", rcAssessmentRoutes);
+router.use("/review-center-app/notifications", rcNotificationRoutes);
+router.use("/review-center/notifications", rcNotificationRoutes);
 
 export default router;

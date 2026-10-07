@@ -1,13 +1,30 @@
 import prisma from "../prisma";
 import sseService from "./sse.service";
 import pusherService from "./pusher.service";
-function getOrConditions(userId, role) {
+function getOrConditions(userId, role, reviewCenterId, companyName) {
+    const uppercaseRole = role ? role.toUpperCase() : "";
+    const isReviewCenter = uppercaseRole === "REVIEW_CENTER_REPRESENTATIVE" ||
+        uppercaseRole === "REVIEWCENTER";
+    // If the user is a Review Center representative:
+    // Strictly scope to their user, reviewCenterId, and review center roles.
+    // Never pull generic "ALL" notifications from faculty/question-bank.
+    if (isReviewCenter) {
+        const rcConditions = [];
+        if (userId) {
+            rcConditions.push({ recipientId: userId });
+        }
+        if (reviewCenterId) {
+            rcConditions.push({ recipientId: reviewCenterId });
+        }
+        rcConditions.push({ recipientRole: "REVIEWCENTER" });
+        rcConditions.push({ recipientRole: "REVIEW_CENTER_REPRESENTATIVE" });
+        return rcConditions.length > 0 ? rcConditions : [{ recipientId: "NONE" }];
+    }
     const OR_conditions = [{ recipientRole: "ALL" }];
     if (userId) {
         OR_conditions.push({ recipientId: userId });
     }
     if (role) {
-        const uppercaseRole = role.toUpperCase();
         OR_conditions.push({ recipientRole: uppercaseRole });
         if (["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(uppercaseRole)) {
             OR_conditions.push({ recipientRole: "REVIEWER" });
@@ -16,13 +33,16 @@ function getOrConditions(userId, role) {
     }
     return OR_conditions;
 }
-export async function getUnreadNotificationsCount(userId, role) {
+export async function getUnreadNotificationsCount(userId, role, reviewCenterId, companyName) {
     if (!userId)
         return 0;
     try {
+        const uppercaseRole = role ? role.toUpperCase() : "";
+        const isReviewCenter = uppercaseRole === "REVIEW_CENTER_REPRESENTATIVE" ||
+            uppercaseRole === "REVIEWCENTER";
         const unreadWhere = {
             AND: [
-                { OR: getOrConditions(userId, role) },
+                { OR: getOrConditions(userId, role, reviewCenterId, companyName) },
                 { NOT: { deletedUserIds: { has: userId } } },
                 {
                     OR: [
@@ -39,6 +59,45 @@ export async function getUnreadNotificationsCount(userId, role) {
                 },
             ],
         };
+        if (isReviewCenter) {
+            const unreadItems = await prisma.notification.findMany({
+                where: unreadWhere,
+                select: { id: true, type: true, link: true, title: true, metadata: true },
+            });
+            const validItems = unreadItems.filter((notif) => {
+                if (notif.link && notif.link.includes("question-bank"))
+                    return false;
+                if (notif.link && notif.link.includes("subject-management"))
+                    return false;
+                if (notif.type === "QUESTION_APPROVED")
+                    return false;
+                if (notif.title &&
+                    notif.title.toLowerCase().includes("question bank")) {
+                    return false;
+                }
+                if (notif.metadata) {
+                    try {
+                        const meta = typeof notif.metadata === "string"
+                            ? JSON.parse(notif.metadata)
+                            : notif.metadata;
+                        if (meta.reviewCenterId &&
+                            reviewCenterId &&
+                            meta.reviewCenterId !== reviewCenterId) {
+                            return false;
+                        }
+                        if (meta.companyName &&
+                            companyName &&
+                            meta.companyName.trim().toLowerCase() !==
+                                companyName.trim().toLowerCase()) {
+                            return false;
+                        }
+                    }
+                    catch { }
+                }
+                return true;
+            });
+            return validItems.length;
+        }
         return await prisma.notification.count({ where: unreadWhere });
     }
     catch (err) {
@@ -81,12 +140,27 @@ export async function createNotification(input) {
     return notif;
 }
 export async function getUserNotifications(input) {
-    const { userId, role, unreadOnly = false, limit = 15, skip = 0, search, type } = input;
+    const { userId, role, reviewCenterId, companyName, unreadOnly = false, limit = 15, skip = 0, search, type, } = input;
+    const uppercaseRole = role ? role.toUpperCase() : "";
+    const isReviewCenter = uppercaseRole === "REVIEW_CENTER_REPRESENTATIVE" ||
+        uppercaseRole === "REVIEWCENTER";
     const andConditions = [];
     if (userId) {
         andConditions.push({
             NOT: {
                 deletedUserIds: { has: userId },
+            },
+        });
+    }
+    // If review center, strictly exclude question-bank / faculty notifications
+    if (isReviewCenter) {
+        andConditions.push({
+            NOT: {
+                OR: [
+                    { link: { contains: "question-bank" } },
+                    { link: { contains: "subject-management" } },
+                    { type: "QUESTION_APPROVED" },
+                ],
             },
         });
     }
@@ -120,20 +194,60 @@ export async function getUserNotifications(input) {
         });
     }
     const whereClause = {
-        AND: [{ OR: getOrConditions(userId, role) }, ...andConditions],
+        AND: [
+            { OR: getOrConditions(userId, role, reviewCenterId, companyName) },
+            ...andConditions,
+        ],
     };
     const [rawNotifications, unreadCount] = await Promise.all([
         prisma.notification.findMany({
             where: whereClause,
             orderBy: { createdAt: "desc" },
             skip: Math.max(0, skip),
-            take: limit + 1,
+            take: isReviewCenter ? limit + 50 : limit + 1,
         }),
-        getUnreadNotificationsCount(userId, role),
+        getUnreadNotificationsCount(userId, role, reviewCenterId, companyName),
     ]);
-    const hasMore = rawNotifications.length > limit;
-    const items = hasMore ? rawNotifications.slice(0, limit) : rawNotifications;
-    const processed = items.map((n) => {
+    let items = rawNotifications;
+    if (isReviewCenter) {
+        items = rawNotifications.filter((notif) => {
+            if (notif.link && notif.link.includes("question-bank"))
+                return false;
+            if (notif.link && notif.link.includes("subject-management"))
+                return false;
+            if (notif.type === "QUESTION_APPROVED")
+                return false;
+            if (notif.title &&
+                notif.title.toLowerCase().includes("question bank")) {
+                return false;
+            }
+            if (notif.metadata) {
+                try {
+                    const meta = typeof notif.metadata === "string"
+                        ? JSON.parse(notif.metadata)
+                        : notif.metadata;
+                    if (meta.reviewCenterId &&
+                        reviewCenterId &&
+                        meta.reviewCenterId !== reviewCenterId) {
+                        return false;
+                    }
+                    if (meta.companyName &&
+                        companyName &&
+                        meta.companyName.trim().toLowerCase() !==
+                            companyName.trim().toLowerCase()) {
+                        return false;
+                    }
+                }
+                catch {
+                    // Ignore JSON parse errors
+                }
+            }
+            return true;
+        });
+    }
+    const hasMore = items.length > limit;
+    const sliced = hasMore ? items.slice(0, limit) : items;
+    const processed = sliced.map((n) => {
         const isReadForUser = n.recipientId === userId
             ? n.isRead
             : (userId
@@ -181,13 +295,13 @@ export async function markNotificationAsRead(id, userId, role) {
     }
 }
 export async function markAllNotificationsAsRead(input) {
-    const { userId, role } = input;
+    const { userId, role, reviewCenterId, companyName } = input;
     if (!userId)
         return { success: true };
     try {
         const notificationsToMark = await prisma.notification.findMany({
             where: {
-                OR: getOrConditions(userId, role),
+                OR: getOrConditions(userId, role, reviewCenterId, companyName),
                 NOT: { deletedUserIds: { has: userId } },
             },
             select: { id: true, recipientId: true, isRead: true, readUserIds: true },
@@ -241,13 +355,13 @@ export async function deleteNotification(id, userId, role) {
     return { success: true };
 }
 export async function clearAllNotifications(input) {
-    const { userId, role } = input;
+    const { userId, role, reviewCenterId, companyName } = input;
     if (!userId)
         return { success: true };
     try {
         const notificationsToClear = await prisma.notification.findMany({
             where: {
-                OR: getOrConditions(userId, role),
+                OR: getOrConditions(userId, role, reviewCenterId, companyName),
                 NOT: { deletedUserIds: { has: userId } },
             },
             select: { id: true, recipientId: true, deletedUserIds: true },

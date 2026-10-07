@@ -7,6 +7,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../../services/prisma";
+import rcNotificationService from "../../services/review-center/rcNotification.service.js";
 
 const assessmentService = new AssessmentService();
 
@@ -163,6 +164,18 @@ export const bulkSaveScores = asyncHandler(
       reviewCenterId,
       user?.email || user?.name
     );
+
+    if (reviewCenterId) {
+      rcNotificationService
+        .createRCNotification({
+          reviewCenterId,
+          title: "Assessment Scores Uploaded",
+          message: `Evaluation scores for ${items.length} candidate(s) were saved.`,
+          type: "ASSESSMENT",
+          link: "/scores",
+        })
+        .catch((err) => console.warn("Failed to create RC notification for scores:", err));
+    }
 
     return new ApiResponse(
       200,

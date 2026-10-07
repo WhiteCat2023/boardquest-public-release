@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useRoleFlags from "@/hooks/useRoleFlags";
 import { useReviewSchedules } from "../api/useCalendar";
 import type { ReviewSchedule } from "../types/types";
 import {
@@ -8,6 +9,7 @@ import {
 } from "../components";
 
 export default function CalendarManagement() {
+  const { canManageSchedules } = useRoleFlags();
   const { data: rawSchedules = [], isLoading: isSchedulesLoading } = useReviewSchedules();
   const schedules = Array.isArray(rawSchedules) ? rawSchedules : [];
 
@@ -16,11 +18,13 @@ export default function CalendarManagement() {
   const [editingSchedule, setEditingSchedule] = useState<ReviewSchedule | null>(null);
 
   const handleOpenAddSchedule = () => {
+    if (!canManageSchedules) return;
     setEditingSchedule(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEditSchedule = (sched: ReviewSchedule) => {
+    if (!canManageSchedules) return;
     setEditingSchedule(sched);
     setIsModalOpen(true);
   };
@@ -28,22 +32,28 @@ export default function CalendarManagement() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* ── Page Header ── */}
-      <CalendarHeader onAddSchedule={handleOpenAddSchedule} />
+      <CalendarHeader
+        onAddSchedule={handleOpenAddSchedule}
+        canManage={canManageSchedules}
+      />
 
       {/* Interactive Monthly Calendar & Schedule View */}
       <ReviewCalendarView
         schedules={schedules}
         isLoading={isSchedulesLoading}
+        canManage={canManageSchedules}
         onAddSchedule={handleOpenAddSchedule}
         onEditSchedule={handleOpenEditSchedule}
       />
 
       {/* Set Game Final Review Schedule Modal */}
-      <SetReviewScheduleModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialData={editingSchedule}
-      />
+      {canManageSchedules && (
+        <SetReviewScheduleModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          initialData={editingSchedule}
+        />
+      )}
     </div>
   );
 }

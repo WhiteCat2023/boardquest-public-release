@@ -5,12 +5,18 @@ import { evaluateScheduleStatus } from "../../utils/scheduleUtils";
 
 interface ScheduleCardItemProps {
   schedule: ReviewSchedule;
+  isSelected?: boolean;
+  canManage?: boolean;
+  onSelect?: (schedule: ReviewSchedule) => void;
   onEdit: (schedule: ReviewSchedule) => void;
   onDelete: (schedule: ReviewSchedule) => void;
 }
 
 export function ScheduleCardItem({
   schedule,
+  isSelected = false,
+  canManage = true,
+  onSelect,
   onEdit,
   onDelete,
 }: ScheduleCardItemProps) {
@@ -44,13 +50,31 @@ export function ScheduleCardItem({
       : schedule.status;
 
   return (
-    <div className="p-3 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-all flex flex-col gap-2 group font-sans">
+    <div
+      onClick={() => onSelect?.(schedule)}
+      className={`p-3 rounded-xl border transition-all flex flex-col gap-2 group font-sans cursor-pointer relative ${
+        isSelected
+          ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xs"
+          : "border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-border"
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="text-xs font-bold text-foreground truncate">
-            {schedule.title}
-          </h4>
-          <span className="text-[10px] text-muted-foreground font-medium truncate block">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <h4
+              className={`text-xs font-bold truncate ${
+                isSelected ? "text-primary" : "text-foreground"
+              }`}
+            >
+              {schedule.title}
+            </h4>
+            {isSelected && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-primary text-primary-foreground shadow-2xs">
+                Active on Calendar
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground font-medium truncate block mt-0.5">
             {schedule.companyName &&
             schedule.companyName !== "Institutional (BoardQuest)"
               ? `${schedule.companyName} • ${schedule.category || "Board Review"}`
@@ -61,7 +85,13 @@ export function ScheduleCardItem({
       </div>
 
       {/* Dates & Duration */}
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded-md border border-border/60">
+      <div
+        className={`flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 rounded-md border ${
+          isSelected
+            ? "bg-background text-primary font-bold border-primary/30"
+            : "bg-background/80 text-muted-foreground border-border/60"
+        }`}
+      >
         <CalendarIcon className="size-3 text-primary shrink-0" />
         <span>
           {schedule.startDate} → {schedule.endDate}
@@ -76,21 +106,34 @@ export function ScheduleCardItem({
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
-        <button
-          type="button"
-          onClick={() => onEdit(schedule)}
-          className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold"
-        >
-          <Edit3 size={12} /> Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(schedule)}
-          className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold ml-1"
-        >
-          <Trash2 size={12} /> Delete
-        </button>
+      <div className="flex items-center justify-between gap-1 pt-1 border-t border-border/50">
+        <span className="text-[10px] text-muted-foreground font-medium">
+          {isSelected ? "Click to deselect" : "Click to view on calendar"}
+        </span>
+        {canManage && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(schedule);
+              }}
+              className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold"
+            >
+              <Edit3 size={12} /> Edit
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(schedule);
+              }}
+              className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold ml-1"
+            >
+              <Trash2 size={12} /> Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ import {
   useDeleteAssessment,
   useEmailGradeReports,
 } from "../api/useAssessments";
-import { useSchoolYears, useCandidates } from "@/features/students/api/useCandidates";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 import {
   MEDTECH_SUBJECT_DETAILS,
   getSubjectBySlug,
@@ -64,35 +64,17 @@ export function SubjectScoresPage() {
   const subjectDetail = getSubjectBySlug(subjectSlug);
   const currentSubjectName: MedTechSubject = subjectDetail?.name || "Clinical Chemistry";
 
-  const { data: candidatesData } = useCandidates();
-  const { data: dbSchoolYears = [] } = useSchoolYears();
-
-  const candidateSchoolYears = candidatesData?.schoolYears || [];
-
-  const allSchoolYears = useMemo(() => {
-    return Array.from(
-      new Set([
-        ...(routeSchoolYear ? [routeSchoolYear] : []),
-        ...(searchParams.get("sy") ? [searchParams.get("sy")!] : []),
-        ...dbSchoolYears,
-        ...candidateSchoolYears,
-        "2026-2027",
-        "2025-2026",
-        "2024-2025",
-      ])
-    ).sort((a, b) => b.localeCompare(a));
-  }, [routeSchoolYear, searchParams, dbSchoolYears, candidateSchoolYears]);
-
-  const selectedSchoolYear = searchParams.get("sy") || routeSchoolYear || allSchoolYears[0] || "2026-2027";
+  const { activeSchoolYear, schoolYears } = useActiveSchoolYear();
+  const selectedSchoolYear = activeSchoolYear;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
-  const handleSchoolYearChange = (sy: string) => {
-    setSearchParams({ sy });
+  // Reset pagination when active school year changes
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [activeSchoolYear]);
 
   const handleSearchChange = (val: string) => {
     setSearchTerm(val);
@@ -395,8 +377,8 @@ export function SubjectScoresPage() {
       </div>
 
       {/* ── 3. Filters Bar ── */}
-      <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row items-stretch sm:items-end justify-between gap-4">
-        {/* Search (Left) */}
+      <div className="bg-card border border-border p-4 rounded-2xl shadow-sm">
+        {/* Search */}
         <div className="space-y-1 w-full sm:max-w-md">
           <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             Search Assessments
@@ -410,25 +392,6 @@ export function SubjectScoresPage() {
               className="pl-8"
             />
           </div>
-        </div>
-
-        {/* School Year (Right) */}
-        <div className="space-y-1 w-full sm:w-52 shrink-0">
-          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-            School Year
-          </label>
-          <Select value={selectedSchoolYear} onValueChange={handleSchoolYearChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="School Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {allSchoolYears.map((sy) => (
-                <SelectItem key={sy} value={sy}>
-                  {sy}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -599,7 +562,7 @@ export function SubjectScoresPage() {
         onOpenChange={setIsCreateOpen}
         defaultSchoolYear={selectedSchoolYear}
         defaultSubject={currentSubjectName}
-        availableSchoolYears={allSchoolYears}
+        availableSchoolYears={schoolYears}
         onCreated={() => {
           refetchAssessments();
         }}

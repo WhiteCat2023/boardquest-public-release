@@ -4,7 +4,6 @@ import MainLayout from "./layout/MainLayout";
 import { RequireAuth } from "@/features/auth";
 import { PersistentSession } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
-import SettingLayout from "./layout/SettingLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalModalContainer } from "@/components/modal";
 import { UserRole } from "@/types/question";
@@ -256,6 +255,21 @@ function App() {
                     path="review-center-management/:reviewCenterId"
                     element={<ReviewCenterDetailsPage />}
                   />
+                </Route>
+
+                {/* Academic Calendar Route (Viewable by Teachers, Deans, Team Leads, and Superadmins) */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
+                      ]}
+                    />
+                  }
+                >
                   <Route
                     path="calendar-management"
                     element={<CalendarManagement />}
@@ -398,9 +412,7 @@ function App() {
                     />
                   }
                 >
-                  <Route element={<SettingLayout />}>
-                    <Route path="settings" element={<Settings />} />
-                  </Route>
+                  <Route path="settings" element={<Settings />} />
                 </Route>
 
                 <Route path="profile-settings" element={<ProfileSettings />} />

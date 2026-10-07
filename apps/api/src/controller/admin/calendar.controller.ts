@@ -10,7 +10,18 @@ export const getReviewSchedules = asyncHandler(async (req: AuthenticatedRequest,
   return new ApiResponse(200, { schedules }, "Review schedules retrieved successfully").send(res);
 });
 
+const assertCanManageSchedule = (req: AuthenticatedRequest) => {
+  const role = String(req.user?.role || "").toUpperCase();
+  if (role !== "SUPERADMIN" && role !== "DEAN" && role !== "TEAMLEAD") {
+    throw new ApiError(
+      403,
+      "Access Denied: Only the Team Lead, Dean, and Superadmin can create or manage schedules in the academic calendar."
+    );
+  }
+};
+
 export const createReviewSchedule = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  assertCanManageSchedule(req);
   const { title, companyName, startDate, endDate, category, description } = req.body;
 
   if (!title || !startDate || !endDate) {
@@ -30,6 +41,7 @@ export const createReviewSchedule = asyncHandler(async (req: AuthenticatedReques
 });
 
 export const updateReviewSchedule = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  assertCanManageSchedule(req);
   const { id } = req.params;
   const schedule = await calendarService.updateReviewSchedule(id as string, req.body);
 
@@ -37,6 +49,7 @@ export const updateReviewSchedule = asyncHandler(async (req: AuthenticatedReques
 });
 
 export const deleteReviewSchedule = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  assertCanManageSchedule(req);
   const { id } = req.params;
   await calendarService.deleteReviewSchedule(id as string);
 

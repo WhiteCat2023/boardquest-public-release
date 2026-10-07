@@ -5,6 +5,9 @@ import type { ReviewSchedule } from "../../types/types";
 
 interface MonthCalendarGridProps {
   schedules: ReviewSchedule[];
+  selectedSchedule?: ReviewSchedule | null;
+  onClearSelection?: () => void;
+  canManage?: boolean;
   onEditSchedule: (schedule: ReviewSchedule) => void;
 }
 
@@ -27,9 +30,22 @@ const DAYS_OF_WEEK = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 export function MonthCalendarGrid({
   schedules,
+  selectedSchedule,
+  onClearSelection,
+  canManage = true,
   onEditSchedule,
 }: MonthCalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  // Automatically sync calendar month to selected schedule's start date
+  React.useEffect(() => {
+    if (selectedSchedule?.startDate) {
+      const d = new Date(selectedSchedule.startDate);
+      if (!isNaN(d.getTime())) {
+        setCurrentDate(d);
+      }
+    }
+  }, [selectedSchedule]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -89,11 +105,35 @@ export function MonthCalendarGrid({
             <CalendarIcon className="size-4" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
-              {MONTH_NAMES[month]} {year}
-            </h2>
-            <p className="text-[11px] text-muted-foreground">
-              Review schedule and timeline overview
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+                {MONTH_NAMES[month]} {year}
+              </h2>
+              {selectedSchedule ? (
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                  <span>Showing: {selectedSchedule.title}</span>
+                  {onClearSelection && (
+                    <button
+                      type="button"
+                      onClick={onClearSelection}
+                      className="ml-1 text-muted-foreground hover:text-foreground cursor-pointer font-extrabold"
+                      title="Clear selection"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground bg-muted border border-border">
+                  Click a schedule to view
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {selectedSchedule
+                ? `Active timeline: ${selectedSchedule.startDate} to ${selectedSchedule.endDate}`
+                : "Select a review period on the sidebar to display its schedule on the calendar"}
             </p>
           </div>
         </div>
@@ -167,7 +207,7 @@ export function MonthCalendarGrid({
                   today
                     ? "border-primary bg-primary/5 font-bold shadow-2xs"
                     : hasSchedules
-                    ? "border-border/90 bg-muted/20 hover:bg-muted/40"
+                    ? "border-primary/60 bg-primary/10 shadow-2xs ring-1 ring-primary/20"
                     : "border-border/40 bg-card hover:bg-muted/20"
                 }
               `}
@@ -180,6 +220,8 @@ export function MonthCalendarGrid({
                     ${
                       today
                         ? "size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px]"
+                        : hasSchedules
+                        ? "font-bold text-primary"
                         : "text-foreground"
                     }
                   `}
@@ -187,7 +229,7 @@ export function MonthCalendarGrid({
                   {day}
                 </span>
                 {hasSchedules && (
-                  <span className="size-1.5 rounded-full bg-primary" />
+                  <span className="size-1.5 rounded-full bg-primary animate-pulse" />
                 )}
               </div>
 
@@ -196,8 +238,14 @@ export function MonthCalendarGrid({
                 {daySchedules.slice(0, 2).map((sched) => (
                   <div
                     key={sched.id}
-                    onClick={() => onEditSchedule(sched)}
-                    className="px-1 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary border border-primary/25 truncate cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      if (canManage) onEditSchedule(sched);
+                    }}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary text-primary-foreground shadow-2xs truncate ${
+                      canManage
+                        ? "cursor-pointer hover:opacity-90"
+                        : "cursor-default"
+                    } transition-opacity`}
                     title={`${sched.title} (${sched.startDate} to ${sched.endDate})`}
                   >
                     {sched.title}

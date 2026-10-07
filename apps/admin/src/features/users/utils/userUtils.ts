@@ -22,6 +22,12 @@ export const getAllowedRolesToCreate = (
   if (norm === "SUPERADMIN" || currentUserRole === UserRole.SUPERADMIN) {
     return [
       {
+        value: UserRole.SUPERADMIN,
+        label: "Super Admin",
+        description:
+          "Full system administrator access across all features, settings, and logs.",
+      },
+      {
         value: UserRole.DEAN,
         label: "Dean",
         description:
@@ -72,12 +78,13 @@ export const getAllowedRolesToCreate = (
 
 /**
  * Returns role options that can be filtered based on the current user's role.
- * - Superadmin: Dean, Team Lead, Teacher
+ * - Superadmin: Super Admin, Dean, Team Lead, Teacher
  * - Dean: Team Lead, Teacher
  * - Teamlead: No filter (only manages Teacher accounts)
  */
 const MANAGED_ROLES_MAP: Record<string, { value: string; label: string }[]> = {
   SUPERADMIN: [
+    { value: "SUPERADMIN", label: "Super Admin" },
     { value: "DEAN", label: "Dean" },
     { value: "TEAMLEAD", label: "Team Lead" },
     { value: "TEACHER", label: "Teacher" },

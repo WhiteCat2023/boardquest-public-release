@@ -138,10 +138,11 @@ export function ApproveAuthorQuestionsDialog({
 
           <Button
             type="button"
+            variant="success"
             size="sm"
             onClick={handleConfirm}
             disabled={approveAuthorMutation.isPending}
-            className="h-8.5 px-4 rounded-xl !bg-emerald-600 hover:!bg-emerald-700 !text-white text-xs font-bold gap-1.5 cursor-pointer shadow-2xs border border-emerald-600/30"
+            className="h-8.5 px-4 rounded-xl text-xs font-bold gap-1.5 cursor-pointer shadow-2xs"
           >
             {approveAuthorMutation.isPending ? (
               <>

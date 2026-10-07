@@ -22,10 +22,11 @@ router.post("/", authenticateToken, requireRoles(allowedRoles), createReviewCent
 router.put("/:id", authenticateToken, requireRoles(allowedRoles), updateReviewCenter);
 router.delete("/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewCenter);
 // Review Calendar & Schedule Routes (Delegated to Calendar Controller for compatibility)
+const manageScheduleRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
 router.get("/schedules/get", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);
-router.post("/schedules/create", authenticateToken, requireRoles(allowedRoles), createReviewSchedule);
-router.put("/schedules/update/:id", authenticateToken, requireRoles(allowedRoles), updateReviewSchedule);
-router.delete("/schedules/delete/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewSchedule);
+router.post("/schedules/create", authenticateToken, requireRoles(manageScheduleRoles), createReviewSchedule);
+router.put("/schedules/update/:id", authenticateToken, requireRoles(manageScheduleRoles), updateReviewSchedule);
+router.delete("/schedules/delete/:id", authenticateToken, requireRoles(manageScheduleRoles), deleteReviewSchedule);
 // Generic ID lookup fallback
 router.get("/:id", authenticateToken, requireRoles(allowedRoles), getReviewCenterById);
 export default router;

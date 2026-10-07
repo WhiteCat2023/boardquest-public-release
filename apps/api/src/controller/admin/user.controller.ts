@@ -10,7 +10,13 @@ import { ensureSuperAdminExists } from "../../services/admin/bootstrap.service";
 import { isSuperAdmin, getSuperAdminProfile } from "../../config/credentials";
 
 export const me = asyncHandler(async (req: Request, res: Response) => {
-  const token = req.cookies?.accessToken || req.cookies?.token;
+  let token = req.cookies?.accessToken || req.cookies?.token;
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7).trim();
+    }
+  }
   if (!token) {
     return new ApiResponse(401, null, "No token provided").send(res);
   }

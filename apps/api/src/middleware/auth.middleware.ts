@@ -14,6 +14,8 @@ export interface AuthenticatedRequest extends Request {
     isActive?: boolean;
     handledCategoryIds?: string[];
     handledCategories?: Array<{ id: string; name: string }>;
+    reviewCenterId?: string | null;
+    companyName?: string;
   };
 }
 
@@ -23,13 +25,35 @@ export const authenticateToken = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    let token = req.cookies?.accessToken || req.cookies?.token;
+    // 1. Explicit Authorization header takes highest priority
+    let token: string | undefined;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7).trim();
+    }
+
+    // 2. Cookie fallback: route-aware token selection
     if (!token) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        token = authHeader.slice(7); // Remove "Bearer " prefix
+      const isReviewCenterRoute =
+        req.baseUrl?.includes("review-center-app") ||
+        req.originalUrl?.includes("/review-center-app") ||
+        req.baseUrl?.includes("review-center") ||
+        req.originalUrl?.includes("/review-center/");
+
+      if (isReviewCenterRoute) {
+        token =
+          req.cookies?.rc_accessToken ||
+          req.cookies?.accessToken ||
+          req.cookies?.token;
+      } else {
+        // Admin routes MUST prioritize accessToken over rc_accessToken
+        token =
+          req.cookies?.accessToken ||
+          req.cookies?.token ||
+          req.cookies?.rc_accessToken;
       }
     }
+
     if (!token) {
       res.status(401).json({
         message: "Access token is required",
@@ -81,6 +105,56 @@ export const authenticateToken = async (
       });
 
       if (!user) {
+        const repUser = await prisma.reviewCenterRepresentativeUser.findUnique({
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            companyName: true,
+            reviewCenterId: true,
+            accountStatus: true,
+            isActive: true,
+          },
+        });
+
+        if (repUser) {
+          user = {
+            id: repUser.id,
+            email: repUser.email,
+            name: repUser.name,
+            role: "REVIEW_CENTER_REPRESENTATIVE",
+            accountStatus: repUser.accountStatus,
+            isActive: repUser.isActive,
+            reviewCenterId: repUser.reviewCenterId,
+            companyName: repUser.companyName,
+            handledCategoryIds: [],
+            handledCategories: [],
+          };
+
+          if (repUser.accountStatus === "DEACTIVATED") {
+            res.status(403).json({
+              message:
+                "Your account has been deactivated. Please contact your administrator for assistance.",
+              error: "ACCOUNT_DEACTIVATED",
+            });
+            return;
+          }
+
+          prisma.reviewCenterRepresentativeUser
+            .update({
+              where: { id: repUser.id },
+              data: {
+                lastActiveAt: new Date(),
+              },
+            })
+            .catch((err: any) =>
+              console.error("Error updating review center user active status:", err),
+            );
+        }
+      }
+
+      if (!user) {
         res.status(401).json({
           message: "User not found",
           error: "USER_NOT_FOUND",
@@ -104,17 +178,19 @@ export const authenticateToken = async (
 
       user.accountStatus = accountStatus;
 
-      // Update lastActiveAt asynchronously without touching accountStatus
-      prisma.adminUser
-        .update({
-          where: { id: user.id },
-          data: {
-            lastActiveAt: new Date(),
-          },
-        })
-        .catch((err: any) =>
-          console.error("Error updating user active status:", err),
-        );
+      // Update lastActiveAt asynchronously without touching accountStatus if adminUser
+      if (user.role !== "REVIEW_CENTER_REPRESENTATIVE") {
+        prisma.adminUser
+          .update({
+            where: { id: user.id },
+            data: {
+              lastActiveAt: new Date(),
+            },
+          })
+          .catch((err: any) =>
+            console.error("Error updating user active status:", err),
+          );
+      }
     }
 
     req.user = user;

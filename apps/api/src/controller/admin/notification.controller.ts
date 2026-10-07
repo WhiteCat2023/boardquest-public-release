@@ -22,13 +22,25 @@ export async function getNotificationsHandler(req: AuthenticatedRequest, res: Re
   try {
     const userId = req.user?.id;
     const role = req.user?.role;
+    const reviewCenterId = (req.user as any)?.reviewCenterId || undefined;
+    const companyName = (req.user as any)?.companyName || undefined;
     const unreadOnly = req.query.unreadOnly === "true";
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 15;
     const skip = req.query.skip ? parseInt(req.query.skip as string, 10) : 0;
     const search = req.query.search ? String(req.query.search) : undefined;
     const type = req.query.type ? String(req.query.type) : undefined;
 
-    const result = await getUserNotifications({ userId, role, unreadOnly, limit, skip, search, type });
+    const result = await getUserNotifications({
+      userId,
+      role,
+      reviewCenterId,
+      companyName,
+      unreadOnly,
+      limit,
+      skip,
+      search,
+      type,
+    });
 
     let notifications: any[];
     let unreadCount: number;
@@ -90,8 +102,10 @@ export async function markAllAsReadHandler(req: AuthenticatedRequest, res: Respo
   try {
     const userId = req.user?.id;
     const role = req.user?.role;
+    const reviewCenterId = (req.user as any)?.reviewCenterId || undefined;
+    const companyName = (req.user as any)?.companyName || undefined;
 
-    const result = await markAllNotificationsAsRead({ userId, role });
+    const result = await markAllNotificationsAsRead({ userId, role, reviewCenterId, companyName });
     return res.status(200).json({
       success: true,
       data: result,
@@ -131,8 +145,10 @@ export async function clearAllNotificationsHandler(req: AuthenticatedRequest, re
   try {
     const userId = req.user?.id;
     const role = req.user?.role;
+    const reviewCenterId = (req.user as any)?.reviewCenterId || undefined;
+    const companyName = (req.user as any)?.companyName || undefined;
 
-    const result = await clearAllNotifications({ userId, role });
+    const result = await clearAllNotifications({ userId, role, reviewCenterId, companyName });
     return res.status(200).json({
       success: true,
       data: result,
@@ -178,7 +194,9 @@ export async function createNotificationHandler(req: AuthenticatedRequest, res: 
 export function streamNotificationsHandler(req: AuthenticatedRequest, res: Response) {
   const userId = req.user?.id;
   const role = req.user?.role;
-  sseService.addClient(userId, role, res);
+  const reviewCenterId = (req.user as any)?.reviewCenterId || undefined;
+  const companyName = (req.user as any)?.companyName || undefined;
+  sseService.addClient(userId, role, res, reviewCenterId, companyName);
 }
 
 export async function sendDigestHandler(req: AuthenticatedRequest, res: Response) {

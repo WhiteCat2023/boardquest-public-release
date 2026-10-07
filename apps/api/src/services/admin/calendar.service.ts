@@ -44,7 +44,23 @@ export function evaluateScheduleStatus(
   return "ONGOING";
 }
 
+function extractSchoolYear(item: any): string {
+  if (item.description) {
+    const match = item.description.match(/\[SY:(\d{4}-\d{4})\]/);
+    if (match && match[1]) return match[1];
+  }
+  if (!item.startDate && !item.createdAt) return "2026-2027";
+  const d = new Date(item.startDate || item.createdAt);
+  if (isNaN(d.getTime())) return "2026-2027";
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  return month >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
+
 function mapProgramToSchedule(item: any) {
+  const schoolYear = extractSchoolYear(item);
+  const description = (item.description || "").replace(/\[SY:\d{4}-\d{4}\]\s*/g, "").trim();
+
   return {
     id: item.id,
     title: item.title,
@@ -57,7 +73,8 @@ function mapProgramToSchedule(item: any) {
       ? new Date(item.endDate).toISOString().split("T")[0]
       : "2026-07-15",
     status: evaluateScheduleStatus(item.startDate, item.endDate),
-    description: item.description || "",
+    description,
+    schoolYear,
     createdAt: item.createdAt,
   };
 }

@@ -10,6 +10,7 @@ export interface ReviewSchedule {
   endDate: string;
   status: string;
   description?: string;
+  schoolYear?: string;
   reviewCenterId?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -21,6 +22,7 @@ export interface CreateReviewSchedulePayload {
   endDate: string;
   category?: string;
   description?: string;
+  schoolYear?: string;
 }
 
 export interface UpdateReviewSchedulePayload {
@@ -30,13 +32,14 @@ export interface UpdateReviewSchedulePayload {
   category?: string;
   description?: string;
   status?: string;
+  schoolYear?: string;
 }
 
-export function useReviewSchedules() {
+export function useReviewSchedules(filters: { schoolYear?: string } = {}) {
   return useQuery<ReviewSchedule[]>({
-    queryKey: ["reviewCenterSchedules"],
+    queryKey: ["reviewCenterSchedules", filters],
     queryFn: async () => {
-      const response = await rcAxios.get("/schedules");
+      const response = await rcAxios.get("/schedules", { params: filters });
       const resData = response.data?.data;
       let list: ReviewSchedule[] = [];
       if (Array.isArray(resData)) list = resData;

@@ -6,11 +6,19 @@ import { ErrorBoundary } from "@/components/custom/ErrorBoundary";
 import { useReviewSchedules } from "@/features/schedules/api/useCalendar";
 import { useCandidates } from "@/features/students/api/useCandidates";
 import { useAssessments } from "@/features/scores/api/useAssessments";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 
 export function ReviewCenterDashboard() {
-  const { data: schedules = [] } = useReviewSchedules();
-  const { data: candidatesData } = useCandidates();
-  const { data: assessmentsData } = useAssessments();
+  const { activeSchoolYear } = useActiveSchoolYear();
+  const { data: schedules = [] } = useReviewSchedules({
+    schoolYear: activeSchoolYear,
+  });
+  const { data: candidatesData } = useCandidates({
+    schoolYear: activeSchoolYear,
+  });
+  const { data: assessmentsData } = useAssessments({
+    schoolYear: activeSchoolYear,
+  });
 
   const averageScore = useMemo(() => {
     const assessments = assessmentsData?.assessments || [];
@@ -30,9 +38,10 @@ export function ReviewCenterDashboard() {
 
       {/* KPI Stats Grid with live counts */}
       <DashboardKpiGrid
-        candidatesCount={candidatesData?.total || 0}
+        candidatesCount={candidatesData?.total || candidatesData?.candidates?.length || 0}
         schedulesCount={schedules.length}
         averageScore={averageScore}
+        activeSchoolYear={activeSchoolYear}
       />
 
       {/* Subject Passing Rates Graphs with error boundary */}

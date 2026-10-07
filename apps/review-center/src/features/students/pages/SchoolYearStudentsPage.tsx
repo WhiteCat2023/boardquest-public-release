@@ -50,9 +50,13 @@ import { CandidateScoreDrawer } from "@/features/scores/components/CandidateScor
 import { PdfPreviewModal } from "@/features/scores/components/PdfPreviewModal";
 import { ConfirmDialog } from "@/components/custom/ConfirmDialog";
 
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
+
 export function SchoolYearStudentsPage() {
   const navigate = useNavigate();
-  const { schoolYear = "2026-2027" } = useParams<{ schoolYear: string }>();
+  const { activeSchoolYear } = useActiveSchoolYear();
+  const { schoolYear: routeSchoolYear } = useParams<{ schoolYear: string }>();
+  const schoolYear = routeSchoolYear || activeSchoolYear || "2026-2027";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
@@ -179,63 +183,35 @@ export function SchoolYearStudentsPage() {
     <div className="space-y-5 max-w-7xl w-full mx-auto font-sans">
       {/* ── 1. Top Navigation & Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/candidates"
-              className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-xs cursor-pointer mr-0.5"
-              title="Back to School Years"
-            >
-              <ArrowLeft className="size-4" />
-            </Link>
-
-            <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
-              <span>School Year {schoolYear}</span>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+            <Users className="size-5" />
+          </div>
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-black text-foreground tracking-tight">
+                Enrolled Students
+              </h1>
+              <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+                SY {schoolYear}
+              </span>
               <span className="text-xs font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full border border-border">
                 {total} {total === 1 ? "Student" : "Students"}
               </span>
-            </h1>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Showing all MedTech review students enrolled for School Year {schoolYear}.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Showing all MedTech review students enrolled for S.Y. {schoolYear}.
-          </p>
         </div>
 
         {/* Action Button */}
         <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setEditYearInput(schoolYear);
-              setIsEditYearOpen(true);
-            }}
-            className="h-9 px-3 text-xs font-bold rounded-xl border-border hover:bg-muted text-foreground flex items-center gap-1.5 cursor-pointer"
-            title="Edit School Year"
-          >
-            <Pencil size={13} />
-            <span className="hidden sm:inline">Edit S.Y.</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDeleteYearConfirmInput("");
-              setIsDeleteYearOpen(true);
-            }}
-            className="h-9 px-3 text-xs font-bold rounded-xl border-destructive/30 hover:bg-destructive/10 text-destructive flex items-center gap-1.5 cursor-pointer"
-            title="Delete School Year"
-          >
-            <Trash2 size={13} />
-            <span className="hidden sm:inline">Delete S.Y.</span>
-          </Button>
-
-          <Button
             asChild
             className="h-9 px-4 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
-            <Link to={`/candidates/${schoolYear}/add`}>
+            <Link to={`/candidates/${encodeURIComponent(schoolYear)}/add`}>
               <Plus size={14} />
               <span>Add Student</span>
             </Link>

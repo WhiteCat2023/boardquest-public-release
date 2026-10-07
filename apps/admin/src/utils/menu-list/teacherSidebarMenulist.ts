@@ -19,6 +19,11 @@ export const teacherNavItem: NavItemProps[] = [
         path: "/subject-management",
         icon: "BookMarked",
       },
+      {
+        title: "Calendar",
+        path: "/calendar-management",
+        icon: "Calendar",
+      },
     ],
   },
   {

@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { ApiError } from "../../utils/apiError";
+import { createNotification } from "../admin/notification.service";
 
 export interface EnrollCandidateDTO {
   name: string;
@@ -174,6 +175,7 @@ export async function createReviewCenterSchoolYear(
   companyName: string,
   schoolYear: string,
   reviewCenterId?: string,
+  isCurrent?: boolean,
 ) {
   const cleanSY = normalizeSchoolYearString(schoolYear);
   if (!cleanSY) {
@@ -194,7 +196,24 @@ export async function createReviewCenterSchoolYear(
     }
   }
 
+  const whereConditions: any[] = [];
+  if (finalReviewCenterId) {
+    whereConditions.push({ reviewCenterId: finalReviewCenterId });
+  }
+  if (companyName && companyName.trim()) {
+    whereConditions.push({
+      companyName: { equals: companyName.trim(), mode: "insensitive" },
+    });
+  }
+
   if (dbSchoolYear) {
+    if (isCurrent && whereConditions.length > 0) {
+      await dbSchoolYear.updateMany({
+        where: { OR: whereConditions },
+        data: { isCurrent: false },
+      });
+    }
+
     const existing = await dbSchoolYear.findFirst({
       where: {
         schoolYear: { equals: cleanSY, mode: "insensitive" },
@@ -203,9 +222,16 @@ export async function createReviewCenterSchoolYear(
     });
 
     if (existing) {
+      if (isCurrent) {
+        await dbSchoolYear.update({
+          where: { id: existing.id },
+          data: { isCurrent: true },
+        });
+      }
       return {
         id: existing.id,
         schoolYear: existing.schoolYear,
+        isCurrent: Boolean(isCurrent ?? existing.isCurrent),
         createdAt: existing.createdAt,
       };
     }
@@ -215,6 +241,7 @@ export async function createReviewCenterSchoolYear(
         schoolYear: cleanSY,
         companyName: companyName.trim(),
         reviewCenterId: finalReviewCenterId || null,
+        isCurrent: Boolean(isCurrent),
         status: "ACTIVE",
       },
     });
@@ -222,6 +249,7 @@ export async function createReviewCenterSchoolYear(
     return {
       id: created.id,
       schoolYear: created.schoolYear,
+      isCurrent: created.isCurrent,
       createdAt: created.createdAt,
     };
   }
@@ -229,8 +257,91 @@ export async function createReviewCenterSchoolYear(
   return {
     id: cleanSY,
     schoolYear: cleanSY,
+    isCurrent: Boolean(isCurrent),
     createdAt: new Date(),
   };
+}
+
+export async function setCurrentReviewCenterSchoolYear(
+  schoolYear: string,
+  companyName?: string,
+  reviewCenterId?: string,
+) {
+  const cleanSY = normalizeSchoolYearString(schoolYear) || schoolYear.trim();
+
+  let finalReviewCenterId = reviewCenterId;
+  if (!finalReviewCenterId && companyName) {
+    const rc = await prisma.reviewCenter.findFirst({
+      where: { name: { equals: companyName.trim(), mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (rc) {
+      finalReviewCenterId = rc.id;
+    }
+  }
+
+  const whereConditions: any[] = [];
+  if (finalReviewCenterId) {
+    whereConditions.push({ reviewCenterId: finalReviewCenterId });
+  }
+  if (companyName && companyName.trim()) {
+    whereConditions.push({
+      companyName: { equals: companyName.trim(), mode: "insensitive" },
+    });
+  }
+
+  if (whereConditions.length === 0) {
+    throw new ApiError(400, "Review center identification is required.");
+  }
+
+  if (dbSchoolYear) {
+    // 1. Unset isCurrent for all school years belonging to this review center
+    await dbSchoolYear.updateMany({
+      where: { OR: whereConditions },
+      data: { isCurrent: false },
+    });
+
+    // 2. Set isCurrent on target school year (or create record if it only existed in candidates)
+    const existing = await dbSchoolYear.findFirst({
+      where: {
+        schoolYear: { equals: cleanSY, mode: "insensitive" },
+        OR: whereConditions,
+      },
+    });
+
+    if (existing) {
+      await dbSchoolYear.update({
+        where: { id: existing.id },
+        data: { isCurrent: true },
+      });
+    } else {
+      await dbSchoolYear.create({
+        data: {
+          schoolYear: cleanSY,
+          companyName: companyName ? companyName.trim() : "",
+          reviewCenterId: finalReviewCenterId || null,
+          isCurrent: true,
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    createNotification({
+      recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+      recipientId: finalReviewCenterId || undefined,
+      title: "Active School Year Updated",
+      message: `S.Y. ${cleanSY} is now set as the active academic cohort.`,
+      type: "INFO",
+      link: `/candidates/${encodeURIComponent(cleanSY)}`,
+      metadata: {
+        reviewCenterId: finalReviewCenterId,
+        companyName,
+        schoolYear: cleanSY,
+      },
+    }).catch((err) => console.warn("School year notification error:", err?.message));
+  }
+
+  return { schoolYear: cleanSY, isCurrent: true };
 }
 
 export async function updateReviewCenterSchoolYear(
@@ -238,6 +349,7 @@ export async function updateReviewCenterSchoolYear(
   newSchoolYear: string,
   companyName?: string,
   reviewCenterId?: string,
+  isCurrent?: boolean,
 ) {
   const cleanOld = oldSchoolYear.trim().replace(/^s\.?y\.?\s*/i, "");
   const cleanNew = normalizeSchoolYearString(newSchoolYear);
@@ -277,9 +389,24 @@ export async function updateReviewCenterSchoolYear(
     throw new ApiError(400, "Review center identification is required.");
   }
 
-  // If old and new are identical, return early
+  // If old and new are identical, update isCurrent if provided and return early
   if (cleanOld.toLowerCase() === cleanNew.toLowerCase()) {
-    return { schoolYear: cleanNew };
+    if (isCurrent !== undefined && dbSchoolYear) {
+      if (isCurrent && whereConditions.length > 0) {
+        await dbSchoolYear.updateMany({
+          where: { OR: whereConditions },
+          data: { isCurrent: false },
+        });
+      }
+      await dbSchoolYear.updateMany({
+        where: {
+          schoolYear: { equals: cleanNew, mode: "insensitive" },
+          OR: whereConditions,
+        },
+        data: { isCurrent },
+      });
+    }
+    return { schoolYear: cleanNew, isCurrent };
   }
 
   // Check if newSchoolYear already exists
@@ -297,6 +424,13 @@ export async function updateReviewCenterSchoolYear(
 
   // 1. Update ReviewCenterSchoolYear
   if (dbSchoolYear) {
+    if (isCurrent && whereConditions.length > 0) {
+      await dbSchoolYear.updateMany({
+        where: { OR: whereConditions },
+        data: { isCurrent: false },
+      });
+    }
+
     const existingRecord = await dbSchoolYear.findFirst({
       where: {
         schoolYear: { equals: cleanOld, mode: "insensitive" },
@@ -307,7 +441,10 @@ export async function updateReviewCenterSchoolYear(
     if (existingRecord) {
       await dbSchoolYear.update({
         where: { id: existingRecord.id },
-        data: { schoolYear: cleanNew },
+        data: {
+          schoolYear: cleanNew,
+          ...(isCurrent !== undefined ? { isCurrent } : {}),
+        },
       });
     } else {
       await dbSchoolYear.create({
@@ -315,7 +452,7 @@ export async function updateReviewCenterSchoolYear(
           schoolYear: cleanNew,
           companyName: companyName ? companyName.trim() : "",
           reviewCenterId: finalReviewCenterId || null,
-          isCurrent: false,
+          isCurrent: Boolean(isCurrent),
           status: "ACTIVE",
         },
       });
@@ -576,6 +713,21 @@ export async function enrollCandidate(data: EnrollCandidateDTO) {
     },
   });
 
+  createNotification({
+    recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+    recipientId: finalReviewCenterId || undefined,
+    title: "Candidate Enrolled",
+    message: `${data.name.trim()} was enrolled for S.Y. ${cleanSY}.`,
+    type: "SUCCESS",
+    link: `/candidates/${encodeURIComponent(cleanSY)}`,
+    metadata: {
+      reviewCenterId: finalReviewCenterId,
+      companyName: data.companyName,
+      candidateEmail: cleanEmail,
+      schoolYear: cleanSY,
+    },
+  }).catch((err) => console.warn("Candidate notification error:", err?.message));
+
   return mapToCandidate(created);
 }
 
@@ -662,6 +814,23 @@ export async function bulkEnrollCandidates(data: BulkEnrollDTO) {
     existingEmailsSet.add(itemEmail);
     createdList.push(mapToCandidate(created));
     enrolledCount++;
+  }
+
+  if (enrolledCount > 0) {
+    createNotification({
+      recipientRole: "REVIEW_CENTER_REPRESENTATIVE",
+      recipientId: finalReviewCenterId || undefined,
+      title: "Candidates Imported",
+      message: `Successfully enrolled ${enrolledCount} candidate(s) for S.Y. ${cleanSY}.`,
+      type: "SUCCESS",
+      link: `/candidates/${encodeURIComponent(cleanSY)}`,
+      metadata: {
+        reviewCenterId: finalReviewCenterId,
+        companyName: data.companyName,
+        schoolYear: cleanSY,
+        count: enrolledCount,
+      },
+    }).catch((err) => console.warn("Bulk candidates notification error:", err?.message));
   }
 
   return {

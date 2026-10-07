@@ -48,6 +48,9 @@ const AssessmentScoresPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("@/features/settings").then((m) => ({ default: m.SettingsPage })),
 );
+const NotificationsPage = lazy(() =>
+  import("@/features/notifications").then((m) => ({ default: m.NotificationsPage })),
+);
 
 const Missing = lazy(() =>
   import("@/features/misc").then((m) => ({ default: m.Missing })),
@@ -55,6 +58,14 @@ const Missing = lazy(() =>
 const Unauthorized = lazy(() =>
   import("@/features/misc").then((m) => ({ default: m.Unauthorized })),
 );
+
+import { Navigate } from "react-router-dom";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
+
+function NavigateToActiveSchoolYear() {
+  const { activeSchoolYear } = useActiveSchoolYear();
+  return <Navigate to={`/candidates/${encodeURIComponent(activeSchoolYear)}`} replace />;
+}
 
 function PageFallback() {
   return (
@@ -87,7 +98,8 @@ function App() {
                 >
                   <Route index element={<Dashboard />} />
                   <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="candidates" element={<SchoolYearsPage />} />
+                  <Route path="candidates" element={<NavigateToActiveSchoolYear />} />
+                  <Route path="candidates/directory" element={<NavigateToActiveSchoolYear />} />
                   <Route path="candidates/add" element={<AddStudentsPage />} />
                   <Route
                     path="candidates/:schoolYear"
@@ -97,7 +109,8 @@ function App() {
                     path="candidates/:schoolYear/add"
                     element={<AddStudentsPage />}
                   />
-                  <Route path="students" element={<SchoolYearsPage />} />
+                  <Route path="students" element={<NavigateToActiveSchoolYear />} />
+                  <Route path="students/directory" element={<NavigateToActiveSchoolYear />} />
                   <Route path="students/add" element={<AddStudentsPage />} />
                   <Route
                     path="students/:schoolYear"
@@ -133,6 +146,7 @@ function App() {
                     element={<AssessmentScoresPage />}
                   />
                   <Route path="schedules" element={<SchedulesPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Route>

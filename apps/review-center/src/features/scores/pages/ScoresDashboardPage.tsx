@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Award,
@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
   useAssessments,
 } from "../api/useAssessments";
-import { useSchoolYears, useCandidates } from "@/features/students/api/useCandidates";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 import {
   MEDTECH_SUBJECT_DETAILS,
 } from "../types";
@@ -35,30 +35,11 @@ const SUBJECT_ICONS: Record<string, any> = {
 };
 
 export function ScoresDashboardPage() {
-  const { schoolYear: routeSchoolYear } = useParams<{ schoolYear?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const { data: candidatesData } = useCandidates();
-  const { data: dbSchoolYears = [] } = useSchoolYears();
-
-  const candidateSchoolYears = candidatesData?.schoolYears || [];
-
-  const allSchoolYears = useMemo(() => {
-    return Array.from(
-      new Set([
-        ...(routeSchoolYear ? [routeSchoolYear] : []),
-        ...(searchParams.get("sy") ? [searchParams.get("sy")!] : []),
-        ...dbSchoolYears,
-        ...candidateSchoolYears,
-        "2026-2027",
-        "2025-2026",
-        "2024-2025",
-      ])
-    ).sort((a, b) => b.localeCompare(a));
-  }, [routeSchoolYear, searchParams, dbSchoolYears, candidateSchoolYears]);
-
-  const selectedSchoolYear = searchParams.get("sy") || routeSchoolYear || allSchoolYears[0] || "2026-2027";
+  const { activeSchoolYear } = useActiveSchoolYear();
+  const selectedSchoolYear = activeSchoolYear;
 
   // Queries (Fetch all assessments to compute category metrics)
   const { data: assessmentsData } = useAssessments({

@@ -19,6 +19,7 @@ export * from './api/useCategories';
 export * from './api/useCategoryDetail';
 export * from './api/useUpdateCategory';
 export * from './api/useLearningModules';
+export * from './api/useTopics';
 export * from './api/useQuestionComments';
 export * from './api/useSaveQuestion';
 export * from './api/useApproveAuthorQuestions';

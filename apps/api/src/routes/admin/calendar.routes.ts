@@ -8,18 +8,19 @@ import {
 } from "../../controller/admin/calendar.controller";
 
 const router = Router();
-const allowedRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
+const manageRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
+const viewRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
 
 // Calendar & Schedule Routes
-router.get("/schedules/get", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);
-router.post("/schedules/create", authenticateToken, requireRoles(allowedRoles), createReviewSchedule);
-router.put("/schedules/update/:id", authenticateToken, requireRoles(allowedRoles), updateReviewSchedule);
-router.delete("/schedules/delete/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewSchedule);
+router.get("/schedules/get", authenticateToken, requireRoles(viewRoles), getReviewSchedules);
+router.post("/schedules/create", authenticateToken, requireRoles(manageRoles), createReviewSchedule);
+router.put("/schedules/update/:id", authenticateToken, requireRoles(manageRoles), updateReviewSchedule);
+router.delete("/schedules/delete/:id", authenticateToken, requireRoles(manageRoles), deleteReviewSchedule);
 
 // Standard RESTful Calendar endpoints
-router.get("/", authenticateToken, requireRoles(allowedRoles), getReviewSchedules);
-router.post("/", authenticateToken, requireRoles(allowedRoles), createReviewSchedule);
-router.put("/:id", authenticateToken, requireRoles(allowedRoles), updateReviewSchedule);
-router.delete("/:id", authenticateToken, requireRoles(allowedRoles), deleteReviewSchedule);
+router.get("/", authenticateToken, requireRoles(viewRoles), getReviewSchedules);
+router.post("/", authenticateToken, requireRoles(manageRoles), createReviewSchedule);
+router.put("/:id", authenticateToken, requireRoles(manageRoles), updateReviewSchedule);
+router.delete("/:id", authenticateToken, requireRoles(manageRoles), deleteReviewSchedule);
 
 export default router;

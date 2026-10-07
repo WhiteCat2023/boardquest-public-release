@@ -21,6 +21,7 @@ export default function QuestionList({
   const {
     questions: hookQuestions,
     hasNextPage,
+    total,
     loading: hookLoading,
     error,
     fetchQuestions,
@@ -112,6 +113,12 @@ export default function QuestionList({
               pagination={
                 <DataTablePagination
                   currentPage={currentPageIndex + 1}
+                  totalItems={total}
+                  totalPages={
+                    total !== undefined
+                      ? Math.max(1, Math.ceil(total / itemsPerPage))
+                      : undefined
+                  }
                   hasNextPage={!!hasNextPage}
                   hasPreviousPage={currentPageIndex > 0}
                   onNext={handleNext}

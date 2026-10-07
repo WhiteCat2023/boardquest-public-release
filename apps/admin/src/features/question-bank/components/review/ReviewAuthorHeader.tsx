@@ -66,10 +66,11 @@ export function ReviewAuthorHeader({
 
           {isStaff && (
             <Button
+              variant="success"
               size="sm"
               onClick={onApproveAllForAuthor}
               disabled={isApproving}
-              className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg gap-1.5 cursor-pointer shadow-2xs border border-emerald-600/20"
+              className="h-8 px-3 text-xs font-bold rounded-lg gap-1.5 cursor-pointer shadow-2xs"
             >
               <CheckCircle2 size={13} />
               Approve All for Author

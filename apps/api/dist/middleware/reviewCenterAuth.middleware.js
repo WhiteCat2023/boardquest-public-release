@@ -2,14 +2,18 @@ import prisma from "../services/prisma";
 import { verifyJWT } from "../utils/jwt.utils";
 export const authenticateReviewCenterToken = async (req, res, next) => {
     try {
-        let token = req.cookies?.rc_accessToken ||
-            req.cookies?.accessToken ||
-            req.cookies?.token;
+        // 1. Explicit Authorization header takes highest priority
+        let token;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            token = authHeader.slice(7).trim();
+        }
+        // 2. Cookie fallback
         if (!token) {
-            const authHeader = req.headers.authorization;
-            if (authHeader && authHeader.startsWith("Bearer ")) {
-                token = authHeader.slice(7);
-            }
+            token =
+                req.cookies?.rc_accessToken ||
+                    req.cookies?.accessToken ||
+                    req.cookies?.token;
         }
         if (!token) {
             res.status(401).json({

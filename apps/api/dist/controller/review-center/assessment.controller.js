@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../../services/prisma";
+import rcNotificationService from "../../services/review-center/rcNotification.service.js";
 const assessmentService = new AssessmentService();
 function getStringParam(param) {
     if (Array.isArray(param))
@@ -74,6 +75,17 @@ export const bulkSaveScores = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Items array is required");
     }
     const result = await assessmentService.bulkSaveScores(id, items, companyName, reviewCenterId, user?.email || user?.name);
+    if (reviewCenterId) {
+        rcNotificationService
+            .createRCNotification({
+            reviewCenterId,
+            title: "Assessment Scores Uploaded",
+            message: `Evaluation scores for ${items.length} candidate(s) were saved.`,
+            type: "ASSESSMENT",
+            link: "/scores",
+        })
+            .catch((err) => console.warn("Failed to create RC notification for scores:", err));
+    }
     return new ApiResponse(200, result, "Scores saved and statistics recalculated successfully").send(res);
 });
 export const emailAssessmentGradeReports = asyncHandler(async (req, res) => {

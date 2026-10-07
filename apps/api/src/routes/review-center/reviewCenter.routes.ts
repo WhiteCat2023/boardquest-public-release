@@ -120,6 +120,8 @@ router.delete(
 );
 
 // Review Calendar & Schedule Routes (Delegated to Calendar Controller for compatibility)
+const manageScheduleRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD"];
+
 router.get(
   "/schedules/get",
   authenticateToken,
@@ -129,19 +131,19 @@ router.get(
 router.post(
   "/schedules/create",
   authenticateToken,
-  requireRoles(allowedRoles),
+  requireRoles(manageScheduleRoles),
   createReviewSchedule,
 );
 router.put(
   "/schedules/update/:id",
   authenticateToken,
-  requireRoles(allowedRoles),
+  requireRoles(manageScheduleRoles),
   updateReviewSchedule,
 );
 router.delete(
   "/schedules/delete/:id",
   authenticateToken,
-  requireRoles(allowedRoles),
+  requireRoles(manageScheduleRoles),
   deleteReviewSchedule,
 );
 

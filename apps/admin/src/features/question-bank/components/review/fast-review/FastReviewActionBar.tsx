@@ -79,10 +79,11 @@ export default function FastReviewActionBar({
 
         <Button
           type="button"
+          variant="success"
           size="sm"
           onClick={onApprove}
           disabled={isApproving || isApproved}
-          className="h-8 px-4 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-2xs border border-emerald-600/20 disabled:opacity-50"
+          className="h-8 px-4 rounded-lg text-xs font-bold gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
         >
           {isApproving ? (
             <Spinner size="xs" variant="current" />
@@ -90,7 +91,7 @@ export default function FastReviewActionBar({
             <CheckCircle2 size={14} />
           )}
           <span>Approve &amp; Next</span>
-          <kbd className="hidden sm:inline-block px-1.5 bg-emerald-700 text-white text-[9px] font-mono rounded">
+          <kbd className="hidden sm:inline-block px-1.5 bg-emerald-700/80 text-white text-[9px] font-mono rounded">
             A
           </kbd>
         </Button>

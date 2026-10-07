@@ -66,7 +66,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         limit: itemsPerPage,
     });
 
-    const { questions = [], hasNextPage, nextCursor } = data ?? {};
+    const { questions = [], hasNextPage, nextCursor, total } = data ?? {};
 
     // Selection details
     const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
@@ -301,6 +301,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     return {
         questions,
         hasNextPage,
+        total,
         loading,
         error,
         fetchQuestions,

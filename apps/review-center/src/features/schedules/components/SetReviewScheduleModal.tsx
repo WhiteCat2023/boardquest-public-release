@@ -34,6 +34,7 @@ interface SetReviewScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: ReviewSchedule | null;
+  activeSchoolYear?: string;
 }
 
 const CATEGORY_OPTIONS = [
@@ -49,6 +50,7 @@ export default function SetReviewScheduleModal({
   isOpen,
   onClose,
   initialData,
+  activeSchoolYear,
 }: SetReviewScheduleModalProps) {
   const { user } = useReviewCenterAuth();
   const isEditing = !!initialData;
@@ -73,15 +75,29 @@ export default function SetReviewScheduleModal({
       setDescription(initialData.description || "");
     } else {
       setTitle("");
-      const twoWeeksLater = new Date(Date.now() + 14 * 86400000)
+      let defaultStart = todayStr;
+      let defaultEnd = new Date(Date.now() + 14 * 86400000)
         .toISOString()
         .split("T")[0];
-      setStartDate(todayStr);
-      setEndDate(twoWeeksLater);
+
+      if (activeSchoolYear) {
+        const match = activeSchoolYear.match(/^(\d{4})-\d{4}$/);
+        if (match) {
+          const syStartYear = parseInt(match[1], 10);
+          const currentYear = new Date().getFullYear();
+          if (currentYear !== syStartYear && currentYear !== syStartYear + 1) {
+            defaultStart = `${syStartYear}-08-01`;
+            defaultEnd = `${syStartYear}-08-15`;
+          }
+        }
+      }
+
+      setStartDate(defaultStart);
+      setEndDate(defaultEnd);
       setCategory("Board Review");
       setDescription("");
     }
-  }, [initialData, isOpen, todayStr]);
+  }, [initialData, isOpen, todayStr, activeSchoolYear]);
 
   // Calculate duration in days
   const calculateDays = () => {
@@ -133,6 +149,7 @@ export default function SetReviewScheduleModal({
       endDate,
       category,
       description: description.trim(),
+      schoolYear: activeSchoolYear,
     };
 
     if (isEditing && initialData) {
@@ -200,9 +217,16 @@ export default function SetReviewScheduleModal({
                 {user?.companyName || "Review Center Partner"}
               </span>
             </div>
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-              Partner Schedule
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {activeSchoolYear && (
+                <span className="text-[10px] font-bold text-foreground bg-muted px-2 py-0.5 rounded-md border border-border/80">
+                  S.Y. {activeSchoolYear}
+                </span>
+              )}
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                Partner Schedule
+              </span>
+            </div>
           </div>
         </div>
 

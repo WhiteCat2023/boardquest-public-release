@@ -167,16 +167,29 @@ export interface SchoolYearRecord {
   createdAt: string;
 }
 
-export function useSchoolYears() {
-  return useQuery<string[]>({
+export function useSchoolYearRecords() {
+  return useQuery<SchoolYearRecord[]>({
     queryKey: ["reviewCenterSchoolYears"],
     queryFn: async () => {
       const response = await rcAxios.get("/candidates/school-years");
       const list = response.data?.data?.schoolYears;
       if (Array.isArray(list)) {
-        return list.map((item: any) =>
-          typeof item === "string" ? item : item.schoolYear
-        );
+        return list.map((item: any) => {
+          if (typeof item === "string") {
+            return {
+              id: item,
+              schoolYear: item,
+              isCurrent: false,
+              createdAt: new Date().toISOString(),
+            };
+          }
+          return {
+            id: item.id || item.schoolYear,
+            schoolYear: item.schoolYear,
+            isCurrent: Boolean(item.isCurrent),
+            createdAt: item.createdAt || new Date().toISOString(),
+          };
+        });
       }
       return [];
     },
@@ -185,19 +198,54 @@ export function useSchoolYears() {
   });
 }
 
+export function useSchoolYears() {
+  const query = useSchoolYearRecords();
+  return {
+    ...query,
+    data: (query.data || []).map((item) => item.schoolYear),
+  };
+}
+
 export function useCreateSchoolYear() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (schoolYear: string) => {
-      const response = await rcAxios.post("/candidates/school-years", {
-        schoolYear,
-      });
+    mutationFn: async (
+      payload: string | { schoolYear: string; isCurrent?: boolean }
+    ) => {
+      const body =
+        typeof payload === "string" ? { schoolYear: payload } : payload;
+      const response = await rcAxios.post("/candidates/school-years", body);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviewCenterSchoolYears"] });
       queryClient.invalidateQueries({ queryKey: ["reviewCenterCandidates"] });
+    },
+  });
+}
+
+export function useSetCurrentSchoolYear() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (schoolYear: string) => {
+      const response = await rcAxios.put(
+        `/candidates/school-years/${encodeURIComponent(schoolYear)}/current`
+      );
+      return response.data;
+    },
+    onSuccess: (_data, selectedYear) => {
+      queryClient.setQueryData<SchoolYearRecord[]>(
+        ["reviewCenterSchoolYears"],
+        (old) => {
+          if (!old || !Array.isArray(old)) return old;
+          return old.map((r) => ({
+            ...r,
+            isCurrent: r.schoolYear === selectedYear,
+          }));
+        }
+      );
     },
   });
 }
@@ -209,13 +257,15 @@ export function useUpdateSchoolYear() {
     mutationFn: async ({
       oldSchoolYear,
       newSchoolYear,
+      isCurrent,
     }: {
       oldSchoolYear: string;
-      newSchoolYear: string;
+      newSchoolYear?: string;
+      isCurrent?: boolean;
     }) => {
       const response = await rcAxios.put(
         `/candidates/school-years/${encodeURIComponent(oldSchoolYear)}`,
-        { newSchoolYear }
+        { newSchoolYear, isCurrent }
       );
       return response.data;
     },

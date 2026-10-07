@@ -232,40 +232,46 @@ export class QuestionService {
         const whereClause = authorId ? { authorId } : undefined;
         const limitNum = limit || 20;
         try {
-            const rawQuestions = await this.db.question.findMany({
-                where: whereClause,
-                take: limit ? limitNum + 1 : undefined,
-                skip: cursor ? 1 : undefined,
-                cursor: cursor ? { id: cursor } : undefined,
-                include: {
-                    subject: true,
-                    author: { select: { name: true } },
-                },
-                orderBy: { createdAt: "desc" },
-            });
+            const [total, rawQuestions] = await Promise.all([
+                this.db.question.count({ where: whereClause }),
+                this.db.question.findMany({
+                    where: whereClause,
+                    take: limit ? limitNum + 1 : undefined,
+                    skip: cursor ? 1 : undefined,
+                    cursor: cursor ? { id: cursor } : undefined,
+                    include: {
+                        subject: true,
+                        author: { select: { name: true } },
+                    },
+                    orderBy: { createdAt: "desc" },
+                }),
+            ]);
             const questions = rawQuestions.map((q) => ({
                 ...q,
                 category: q.subject,
                 categoryId: q.subjectId,
             }));
             if (!limit)
-                return questions;
+                return { questions, total };
             const hasNextPage = questions.length > limitNum;
             if (hasNextPage)
                 questions.pop();
             const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
-            return { questions, nextCursor, hasNextPage };
+            return { questions, nextCursor, hasNextPage, total };
         }
         catch (err) {
             console.warn("getAllQuestions relation include failed, falling back to safe query:", err?.message);
-            const rawQuestions = await this.db.question.findMany({
-                where: whereClause,
-                take: limit ? limitNum + 1 : undefined,
-                skip: cursor ? 1 : undefined,
-                cursor: cursor ? { id: cursor } : undefined,
-                include: { subject: true },
-                orderBy: { createdAt: "desc" },
-            });
+            const [total, rawQuestions] = await Promise.all([
+                this.db.question.count({ where: whereClause }),
+                this.db.question.findMany({
+                    where: whereClause,
+                    take: limit ? limitNum + 1 : undefined,
+                    skip: cursor ? 1 : undefined,
+                    cursor: cursor ? { id: cursor } : undefined,
+                    include: { subject: true },
+                    orderBy: { createdAt: "desc" },
+                }),
+            ]);
             const questions = rawQuestions.map((q) => ({
                 ...q,
                 category: q.subject,
@@ -273,12 +279,12 @@ export class QuestionService {
                 author: { name: "System Administrator" },
             }));
             if (!limit)
-                return questions;
+                return { questions, total };
             const hasNextPage = questions.length > limitNum;
             if (hasNextPage)
                 questions.pop();
             const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
-            return { questions, nextCursor, hasNextPage };
+            return { questions, nextCursor, hasNextPage, total };
         }
     }
     async getFilteredQuestions(search, difficulty, category, type, status, cursor, limit, authorId, isPublished, schoolYear, handledCategoryIds, userRole) {
@@ -315,18 +321,21 @@ export class QuestionService {
         };
         const limitNum = limit || 20;
         try {
-            const rawQuestions = await this.db.question.findMany({
-                where: whereClause,
-                take: limit ? limitNum + 1 : undefined,
-                skip: cursor ? 1 : undefined,
-                cursor: cursor ? { id: cursor } : undefined,
-                include: {
-                    subject: true,
-                    author: { select: { name: true } },
-                    _count: { select: { comments: true } },
-                },
-                orderBy: { createdAt: "desc" },
-            });
+            const [total, rawQuestions] = await Promise.all([
+                this.db.question.count({ where: whereClause }),
+                this.db.question.findMany({
+                    where: whereClause,
+                    take: limit ? limitNum + 1 : undefined,
+                    skip: cursor ? 1 : undefined,
+                    cursor: cursor ? { id: cursor } : undefined,
+                    include: {
+                        subject: true,
+                        author: { select: { name: true } },
+                        _count: { select: { comments: true } },
+                    },
+                    orderBy: { createdAt: "desc" },
+                }),
+            ]);
             // Auto-heal and sync questions that are in PENDING_REVISION status with 0 comments
             const stalePendingRevisionIds = rawQuestions
                 .filter((q) => (q.status === "PENDING_REVISION" ||
@@ -360,23 +369,26 @@ export class QuestionService {
                 };
             });
             if (!limit)
-                return questions;
+                return { questions, total };
             const hasNextPage = questions.length > limitNum;
             if (hasNextPage)
                 questions.pop();
             const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
-            return { questions, nextCursor, hasNextPage };
+            return { questions, nextCursor, hasNextPage, total };
         }
         catch (err) {
             console.warn("getFilteredQuestions relation include failed, falling back to safe query:", err?.message);
-            const rawQuestions = await this.db.question.findMany({
-                where: whereClause,
-                take: limit ? limitNum + 1 : undefined,
-                skip: cursor ? 1 : undefined,
-                cursor: cursor ? { id: cursor } : undefined,
-                include: { subject: true },
-                orderBy: { createdAt: "desc" },
-            });
+            const [total, rawQuestions] = await Promise.all([
+                this.db.question.count({ where: whereClause }),
+                this.db.question.findMany({
+                    where: whereClause,
+                    take: limit ? limitNum + 1 : undefined,
+                    skip: cursor ? 1 : undefined,
+                    cursor: cursor ? { id: cursor } : undefined,
+                    include: { subject: true },
+                    orderBy: { createdAt: "desc" },
+                }),
+            ]);
             const questions = rawQuestions.map((q) => ({
                 ...q,
                 category: q.subject,
@@ -384,12 +396,12 @@ export class QuestionService {
                 author: { name: "System Administrator" },
             }));
             if (!limit)
-                return questions;
+                return { questions, total };
             const hasNextPage = questions.length > limitNum;
             if (hasNextPage)
                 questions.pop();
             const nextCursor = questions.length > 0 ? questions[questions.length - 1].id : null;
-            return { questions, nextCursor, hasNextPage };
+            return { questions, nextCursor, hasNextPage, total };
         }
     }
     async getQuestionStats(authorId) {

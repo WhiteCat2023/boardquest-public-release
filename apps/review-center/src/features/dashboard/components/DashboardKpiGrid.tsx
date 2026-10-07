@@ -5,12 +5,14 @@ interface DashboardKpiGridProps {
   candidatesCount?: number;
   schedulesCount?: number;
   averageScore?: number | null;
+  activeSchoolYear?: string;
 }
 
 export function DashboardKpiGrid({
   candidatesCount = 0,
   schedulesCount = 0,
   averageScore = null,
+  activeSchoolYear,
 }: DashboardKpiGridProps) {
   const kpis = [
     {
@@ -18,7 +20,11 @@ export function DashboardKpiGrid({
       value: candidatesCount,
       subtitle:
         candidatesCount === 0
-          ? "No candidates enrolled yet"
+          ? activeSchoolYear
+            ? `No candidates in S.Y. ${activeSchoolYear}`
+            : "No candidates enrolled yet"
+          : activeSchoolYear
+          ? `${candidatesCount} active candidate${candidatesCount === 1 ? "" : "s"} in S.Y. ${activeSchoolYear}`
           : `${candidatesCount} active candidate${candidatesCount === 1 ? "" : "s"}`,
       icon: Users,
       iconColor: "text-primary",
@@ -29,7 +35,11 @@ export function DashboardKpiGrid({
       value: schedulesCount,
       subtitle:
         schedulesCount === 0
-          ? "No scheduled review periods"
+          ? activeSchoolYear
+            ? `No scheduled review periods in S.Y. ${activeSchoolYear}`
+            : "No scheduled review periods"
+          : activeSchoolYear
+          ? `${schedulesCount} scheduled session${schedulesCount === 1 ? "" : "s"} in S.Y. ${activeSchoolYear}`
           : `${schedulesCount} scheduled session${schedulesCount === 1 ? "" : "s"}`,
       icon: Calendar,
       iconColor: "text-amber-500",
@@ -40,7 +50,11 @@ export function DashboardKpiGrid({
       value: averageScore !== null ? `${averageScore}%` : "Standby",
       subtitle:
         averageScore !== null
-          ? "Average board readiness score"
+          ? activeSchoolYear
+            ? `Average readiness score (S.Y. ${activeSchoolYear})`
+            : "Average board readiness score"
+          : activeSchoolYear
+          ? `Awaiting evaluation results for S.Y. ${activeSchoolYear}`
           : "Awaiting evaluation results",
       icon: Award,
       iconColor: "text-emerald-500",

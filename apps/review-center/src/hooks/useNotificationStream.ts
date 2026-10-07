@@ -1,20 +1,19 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import useAuth from "./useAuth";
+import { useReviewCenterAuth } from "./useReviewCenterAuth";
 
 const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 const BASE_URL = rawUrl.endsWith("/api") ? rawUrl : `${rawUrl.replace(/\/$/, "")}/api`;
 
 export function useNotificationStream() {
   const queryClient = useQueryClient();
-  const { auth } = useAuth();
-  const currentUser = (auth as any)?.data?.user || (auth as any)?.user;
+  const { user } = useReviewCenterAuth();
 
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!user?.id) return;
 
-    const streamUrl = `${BASE_URL}/notifications/stream`;
+    const streamUrl = `${BASE_URL}/review-center-app/notifications/stream`;
     let eventSource: EventSource | null = null;
 
     try {
@@ -34,25 +33,42 @@ export function useNotificationStream() {
             // Invalidate React Query notification and domain caches
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
             queryClient.invalidateQueries({ queryKey: ["notifications-count"] });
-            queryClient.invalidateQueries({ queryKey: ["questions"] });
-            queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
-            queryClient.invalidateQueries({ queryKey: ["categories"] });
-            queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+            queryClient.invalidateQueries({ queryKey: ["reviewCenterCandidates"] });
+            queryClient.invalidateQueries({ queryKey: ["candidates"] });
+            queryClient.invalidateQueries({ queryKey: ["reviewCenterAssessments"] });
+            queryClient.invalidateQueries({ queryKey: ["assessments"] });
+            queryClient.invalidateQueries({ queryKey: ["reviewSchedules"] });
+            queryClient.invalidateQueries({ queryKey: ["schedules"] });
           }
         } catch (err) {
           console.warn("Error parsing notification SSE payload:", err);
         }
       });
 
-      eventSource.addEventListener("questions-updated", () => {
+      eventSource.addEventListener("candidates-updated", () => {
         try {
-          // Instantly refresh all question list, review desk, and category stats
-          queryClient.invalidateQueries({ queryKey: ["questions"] });
-          queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
-          queryClient.invalidateQueries({ queryKey: ["categories"] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-questions"] });
+          queryClient.invalidateQueries({ queryKey: ["reviewCenterCandidates"] });
+          queryClient.invalidateQueries({ queryKey: ["candidates"] });
         } catch (err) {
-          console.warn("Error processing questions-updated SSE event:", err);
+          console.warn("Error processing candidates-updated SSE event:", err);
+        }
+      });
+
+      eventSource.addEventListener("schedules-updated", () => {
+        try {
+          queryClient.invalidateQueries({ queryKey: ["reviewSchedules"] });
+          queryClient.invalidateQueries({ queryKey: ["schedules"] });
+        } catch (err) {
+          console.warn("Error processing schedules-updated SSE event:", err);
+        }
+      });
+
+      eventSource.addEventListener("scores-updated", () => {
+        try {
+          queryClient.invalidateQueries({ queryKey: ["reviewCenterAssessments"] });
+          queryClient.invalidateQueries({ queryKey: ["assessments"] });
+        } catch (err) {
+          console.warn("Error processing scores-updated SSE event:", err);
         }
       });
 
@@ -68,7 +84,7 @@ export function useNotificationStream() {
         eventSource.close();
       }
     };
-  }, [currentUser?.id, queryClient]);
+  }, [user?.id, queryClient]);
 }
 
 export default useNotificationStream;

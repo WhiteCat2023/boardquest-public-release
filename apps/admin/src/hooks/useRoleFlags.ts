@@ -10,6 +10,8 @@ export interface RoleFlags {
   isDeanOrSuperAdmin: boolean;
   isAdminOrSuperAdmin: boolean;
   isStaff: boolean;
+  canManageSchedules: boolean;
+  canCreateSchedules: boolean;
 }
 
 export function getRoleFlags(role?: string | number): RoleFlags {
@@ -20,6 +22,7 @@ export function getRoleFlags(role?: string | number): RoleFlags {
   const isTeamLead = role === "TEAMLEAD";
   const isReviewCenter = role === "REVIEWCENTER" || role === "EXTERNAL";
   const isDeanOrSuperAdmin = isSuperAdmin || isDean;
+  const canManageSchedules = isSuperAdmin || isDean || isTeamLead;
 
   return {
     isSuperAdmin,
@@ -30,7 +33,9 @@ export function getRoleFlags(role?: string | number): RoleFlags {
     isReviewCenter,
     isDeanOrSuperAdmin,
     isAdminOrSuperAdmin: isDeanOrSuperAdmin,
-    isStaff: isSuperAdmin || isDean || isTeamLead,
+    isStaff: canManageSchedules,
+    canManageSchedules,
+    canCreateSchedules: canManageSchedules,
   };
 }
 

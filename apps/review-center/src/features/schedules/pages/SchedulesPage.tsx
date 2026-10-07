@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   useReviewSchedules,
@@ -9,10 +10,12 @@ import {
 } from "../api/useCalendar";
 import ReviewCalendarView from "../components/ReviewCalendarView";
 import SetReviewScheduleModal from "../components/SetReviewScheduleModal";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 
 export function SchedulesPage() {
+  const { activeSchoolYear } = useActiveSchoolYear();
   const { data: rawSchedules = [], isLoading: isSchedulesLoading } =
-    useReviewSchedules();
+    useReviewSchedules({ schoolYear: activeSchoolYear });
   const deleteScheduleMutation = useDeleteReviewSchedule();
 
   const schedules = Array.isArray(rawSchedules) ? rawSchedules : [];
@@ -53,10 +56,13 @@ export function SchedulesPage() {
         <div>
           <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
             <CalendarIcon className="text-primary size-6 shrink-0" />
-            Evaluation Schedules
+            <span>Evaluation Schedules</span>
+            <Badge variant="outline" className="text-xs font-bold px-2 py-0.5 rounded-lg bg-muted/60 border-border text-foreground">
+              S.Y. {activeSchoolYear}
+            </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Configure partner review periods, mock board dates, and diagnostic drills to sync with the Academic Calendar.
+            Configure partner review periods, mock board dates, and diagnostic drills for S.Y. {activeSchoolYear} to sync with the Academic Calendar.
           </p>
         </div>
 
@@ -76,6 +82,7 @@ export function SchedulesPage() {
         onAddSchedule={handleOpenAddSchedule}
         onEditSchedule={handleOpenEditSchedule}
         onDeleteSchedule={handleDeleteSchedule}
+        activeSchoolYear={activeSchoolYear}
       />
 
       {/* Modal for setting/updating review schedule */}
@@ -83,6 +90,7 @@ export function SchedulesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingSchedule}
+        activeSchoolYear={activeSchoolYear}
       />
     </div>
   );

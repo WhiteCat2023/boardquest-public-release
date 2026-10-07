@@ -36,10 +36,13 @@ import BulkEnrollModal from "../components/BulkEnrollModal";
 import { CandidateScoreDrawer } from "@/features/scores/components/CandidateScoreDrawer";
 import { PdfPreviewModal } from "@/features/scores/components/PdfPreviewModal";
 import { ConfirmDialog } from "@/components/custom/ConfirmDialog";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 
 const DEFAULT_KNOWN_YEARS = ["2026-2027", "2025-2026", "2024-2025"];
 
 export function StudentsPage() {
+  const { activeSchoolYear, currentSchoolYear } = useActiveSchoolYear();
+
   // Navigation State: null = School Years List, string = specific School Year view
   const [selectedSchoolYear, setSelectedSchoolYear] = useState<string | null>(
     null
@@ -255,7 +258,9 @@ export function StudentsPage() {
                   completedCount: 0,
                   sampleStudents: [],
                 };
-                const isCurrent = sy === "2026-2027";
+                const isCurrent =
+                  sy === currentSchoolYear ||
+                  (!currentSchoolYear && sy === activeSchoolYear);
 
                 return (
                   <Card

@@ -1,4 +1,5 @@
 import * as candidateService from "../../services/review-center/candidate.service";
+import rcNotificationService from "../../services/review-center/rcNotification.service.js";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
@@ -11,25 +12,40 @@ export const getMyReviewCenterSchoolYears = asyncHandler(async (req, res) => {
 });
 export const createMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
     const user = req.user;
-    const { schoolYear } = req.body;
+    const { schoolYear, isCurrent } = req.body;
     if (!schoolYear) {
         throw new ApiError(400, "School Year is required.");
     }
     const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
-    const created = await candidateService.createReviewCenterSchoolYear(companyName, schoolYear, reviewCenterId);
+    const created = await candidateService.createReviewCenterSchoolYear(companyName, schoolYear, reviewCenterId, isCurrent);
     return new ApiResponse(201, { schoolYear: created }, "School year created successfully in database").send(res);
+});
+export const setMyReviewCenterCurrentSchoolYear = asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { schoolYear } = req.params;
+    const companyName = user?.companyName;
+    const reviewCenterId = user?.reviewCenterId;
+    if (!schoolYear) {
+        throw new ApiError(400, "School Year is required.");
+    }
+    const result = await candidateService.setCurrentReviewCenterSchoolYear(schoolYear, companyName, reviewCenterId);
+    return new ApiResponse(200, result, "Current school year set successfully").send(res);
 });
 export const updateMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
     const user = req.user;
     const { schoolYear } = req.params;
-    const { newSchoolYear } = req.body;
+    const { newSchoolYear, isCurrent } = req.body;
     const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
+    if (isCurrent === true && (!newSchoolYear || newSchoolYear === schoolYear)) {
+        const result = await candidateService.setCurrentReviewCenterSchoolYear(schoolYear, companyName, reviewCenterId);
+        return new ApiResponse(200, result, "Current school year updated successfully").send(res);
+    }
     if (!newSchoolYear) {
         throw new ApiError(400, "New school year is required");
     }
-    const updated = await candidateService.updateReviewCenterSchoolYear(schoolYear, newSchoolYear, companyName, reviewCenterId);
+    const updated = await candidateService.updateReviewCenterSchoolYear(schoolYear, newSchoolYear, companyName, reviewCenterId, isCurrent);
     return new ApiResponse(200, { schoolYear: updated }, "School year updated successfully").send(res);
 });
 export const deleteMyReviewCenterSchoolYear = asyncHandler(async (req, res) => {
@@ -69,6 +85,17 @@ export const enrollMyReviewCenterCandidate = asyncHandler(async (req, res) => {
         companyName,
         reviewCenterId,
     });
+    if (reviewCenterId) {
+        rcNotificationService
+            .createRCNotification({
+            reviewCenterId,
+            title: "New Candidate Enrolled",
+            message: `${name} (${email}) was enrolled in S.Y. ${schoolYear}.`,
+            type: "CANDIDATE",
+            link: "/students",
+        })
+            .catch((err) => console.warn("Failed to create RC notification for candidate:", err));
+    }
     return new ApiResponse(201, { candidate }, "Candidate enrolled successfully into review center cohort").send(res);
 });
 export const bulkEnrollMyReviewCenterCandidates = asyncHandler(async (req, res) => {
@@ -89,6 +116,17 @@ export const bulkEnrollMyReviewCenterCandidates = asyncHandler(async (req, res) 
         companyName,
         reviewCenterId,
     });
+    if (reviewCenterId) {
+        rcNotificationService
+            .createRCNotification({
+            reviewCenterId,
+            title: "Bulk Candidates Enrolled",
+            message: `${result.enrolledCount} candidates enrolled into S.Y. ${schoolYear}.`,
+            type: "CANDIDATE",
+            link: "/students",
+        })
+            .catch((err) => console.warn("Failed to create RC notification for bulk candidates:", err));
+    }
     return new ApiResponse(201, result, `Successfully enrolled ${result.enrolledCount} student(s) into School Year ${schoolYear}.`).send(res);
 });
 export const updateMyReviewCenterCandidate = asyncHandler(async (req, res) => {

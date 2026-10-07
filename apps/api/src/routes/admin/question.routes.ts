@@ -42,6 +42,13 @@ import {
   assignCategoryHandlers,
 } from "../../controller/admin/subject.controller";
 
+import {
+  getTopicsBySubject,
+  createTopic,
+  updateTopic,
+  deleteTopic,
+} from "../../controller/admin/topic.controller.js";
+
 const router = Router();
 
 router.get("/stats", authenticateToken, getQuestionStats);
@@ -175,6 +182,51 @@ router.delete(
   authenticateToken,
   requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   deleteModule,
+);
+
+// Topic CMS routes
+const topicRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
+
+router.get("/category/:categoryId/topics", authenticateToken, getTopicsBySubject);
+router.get("/subject/:subjectId/topics", authenticateToken, getTopicsBySubject);
+
+router.post(
+  "/category/:categoryId/topics",
+  authenticateToken,
+  requireRoles(topicRoles),
+  createTopic,
+);
+router.post(
+  "/subject/:subjectId/topics",
+  authenticateToken,
+  requireRoles(topicRoles),
+  createTopic,
+);
+
+router.put(
+  "/topics/:topicId",
+  authenticateToken,
+  requireRoles(topicRoles),
+  updateTopic,
+);
+router.put(
+  "/category/:categoryId/topics/:topicId",
+  authenticateToken,
+  requireRoles(topicRoles),
+  updateTopic,
+);
+
+router.delete(
+  "/topics/:topicId",
+  authenticateToken,
+  requireRoles(topicRoles),
+  deleteTopic,
+);
+router.delete(
+  "/category/:categoryId/topics/:topicId",
+  authenticateToken,
+  requireRoles(topicRoles),
+  deleteTopic,
 );
 
 export default router;

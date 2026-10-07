@@ -23,6 +23,11 @@ export default function Dashboard() {
         <DashboardKpiCards />
       </div>
 
+      {/* App Analytics: Line Graph & Performance Distribution */}
+      <div className="w-full shrink-0">
+        <StudentPassingRateAnalytics />
+      </div>
+
       {/* SuperAdmin View: Faculty Roster & System Audit Logs */}
       {isSuperAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 shrink-0">
@@ -31,26 +36,16 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Operational Sections: Hidden for SUPERADMIN */}
-      {!isSuperAdmin && (
-        <>
-          {/* App Analytics: Line Graph & Performance Distribution */}
-          <div className="w-full shrink-0">
-            <StudentPassingRateAnalytics />
-          </div>
+      {/* 6 Major Licensure Examination Subjects Overview */}
+      <div className="w-full shrink-0">
+        <SubjectOverviewSection />
+      </div>
 
-          {/* 6 Major Licensure Examination Subjects Overview */}
-          <div className="w-full shrink-0">
-            <SubjectOverviewSection />
-          </div>
-
-          {/* Operational Grid: Recent Questions & Student Roster */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 shrink-0">
-            <RecentQuestionsCard />
-            <StudentRosterCard />
-          </div>
-        </>
-      )}
+      {/* Operational Grid: Recent Questions & Student Roster */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 shrink-0">
+        <RecentQuestionsCard />
+        <StudentRosterCard />
+      </div>
     </div>
   );
 }

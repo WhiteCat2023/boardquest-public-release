@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,6 +24,7 @@ interface ReviewCalendarViewProps {
   onAddSchedule: () => void;
   onEditSchedule: (schedule: ReviewSchedule) => void;
   onDeleteSchedule: (schedule: ReviewSchedule) => void;
+  activeSchoolYear?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -34,11 +35,52 @@ export default function ReviewCalendarView({
   onAddSchedule,
   onEditSchedule,
   onDeleteSchedule,
+  activeSchoolYear,
 }: ReviewCalendarViewProps) {
   // Calendar month state
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Selected schedule state: null by default so calendar doesn't show all schedules automatically
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+
+  const selectedSchedule = useMemo(() => {
+    if (!selectedScheduleId) return null;
+    return (schedules || []).find((s) => s.id === selectedScheduleId) || null;
+  }, [schedules, selectedScheduleId]);
+
+  const calendarSchedules = useMemo(() => {
+    if (!selectedScheduleId) return [];
+    return selectedSchedule ? [selectedSchedule] : [];
+  }, [selectedScheduleId, selectedSchedule]);
+
+  // Sync calendar view month to selected schedule's start date
+  useEffect(() => {
+    if (selectedSchedule?.startDate) {
+      const d = new Date(selectedSchedule.startDate);
+      if (!isNaN(d.getTime())) {
+        setCurrentDate(d);
+      }
+    }
+  }, [selectedSchedule]);
+
+  // Sync calendar view month to active school year if no schedule is selected
+  useEffect(() => {
+    if (selectedScheduleId || !activeSchoolYear) return;
+    const match = activeSchoolYear.match(/^(\d{4})-\d{4}$/);
+    if (match) {
+      const syStartYear = parseInt(match[1], 10);
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      if (todayYear === syStartYear || todayYear === syStartYear + 1) {
+        setCurrentDate(today);
+      } else {
+        // Jump to August 1 of that academic year
+        setCurrentDate(new Date(syStartYear, 7, 1));
+      }
+    }
+  }, [activeSchoolYear, selectedScheduleId]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -116,7 +158,7 @@ export default function ReviewCalendarView({
     const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const targetDate = new Date(dayStr);
 
-    return activeSchedules.filter((sched) => {
+    return calendarSchedules.filter((sched) => {
       if (!sched.startDate || !sched.endDate) return false;
       const start = new Date(sched.startDate);
       const end = new Date(sched.endDate);
@@ -171,11 +213,33 @@ export default function ReviewCalendarView({
               <CalendarIcon className="size-4" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
-                {monthNames[month]} {year}
-              </h2>
-              <p className="text-[11px] text-muted-foreground">
-                Review schedule and timeline overview
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+                  {monthNames[month]} {year}
+                </h2>
+                {selectedSchedule ? (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                    <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                    <span>Showing: {selectedSchedule.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedScheduleId(null)}
+                      className="ml-1 text-muted-foreground hover:text-foreground cursor-pointer font-extrabold"
+                      title="Clear selection"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground bg-muted border border-border">
+                    Click a schedule to view
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {selectedSchedule
+                  ? `Active timeline: ${selectedSchedule.startDate} to ${selectedSchedule.endDate}`
+                  : "Select a review period on the sidebar to display its schedule on the calendar"}
               </p>
             </div>
           </div>
@@ -306,9 +370,20 @@ export default function ReviewCalendarView({
               Scheduled Review Periods
             </h3>
           </div>
-          <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-            {filteredSchedules.length}
-          </span>
+          <div className="flex items-center gap-2">
+            {selectedScheduleId && (
+              <button
+                type="button"
+                onClick={() => setSelectedScheduleId(null)}
+                className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+            <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {filteredSchedules.length}
+            </span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -347,8 +422,9 @@ export default function ReviewCalendarView({
                 No Review Periods
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Click &quot;Schedule Review Period&quot; to set review dates and
-                timelines.
+                {activeSchoolYear
+                  ? `Click "Schedule Review Period" to set review dates for S.Y. ${activeSchoolYear}.`
+                  : 'Click "Schedule Review Period" to set review dates and timelines.'}
               </p>
               <Button
                 size="sm"
@@ -377,57 +453,95 @@ export default function ReviewCalendarView({
               </Button>
             </div>
           ) : (
-            paginatedSchedules.map((sched) => (
-              <div
-                key={sched.id}
-                className="p-3 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-all flex flex-col gap-2 group"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-foreground truncate">
-                      {sched.title}
-                    </h4>
-                    <span className="text-[10px] text-muted-foreground font-medium">
-                      {sched.category || "Board Review"}
+            paginatedSchedules.map((sched) => {
+              const isSelected = selectedScheduleId === sched.id;
+              return (
+                <div
+                  key={sched.id}
+                  onClick={() =>
+                    setSelectedScheduleId((prev) => (prev === sched.id ? null : sched.id))
+                  }
+                  className={`p-3 rounded-xl border transition-all flex flex-col gap-2 group font-sans cursor-pointer relative ${
+                    isSelected
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xs"
+                      : "border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-border"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4
+                          className={`text-xs font-bold truncate ${
+                            isSelected ? "text-primary" : "text-foreground"
+                          }`}
+                        >
+                          {sched.title}
+                        </h4>
+                        {isSelected && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-primary text-primary-foreground shadow-2xs">
+                            Active on Calendar
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">
+                        {sched.category || "Board Review"}
+                      </span>
+                    </div>
+                    {getStatusBadge(sched.status)}
+                  </div>
+
+                  {/* Dates & Duration */}
+                  <div
+                    className={`flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 rounded-md border ${
+                      isSelected
+                        ? "bg-background text-primary font-bold border-primary/30"
+                        : "bg-background/80 text-muted-foreground border-border/60"
+                    }`}
+                  >
+                    <CalendarIcon className="size-3 text-primary shrink-0" />
+                    <span>
+                      {sched.startDate} → {sched.endDate}
                     </span>
                   </div>
-                  {getStatusBadge(sched.status)}
-                </div>
 
-                {/* Dates & Duration */}
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded-md border border-border/60">
-                  <CalendarIcon className="size-3 text-primary shrink-0" />
-                  <span>
-                    {sched.startDate} → {sched.endDate}
-                  </span>
-                </div>
+                  {/* Description if present */}
+                  {sched.description && (
+                    <p className="text-[11px] text-muted-foreground/80 line-clamp-2 italic">
+                      &quot;{sched.description}&quot;
+                    </p>
+                  )}
 
-                {/* Description if present */}
-                {sched.description && (
-                  <p className="text-[11px] text-muted-foreground/80 line-clamp-2 italic">
-                    &quot;{sched.description}&quot;
-                  </p>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
-                  <button
-                    type="button"
-                    onClick={() => onEditSchedule(sched)}
-                    className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold"
-                  >
-                    <Edit3 size={12} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteSchedule(sched)}
-                    className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold ml-1"
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
+                  {/* Actions */}
+                  <div className="flex items-center justify-between gap-1 pt-1 border-t border-border/50">
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {isSelected ? "Click to deselect" : "Click to view on calendar"}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditSchedule(sched);
+                        }}
+                        className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold"
+                      >
+                        <Edit3 size={12} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSchedule(sched);
+                        }}
+                        className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-[11px] flex items-center gap-1 font-semibold ml-1"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

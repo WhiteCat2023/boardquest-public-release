@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
 import { createQuestion, deleteQuestion, getQuestionById, getQuestions, getQuestionsByCategory, updateQuestion, bulkUploadQuestions, extractQuestions, bulkDeleteQuestions, bulkApproveQuestions, bulkUpdateStatusQuestions, bulkFeedbackQuestions, synthesizeQuestion, createSynthesizedQuestion, getPendingReviewAuthors, getQuestionStats, getQuestionComments, createQuestionComment, deleteQuestionComment, toggleResolveComment, bulkParaphraseQuestions, bulkApplyParaphrase, } from "../../controller/admin/question.controller";
 import { createCategory, getCategories, getCategory, updateCategory, deleteCategory, getCategoriesTotalCount, getModulesByCategory, createModule, updateModule, deleteModule, assignCategoryHandlers, } from "../../controller/admin/subject.controller";
+import { getTopicsBySubject, createTopic, updateTopic, deleteTopic, } from "../../controller/admin/topic.controller.js";
 const router = Router();
 router.get("/stats", authenticateToken, getQuestionStats);
 router.post("/create", authenticateToken, createQuestion);
@@ -51,4 +52,14 @@ router.put("/category/modules/:moduleId", authenticateToken, requireRoles(["SUPE
 router.put("/subject/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), updateModule);
 router.delete("/category/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), deleteModule);
 router.delete("/subject/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), deleteModule);
+// Topic CMS routes
+const topicRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
+router.get("/category/:categoryId/topics", authenticateToken, getTopicsBySubject);
+router.get("/subject/:subjectId/topics", authenticateToken, getTopicsBySubject);
+router.post("/category/:categoryId/topics", authenticateToken, requireRoles(topicRoles), createTopic);
+router.post("/subject/:subjectId/topics", authenticateToken, requireRoles(topicRoles), createTopic);
+router.put("/topics/:topicId", authenticateToken, requireRoles(topicRoles), updateTopic);
+router.put("/category/:categoryId/topics/:topicId", authenticateToken, requireRoles(topicRoles), updateTopic);
+router.delete("/topics/:topicId", authenticateToken, requireRoles(topicRoles), deleteTopic);
+router.delete("/category/:categoryId/topics/:topicId", authenticateToken, requireRoles(topicRoles), deleteTopic);
 export default router;

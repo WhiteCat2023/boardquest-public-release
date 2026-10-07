@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import * as candidateService from "../../services/review-center/candidate.service";
+import rcNotificationService from "../../services/review-center/rcNotification.service.js";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
@@ -27,7 +28,7 @@ export const getMyReviewCenterSchoolYears = asyncHandler(
 export const createMyReviewCenterSchoolYear = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user as any;
-    const { schoolYear } = req.body;
+    const { schoolYear, isCurrent } = req.body;
 
     if (!schoolYear) {
       throw new ApiError(400, "School Year is required.");
@@ -40,6 +41,7 @@ export const createMyReviewCenterSchoolYear = asyncHandler(
       companyName,
       schoolYear,
       reviewCenterId,
+      isCurrent,
     );
 
     return new ApiResponse(
@@ -50,13 +52,51 @@ export const createMyReviewCenterSchoolYear = asyncHandler(
   },
 );
 
+export const setMyReviewCenterCurrentSchoolYear = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as any;
+    const { schoolYear } = req.params;
+    const companyName = user?.companyName;
+    const reviewCenterId = user?.reviewCenterId;
+
+    if (!schoolYear) {
+      throw new ApiError(400, "School Year is required.");
+    }
+
+    const result = await candidateService.setCurrentReviewCenterSchoolYear(
+      schoolYear as string,
+      companyName,
+      reviewCenterId,
+    );
+
+    return new ApiResponse(
+      200,
+      result,
+      "Current school year set successfully",
+    ).send(res);
+  },
+);
+
 export const updateMyReviewCenterSchoolYear = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user as any;
     const { schoolYear } = req.params;
-    const { newSchoolYear } = req.body;
+    const { newSchoolYear, isCurrent } = req.body;
     const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
+
+    if (isCurrent === true && (!newSchoolYear || newSchoolYear === schoolYear)) {
+      const result = await candidateService.setCurrentReviewCenterSchoolYear(
+        schoolYear as string,
+        companyName,
+        reviewCenterId,
+      );
+      return new ApiResponse(
+        200,
+        result,
+        "Current school year updated successfully",
+      ).send(res);
+    }
 
     if (!newSchoolYear) {
       throw new ApiError(400, "New school year is required");
@@ -67,6 +107,7 @@ export const updateMyReviewCenterSchoolYear = asyncHandler(
       newSchoolYear as string,
       companyName,
       reviewCenterId,
+      isCurrent,
     );
 
     return new ApiResponse(
@@ -149,6 +190,18 @@ export const enrollMyReviewCenterCandidate = asyncHandler(
       reviewCenterId,
     });
 
+    if (reviewCenterId) {
+      rcNotificationService
+        .createRCNotification({
+          reviewCenterId,
+          title: "New Candidate Enrolled",
+          message: `${name} (${email}) was enrolled in S.Y. ${schoolYear}.`,
+          type: "CANDIDATE",
+          link: "/students",
+        })
+        .catch((err) => console.warn("Failed to create RC notification for candidate:", err));
+    }
+
     return new ApiResponse(
       201,
       { candidate },
@@ -179,6 +232,18 @@ export const bulkEnrollMyReviewCenterCandidates = asyncHandler(
       companyName,
       reviewCenterId,
     });
+
+    if (reviewCenterId) {
+      rcNotificationService
+        .createRCNotification({
+          reviewCenterId,
+          title: "Bulk Candidates Enrolled",
+          message: `${result.enrolledCount} candidates enrolled into S.Y. ${schoolYear}.`,
+          type: "CANDIDATE",
+          link: "/students",
+        })
+        .catch((err) => console.warn("Failed to create RC notification for bulk candidates:", err));
+    }
 
     return new ApiResponse(
       201,

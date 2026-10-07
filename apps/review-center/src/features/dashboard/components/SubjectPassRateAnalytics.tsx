@@ -18,19 +18,13 @@ import {
   Target,
   FileSpreadsheet,
   Layers,
+  Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAssessments } from "@/features/scores/api/useAssessments";
-import { useSchoolYears, useCandidates } from "@/features/students/api/useCandidates";
+import { useActiveSchoolYear } from "@/context/SchoolYearContext";
 import {
   MEDTECH_SUBJECT_DETAILS,
   type MedTechSubjectDetail,
@@ -46,37 +40,18 @@ const SUBJECT_ICONS: Record<string, React.ElementType> = {
 };
 
 export function SubjectPassRateAnalytics() {
-  const [selectedSchoolYear, setSelectedSchoolYear] = useState<string>("ALL");
+  const { activeSchoolYear } = useActiveSchoolYear();
 
-  const { data: assessmentsData, isLoading: isLoadingAssessments } = useAssessments();
-  const { data: dbSchoolYears = [] } = useSchoolYears();
-  const { data: candidatesData } = useCandidates();
-
-  const allSchoolYears = useMemo(() => {
-    const candidateYears = candidatesData?.schoolYears || [];
-    return Array.from(
-      new Set([
-        ...dbSchoolYears,
-        ...candidateYears,
-        "2027-2028",
-        "2026-2027",
-        "2025-2026",
-      ])
-    ).sort((a, b) => b.localeCompare(a));
-  }, [dbSchoolYears, candidatesData]);
+  const { data: assessmentsData, isLoading: isLoadingAssessments } = useAssessments({
+    schoolYear: activeSchoolYear,
+  });
 
   const assessments = assessmentsData?.assessments || [];
-
-  // Filter assessments by selected school year if not "ALL"
-  const filteredAssessments = useMemo(() => {
-    if (selectedSchoolYear === "ALL") return assessments;
-    return assessments.filter((a) => a.schoolYear === selectedSchoolYear);
-  }, [assessments, selectedSchoolYear]);
 
   // Aggregate stats per MedTech subject
   const subjectStats = useMemo(() => {
     return MEDTECH_SUBJECT_DETAILS.map((subject: MedTechSubjectDetail) => {
-      const matching = filteredAssessments.filter(
+      const matching = assessments.filter(
         (a) => a.subject.trim().toLowerCase() === subject.name.trim().toLowerCase()
       );
 
@@ -118,7 +93,7 @@ export function SubjectPassRateAnalytics() {
         status,
       };
     });
-  }, [filteredAssessments]);
+  }, [assessments]);
 
   // Overall Global Aggregates
   const overallMetrics = useMemo(() => {
@@ -196,29 +171,20 @@ export function SubjectPassRateAnalytics() {
                 </Badge>
               </h2>
               <p className="text-xs text-muted-foreground">
-                PRC Medical Technology Board Examination pass rate analytics across all 6 core subjects.
+                PRC Medical Technology Board Examination pass rate analytics across all 6 core subjects for S.Y. {activeSchoolYear}.
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
-          <Select value={selectedSchoolYear} onValueChange={setSelectedSchoolYear}>
-            <SelectTrigger className="h-9 w-[160px] bg-background border-border rounded-xl text-xs font-bold text-foreground">
-              <SelectValue placeholder="School Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All School Years</SelectItem>
-              {allSchoolYears.map((sy) => (
-                <SelectItem key={sy} value={sy}>
-                  S.Y. {sy}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/60 border border-border text-xs font-bold text-foreground">
+            <Calendar className="size-3.5 text-primary" />
+            <span>S.Y. {activeSchoolYear}</span>
+          </div>
 
           <Button asChild size="sm" variant="outline" className="rounded-xl h-9 text-xs font-bold gap-1.5 cursor-pointer">
-            <Link to="/scores">
+            <Link to={`/scores?sy=${encodeURIComponent(activeSchoolYear)}`}>
               <FileSpreadsheet className="size-3.5" />
               <span>Full Scores Hub</span>
             </Link>
@@ -434,7 +400,7 @@ export function SubjectPassRateAnalytics() {
                   <div key={subject.slug} className="group space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <Link
-                        to={`/scores/subject/${subject.slug}`}
+                        to={`/scores/subject/${subject.slug}?sy=${encodeURIComponent(activeSchoolYear)}`}
                         className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer group-hover:translate-x-0.5 duration-150"
                       >
                         <div className="p-1 rounded-md bg-muted/60 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
@@ -496,7 +462,7 @@ export function SubjectPassRateAnalytics() {
                 <span>PRC requires a general average of &ge; 75% with no subject below 50%.</span>
               </span>
               <Button asChild variant="ghost" size="sm" className="h-7 text-xs font-bold gap-1 cursor-pointer">
-                <Link to="/scores">
+                <Link to={`/scores?sy=${encodeURIComponent(activeSchoolYear)}`}>
                   <span>Enter Scores</span>
                   <ArrowRight className="size-3" />
                 </Link>
@@ -745,7 +711,7 @@ export function SubjectPassRateAnalytics() {
                     {subject.avgMean ? `Mean: ${subject.avgMean} pts` : "Score Sheet"}
                   </span>
                   <Link
-                    to={`/scores/subject/${subject.slug}`}
+                    to={`/scores/subject/${subject.slug}?sy=${encodeURIComponent(activeSchoolYear)}`}
                     className="font-bold text-primary hover:underline flex items-center gap-1 text-[11px]"
                   >
                     <span>Manage</span>

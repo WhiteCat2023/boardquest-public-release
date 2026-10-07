@@ -3,6 +3,7 @@ import request from "supertest";
 import express, { Express } from "express";
 import calendarRouter from "../routes/admin/calendar.routes";
 import * as calendarService from "../services/admin/calendar.service";
+import { authenticateToken } from "../middleware/auth.middleware";
 
 // Mock calendar service
 jest.mock("../services/admin/calendar.service");
@@ -18,6 +19,10 @@ beforeAll(() => {
 describe("Calendar Routes", () => {
   afterEach(() => {
     jest.clearAllMocks();
+    (authenticateToken as jest.Mock).mockImplementation((req: any, res: any, next: any) => {
+      req.user = { id: "1", email: "admin@example.com", role: "DEAN", name: "Dean User" };
+      next();
+    });
   });
 
   describe("GET /api/calendar/schedules/get", () => {
@@ -42,6 +47,18 @@ describe("Calendar Routes", () => {
       expect(response.body.data.schedules).toBeDefined();
       expect(response.body.data.schedules.length).toBe(1);
       expect(response.body.message).toContain("retrieved successfully");
+    });
+
+    it("should allow TEACHER to view review schedules", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER" };
+        next();
+      });
+
+      (calendarService.getAllReviewSchedules as jest.Mock).mockResolvedValue([]);
+
+      const response = await request(app).get("/api/calendar/schedules/get");
+      expect(response.status).toBe(200);
     });
   });
 
@@ -74,6 +91,67 @@ describe("Calendar Routes", () => {
       expect(response.body.data.schedule.title).toBe("Intensive Diagnostic Coaching");
     });
 
+    it("should allow TEAMLEAD to create review schedules", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "tl_1", email: "teamlead@example.com", role: "TEAMLEAD" };
+        next();
+      });
+
+      (calendarService.createReviewSchedule as jest.Mock).mockResolvedValue({
+        id: "sched_tl",
+        title: "Team Lead Created Schedule",
+      });
+
+      const response = await request(app)
+        .post("/api/calendar/schedules/create")
+        .send({
+          title: "Team Lead Created Schedule",
+          startDate: "2026-10-01",
+          endDate: "2026-10-15",
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it("should allow SUPERADMIN to create review schedules", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "sa_1", email: "superadmin@example.com", role: "SUPERADMIN" };
+        next();
+      });
+
+      (calendarService.createReviewSchedule as jest.Mock).mockResolvedValue({
+        id: "sched_sa",
+        title: "Superadmin Created Schedule",
+      });
+
+      const response = await request(app)
+        .post("/api/calendar/schedules/create")
+        .send({
+          title: "Superadmin Created Schedule",
+          startDate: "2026-10-01",
+          endDate: "2026-10-15",
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it("should reject schedule creation if user is a TEACHER with 403 Forbidden", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER" };
+        next();
+      });
+
+      const response = await request(app)
+        .post("/api/calendar/schedules/create")
+        .send({
+          title: "Teacher Attempted Schedule",
+          startDate: "2026-10-01",
+          endDate: "2026-10-15",
+        });
+
+      expect(response.status).toBe(403);
+    });
+
     it("should return 400 if required fields are missing", async () => {
       const response = await request(app)
         .post("/api/calendar/schedules/create")
@@ -100,6 +178,19 @@ describe("Calendar Routes", () => {
       expect(response.status).toBe(200);
       expect(response.body.data.schedule.title).toBe("Updated Board Review Batch A");
     });
+
+    it("should reject schedule update if user is a TEACHER with 403 Forbidden", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER" };
+        next();
+      });
+
+      const response = await request(app)
+        .put("/api/calendar/schedules/update/sched_1")
+        .send({ title: "Teacher Attempted Update" });
+
+      expect(response.status).toBe(403);
+    });
   });
 
   describe("DELETE /api/calendar/schedules/delete/:id", () => {
@@ -110,6 +201,17 @@ describe("Calendar Routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toContain("deleted successfully");
+    });
+
+    it("should reject schedule deletion if user is a TEACHER with 403 Forbidden", async () => {
+      (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+        req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER" };
+        next();
+      });
+
+      const response = await request(app).delete("/api/calendar/schedules/delete/sched_1");
+
+      expect(response.status).toBe(403);
     });
   });
 });
