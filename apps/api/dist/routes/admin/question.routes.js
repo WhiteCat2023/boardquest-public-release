@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
 import { createQuestion, deleteQuestion, getQuestionById, getQuestions, getQuestionsByCategory, updateQuestion, bulkUploadQuestions, extractQuestions, bulkDeleteQuestions, bulkApproveQuestions, bulkUpdateStatusQuestions, bulkFeedbackQuestions, synthesizeQuestion, createSynthesizedQuestion, getPendingReviewAuthors, getQuestionStats, getQuestionComments, createQuestionComment, deleteQuestionComment, toggleResolveComment, bulkParaphraseQuestions, bulkApplyParaphrase, } from "../../controller/admin/question.controller";
+import { getEncodingTrackerOverview, upsertQuotaAssignment, sendTeacherNudge, sendBulkTeacherNudges, getMyEncodingProgress, } from "../../controller/admin/encoding-tracker.controller";
 import { createCategory, getCategories, getCategory, updateCategory, deleteCategory, getCategoriesTotalCount, getModulesByCategory, createModule, updateModule, deleteModule, assignCategoryHandlers, } from "../../controller/admin/subject.controller";
 import { getTopicsBySubject, createTopic, updateTopic, deleteTopic, } from "../../controller/admin/topic.controller.js";
 const router = Router();
@@ -17,6 +18,12 @@ router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "DE
 router.post("/bulk/paraphrase", authenticateToken, bulkParaphraseQuestions);
 router.post("/bulk/paraphrase/apply", authenticateToken, bulkApplyParaphrase);
 router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
+// Encoding Tracker Routes
+router.get("/encoding-tracker", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), getEncodingTrackerOverview);
+router.post("/encoding-tracker/quota", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), upsertQuotaAssignment);
+router.post("/encoding-tracker/nudge", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), sendTeacherNudge);
+router.post("/encoding-tracker/nudge-bulk", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), sendBulkTeacherNudges);
+router.get("/encoding-tracker/my-progress", authenticateToken, getMyEncodingProgress);
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.get("/:questionId/comments", authenticateToken, getQuestionComments);

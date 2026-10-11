@@ -123,10 +123,119 @@ export class StudentService {
         };
     }
     /**
+     * Helper to compute calendar pace lag and activity engagement cadence for a student
+     */
+    computeStudentPaceAndEngagement(student, activePlan, lessonCompletions = [], questionAttempts = [], achievements = [], examResults = []) {
+        const now = new Date();
+        // 1. Calendar Pace Lag
+        let calendarPace;
+        if (!activePlan || !activePlan.subject) {
+            calendarPace = {
+                status: "NOT_SCHEDULED",
+                expectedPercent: 0,
+                actualPercent: 0,
+                lagPercent: 0,
+                targetDate: null,
+            };
+        }
+        else {
+            const rawStart = activePlan.startDate || activePlan.createdAt || student.createdAt;
+            const rawEnd = activePlan.endDate || activePlan.targetDate || activePlan.startDate;
+            const startDate = rawStart ? new Date(rawStart) : new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+            const endDate = rawEnd ? new Date(rawEnd) : new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+            const totalDuration = endDate.getTime() - startDate.getTime();
+            const elapsed = now.getTime() - startDate.getTime();
+            let expectedPercent = 0;
+            if (totalDuration > 0) {
+                expectedPercent = Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
+            }
+            else {
+                expectedPercent = now >= endDate ? 100 : 0;
+            }
+            // Actual completion in active plan's subject
+            const normSub = activePlan.subject.trim().toLowerCase();
+            const completedLessons = lessonCompletions.filter((c) => {
+                const s = (c.subject || "").trim().toLowerCase();
+                return (s === normSub || s.includes(normSub) || normSub.includes(s)) && c.status === "completed";
+            }).length;
+            // Total expected lessons in subject (default 2 based on curriculum map)
+            const expectedLessonsCount = 2;
+            const actualPercent = Math.min(100, Math.round((completedLessons / expectedLessonsCount) * 100));
+            const lagPercent = actualPercent - expectedPercent;
+            let status;
+            if (now > endDate && actualPercent < 100) {
+                status = "CRITICAL";
+            }
+            else if (lagPercent < -25) {
+                status = "CRITICAL";
+            }
+            else if (lagPercent < -10) {
+                status = "BEHIND";
+            }
+            else {
+                status = "ON_TRACK";
+            }
+            calendarPace = {
+                status,
+                expectedPercent,
+                actualPercent,
+                lagPercent,
+                activeSubject: activePlan.subject,
+                targetDate: activePlan.endDate || activePlan.targetDate || null,
+            };
+        }
+        // 2. Engagement Cadence
+        const activityDates = [];
+        if (student.createdAt)
+            activityDates.push(new Date(student.createdAt).getTime());
+        for (const qa of questionAttempts) {
+            if (qa.lastAttempt)
+                activityDates.push(new Date(qa.lastAttempt).getTime());
+        }
+        for (const ach of achievements) {
+            if (ach.timestamp)
+                activityDates.push(new Date(ach.timestamp).getTime());
+        }
+        for (const ex of examResults) {
+            if (ex.timestamp)
+                activityDates.push(new Date(ex.timestamp).getTime());
+        }
+        for (const lc of lessonCompletions) {
+            if (lc.updatedAt)
+                activityDates.push(new Date(lc.updatedAt).getTime());
+        }
+        const latestTimestamp = activityDates.length > 0
+            ? Math.max(...activityDates)
+            : (student.createdAt ? new Date(student.createdAt).getTime() : now.getTime());
+        const latestDate = new Date(latestTimestamp);
+        const daysSinceLastActive = Math.max(0, Math.floor((now.getTime() - latestTimestamp) / (1000 * 60 * 60 * 24)));
+        const sevenDaysAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+        const weeklyAttemptCount = questionAttempts
+            .filter((qa) => qa.lastAttempt && new Date(qa.lastAttempt).getTime() >= sevenDaysAgo)
+            .reduce((sum, qa) => sum + (qa.attempts || 1), 0);
+        let engagementStatus;
+        if (daysSinceLastActive > 5) {
+            engagementStatus = "DORMANT";
+        }
+        else if (daysSinceLastActive >= 3 || (weeklyAttemptCount === 0 && daysSinceLastActive >= 2)) {
+            engagementStatus = "LOW_CADENCE";
+        }
+        else {
+            engagementStatus = "ACTIVE";
+        }
+        const engagement = {
+            status: engagementStatus,
+            lastActiveAt: latestDate.toISOString(),
+            daysSinceLastActive,
+            weeklyAttemptCount,
+        };
+        return { calendarPace, engagement };
+    }
+    /**
      * Get all students with optional filters
      */
     async getAllStudents(options) {
-        const { search, level, location, advisorId, skip = 0, take = 50, } = options || {};
+        const { search, level, location, advisorId, paceStatus, engagement, skip = 0, take = 50, } = options || {};
         const where = {};
         if (search && search.trim()) {
             const q = search.trim();
@@ -158,63 +267,92 @@ export class StudentService {
                 },
             };
         }
-        let students = await this.db.user.findMany({
-            where,
-            skip,
-            take,
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                firstName: true,
-                lastName: true,
-                level: true,
-                xp: true,
-                streak: true,
-                location: true,
-                equippedItem: true,
-                createdAt: true,
-                studyPlans: {
-                    select: {
-                        id: true,
-                        subject: true,
-                        startDate: true,
-                        endDate: true,
-                        targetDate: true,
-                    },
+        const hasPaceOrEngagementFilter = (paceStatus && paceStatus !== "ALL") ||
+            (engagement && engagement !== "ALL");
+        const selectFields = {
+            id: true,
+            email: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            level: true,
+            xp: true,
+            streak: true,
+            location: true,
+            equippedItem: true,
+            createdAt: true,
+            studyPlans: {
+                select: {
+                    id: true,
+                    subject: true,
+                    startDate: true,
+                    endDate: true,
+                    targetDate: true,
                 },
-                achievements: {
-                    orderBy: { timestamp: "desc" },
-                    take: 5,
+            },
+            achievements: {
+                orderBy: { timestamp: "desc" },
+                take: 5,
+            },
+            mastery: true,
+            examResults: {
+                orderBy: { timestamp: "desc" },
+                take: 5,
+            },
+            lessonCompletions: {
+                select: {
+                    id: true,
+                    subject: true,
+                    status: true,
+                    updatedAt: true,
                 },
-                mastery: true,
-                examResults: {
-                    orderBy: { timestamp: "desc" },
+            },
+            questionAttempts: {
+                select: {
+                    id: true,
+                    attempts: true,
+                    correct: true,
+                    lastAttempt: true,
                 },
-                userBadges: {
-                    include: {
-                        badge: true,
-                    },
-                    orderBy: { unlockedAt: "desc" },
+            },
+            userBadges: {
+                include: {
+                    badge: true,
                 },
-                guidanceAssignments: {
-                    select: {
-                        id: true,
-                        advisorId: true,
-                        status: true,
-                        subjectCategory: true,
-                        reason: true,
-                        advisor: {
-                            select: { id: true, name: true, email: true },
-                        },
+                orderBy: { unlockedAt: "desc" },
+            },
+            guidanceAssignments: {
+                select: {
+                    id: true,
+                    advisorId: true,
+                    status: true,
+                    subjectCategory: true,
+                    reason: true,
+                    advisor: {
+                        select: { id: true, name: true, email: true },
                     },
                 },
             },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-        const total = await this.db.user.count({ where });
+        };
+        let students = [];
+        let total = 0;
+        if (hasPaceOrEngagementFilter) {
+            students = await this.db.user.findMany({
+                where,
+                select: selectFields,
+                orderBy: { createdAt: "desc" },
+            });
+        }
+        else {
+            students = await this.db.user.findMany({
+                where,
+                skip,
+                take,
+                select: selectFields,
+                orderBy: { createdAt: "desc" },
+            });
+            total = await this.db.user.count({ where });
+        }
         // Fetch batch UserSettings for these students from MongoDB collection
         const studentIds = students.map((s) => s.id);
         const userSettingsMap = new Map();
@@ -239,10 +377,52 @@ export class StudentService {
                 // Silently continue if collection is not yet populated
             }
         }
-        // Ensure deactivated badges are stripped out and attach target period info
+        // Fetch batch StudyPlans for these students from MongoDB collection directly
+        // (Resolves MongoDB storing userId as String instead of BSON ObjectId)
+        const studyPlansMap = new Map();
+        if (studentIds.length > 0) {
+            try {
+                const oidList = studentIds.map((id) => ({ $oid: id }));
+                const rawPlansResult = await this.db.$runCommandRaw({
+                    find: "StudyPlan",
+                    filter: {
+                        $or: [
+                            { userId: { $in: studentIds } },
+                            { userId: { $in: oidList } },
+                        ],
+                    },
+                });
+                const batch = rawPlansResult?.cursor?.firstBatch || [];
+                for (const p of batch) {
+                    const uid = p.userId?.$oid || (typeof p.userId === "object" ? p.userId?.$oid : String(p.userId || ""));
+                    const id = p._id?.$oid || (typeof p._id === "object" ? p._id?.$oid : String(p._id || ""));
+                    if (uid) {
+                        const list = studyPlansMap.get(uid) || [];
+                        list.push({
+                            id,
+                            userId: uid,
+                            subject: p.subject,
+                            startDate: p.startDate?.$date ? new Date(p.startDate.$date).toISOString() : (p.startDate ? new Date(p.startDate).toISOString() : null),
+                            endDate: p.endDate?.$date ? new Date(p.endDate.$date).toISOString() : (p.endDate ? new Date(p.endDate).toISOString() : null),
+                            targetDate: p.targetDate?.$date ? new Date(p.targetDate.$date).toISOString() : (p.targetDate ? new Date(p.targetDate).toISOString() : (p.endDate?.$date ? new Date(p.endDate.$date).toISOString() : null)),
+                            createdAt: p.createdAt?.$date ? new Date(p.createdAt.$date).toISOString() : null,
+                            updatedAt: p.updatedAt?.$date ? new Date(p.updatedAt.$date).toISOString() : null,
+                        });
+                        studyPlansMap.set(uid, list);
+                    }
+                }
+            }
+            catch (err) {
+                // Silently continue if collection is not yet populated
+            }
+        }
+        // Ensure deactivated badges are stripped out and attach target period + pace + engagement info
         const sanitizedStudents = students.map((s) => {
             const settings = userSettingsMap.get(s.id) || null;
-            const plans = (s.studyPlans || []).map((p) => ({
+            const rawPlans = (studyPlansMap.get(s.id) && studyPlansMap.get(s.id).length > 0)
+                ? studyPlansMap.get(s.id)
+                : (s.studyPlans || []);
+            const plans = rawPlans.map((p) => ({
                 ...p,
                 endDate: p.endDate || p.targetDate,
             }));
@@ -252,20 +432,52 @@ export class StudentService {
                 .filter((p) => p.endDate && new Date(p.endDate) >= now)
                 .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
             const activeObj = futurePlans.length > 0 ? futurePlans[0] : (plans[0] || null);
+            const { calendarPace, engagement: eng } = this.computeStudentPaceAndEngagement(s, activeObj, s.lessonCompletions || [], s.questionAttempts || [], s.achievements || [], s.examResults || []);
+            const activeGuidance = (s.guidanceAssignments || []).find((g) => String(g.status).toUpperCase() === "PENDING" ||
+                String(g.status).toUpperCase() === "IN_PROGRESS") || null;
             return {
                 ...s,
+                studyPlans: rawPlans,
+                activeGuidance,
                 userSettings: settings,
                 activeObjective: activeObj,
+                calendarPace,
+                engagement: eng,
                 userBadges: (s.userBadges || []).filter((ub) => !ub.badge || ub.badge.isActive !== false),
             };
         });
+        // Compute cohort summary counts
+        const summary = {
+            total: hasPaceOrEngagementFilter ? sanitizedStudents.length : total,
+            onTrack: sanitizedStudents.filter((s) => s.calendarPace?.status === "ON_TRACK").length,
+            behind: sanitizedStudents.filter((s) => s.calendarPace?.status === "BEHIND" || s.calendarPace?.status === "CRITICAL").length,
+            critical: sanitizedStudents.filter((s) => s.calendarPace?.status === "CRITICAL").length,
+            dormant: sanitizedStudents.filter((s) => s.engagement?.status === "DORMANT").length,
+        };
+        let resultStudents = sanitizedStudents;
+        if (hasPaceOrEngagementFilter) {
+            if (paceStatus && paceStatus !== "ALL") {
+                if (paceStatus === "BEHIND") {
+                    resultStudents = resultStudents.filter((s) => s.calendarPace?.status === "BEHIND" || s.calendarPace?.status === "CRITICAL");
+                }
+                else {
+                    resultStudents = resultStudents.filter((s) => s.calendarPace?.status === paceStatus);
+                }
+            }
+            if (engagement && engagement !== "ALL") {
+                resultStudents = resultStudents.filter((s) => s.engagement?.status === engagement);
+            }
+            total = resultStudents.length;
+            resultStudents = resultStudents.slice(skip, skip + take);
+        }
         return {
-            data: sanitizedStudents,
+            data: resultStudents,
+            summary,
             pagination: {
                 total,
                 skip,
                 take,
-                pages: Math.ceil(total / take),
+                pages: Math.max(1, Math.ceil(total / take)),
             },
         };
     }
@@ -503,6 +715,7 @@ export class StudentService {
                         orderBy: { createdAt: "asc" },
                     },
                     lessonCompletions: true,
+                    questionAttempts: true,
                     userBadges: {
                         include: {
                             badge: true,
@@ -557,8 +770,8 @@ export class StudentService {
                 const batch = rawPlansResult?.cursor?.firstBatch || [];
                 if (batch.length > 0) {
                     sanitizedStudent.studyPlans = batch.map((p) => ({
-                        id: p._id?.toString?.() || p._id?.$oid || p._id,
-                        userId: p.userId,
+                        id: p._id?.$oid || (typeof p._id === "object" ? p._id?.$oid : String(p._id || "")),
+                        userId: p.userId?.$oid || (typeof p.userId === "object" ? p.userId?.$oid : String(p.userId || "")),
                         subject: p.subject,
                         startDate: p.startDate?.$date ? new Date(p.startDate.$date).toISOString() : (p.startDate ? new Date(p.startDate).toISOString() : new Date().toISOString()),
                         endDate: p.endDate?.$date ? new Date(p.endDate.$date).toISOString() : (p.endDate ? new Date(p.endDate).toISOString() : new Date().toISOString()),
@@ -596,9 +809,16 @@ export class StudentService {
             catch (err) {
                 // Silently fallback if review center scores unavailable
             }
+            // Compute calendar pace lag and activity engagement
+            const { calendarPace, engagement: eng } = this.computeStudentPaceAndEngagement(sanitizedStudent, performanceData.activeObjective, sanitizedStudent.lessonCompletions || [], sanitizedStudent.questionAttempts || [], sanitizedStudent.achievements || [], sanitizedStudent.examResults || []);
+            const activeGuidance = (sanitizedStudent.guidanceAssignments || []).find((g) => String(g.status).toUpperCase() === "PENDING" ||
+                String(g.status).toUpperCase() === "IN_PROGRESS") || null;
             return {
                 ...sanitizedStudent,
                 ...performanceData,
+                activeGuidance,
+                calendarPace,
+                engagement: eng,
                 reviewCenterTranscript,
             };
         }
@@ -676,6 +896,10 @@ export class StudentService {
         if (!student) {
             throw new ApiError(404, "Student not found");
         }
+        // Cascade delete guidance assignments to prevent orphaned documents in MongoDB
+        await this.db.guidanceAssignment.deleteMany({
+            where: { studentId },
+        }).catch((err) => console.warn("Failed to delete student guidance assignments:", err?.message));
         await this.db.user.delete({
             where: { id: studentId },
         });

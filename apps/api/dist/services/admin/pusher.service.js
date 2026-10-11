@@ -21,6 +21,9 @@ class PusherService {
         return this.client;
     }
     async broadcastNotification(notification) {
+        if (process.env.NODE_ENV === "test") {
+            return;
+        }
         const client = this.getClient();
         const channels = [];
         if (notification.recipientId) {
@@ -59,6 +62,9 @@ class PusherService {
         }
     }
     async broadcastEvent(channel, eventName, data) {
+        if (process.env.NODE_ENV === "test") {
+            return;
+        }
         const client = this.getClient();
         const channels = Array.isArray(channel) ? channel : [channel];
         if (!client) {

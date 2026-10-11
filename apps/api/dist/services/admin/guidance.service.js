@@ -2,7 +2,84 @@ import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
 import { GuidanceStatus, Role } from "../../types/prisma.types";
 import { createNotification } from "./notification.service";
+export const bulkCreateGuidanceAssignments = async (assignedById, payload, creatorRole) => {
+    if (creatorRole !== Role.SUPERADMIN &&
+        creatorRole !== Role.DEAN &&
+        creatorRole !== Role.TEAMLEAD) {
+        throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
+    }
+    const { studentIds, advisorId, subjectCategory, reason, guidanceNotes } = payload;
+    if (!Array.isArray(studentIds) ||
+        studentIds.length === 0 ||
+        !advisorId ||
+        !reason?.trim()) {
+        throw new ApiError(400, "studentIds array, advisorId, and reason are required.");
+    }
+    const advisor = await prisma.adminUser.findUnique({
+        where: { id: advisorId },
+    });
+    if (!advisor) {
+        throw new ApiError(404, "Advisor profile not found.");
+    }
+    const advisorRole = String(advisor.role || "").toUpperCase().trim();
+    if (advisorRole === "REVIEWCENTER" ||
+        advisorRole === "EXTERNAL" ||
+        advisorRole.includes("REVIEW") ||
+        advisorRole.includes("EXTERNAL")) {
+        throw new ApiError(400, "Review center or external accounts cannot be assigned as student advisors.");
+    }
+    // Find all matching valid students
+    const students = await prisma.user.findMany({
+        where: { id: { in: studentIds } },
+        select: { id: true, name: true, email: true },
+    });
+    if (students.length === 0) {
+        throw new ApiError(404, "None of the specified students were found.");
+    }
+    // Create guidance assignment for each student
+    const assignments = await Promise.all(students.map((student) => prisma.guidanceAssignment.create({
+        data: {
+            studentId: student.id,
+            advisorId,
+            assignedById,
+            subjectCategory: subjectCategory || "General Academic Support",
+            reason: reason.trim(),
+            guidanceNotes: guidanceNotes?.trim() || "",
+            status: GuidanceStatus.PENDING,
+        },
+        include: {
+            student: {
+                select: { id: true, name: true, email: true, level: true, xp: true },
+            },
+            advisor: {
+                select: { id: true, name: true, email: true, role: true },
+            },
+        },
+    })));
+    createNotification({
+        recipientId: advisorId,
+        recipientRole: advisor.role,
+        title: "New Student Guidance Assigned (Bulk)",
+        message: `${assignments.length} student${assignments.length > 1 ? "s were" : " was"} assigned to you for academic guidance.`,
+        type: "STUDENT_ASSIGNED",
+        link: "/student-management",
+    }).catch((err) => console.warn("Notification error:", err?.message));
+    return {
+        count: assignments.length,
+        assignments,
+    };
+};
 export const createGuidanceAssignment = async (assignedById, payload, creatorRole) => {
+    if (Array.isArray(payload.studentIds) && payload.studentIds.length > 0) {
+        const bulkResult = await bulkCreateGuidanceAssignments(assignedById, {
+            studentIds: payload.studentIds,
+            advisorId: payload.advisorId,
+            subjectCategory: payload.subjectCategory,
+            reason: payload.reason,
+            guidanceNotes: payload.guidanceNotes,
+        }, creatorRole);
+        return bulkResult.assignments[0];
+    }
     if (creatorRole !== Role.SUPERADMIN &&
         creatorRole !== Role.DEAN &&
         creatorRole !== Role.TEAMLEAD) {
@@ -88,6 +165,12 @@ export const getGuidanceAssignments = async (filters) => {
             { advisor: { name: { contains: term, mode: "insensitive" } } },
             { reason: { contains: term, mode: "insensitive" } },
         ];
+    }
+    // Ensure query only targets existing students to prevent Prisma MongoDB relation crashes
+    const activeStudents = await prisma.user.findMany({ select: { id: true } });
+    const activeStudentIds = activeStudents.map((s) => s.id);
+    if (!filters.studentId) {
+        where.studentId = { in: activeStudentIds };
     }
     const assignments = await prisma.guidanceAssignment.findMany({
         where,

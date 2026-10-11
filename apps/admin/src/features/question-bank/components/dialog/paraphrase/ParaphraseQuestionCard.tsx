@@ -67,6 +67,24 @@ export default function ParaphraseQuestionCard({
           >
             {item.difficulty}
           </Badge>
+          {item.type && (
+            <Badge
+              variant="outline"
+              className={`text-[9.5px] font-bold px-1.5 py-0 rounded-md ${
+                item.type === "TRUE_FALSE"
+                  ? "border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10"
+                  : item.type === "SHORT_ANSWER"
+                  ? "border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-500/10"
+                  : "border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/10"
+              }`}
+            >
+              {item.type === "TRUE_FALSE"
+                ? "True/False"
+                : item.type === "SHORT_ANSWER"
+                ? "Short Answer"
+                : "MCQ"}
+            </Badge>
+          )}
         </div>
 
         {/* Actions & Status on Right */}
@@ -126,7 +144,8 @@ export default function ParaphraseQuestionCard({
         {/* Left Column: Original Stem */}
         <div className="flex flex-col gap-1 p-2.5 rounded-lg bg-muted/30 border border-border/70">
           <span className="text-[9.5px] uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1">
-            <HelpCircle size={10} /> Original Stem
+            <HelpCircle size={10} />{" "}
+            {item.type === "TRUE_FALSE" ? "Original Statement" : "Original Stem"}
           </span>
           <p className="text-xs text-muted-foreground font-normal leading-relaxed select-text mt-0.5">
             {item.original}
@@ -137,7 +156,12 @@ export default function ParaphraseQuestionCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <span className="text-[9.5px] uppercase font-bold tracking-wider text-primary flex items-center gap-1">
-              <Sparkles size={10} /> Paraphrased Stem
+              <Sparkles size={10} />{" "}
+              {item.type === "TRUE_FALSE"
+                ? "Paraphrased Statement (True/False Assertion)"
+                : item.type === "SHORT_ANSWER"
+                ? "Paraphrased Prompt (Short Answer)"
+                : "Paraphrased Stem (MCQ)"}
             </span>
             {isDifferent && (
               <span className="text-[9.5px] text-muted-foreground">
@@ -156,7 +180,13 @@ export default function ParaphraseQuestionCard({
                 ? "bg-card border-primary/35 text-foreground shadow-2xs"
                 : "bg-muted/20 border-border text-foreground/80"
             }`}
-            placeholder="Paraphrased question stem..."
+            placeholder={
+              item.type === "TRUE_FALSE"
+                ? "Paraphrased factual assertion (True/False)..."
+                : item.type === "SHORT_ANSWER"
+                ? "Paraphrased short answer prompt..."
+                : "Paraphrased question stem..."
+            }
           />
         </div>
       </div>

@@ -89,4 +89,26 @@ describe("Guidance Routes", () => {
             expect(response.body.data.students).toBeDefined();
         });
     });
+    describe("POST /api/guidance/bulk", () => {
+        it("should create bulk guidance assignments successfully", async () => {
+            const mockResult = {
+                count: 2,
+                assignments: [
+                    { id: "g_1", studentId: "s_1", advisorId: "adv_1" },
+                    { id: "g_2", studentId: "s_2", advisorId: "adv_1" },
+                ],
+            };
+            guidanceService.bulkCreateGuidanceAssignments.mockResolvedValue(mockResult);
+            const response = await request(app)
+                .post("/api/guidance/bulk")
+                .send({
+                studentIds: ["s_1", "s_2"],
+                advisorId: "adv_1",
+                reason: "Bulk referral for cohort guidance",
+            });
+            expect(response.status).toBe(201);
+            expect(response.body.data.count).toBe(2);
+            expect(response.body.data.assignments).toHaveLength(2);
+        });
+    });
 });

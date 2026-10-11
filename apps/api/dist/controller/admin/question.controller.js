@@ -359,12 +359,23 @@ export const bulkParaphraseQuestions = asyncHandler(async (req, res) => {
     if (questions.length > 5) {
         throw new ApiError(400, "Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
     }
+    const normalizeType = (val) => {
+        if (!val)
+            return "MCQ";
+        const upper = String(val).toUpperCase().replace(/[\s\/-]/g, "_");
+        if (upper.includes("TRUE") || upper.includes("FALSE") || upper === "TF")
+            return "TRUE_FALSE";
+        if (upper.includes("SHORT") || upper.includes("IDENTIFICATION") || upper === "SA")
+            return "SHORT_ANSWER";
+        return "MCQ";
+    };
     const items = questions.map((q) => ({
         id: String(q.id),
         question: String(q.question),
         topic: q.topic || "General",
         subject: q.subject || "Board Exam",
         difficulty: q.difficulty,
+        type: normalizeType(q.type || q.format),
         tone: tone || "BOARD_EXAM",
         variationIndex: typeof q.variationIndex === "number" ? q.variationIndex : 0,
     }));

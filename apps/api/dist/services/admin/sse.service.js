@@ -2,9 +2,14 @@ class SseService {
     clients = [];
     constructor() {
         // Periodic 30-second heartbeat to keep connections alive and prevent proxy timeouts
-        setInterval(() => {
-            this.sendHeartbeat();
-        }, 30000);
+        if (process.env.NODE_ENV !== "test") {
+            const timer = setInterval(() => {
+                this.sendHeartbeat();
+            }, 30000);
+            if (timer && typeof timer.unref === "function") {
+                timer.unref();
+            }
+        }
     }
     addClient(userId, role, res, reviewCenterId, companyName) {
         // Set SSE headers

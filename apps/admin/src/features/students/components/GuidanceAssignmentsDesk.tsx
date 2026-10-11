@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import {
@@ -14,14 +14,29 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { DataTablePagination } from "@/components/custom/pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export function GuidanceAssignmentsDesk() {
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const { data: assignments = [], isLoading } = useQuery({
+  // Reset pagination on filter or search term change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, search]);
+
+  const {
+    data: assignments = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["guidanceAssignments", filterStatus, search],
     queryFn: async () => {
       const res = await axiosPrivate.get("/guidance", {
@@ -52,7 +67,27 @@ export function GuidanceAssignmentsDesk() {
     },
   });
 
-  const filteredAssignments = assignments;
+  const totalItems = assignments.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const hasNextPage = currentPage < totalPages;
+  const hasPreviousPage = currentPage > 1;
+
+  const paginatedAssignments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return assignments.slice(start, start + ITEMS_PER_PAGE);
+  }, [assignments, currentPage]);
+
+  const handleNext = () => {
+    if (hasNextPage) setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePrevious = () => {
+    if (hasPreviousPage) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handlePageSelect = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="space-y-4 font-sans text-foreground">
@@ -108,14 +143,25 @@ export function GuidanceAssignmentsDesk() {
                   Loading guidance assignments desk...
                 </TableCell>
               </TableRow>
-            ) : filteredAssignments.length === 0 ? (
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-xs text-destructive">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <p>Failed to load guidance assignments: {(error as any)?.message || "Server error"}</p>
+                    <Button variant="outline" size="sm" onClick={() => refetch()} className="h-7 text-xs">
+                      Retry
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : totalItems === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
                   No guidance assignments found matching filter.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAssignments.map((item: any) => (
+              paginatedAssignments.map((item: any) => (
                 <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-semibold text-xs text-foreground">
                     <div className="flex flex-col">
@@ -194,6 +240,23 @@ export function GuidanceAssignmentsDesk() {
             )}
           </TableBody>
         </Table>
+
+        {/* Integrated Pagination Footer */}
+        {!isLoading && !isError && totalItems > 0 && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={ITEMS_PER_PAGE}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={hasPreviousPage}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            onPageSelect={handlePageSelect}
+            itemLabel="guidance cases"
+            variant="table-footer"
+          />
+        )}
       </div>
     </div>
   );

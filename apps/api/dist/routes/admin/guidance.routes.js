@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
-import { createGuidanceAssignment, getGuidanceAssignments, updateGuidanceAssignment, getFailingStudents, } from "../../controller/admin/guidance.controller";
+import { createGuidanceAssignment, bulkCreateGuidanceAssignments, getGuidanceAssignments, updateGuidanceAssignment, getFailingStudents, } from "../../controller/admin/guidance.controller";
 const router = Router();
 router.use(authenticateToken);
 router.post("/", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), createGuidanceAssignment);
+router.post("/bulk", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), bulkCreateGuidanceAssignments);
 router.get("/", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), getGuidanceAssignments);
 router.put("/:id", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]), updateGuidanceAssignment);
 router.get("/failing-students", requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), getFailingStudents);

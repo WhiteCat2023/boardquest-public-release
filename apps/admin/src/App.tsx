@@ -97,6 +97,11 @@ const AddedQuestionUsingCSV = lazy(() =>
     default: m.AddedQuestionUsingCSV,
   })),
 );
+const FacultyEncodingTracker = lazy(() =>
+  import("@/features/question-bank").then((m) => ({
+    default: m.FacultyEncodingTracker,
+  })),
+);
 
 const Analytics = lazy(() =>
   import("@/features/analytics").then((m) => ({ default: m.Analytics })),
@@ -212,11 +217,16 @@ function App() {
                   />
                 </Route>
 
-                {/* Student Enrollment - Restricted to ADMIN and TEAMLEAD */}
+                {/* Student Enrollment - Accessible by ADMIN, TEAMLEAD, and TEACHER */}
                 <Route
                   element={
                     <RequireAuth
-                      allowedRoles={[UserRole.SUPERADMIN, UserRole.DEAN, UserRole.TEAMLEAD]}
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                        UserRole.TEAMLEAD,
+                        UserRole.TEACHER,
+                      ]}
                     />
                   }
                 >
@@ -335,6 +345,14 @@ function App() {
                       path="question-bank/review-questions"
                       element={<ReviewQuestions />}
                     />
+                    <Route
+                      path="question-bank/encoding-tracker"
+                      element={<FacultyEncodingTracker />}
+                    />
+                    <Route
+                      path="question-bank/tracker"
+                      element={<FacultyEncodingTracker />}
+                    />
                   </Route>
                   <Route
                     path="question-bank/bank"
@@ -382,7 +400,21 @@ function App() {
                   <Route path="analytics" element={<Analytics />} />
                 </Route>
 
-                {/* SuperAdmin, Dean, and Teamlead Routes */}
+                {/* Game Management - Restricted to SuperAdmin and Dean */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                      ]}
+                    />
+                  }
+                >
+                  <Route path="game-management" element={<GameManagementPage />} />
+                </Route>
+
+                {/* Leaderboards - Accessible by SuperAdmin, Dean, and Teamlead */}
                 <Route
                   element={
                     <RequireAuth
@@ -394,7 +426,6 @@ function App() {
                     />
                   }
                 >
-                  <Route path="game-management" element={<GameManagementPage />} />
                   <Route path="leaderboards" element={<LeaderboardPage />} />
                 </Route>
 

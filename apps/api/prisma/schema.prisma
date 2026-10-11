@@ -26,6 +26,11 @@ enum QuestionDifficulty {
   HARD
 }
 
+enum CognitiveLevel {
+  LOTS
+  HOTS
+}
+
 enum QuestionType {
   MCQ
   TRUE_FALSE
@@ -101,6 +106,8 @@ model AdminUser {
   questionComments QuestionComment[] @relation("QuestionCommentAuthor")
   assignedStudents GuidanceAssignment[] @relation("AdvisorGuidance")
   createdGuidanceAssignments GuidanceAssignment[] @relation("AssignerGuidance")
+  quotaAssignments QuestionQuotaAssignment[] @relation("TeacherQuotaAssignments")
+  assignedQuotas   QuestionQuotaAssignment[] @relation("AssignedByQuotas")
 }
 
 model Question {
@@ -120,6 +127,7 @@ model Question {
   topic String
 
   difficulty QuestionDifficulty
+  cognitiveLevel CognitiveLevel @default(LOTS)
 
   type QuestionType
 
@@ -170,6 +178,7 @@ model Subject {
   icon String
   questions Question[] 
   modules   LearningModule[]
+  quotaAssignments QuestionQuotaAssignment[] @relation("SubjectQuotaAssignments")
 
   handlers    AdminUser[] @relation("HandledSubjects", fields: [handlerIds], references: [id])
   handlerIds  String[]    @db.ObjectId
@@ -197,6 +206,24 @@ model LearningModule {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model QuestionQuotaAssignment {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  teacherId      String    @db.ObjectId
+  teacher        AdminUser @relation("TeacherQuotaAssignments", fields: [teacherId], references: [id], onDelete: Cascade)
+  subjectId      String    @db.ObjectId
+  subject        Subject   @relation("SubjectQuotaAssignments", fields: [subjectId], references: [id], onDelete: Cascade)
+  assignedById   String?   @db.ObjectId
+  assignedBy     AdminUser? @relation("AssignedByQuotas", fields: [assignedById], references: [id])
+  schoolYear     String    @default("S.Y. 2025-2026")
+  targetCount    Int       @default(50)
+  deadline       DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([teacherId, subjectId, schoolYear])
 }
 
 // [ Review Center Schema ]

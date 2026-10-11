@@ -45,6 +45,11 @@ export const teamLeadNavItem: NavItemProps[] = [
     sideBarCategoryName: "QUESTION BANK",
     content: [
       {
+        title: "Encoding Tracker",
+        path: "/question-bank/encoding-tracker",
+        icon: "ClipboardCheck",
+      },
+      {
         title: "My Questions",
         path: "/question-bank/my-questions",
         icon: "FileText",
@@ -68,11 +73,6 @@ export const teamLeadNavItem: NavItemProps[] = [
         title: "Student",
         path: "/student-management",
         icon: "GraduationCap",
-      },
-      {
-        title: "Game Management",
-        path: "/game-management",
-        icon: "Gamepad2",
       },
       {
         title: "Leaderboards",

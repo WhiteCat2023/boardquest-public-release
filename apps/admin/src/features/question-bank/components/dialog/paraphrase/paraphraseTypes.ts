@@ -15,6 +15,7 @@ export interface ParaphrasedItemState {
   isReverted: boolean;
   topic?: string;
   difficulty?: string;
+  type?: string;
   variationIndex: number;
 }
 
@@ -28,6 +29,8 @@ export interface BulkParaphraseDialogProps {
         question: string;
         topic?: string;
         difficulty?: string;
+        type?: string;
+        format?: string;
         [key: string]: any;
       }>;
   onSuccess?: () => void;

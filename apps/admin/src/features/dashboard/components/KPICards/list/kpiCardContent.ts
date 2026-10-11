@@ -63,9 +63,9 @@ export const kpiContentForAdmin = (
       },
       {
         id: "curriculum",
-        title: "HANDLED SUBJECTS",
+        title: "TOTAL SUBJECTS",
         count: handledCategoriesCount,
-        subtitle: "Assigned subject areas",
+        subtitle: "All subject areas",
         icon: BookOpen,
         link: "/subject-management",
       },

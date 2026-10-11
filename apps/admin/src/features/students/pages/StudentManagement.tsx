@@ -7,6 +7,7 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,15 +28,22 @@ import { DataTablePagination } from "@/components/custom/pagination";
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentManagement() {
-  const { isTeacher, currentUser } = useRoleFlags();
+  const { isTeacher, isAdminOrSuperAdmin, isTeamLead, currentUser } = useRoleFlags();
+  const canAssignGuidance = isAdminOrSuperAdmin || isTeamLead;
+
   const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">(
     "DIRECTORY",
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
+  const [selectedPaceStatus, setSelectedPaceStatus] = useState<string>("ALL");
+  const [selectedEngagement, setSelectedEngagement] = useState<string>("ALL");
   const [selectedStudentForGuidance, setSelectedStudentForGuidance] =
     useState<any>(null);
+  const [selectedStudentsForGuidance, setSelectedStudentsForGuidance] =
+    useState<any[]>([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [isGuidanceModalOpen, setIsGuidanceModalOpen] = useState(false);
 
   // Pagination State (offset-based, mirrors FacultyManagement cursor-stack pattern)
@@ -46,6 +54,8 @@ export default function StudentManagement() {
     search: searchTerm,
     level: selectedLevel,
     location: selectedLocation,
+    paceStatus: selectedPaceStatus,
+    engagement: selectedEngagement,
     advisorId: isTeacher ? currentUser?.id : undefined,
     skip,
     take: ITEMS_PER_PAGE,
@@ -56,7 +66,10 @@ export default function StudentManagement() {
   const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
   const hasNextPage = currentPage < totalPages;
 
-  const resetPagination = () => setCurrentPage(1);
+  const resetPagination = () => {
+    setCurrentPage(1);
+    setSelectedStudentIds([]);
+  };
 
   const handleNext = () => {
     if (hasNextPage) setCurrentPage((p) => p + 1);
@@ -70,8 +83,61 @@ export default function StudentManagement() {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
+  const isStudentAssignable = (s: any) => {
+    const active =
+      s.activeGuidance ||
+      (s.guidanceAssignments || []).find(
+        (g: any) =>
+          String(g.status).toUpperCase() === "PENDING" ||
+          String(g.status).toUpperCase() === "IN_PROGRESS",
+      );
+    return !active;
+  };
+
+  const assignableStudents = studentsList.filter(isStudentAssignable);
+
+  const isAllSelected =
+    assignableStudents.length > 0 &&
+    assignableStudents.every((s) => selectedStudentIds.includes(s.id));
+
+  const handleToggleSelect = (studentId: string) => {
+    setSelectedStudentIds((prev) =>
+      prev.includes(studentId)
+        ? prev.filter((id) => id !== studentId)
+        : [...prev, studentId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      const pageIds = assignableStudents.map((s) => s.id);
+      setSelectedStudentIds((prev) =>
+        prev.filter((id) => !pageIds.includes(id))
+      );
+    } else {
+      const pageIds = assignableStudents.map((s) => s.id);
+      setSelectedStudentIds((prev) =>
+        Array.from(new Set([...prev, ...pageIds]))
+      );
+    }
+  };
+
+  const handleOpenBulkAssignGuidance = () => {
+    const targets = assignableStudents.filter((s) =>
+      selectedStudentIds.includes(s.id)
+    );
+    if (targets.length === 0) {
+      toast.error("Please select at least one student to assign guidance.");
+      return;
+    }
+    setSelectedStudentsForGuidance(targets);
+    setSelectedStudentForGuidance(null);
+    setIsGuidanceModalOpen(true);
+  };
+
   const handleOpenAssignGuidance = (student: any) => {
     setSelectedStudentForGuidance(student);
+    setSelectedStudentsForGuidance([]);
     setIsGuidanceModalOpen(true);
   };
 
@@ -79,19 +145,24 @@ export default function StudentManagement() {
     setSearchTerm("");
     setSelectedLevel("ALL");
     setSelectedLocation("ALL");
+    setSelectedPaceStatus("ALL");
+    setSelectedEngagement("ALL");
+    setSelectedStudentIds([]);
     resetPagination();
   };
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
     selectedLevel !== "ALL" ||
-    selectedLocation !== "ALL";
+    selectedLocation !== "ALL" ||
+    selectedPaceStatus !== "ALL" ||
+    selectedEngagement !== "ALL";
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* 1. Header Bar */}
       <StudentHeader
-        canAddStudent={!isTeacher}
+        canAddStudent={true}
         title={isTeacher ? "My Students" : "Student Directory & Advising"}
         description={
           isTeacher
@@ -144,10 +215,10 @@ export default function StudentManagement() {
 
       {activeTab === "DIRECTORY" ? (
         <>
-          {/* 3. Search & Filters Bar */}
+          {/* Search & Filters Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border/80 p-2.5 px-3 rounded-2xl shadow-2xs w-full">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[220px] max-w-md">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
               <Input
                 type="text"
@@ -174,6 +245,46 @@ export default function StudentManagement() {
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Calendar Pace Filter */}
+              <Select
+                value={selectedPaceStatus}
+                onValueChange={(v) => {
+                  setSelectedPaceStatus(v);
+                  resetPagination();
+                }}
+              >
+                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
+                  <SelectValue placeholder="Calendar Pace" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="ALL">All Paces</SelectItem>
+                  <SelectItem value="ON_TRACK">On Track</SelectItem>
+                  <SelectItem value="BEHIND">Behind Schedule</SelectItem>
+                  <SelectItem value="CRITICAL">Critical Lag</SelectItem>
+                  <SelectItem value="NOT_SCHEDULED">Unscheduled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Engagement Filter */}
+              <Select
+                value={selectedEngagement}
+                onValueChange={(v) => {
+                  setSelectedEngagement(v);
+                  resetPagination();
+                }}
+              >
+                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
+                  <SelectValue placeholder="Engagement" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="ALL">All Activity</SelectItem>
+                  <SelectItem value="ACTIVE">Active (≤2d)</SelectItem>
+                  <SelectItem value="LOW_CADENCE">Low Cadence</SelectItem>
+                  <SelectItem value="DORMANT">Dormant (5d+)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Progression Level Filter */}
               <Select
                 value={selectedLevel}
                 onValueChange={(v) => {
@@ -181,7 +292,7 @@ export default function StudentManagement() {
                   resetPagination();
                 }}
               >
-                <SelectTrigger className="h-9 w-[125px] sm:w-[130px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
+                <SelectTrigger className="h-9 w-[115px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -193,6 +304,7 @@ export default function StudentManagement() {
                 </SelectContent>
               </Select>
 
+              {/* Location Filter */}
               <Select
                 value={selectedLocation}
                 onValueChange={(v) => {
@@ -200,7 +312,7 @@ export default function StudentManagement() {
                   resetPagination();
                 }}
               >
-                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
+                <SelectTrigger className="h-9 w-[125px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -226,12 +338,44 @@ export default function StudentManagement() {
             </div>
           </div>
 
-          {/* 4. Student Directory Table */}
+          {/* Bulk Selection Action Bar */}
+          {canAssignGuidance && selectedStudentIds.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-primary/10 border border-primary/25 p-2.5 px-4 rounded-2xl shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-bold text-primary">
+                  {selectedStudentIds.length} student{selectedStudentIds.length > 1 ? "s" : ""} selected
+                </span>
+                <span className="text-muted-foreground">•</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentIds([])}
+                  className="text-muted-foreground hover:text-foreground text-xs underline cursor-pointer"
+                >
+                  Clear selection
+                </button>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleOpenBulkAssignGuidance}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3.5 text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserCheck size={14} />
+                <span>Bulk Assign Guidance ({selectedStudentIds.length})</span>
+              </Button>
+            </div>
+          )}
+
           {/* 4. Student Directory Table with Integrated Footer */}
           <StudentTable
             students={studentsList}
             isLoading={isLoading}
             onAssignGuidance={handleOpenAssignGuidance}
+            selectedIds={selectedStudentIds}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
+            isAllSelected={isAllSelected}
+            canSelect={canAssignGuidance}
             emptyTitle={
               isTeacher
                 ? "No Assigned Students"
@@ -265,14 +409,19 @@ export default function StudentManagement() {
         <GuidanceAssignmentsDesk />
       )}
 
-      {selectedStudentForGuidance && (
+      {(selectedStudentForGuidance || selectedStudentsForGuidance.length > 0) && (
         <AssignGuidanceModal
           isOpen={isGuidanceModalOpen}
           onClose={() => {
             setIsGuidanceModalOpen(false);
             setSelectedStudentForGuidance(null);
+            setSelectedStudentsForGuidance([]);
+          }}
+          onSuccess={() => {
+            setSelectedStudentIds([]);
           }}
           student={selectedStudentForGuidance}
+          students={selectedStudentsForGuidance}
         />
       )}
     </div>

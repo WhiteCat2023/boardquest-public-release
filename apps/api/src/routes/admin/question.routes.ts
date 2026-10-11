@@ -29,6 +29,14 @@ import {
 } from "../../controller/admin/question.controller";
 
 import {
+  getEncodingTrackerOverview,
+  upsertQuotaAssignment,
+  sendTeacherNudge,
+  sendBulkTeacherNudges,
+  getMyEncodingProgress,
+} from "../../controller/admin/encoding-tracker.controller";
+
+import {
   createCategory,
   getCategories,
   getCategory,
@@ -66,6 +74,38 @@ router.post("/bulk/feedback", authenticateToken, requireRoles(["SUPERADMIN", "DE
 router.post("/bulk/paraphrase", authenticateToken, bulkParaphraseQuestions);
 router.post("/bulk/paraphrase/apply", authenticateToken, bulkApplyParaphrase);
 router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
+
+// Encoding Tracker Routes
+router.get(
+  "/encoding-tracker",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  getEncodingTrackerOverview,
+);
+router.post(
+  "/encoding-tracker/quota",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  upsertQuotaAssignment,
+);
+router.post(
+  "/encoding-tracker/nudge",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  sendTeacherNudge,
+);
+router.post(
+  "/encoding-tracker/nudge-bulk",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  sendBulkTeacherNudges,
+);
+router.get(
+  "/encoding-tracker/my-progress",
+  authenticateToken,
+  getMyEncodingProgress,
+);
+
 router.get("/get", authenticateToken, getQuestions);
 router.get("/get/:questionId", authenticateToken, getQuestionById);
 router.get("/:questionId/comments", authenticateToken, getQuestionComments);

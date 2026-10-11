@@ -36,6 +36,10 @@ class PusherService {
     recipientRole?: string | null;
     createdAt?: Date;
   }) {
+    if (process.env.NODE_ENV === "test") {
+      return;
+    }
+
     const client = this.getClient();
     const channels: string[] = [];
 
@@ -77,6 +81,10 @@ class PusherService {
   }
 
   async broadcastEvent(channel: string | string[], eventName: string, data: any) {
+    if (process.env.NODE_ENV === "test") {
+      return;
+    }
+
     const client = this.getClient();
     const channels = Array.isArray(channel) ? channel : [channel];
 

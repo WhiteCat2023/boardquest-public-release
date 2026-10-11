@@ -30,6 +30,7 @@ export * from './components/categories';
 export * from './components/review';
 export * from './components/detail';
 export * from './components/sidebar';
-
-
-
+export { default as FacultyEncodingTracker } from './pages/FacultyEncodingTracker';
+export * from './api/useEncodingTracker';
+export * from './types/encodingTracker.types';
+export * from './components/tracker';

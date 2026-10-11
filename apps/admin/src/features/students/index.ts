@@ -23,6 +23,7 @@ export * from "./components/profile/StudentPerformanceCard";
 export * from "./components/profile/StudentBadgesSection";
 export * from "./components/profile/StudentAchievementHistory";
 export * from "./components/profile/StudentSubjectProgressCard";
+export { default as StudentExamResultsTab } from "./components/profile/StudentExamResultsTab";
 export * from "./components/enroll";
 
 // API & Types

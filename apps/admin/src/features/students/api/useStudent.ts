@@ -1,19 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type { Student } from "@/features/students/types/types";
+import type { Student, StudentCohortSummary, ExamResult, ExamResultStats } from "@/features/students/types/types";
 
 export function useStudents(params?: {
   search?: string;
   level?: string;
   location?: string;
   advisorId?: string;
+  paceStatus?: string;
+  engagement?: string;
   skip?: number;
   take?: number;
   enabled?: boolean;
 }) {
   const axiosPrivate = useAxiosPrivate();
 
-  return useQuery<{ students: Student[]; total: number }>({
+  return useQuery<{ students: Student[]; total: number; summary?: StudentCohortSummary }>({
     queryKey: ["students", params],
     queryFn: async () => {
       const response = await axiosPrivate.get("/students/get", {
@@ -26,6 +28,7 @@ export function useStudents(params?: {
       return {
         students: resData?.data || resData?.students || [],
         total: resData?.pagination?.total || (resData?.data || []).length,
+        summary: resData?.summary,
       };
     },
     enabled: params?.enabled ?? true,
@@ -95,3 +98,37 @@ export function useBulkCreateStudents() {
     },
   });
 }
+
+export function useStudentExamResults(studentId?: string, initialData?: ExamResult[]) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<ExamResult[]>({
+    queryKey: ["student-exams", studentId],
+    queryFn: async () => {
+      if (!studentId) return [];
+      const response = await axiosPrivate.get(`/students/exam/${studentId}`);
+      return response.data?.data?.results || [];
+    },
+    enabled: !!studentId,
+    initialData: initialData && initialData.length > 0 ? initialData : undefined,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useStudentExamStats(studentId?: string) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<ExamResultStats>({
+    queryKey: ["student-exam-stats", studentId],
+    queryFn: async () => {
+      if (!studentId) throw new Error("Student ID is required");
+      const response = await axiosPrivate.get(`/students/exam/stats/${studentId}`);
+      return response.data?.data?.stats;
+    },
+    enabled: !!studentId,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+}
+

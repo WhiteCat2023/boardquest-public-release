@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Info, Settings, Zap, Trophy, Sparkles } from "lucide-react";
+import { ArrowLeft, Info, Settings, Zap, Trophy, Sparkles, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,6 +21,14 @@ export function StudentProfileHeader({
   onAssignGuidance,
 }: StudentProfileHeaderProps) {
   const navigate = useNavigate();
+
+  const activeGuidance =
+    student.activeGuidance ||
+    (student.guidanceAssignments || []).find(
+      (g: any) =>
+        String(g.status).toUpperCase() === "PENDING" ||
+        String(g.status).toUpperCase() === "IN_PROGRESS",
+    );
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -119,15 +127,27 @@ export function StudentProfileHeader({
             <span>Point Formula</span>
           </Button>
 
-          {/* Primary Action Button (⚡ Assign Guidance / Intervene) */}
-          <Button
-            size="sm"
-            onClick={onAssignGuidance}
-            className="h-9 px-3.5 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs cursor-pointer flex items-center gap-1.5"
-          >
-            <Zap size={14} className="fill-current text-primary-foreground" />
-            <span>Assign Guidance</span>
-          </Button>
+          {/* Primary Action Button or Active Guidance Status */}
+          {activeGuidance ? (
+            <div
+              className="h-9 px-3 text-xs font-bold rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center gap-1.5"
+              title={`Guidance active with advisor ${activeGuidance.advisor?.name || "Advisor"}`}
+            >
+              <UserCheck size={14} />
+              <span>Assigned: {activeGuidance.advisor?.name || "Advisor"}</span>
+            </div>
+          ) : (
+            onAssignGuidance && (
+              <Button
+                size="sm"
+                onClick={onAssignGuidance}
+                className="h-9 px-3.5 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Zap size={14} className="fill-current text-primary-foreground" />
+                <span>Assign Guidance</span>
+              </Button>
+            )
+          )}
         </div>
       </div>
     </div>

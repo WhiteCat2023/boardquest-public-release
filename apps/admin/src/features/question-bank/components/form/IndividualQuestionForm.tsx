@@ -146,6 +146,7 @@ export function IndividualQuestionForm({
             question: originalBackup?.question || questionWording,
             topic: topic || "General",
             difficulty: (difficulty as any) || "MEDIUM",
+            type: (format as any) || "MCQ",
           } as any,
         ]}
         onApplyToForm={handleApplyParaphrase}

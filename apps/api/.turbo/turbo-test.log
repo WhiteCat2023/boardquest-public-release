@@ -1,166 +1,27 @@
 $ jest
-PASS src/__tests__/questionCommentReview.test.ts (9.079 s)
-PASS src/__tests__/guidance.test.ts (9.677 s)
-PASS src/__tests__/game.test.ts (9.879 s)
-PASS src/__tests__/user.test.ts (10.143 s)
-PASS src/__tests__/analytics.test.ts (10.067 s)
-PASS src/__tests__/notification.test.ts
-PASS src/__tests__/candidate.test.ts (10.347 s)
-  ● Console
-
-    console.warn
-      Failed to create RC notification for candidate: TypeError: this.db.$runCommandRaw is not a function
-          at ReviewCenterNotificationService.createRCNotification (D:\Code\capstone\apps\api\src\services\review-center\rcNotification.service.ts:96:45)
-          at D:\Code\capstone\apps\api\src\controller\review-center\candidate.controller.ts:195:10
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at D:\Code\capstone\apps\api\src\utils\asyncHandler.ts:10:7
-
-    [0m [90m 200 |[39m           link[33m:[39m [32m"/students"[39m[33m,[39m
-     [90m 201 |[39m         })
-    [31m[1m>[22m[39m[90m 202 |[39m         [33m.[39m[36mcatch[39m((err) [33m=>[39m console[33m.[39mwarn([32m"Failed to create RC notification for candidate:"[39m[33m,[39m err))[33m;[39m
-     [90m     |[39m                                 [31m[1m^[22m[39m
-     [90m 203 |[39m     }
-     [90m 204 |[39m
-     [90m 205 |[39m     [36mreturn[39m [36mnew[39m [33mApiResponse[39m([0m
-
-      at src/controller/review-center/candidate.controller.ts:202:33
-
-    console.warn
-      Failed to create RC notification for bulk candidates: TypeError: this.db.$runCommandRaw is not a function
-          at ReviewCenterNotificationService.createRCNotification (D:\Code\capstone\apps\api\src\services\review-center\rcNotification.service.ts:96:45)
-          at D:\Code\capstone\apps\api\src\controller\review-center\candidate.controller.ts:238:10
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at D:\Code\capstone\apps\api\src\utils\asyncHandler.ts:10:7
-
-    [0m [90m 243 |[39m           link[33m:[39m [32m"/students"[39m[33m,[39m
-     [90m 244 |[39m         })
-    [31m[1m>[22m[39m[90m 245 |[39m         [33m.[39m[36mcatch[39m((err) [33m=>[39m console[33m.[39mwarn([32m"Failed to create RC notification for bulk candidates:"[39m[33m,[39m err))[33m;[39m
-     [90m     |[39m                                 [31m[1m^[22m[39m
-     [90m 246 |[39m     }
-     [90m 247 |[39m
-     [90m 248 |[39m     [36mreturn[39m [36mnew[39m [33mApiResponse[39m([0m
-
-      at src/controller/review-center/candidate.controller.ts:245:33
-
-PASS src/__tests__/calendar.test.ts
-PASS src/__tests__/statsCalculator.test.ts
-PASS src/__tests__/auth.test.ts (10.539 s)
-  ● Console
-
-    console.warn
-      [MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.
-
-    [0m [90m 991 |[39m   [36mconst[39m resend [33m=[39m getResendClient()[33m;[39m
-     [90m 992 |[39m   [36mif[39m ([33m![39mresend) {
-    [31m[1m>[22m[39m[90m 993 |[39m     console[33m.[39mwarn(
-     [90m     |[39m             [31m[1m^[22m[39m
-     [90m 994 |[39m       [32m`[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`[39m[33m,[39m
-     [90m 995 |[39m     )[33m;[39m
-     [90m 996 |[39m     console[33m.[39mlog([32m`\n==================================================`[39m)[33m;[39m[0m
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:993:13)
-      at src/controller/admin/auth.controller.ts:98:29
-      at src/utils/asyncHandler.ts:10:7
-
-    console.log
-      
-      ==================================================
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:996:13)
-
-    console.log
-      🛡️ [SECURITY LOGIN ALERT EMAIL SIMULATION]
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:997:13)
-
-    console.log
-      📬 To: test@example.com
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:998:13)
-
-    console.log
-      ⏰ Time: Wed, 07 Oct 2026 20:31:06 GMT
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:999:13)
-
-    console.log
-      🌐 IP: ::ffff:127.0.0.1
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1000:13)
-
-    console.log
-      💻 Device: Browser
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1001:28)
-
-    console.log
-      ==================================================
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1002:13)
-
-    console.warn
-      [MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.
-
-    [0m [90m 991 |[39m   [36mconst[39m resend [33m=[39m getResendClient()[33m;[39m
-     [90m 992 |[39m   [36mif[39m ([33m![39mresend) {
-    [31m[1m>[22m[39m[90m 993 |[39m     console[33m.[39mwarn(
-     [90m     |[39m             [31m[1m^[22m[39m
-     [90m 994 |[39m       [32m`[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`[39m[33m,[39m
-     [90m 995 |[39m     )[33m;[39m
-     [90m 996 |[39m     console[33m.[39mlog([32m`\n==================================================`[39m)[33m;[39m[0m
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:993:13)
-      at src/controller/admin/auth.controller.ts:98:29
-      at src/utils/asyncHandler.ts:10:7
-
-    console.log
-      
-      ==================================================
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:996:13)
-
-    console.log
-      🛡️ [SECURITY LOGIN ALERT EMAIL SIMULATION]
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:997:13)
-
-    console.log
-      📬 To: test@example.com
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:998:13)
-
-    console.log
-      ⏰ Time: Wed, 07 Oct 2026 20:31:06 GMT
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:999:13)
-
-    console.log
-      🌐 IP: ::ffff:127.0.0.1
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1000:13)
-
-    console.log
-      💻 Device: Browser
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1001:28)
-
-    console.log
-      ==================================================
-
-      at sendSecurityAlertEmail (src/services/mail.service.ts:1002:13)
-
-PASS src/__tests__/reviewCenterAuth.test.ts (10.497 s)
-PASS src/__tests__/upload.test.ts
-PASS src/__tests__/assessment.test.ts
+PASS src/__tests__/questionParaphraser.test.ts (8.944 s)
+PASS src/__tests__/calendar.test.ts (9.132 s)
+PASS src/__tests__/upload.test.ts (9.319 s)
+PASS src/__tests__/game.test.ts (9.359 s)
+PASS src/__tests__/reviewCenter.test.ts (9.455 s)
+PASS src/__tests__/candidate.test.ts (9.392 s)
+PASS src/__tests__/reviewCenterAuth.test.ts (9.663 s)
 PASS src/__tests__/logs.test.ts
-PASS src/__tests__/reviewCenter.test.ts (10.566 s)
-PASS src/__tests__/student.test.ts (10.702 s)
-PASS src/__tests__/question.test.ts (10.735 s)
-A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+PASS src/__tests__/user.test.ts (9.691 s)
+PASS src/__tests__/assessment.test.ts
+PASS src/__tests__/statsCalculator.test.ts
+PASS src/__tests__/notification.test.ts
+PASS src/__tests__/guidance.test.ts
+PASS src/__tests__/encodingQuotaRestriction.test.ts
+PASS src/__tests__/analytics.test.ts
+PASS src/__tests__/questionCommentReview.test.ts
+PASS src/__tests__/auth.test.ts (10.127 s)
+PASS src/__tests__/student.test.ts (10.141 s)
+PASS src/__tests__/question.test.ts (10.216 s)
 
-Test Suites: 17 passed, 17 total
-Tests:       182 passed, 182 total
+Test Suites: 19 passed, 19 total
+Tests:       191 passed, 191 total
 Snapshots:   0 total
-Time:        12.322 s
+Time:        11.466 s, estimated 25 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

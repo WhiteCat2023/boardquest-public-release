@@ -80,6 +80,33 @@ export interface ActiveStudyObjective {
   status: string;
 }
 
+export type CalendarPaceStatus = "ON_TRACK" | "BEHIND" | "CRITICAL" | "NOT_SCHEDULED";
+export type EngagementStatus = "ACTIVE" | "LOW_CADENCE" | "DORMANT";
+
+export interface StudentCalendarPace {
+  status: CalendarPaceStatus;
+  expectedPercent: number;
+  actualPercent: number;
+  lagPercent: number;
+  activeSubject?: string;
+  targetDate?: string | null;
+}
+
+export interface StudentEngagement {
+  status: EngagementStatus;
+  lastActiveAt?: string | null;
+  daysSinceLastActive: number;
+  weeklyAttemptCount: number;
+}
+
+export interface StudentCohortSummary {
+  total: number;
+  onTrack: number;
+  behind: number;
+  critical: number;
+  dormant: number;
+}
+
 export interface Student {
   id: string;
   email: string;
@@ -96,10 +123,11 @@ export interface Student {
   mastery?: any[];
   studyPlans?: StudyPlanItem[];
   achievements?: Achievement[];
-  examResults?: any[];
+  examResults?: ExamResult[];
   lessonCompletions?: any[];
   userBadges?: any[];
   guidanceAssignments?: any[];
+  activeGuidance?: any;
 
   // BoardQuesters Performance & Target synchronization fields
   userSettings?: UserSettings | null;
@@ -107,5 +135,26 @@ export interface Student {
   accuracyHistory?: SubjectAccuracyHistoryItem[];
   scorecardSummary?: StudentScorecardSummary;
   activeObjective?: ActiveStudyObjective | null;
+  calendarPace?: StudentCalendarPace;
+  engagement?: StudentEngagement;
   reviewCenterTranscript?: any;
 }
+
+export interface ExamResult {
+  id: string;
+  userId: string;
+  score: number;
+  total: number;
+  accuracy: number;
+  subject?: string | null;
+  timestamp: string;
+}
+
+export interface ExamResultStats {
+  totalAttempts: number;
+  averageScore: number;
+  averageAccuracy: number;
+  highestScore: number;
+  lowestScore: number;
+}
+

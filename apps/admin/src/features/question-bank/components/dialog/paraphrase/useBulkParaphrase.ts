@@ -36,15 +36,16 @@ export function useBulkParaphrase({
       }
 
       const initialItems: ParaphrasedItemState[] = selectedQuestions.slice(0, 5).map(
-        (q): ParaphrasedItemState => ({
+        (q: any): ParaphrasedItemState => ({
           id: q.id,
-          original: q.question || "",
-          current: q.question || "",
+          original: q.question || q.text || "",
+          current: q.question || q.text || "",
           alternatives: [],
           status: "idle",
           isReverted: true,
           topic: q.topic || "General",
           difficulty: q.difficulty || "MEDIUM",
+          type: q.type || q.format || "MCQ",
           variationIndex: 0,
         })
       );
@@ -85,6 +86,7 @@ export function useBulkParaphrase({
           question: it.original,
           topic: it.topic,
           difficulty: it.difficulty,
+          type: it.type || "MCQ",
           variationIndex: it.variationIndex,
         })),
       };
@@ -163,6 +165,7 @@ export function useBulkParaphrase({
             question: targetItem.original,
             topic: targetItem.topic,
             difficulty: targetItem.difficulty,
+            type: targetItem.type || "MCQ",
             variationIndex: nextVariationIndex,
           },
         ],

@@ -103,6 +103,82 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
     );
   }, [subjectTargets, selectedSubject]);
 
+  // Helper to compute calendar pace lag for any study target
+  const computePaceForTarget = (target: SubjectTargetConfig | null) => {
+    if (!target) return null;
+
+    const now = new Date();
+    const startDate = target.startDate;
+    const endDate = target.endDate;
+    const totalDuration = endDate.getTime() - startDate.getTime();
+    const elapsed = now.getTime() - startDate.getTime();
+
+    let expectedPercent = 0;
+    if (totalDuration > 0) {
+      expectedPercent = Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
+    } else {
+      expectedPercent = now >= endDate ? 100 : 0;
+    }
+
+    const normTarget = target.subject.trim().toLowerCase();
+
+    // 1. Check matching metric from student.subjectMetrics
+    const matchedMetric = student?.subjectMetrics?.find((m) => {
+      const s = (m.subject || "").trim().toLowerCase();
+      return s === normTarget || s.includes(normTarget) || normTarget.includes(s);
+    });
+
+    let actualPercent = matchedMetric?.completion ?? 0;
+
+    // 2. If metric completion is 0, check lessonCompletions directly
+    if (actualPercent === 0 && student?.lessonCompletions) {
+      const completedCount = student.lessonCompletions.filter((c: any) => {
+        const s = (c.subject || "").trim().toLowerCase();
+        return (s === normTarget || s.includes(normTarget) || normTarget.includes(s)) && c.status === "completed";
+      }).length;
+      actualPercent = Math.min(100, Math.round((completedCount / 2) * 100));
+    }
+
+    // 3. If student.calendarPace matches this active subject, prefer the backend's official calendarPace
+    const calPace = student?.calendarPace;
+    if (
+      calPace &&
+      calPace.activeSubject &&
+      (calPace.activeSubject.toLowerCase().includes(normTarget) || normTarget.includes(calPace.activeSubject.toLowerCase()))
+    ) {
+      return {
+        status: calPace.status,
+        expectedPercent: calPace.expectedPercent,
+        actualPercent: calPace.actualPercent,
+        lagPercent: calPace.lagPercent,
+      };
+    }
+
+    const lagPercent = actualPercent - expectedPercent;
+
+    let status: "ON_TRACK" | "BEHIND" | "CRITICAL";
+    if (now > endDate && actualPercent < 100) {
+      status = "CRITICAL";
+    } else if (lagPercent < -25) {
+      status = "CRITICAL";
+    } else if (lagPercent < -10) {
+      status = "BEHIND";
+    } else {
+      status = "ON_TRACK";
+    }
+
+    return {
+      status,
+      expectedPercent,
+      actualPercent,
+      lagPercent,
+    };
+  };
+
+  const activeTargetPace = useMemo(() => {
+    return computePaceForTarget(activeTarget);
+  }, [activeTarget, student?.subjectMetrics, student?.lessonCompletions, student?.calendarPace]);
+
   const [currentYear, setCurrentYear] = useState<number>(() =>
     new Date().getFullYear(),
   );
@@ -271,9 +347,29 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
       ) : activeTarget ? (
         <>
           {/* Target Period Badge */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-rose-500/[0.06] border border-rose-500/25 mb-2.5">
+          <div
+            className={`flex items-center justify-between p-2.5 rounded-xl border mb-2.5 transition-colors ${
+              activeTarget.status === "Active"
+                ? activeTargetPace?.status === "BEHIND"
+                  ? "bg-amber-500/[0.06] border-amber-500/30"
+                  : activeTargetPace?.status === "CRITICAL"
+                  ? "bg-rose-500/[0.08] border-rose-500/35"
+                  : "bg-emerald-500/[0.06] border-emerald-500/25"
+                : "bg-muted/30 border-border/70"
+            }`}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="size-7 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <div
+                className={`size-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  activeTarget.status === "Active"
+                    ? activeTargetPace?.status === "BEHIND"
+                      ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                      : activeTargetPace?.status === "CRITICAL"
+                      ? "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                      : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
                 <CalendarIcon size={14} />
               </div>
               <div className="flex flex-col min-w-0">
@@ -283,25 +379,74 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
                 <span className="text-xs font-black text-foreground truncate">
                   {formatDateRange(activeTarget.startDate, activeTarget.endDate)}
                 </span>
+                {activeTarget.status === "Active" && activeTargetPace && (
+                  <span
+                    className={`text-[9.5px] font-bold mt-0.5 truncate flex items-center gap-1 ${
+                      activeTargetPace.status === "BEHIND"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : activeTargetPace.status === "CRITICAL"
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    <span>{activeTargetPace.actualPercent}% done</span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="text-muted-foreground">{activeTargetPace.expectedPercent}% exp</span>
+                  </span>
+                )}
               </div>
             </div>
 
-            <Badge
-              variant="outline"
-              className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded-md ${
-                activeTarget.status === "Active"
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                  : activeTarget.status === "Completed"
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                  : "bg-muted text-muted-foreground border-border"
-              }`}
-            >
-              {activeTarget.status === "Active"
-                ? "Active Target"
-                : activeTarget.status === "Completed"
-                ? "Completed"
-                : "Upcoming"}
-            </Badge>
+            <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
+              {activeTarget.status === "Active" ? (
+                <>
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground border-border/80"
+                  >
+                    Active
+                  </Badge>
+                  {activeTargetPace?.status === "BEHIND" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[9.5px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/35 flex items-center gap-1 shadow-2xs"
+                    >
+                      <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Behind ({activeTargetPace.lagPercent}%)
+                    </Badge>
+                  )}
+                  {activeTargetPace?.status === "CRITICAL" && (
+                    <Badge
+                      variant="destructive"
+                      className="text-[9.5px] font-extrabold px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/35 flex items-center gap-1 shadow-2xs"
+                    >
+                      <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      Critical Lag ({activeTargetPace.lagPercent}%)
+                    </Badge>
+                  )}
+                  {activeTargetPace?.status === "ON_TRACK" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[9.5px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 flex items-center gap-1 shadow-2xs"
+                    >
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                      On Track
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded-md ${
+                    activeTarget.status === "Completed"
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                      : "bg-muted text-muted-foreground border-border"
+                  }`}
+                >
+                  {activeTarget.status === "Completed" ? "Completed" : "Upcoming"}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Interactive Mini-Calendar Grid */}
@@ -357,32 +502,60 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
           <div className="pt-2 mt-2 border-t border-border/70 space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               <span>Target Disciplines</span>
-              <span className="text-primary font-extrabold">
+              <span
+                className={`font-extrabold ${
+                  activeTarget.status === "Active" && activeTargetPace?.status === "BEHIND"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : activeTarget.status === "Active" && activeTargetPace?.status === "CRITICAL"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-primary"
+                }`}
+              >
                 {activeTarget.shortName}
+                {activeTarget.status === "Active" && activeTargetPace?.status === "BEHIND" && " (Behind)"}
+                {activeTarget.status === "Active" && activeTargetPace?.status === "CRITICAL" && " (Critical)"}
               </span>
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
               {subjectTargets.map((item) => {
                 const isSelected = item.subject === selectedSubject;
+                const itemPace = computePaceForTarget(item);
                 return (
                   <button
                     key={item.id || item.subject}
                     type="button"
                     onClick={() => handleSelectSubject(item.subject)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                       isSelected
                         ? "bg-foreground text-background shadow-xs scale-102"
                         : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                   >
                     {item.status === "Active" && (
-                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span
+                        className={`size-1.5 rounded-full animate-pulse ${
+                          itemPace?.status === "BEHIND"
+                            ? "bg-amber-500"
+                            : itemPace?.status === "CRITICAL"
+                            ? "bg-rose-500"
+                            : "bg-emerald-500"
+                        }`}
+                      />
                     )}
                     {item.status === "Completed" && (
                       <CheckCircle2 size={10} className="text-blue-500" />
                     )}
                     <span>{item.shortName}</span>
+                    {item.status === "Active" && itemPace?.status === "BEHIND" && (
+                      <span
+                        className={`text-[8.5px] font-bold ${
+                          isSelected ? "text-amber-300" : "text-amber-500"
+                        }`}
+                      >
+                        ({itemPace.lagPercent}%)
+                      </span>
+                    )}
                   </button>
                 );
               })}

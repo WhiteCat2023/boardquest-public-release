@@ -48,7 +48,7 @@ export default function UserTable({
       : users;
 
   return (
-    <Card className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden w-full p-0">
+    <Card className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden w-full p-0 gap-0 py-0">
       <phantom-ui loading={isLoading}>
         {!isLoading && users.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
@@ -91,9 +91,7 @@ export default function UserTable({
               <TableBody className="divide-y divide-border">
                 {displayUsers.map((user, idx) => (
                   <UserTableRow
-                    key={
-                      user.id === "placeholder" ? `ph-${idx}` : user.id
-                    }
+                    key={user.id === "placeholder" ? `ph-${idx}` : user.id}
                     member={user}
                     canManage={
                       user.id !== currentUserId &&

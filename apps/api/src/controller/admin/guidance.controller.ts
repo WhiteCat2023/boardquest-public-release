@@ -29,6 +29,28 @@ export const createGuidanceAssignment = asyncHandler(
   },
 );
 
+export const bulkCreateGuidanceAssignments = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const creatorRole = req.user?.role;
+    const creatorId = req.user?.id;
+    if (!creatorRole || !creatorId) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const result = await guidanceService.bulkCreateGuidanceAssignments(
+      creatorId,
+      req.body,
+      creatorRole as unknown as Role,
+    );
+
+    return new ApiResponse(
+      201,
+      result,
+      `Successfully assigned ${result.count} students to guidance advisor`,
+    ).send(res);
+  },
+);
+
 export const getGuidanceAssignments = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { status, advisorId, studentId, search } = req.query;

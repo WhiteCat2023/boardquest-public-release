@@ -1,4 +1,4 @@
-import { RotateCcw, Sparkles } from "lucide-react";
+import { RotateCcw, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface IndividualQuestionActionBarProps {
@@ -6,6 +6,7 @@ interface IndividualQuestionActionBarProps {
   status?: string;
   isSubmitting: boolean;
   isNotOriginalQuestion: boolean;
+  isQuotaLocked?: boolean;
   onCancel: () => void;
   onRestoreOriginal: () => void;
   onOpenParaphraser: () => void;
@@ -16,17 +17,20 @@ export function IndividualQuestionActionBar({
   status,
   isSubmitting,
   isNotOriginalQuestion,
+  isQuotaLocked = false,
   onCancel,
   onRestoreOriginal,
   onOpenParaphraser,
 }: IndividualQuestionActionBarProps) {
   const submitLabel = isSubmitting
     ? "Saving..."
-    : isEditMode
-      ? status === "PENDING_REVISION" || status === "NEEDS_REVISION"
-        ? "Update & Resubmit for Review"
-        : "Update Question"
-      : "Save & Submit Question";
+    : isQuotaLocked
+      ? "Quota Met (Locked)"
+      : isEditMode
+        ? status === "PENDING_REVISION" || status === "NEEDS_REVISION"
+          ? "Update & Resubmit for Review"
+          : "Update Question"
+        : "Save & Submit Question";
 
   return (
     <div className="p-3 px-4 border-t border-border flex flex-wrap items-center justify-end gap-2 bg-muted/20">
@@ -55,7 +59,7 @@ export function IndividualQuestionActionBar({
         type="button"
         variant="outline"
         onClick={onOpenParaphraser}
-        disabled={isSubmitting}
+        disabled={isSubmitting || isQuotaLocked}
         className="border-primary/40 text-primary hover:bg-primary/10 font-bold px-3.5 h-8 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
       >
         <Sparkles size={13} className="text-primary" />
@@ -64,9 +68,19 @@ export function IndividualQuestionActionBar({
 
       <Button
         type="submit"
-        disabled={isSubmitting}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold px-4 h-8 rounded-lg text-xs flex items-center gap-1.5 shadow-xs"
+        disabled={isSubmitting || isQuotaLocked}
+        className={`cursor-pointer font-semibold px-4 h-8 rounded-lg text-xs flex items-center gap-1.5 shadow-xs ${
+          isQuotaLocked
+            ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+            : "bg-primary text-primary-foreground hover:bg-primary/90"
+        }`}
+        title={
+          isQuotaLocked
+            ? "Question authoring quota has already been met for this subject."
+            : undefined
+        }
       >
+        {isQuotaLocked && <CheckCircle2 size={13} className="text-emerald-500" />}
         {submitLabel}
       </Button>
     </div>

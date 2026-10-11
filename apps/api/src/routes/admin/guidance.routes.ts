@@ -5,6 +5,7 @@ import {
 } from "../../middleware/auth.middleware";
 import {
   createGuidanceAssignment,
+  bulkCreateGuidanceAssignments,
   getGuidanceAssignments,
   updateGuidanceAssignment,
   getFailingStudents,
@@ -18,6 +19,12 @@ router.post(
   "/",
   requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   createGuidanceAssignment
+);
+
+router.post(
+  "/bulk",
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  bulkCreateGuidanceAssignments
 );
 
 router.get(

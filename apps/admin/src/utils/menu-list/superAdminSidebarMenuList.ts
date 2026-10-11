@@ -45,6 +45,11 @@ export const superAdminNavItem: NavItemProps[] = [
     sideBarCategoryName: "QUESTION BANK",
     content: [
       {
+        title: "Encoding Tracker",
+        path: "/question-bank/encoding-tracker",
+        icon: "ClipboardCheck",
+      },
+      {
         title: "My Questions",
         path: "/question-bank/my-questions",
         icon: "FileText",

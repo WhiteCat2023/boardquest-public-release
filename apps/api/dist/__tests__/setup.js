@@ -15,6 +15,7 @@ jest.mock('../services/prisma', () => ({
             findMany: jest.fn().mockResolvedValue([]),
             update: jest.fn().mockResolvedValue({}),
             delete: jest.fn().mockResolvedValue({}),
+            count: jest.fn().mockResolvedValue(0),
         },
         questionComment: {
             findUnique: jest.fn().mockResolvedValue(null),
@@ -53,6 +54,22 @@ jest.mock('../services/prisma', () => ({
             findUnique: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue({}),
             findMany: jest.fn().mockResolvedValue([]),
+            update: jest.fn().mockResolvedValue({}),
+        },
+        questionQuotaAssignment: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            findFirst: jest.fn().mockResolvedValue(null),
+            findMany: jest.fn().mockResolvedValue([]),
+            create: jest.fn().mockResolvedValue({}),
+            update: jest.fn().mockResolvedValue({}),
+            delete: jest.fn().mockResolvedValue({}),
+            upsert: jest.fn().mockResolvedValue({}),
+            count: jest.fn().mockResolvedValue(0),
+        },
+        schoolYear: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            findFirst: jest.fn().mockResolvedValue(null),
+            findMany: jest.fn().mockResolvedValue([]),
         },
         studyPlan: {
             create: jest.fn().mockResolvedValue({}),
@@ -90,6 +107,7 @@ jest.mock('../services/prisma', () => ({
             update: jest.fn().mockResolvedValue({}),
             delete: jest.fn().mockResolvedValue({}),
         },
+        $runCommandRaw: jest.fn().mockResolvedValue({ cursor: { firstBatch: [] } }),
     },
 }));
 // Mock JWT utils

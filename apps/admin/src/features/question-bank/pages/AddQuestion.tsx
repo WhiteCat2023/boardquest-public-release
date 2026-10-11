@@ -5,14 +5,27 @@ import {
   IndividualQuestionForm,
   BulkImportQuestionsTab,
 } from "../components/form";
+import useRoleFlags from "@/hooks/useRoleFlags";
+import { useMyEncodingProgress } from "../api/useEncodingTracker";
+import { CheckCircle2 } from "lucide-react";
 
 export default function AddQuestion() {
   const navigate = useNavigate();
   const location = useLocation();
   const { questionId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isTeacher } = useRoleFlags();
+  const { data: progress } = useMyEncodingProgress();
 
   const isEditMode = !!questionId;
+
+  const isOverallQuotaMet =
+    isTeacher &&
+    Boolean(
+      progress?.overall &&
+        progress.overall.totalTarget > 0 &&
+        progress.overall.remainingCount === 0,
+    );
 
   // Active Tab: "individual" | "bulk"
   const initialTab =
@@ -53,6 +66,24 @@ export default function AddQuestion() {
         isEditMode={isEditMode}
         onBack={handleBackNav}
       />
+
+      {/* Teacher Quota Completed Announcement */}
+      {isTeacher && isOverallQuotaMet && !isEditMode && (
+        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100 flex items-start gap-3 shadow-2xs animate-in fade-in duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <span>Authoring Quota Completed ({progress?.schoolYear})</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/30">
+                Goal Met
+              </span>
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              You have authored all required questions ({progress?.overall.totalEncoded} of {progress?.overall.totalTarget}) across your assigned subjects. You cannot add additional questions for this school year.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tab Content */}
       {activeTab === "individual" ? (

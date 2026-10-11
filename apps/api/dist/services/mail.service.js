@@ -781,15 +781,17 @@ export async function sendSecurityAlertEmail({ toEmail, userName, loginTime, ipA
   `;
     const resend = getResendClient();
     if (!resend) {
-        console.warn(`[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`);
-        console.log(`\n==================================================`);
-        console.log(`🛡️ [SECURITY LOGIN ALERT EMAIL SIMULATION]`);
-        console.log(`📬 To: ${toEmail}`);
-        console.log(`⏰ Time: ${formattedTime}`);
-        console.log(`🌐 IP: ${ipAddress || "Unknown"}`);
-        if (userAgent)
-            console.log(`💻 Device: ${userAgent}`);
-        console.log(`==================================================\n`);
+        if (process.env.NODE_ENV !== "test") {
+            console.warn(`[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`);
+            console.log(`\n==================================================`);
+            console.log(`🛡️ [SECURITY LOGIN ALERT EMAIL SIMULATION]`);
+            console.log(`📬 To: ${toEmail}`);
+            console.log(`⏰ Time: ${formattedTime}`);
+            console.log(`🌐 IP: ${ipAddress || "Unknown"}`);
+            if (userAgent)
+                console.log(`💻 Device: ${userAgent}`);
+            console.log(`==================================================\n`);
+        }
         return null;
     }
     try {

@@ -9,6 +9,7 @@ import { sendQuestionStatusNotificationEmail } from "../mail.service";
 import { sseService } from "./sse.service";
 import pusherService from "./pusher.service";
 import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
+import { encodingTrackerService } from "./encoding-tracker.service";
 // ============ Validation Schemas ============
 export const CreateQuestionSchema = z.object({
     question: z.string().min(1, "Question title is required"),
@@ -22,6 +23,7 @@ export const CreateQuestionSchema = z.object({
     difficulty: z.preprocess((val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val), z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)),
     type: z.preprocess((val) => (val === "" || !val ? QuestionType.MCQ : val), z.nativeEnum(QuestionType).default(QuestionType.MCQ)),
     status: z.preprocess((val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val), z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)),
+    schoolYear: z.string().optional(),
 });
 export const UpdateQuestionSchema = z.object({
     id: z.string().min(1, "Question ID is required"),
@@ -71,6 +73,16 @@ export class QuestionService {
             }
             if (authorUser?.role === "TEACHER") {
                 computedStatus = QuestionStatus.PENDING_REVIEW;
+                // Quota restriction check for teacher authoring
+                const quotaStatus = await encodingTrackerService.checkTeacherQuota(authorUser.id, categoryId);
+                if (quotaStatus.isQuotaMet) {
+                    const subject = await this.db.subject.findUnique({
+                        where: { id: categoryId },
+                        select: { name: true },
+                    });
+                    const subjectName = subject?.name || "this subject";
+                    throw new ApiError(403, `You have already met your question authoring quota (${quotaStatus.encodedCount}/${quotaStatus.targetCount}) for ${subjectName}.`);
+                }
             }
             else if (authorUser?.role === "SUPERADMIN" ||
                 authorUser?.role === "DEAN" ||
@@ -114,6 +126,7 @@ export class QuestionService {
                 difficulty,
                 type,
                 status: computedStatus,
+                ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
             },
         });
         const authorName = authorUser?.name || "User";

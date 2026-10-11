@@ -22,7 +22,9 @@ export function getRoleFlags(role?: string | number): RoleFlags {
   const isTeamLead = role === "TEAMLEAD";
   const isReviewCenter = role === "REVIEWCENTER" || role === "EXTERNAL";
   const isDeanOrSuperAdmin = isSuperAdmin || isDean;
-  const canManageSchedules = isSuperAdmin || isDean || isTeamLead;
+  const isStaff = isSuperAdmin || isDean || isTeamLead;
+  const canManageSchedules =
+    isSuperAdmin || isDean || isTeamLead || isTeacher;
 
   return {
     isSuperAdmin,
@@ -33,7 +35,7 @@ export function getRoleFlags(role?: string | number): RoleFlags {
     isReviewCenter,
     isDeanOrSuperAdmin,
     isAdminOrSuperAdmin: isDeanOrSuperAdmin,
-    isStaff: canManageSchedules,
+    isStaff,
     canManageSchedules,
     canCreateSchedules: canManageSchedules,
   };

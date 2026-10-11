@@ -19,6 +19,7 @@ import { sendQuestionStatusNotificationEmail } from "../mail.service";
 import { sseService } from "./sse.service";
 import pusherService from "./pusher.service";
 import { superAdminCredentials, isSuperAdmin } from "../../config/credentials";
+import { encodingTrackerService } from "./encoding-tracker.service";
 
 // ============ Validation Schemas ============
 
@@ -43,6 +44,7 @@ export const CreateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val),
     z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW),
   ),
+  schoolYear: z.string().optional(),
 });
 
 export const UpdateQuestionSchema = z.object({
@@ -137,6 +139,23 @@ export class QuestionService {
 
       if (authorUser?.role === "TEACHER") {
         computedStatus = QuestionStatus.PENDING_REVIEW;
+
+        // Quota restriction check for teacher authoring
+        const quotaStatus = await encodingTrackerService.checkTeacherQuota(
+          authorUser.id,
+          categoryId,
+        );
+        if (quotaStatus.isQuotaMet) {
+          const subject = await this.db.subject.findUnique({
+            where: { id: categoryId },
+            select: { name: true },
+          });
+          const subjectName = subject?.name || "this subject";
+          throw new ApiError(
+            403,
+            `You have already met your question authoring quota (${quotaStatus.encodedCount}/${quotaStatus.targetCount}) for ${subjectName}.`,
+          );
+        }
       } else if (
         authorUser?.role === "SUPERADMIN" ||
         authorUser?.role === "DEAN" ||
@@ -192,6 +211,7 @@ export class QuestionService {
         difficulty,
         type,
         status: computedStatus,
+        ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
       },
     });
 

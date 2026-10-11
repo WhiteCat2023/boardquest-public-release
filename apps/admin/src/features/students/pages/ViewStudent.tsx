@@ -8,6 +8,7 @@ import {
   Award,
   Calculator,
   GraduationCap,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,8 +43,16 @@ import { AssignGuidanceModal } from "../components/AssignGuidanceModal";
 import { StudentBadgesSection } from "../components/profile/StudentBadgesSection";
 import { StudentAchievementHistory } from "../components/profile/StudentAchievementHistory";
 import StudentReviewCenterTab from "../components/profile/StudentReviewCenterTab";
+import StudentExamResultsTab from "../components/profile/StudentExamResultsTab";
 
-type StudentProfileTab = "overview" | "timeline" | "graphs" | "readiness" | "achievements" | "review-center";
+type StudentProfileTab =
+  | "overview"
+  | "timeline"
+  | "graphs"
+  | "readiness"
+  | "achievements"
+  | "exam-results"
+  | "review-center";
 
 export default function ViewStudent() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -154,6 +163,12 @@ export default function ViewStudent() {
       label: "Achievements & Badges",
       icon: Award,
       badgeCount: unlockedBadgesCount,
+    },
+    {
+      id: "exam-results" as StudentProfileTab,
+      label: "Exam Results",
+      icon: FileSpreadsheet,
+      badgeCount: activeStudent.examResults?.length || undefined,
     },
     {
       id: "review-center" as StudentProfileTab,
@@ -329,7 +344,12 @@ export default function ViewStudent() {
         </div>
       )}
 
-      {/* TAB 6: REVIEW CENTER SCORES & BOARD LICENSURE TRANSCRIPT */}
+      {/* TAB 6: EXAM RESULTS */}
+      {activeTab === "exam-results" && (
+        <StudentExamResultsTab student={activeStudent} />
+      )}
+
+      {/* TAB 7: REVIEW CENTER SCORES & BOARD LICENSURE TRANSCRIPT */}
       {activeTab === "review-center" && (
         <StudentReviewCenterTab student={activeStudent} />
       )}

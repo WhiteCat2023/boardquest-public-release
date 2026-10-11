@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import {
@@ -20,24 +20,53 @@ import { useSubjects } from "@/features/users";
 export interface AssignGuidanceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  student: any;
+  student?: any;
+  students?: any[];
+  onSuccess?: () => void;
 }
 
 export function AssignGuidanceModal({
   isOpen,
   onClose,
   student,
+  students,
+  onSuccess,
 }: AssignGuidanceModalProps) {
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
   const [selectedAdvisorId, setSelectedAdvisorId] = useState<string>("");
   const [subjectCategory, setSubjectCategory] = useState<string>("Clinical Chemistry");
-  const [reason, setReason] = useState<string>(
-    student?.avgAccuracy && student.avgAccuracy < 75
-      ? `Exam performance accuracy is ${student.avgAccuracy}% (below 75% passing benchmark). Requires academic intervention.`
-      : "Manual referral for board licensure examination guidance."
-  );
+  const [reason, setReason] = useState<string>("");
   const [guidanceNotes, setGuidanceNotes] = useState<string>("");
+
+  const targetStudents = (students && students.length > 0) ? students : (student ? [student] : []);
+  const isBulk = targetStudents.length > 1;
+
+  useEffect(() => {
+    if (isBulk) {
+      setReason("Cohort referral for board licensure examination guidance and academic counseling.");
+    } else if (targetStudents.length === 1) {
+      const single = targetStudents[0];
+      if (single.calendarPace?.status === "CRITICAL" || single.calendarPace?.status === "BEHIND") {
+        setReason(
+          `Pacing Alert: Student is ${Math.abs(single.calendarPace.lagPercent)}% behind schedule for ${single.calendarPace.activeSubject || "their study milestones"}. Requires pacing intervention.`
+        );
+        if (single.calendarPace.activeSubject) {
+          setSubjectCategory(single.calendarPace.activeSubject);
+        }
+      } else if (single.engagement?.status === "DORMANT") {
+        setReason(
+          `Engagement Alert: Student has been dormant with no active drills for ${single.engagement.daysSinceLastActive} days. Requires re-engagement advising.`
+        );
+      } else if (single.avgAccuracy && single.avgAccuracy < 75) {
+        setReason(
+          `Exam performance accuracy is ${single.avgAccuracy}% (below 75% passing benchmark). Requires academic intervention.`
+        );
+      } else {
+        setReason("Manual referral for board licensure examination guidance.");
+      }
+    }
+  }, [students, student, isBulk]);
 
   const { data: advisors = [], isLoading: isLoadingAdvisors } = useQuery({
     queryKey: ["advisorsList"],
@@ -65,19 +94,36 @@ export function AssignGuidanceModal({
 
   const assignMutation = useMutation({
     mutationFn: async () => {
-      const res = await axiosPrivate.post("/guidance", {
-        studentId: student.id,
-        advisorId: selectedAdvisorId,
-        subjectCategory,
-        reason,
-        guidanceNotes,
-      });
-      return res.data;
+      if (isBulk) {
+        const res = await axiosPrivate.post("/guidance/bulk", {
+          studentIds: targetStudents.map((s: any) => s.id),
+          advisorId: selectedAdvisorId,
+          subjectCategory,
+          reason,
+          guidanceNotes,
+        });
+        return res.data;
+      } else {
+        const res = await axiosPrivate.post("/guidance", {
+          studentId: targetStudents[0]?.id,
+          advisorId: selectedAdvisorId,
+          subjectCategory,
+          reason,
+          guidanceNotes,
+        });
+        return res.data;
+      }
     },
     onSuccess: () => {
-      toast.success(`Assigned ${student?.name || "student"} to advisor for guidance!`);
+      if (isBulk) {
+        toast.success(`Assigned ${targetStudents.length} students to advisor for guidance!`);
+      } else {
+        toast.success(`Assigned ${targetStudents[0]?.name || "student"} to advisor for guidance!`);
+      }
       queryClient.invalidateQueries({ queryKey: ["guidanceAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["failingStudents"] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      onSuccess?.();
       onClose();
     },
     onError: (err: any) => {
@@ -85,7 +131,7 @@ export function AssignGuidanceModal({
     },
   });
 
-  if (!student) return null;
+  if (targetStudents.length === 0) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -96,13 +142,42 @@ export function AssignGuidanceModal({
               <UserCheck size={20} />
             </div>
             <DialogTitle className="text-lg font-bold text-foreground">
-              Assign Advisor Guidance & Referral
+              {isBulk
+                ? `Bulk Assign Guidance (${targetStudents.length} Students)`
+                : "Assign Advisor Guidance & Referral"}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Assign student <span className="font-bold text-foreground">{student.name}</span> ({student.email}) to an administrator or faculty member for academic counseling.
+            {isBulk ? (
+              <>
+                Assign <strong className="text-foreground">{targetStudents.length} selected students</strong> to an administrator or faculty member for academic counseling.
+              </>
+            ) : (
+              <>
+                Assign student <span className="font-bold text-foreground">{targetStudents[0]?.name}</span> ({targetStudents[0]?.email}) to an administrator or faculty member for academic counseling.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
+
+        {isBulk && (
+          <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-muted/40 border border-border">
+            <span className="text-[10.5px] font-bold text-muted-foreground uppercase tracking-wider">
+              Selected Students ({targetStudents.length}):
+            </span>
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+              {targetStudents.map((st: any) => (
+                <span
+                  key={st.id}
+                  className="px-2 py-0.5 rounded-md bg-card border border-border text-[10.5px] font-medium text-foreground flex items-center gap-1 shadow-2xs"
+                >
+                  <span className="font-bold">{st.name}</span>
+                  <span className="text-[9.5px] text-muted-foreground">({st.email})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4 py-2 text-xs">
           {/* Advisor Selector */}
@@ -182,7 +257,9 @@ export function AssignGuidanceModal({
             ) : (
               <>
                 <Send size={14} />
-                Assign Guidance Advisor
+                {isBulk
+                  ? `Assign Guidance (${targetStudents.length} Students)`
+                  : "Assign Guidance Advisor"}
               </>
             )}
           </Button>

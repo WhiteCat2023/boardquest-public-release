@@ -7,6 +7,10 @@ export const ParaphraseItemInputSchema = z.object({
   topic: z.string().optional().default("General"),
   subject: z.string().optional().default("Board Exam"),
   difficulty: z.string().optional(),
+  type: z
+    .enum(["MCQ", "TRUE_FALSE", "SHORT_ANSWER"])
+    .optional()
+    .default("MCQ"),
   tone: z
     .enum(["BOARD_EXAM", "SCENARIO", "CONCISE", "SIMPLIFIED"])
     .optional()
@@ -14,7 +18,8 @@ export const ParaphraseItemInputSchema = z.object({
   variationIndex: z.number().optional().default(0),
 });
 
-export type ParaphraseItemInput = z.infer<typeof ParaphraseItemInputSchema>;
+export type ParaphraseItemInput = z.input<typeof ParaphraseItemInputSchema>;
+export type ParaphraseItemValidated = z.infer<typeof ParaphraseItemInputSchema>;
 
 export const ParaphraseItemOutputSchema = z.object({
   id: z.string(),
@@ -31,18 +36,39 @@ export class QuestionParaphraserService {
   }
 
   /**
-   * Cleans unwanted bracketed tags, introductory phrases, and quotation artifacts.
+   * Cleans unwanted bracketed tags, introductory phrases, quotation artifacts,
+   * and enforces proper punctuation based on question type.
    */
-  private cleanStemText(text: string): string {
+  private cleanStemText(
+    text: string,
+    type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" = "MCQ",
+  ): string {
     if (!text) return "";
     let cleaned = text.replace(/\[[^\]]*\]/g, "").trim();
     cleaned = cleaned.replace(/^In relation to [^:]+:\s*/i, "").trim();
     cleaned = cleaned.replace(/^Here is (a|the) paraphrased.*:\s*/i, "").trim();
     cleaned = cleaned.replace(/^Paraphrased question:\s*/i, "").trim();
+    cleaned = cleaned.replace(/^(True or False|True\/False|Statement|Assertion):\s*/i, "").trim();
     cleaned = cleaned.replace(/^"|"$/g, "").trim();
     if (cleaned.length > 0) {
       cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
     }
+
+    if (type === "TRUE_FALSE") {
+      // True/False questions MUST be declarative statements ending with a period.
+      // Strip trailing question marks, colons, or semicolons.
+      cleaned = cleaned.replace(/[?:]+$/, "").trim();
+      if (!cleaned.endsWith(".")) {
+        cleaned = `${cleaned}.`;
+      }
+    } else if (type === "MCQ") {
+      // MCQ questions typically end with a question mark or a completion colon.
+      if (!cleaned.endsWith("?") && !cleaned.endsWith(":")) {
+        cleaned = cleaned.replace(/\.+$/, "").trim();
+        cleaned = `${cleaned}?`;
+      }
+    }
+
     return cleaned;
   }
 
@@ -52,24 +78,57 @@ export class QuestionParaphraserService {
   private generateFallbackParaphrases(
     item: ParaphraseItemInput,
   ): ParaphraseItemOutput {
-    const raw = this.cleanStemText(item.question);
+    const type = item.type || "MCQ";
+    const raw = this.cleanStemText(item.question, type);
     const topic = item.topic && item.topic !== "General" ? item.topic : "clinical";
-    const cleanLower = raw.replace(/\?$/, "").trim();
 
-    const variants: string[] = [
-      `In the context of ${topic} diagnostics, ${cleanLower.toLowerCase().startsWith("what") || cleanLower.toLowerCase().startsWith("which") ? cleanLower : `determine: ${cleanLower}`}?`,
-      `Which of the following best characterizes ${cleanLower.toLowerCase().replace(/^(what is|which is|how does)\s+/i, "")}?`,
-      `Under standard ${topic} evaluation protocols, ${cleanLower.toLowerCase().startsWith("what") || cleanLower.toLowerCase().startsWith("which") ? cleanLower : `identify the principle governing: ${cleanLower}`}?`,
-      `Regarding ${topic}, identify the key parameter evaluated when: ${cleanLower}?`,
-      `From a clinical laboratory perspective, ${cleanLower.toLowerCase().startsWith("what") ? cleanLower : `analyze: ${cleanLower}`}?`,
-    ];
+    let variants: string[] = [];
+
+    if (type === "TRUE_FALSE") {
+      // Convert any interrogative phrasing into a declarative statement
+      let statement = raw
+        .replace(/[?.]+$/, "")
+        .replace(/^(is|are|was|were|does|do|can|could|should|will|would|has|have)\s+/i, "")
+        .replace(/^(what is|which is|how is)\s+/i, "")
+        .trim();
+      if (statement.length > 0) {
+        statement = statement.charAt(0).toUpperCase() + statement.slice(1);
+      }
+
+      variants = [
+        `In ${topic} diagnostics, ${statement.charAt(0).toLowerCase() + statement.slice(1)} is an established clinical observation.`,
+        `Under standard ${topic} evaluation protocols, ${statement.charAt(0).toLowerCase() + statement.slice(1)} represents a documented benchmark.`,
+        `Clinical laboratory evidence confirms that ${statement.charAt(0).toLowerCase() + statement.slice(1)}.`,
+        `According to established criteria in ${topic}, ${statement.charAt(0).toLowerCase() + statement.slice(1)}.`,
+        `Diagnostic assessment validates that ${statement.charAt(0).toLowerCase() + statement.slice(1)}.`,
+      ];
+    } else if (type === "SHORT_ANSWER") {
+      const cleanLower = raw.replace(/[?.]+$/, "").trim();
+      variants = [
+        `Identify the primary parameter governing: ${cleanLower}.`,
+        `In ${topic} evaluation, state the definitive diagnostic criteria for: ${cleanLower}.`,
+        `What specific marker or value is evaluated in: ${cleanLower}?`,
+        `Specify the key clinical mechanism associated with: ${cleanLower}.`,
+        `Define the principal standard referenced when: ${cleanLower}.`,
+      ];
+    } else {
+      // MCQ
+      const cleanLower = raw.replace(/\?$/, "").trim();
+      variants = [
+        `In the context of ${topic} diagnostics, ${cleanLower.toLowerCase().startsWith("what") || cleanLower.toLowerCase().startsWith("which") ? cleanLower : `determine: ${cleanLower}`}?`,
+        `Which of the following best characterizes ${cleanLower.toLowerCase().replace(/^(what is|which is|how does)\s+/i, "")}?`,
+        `Under standard ${topic} evaluation protocols, ${cleanLower.toLowerCase().startsWith("what") || cleanLower.toLowerCase().startsWith("which") ? cleanLower : `identify the principle governing: ${cleanLower}`}?`,
+        `Regarding ${topic}, identify the key parameter evaluated when: ${cleanLower}?`,
+        `From a clinical laboratory perspective, ${cleanLower.toLowerCase().startsWith("what") ? cleanLower : `analyze: ${cleanLower}`}?`,
+      ];
+    }
 
     const selectedIndex = (item.variationIndex || 0) % variants.length;
-    const primary = this.cleanStemText(variants[selectedIndex]);
+    const primary = this.cleanStemText(variants[selectedIndex], type);
     const alternatives = variants
       .filter((_, idx) => idx !== selectedIndex)
       .slice(0, 3)
-      .map((v) => this.cleanStemText(v));
+      .map((v) => this.cleanStemText(v, type));
 
     return {
       id: item.id,
@@ -87,7 +146,7 @@ export class QuestionParaphraserService {
     switch (tone) {
       case "SCENARIO":
         toneInstruction =
-          "Frame the question stem within a realistic clinical scenario or laboratory diagnostic context while retaining exact diagnostic values.";
+          "Frame the stem within a realistic clinical scenario or laboratory diagnostic context while retaining exact diagnostic values.";
         break;
       case "CONCISE":
         toneInstruction =
@@ -109,6 +168,7 @@ export class QuestionParaphraserService {
         id: it.id,
         stem: it.question,
         topic: it.topic || "Medical Technology",
+        questionType: it.type || "MCQ",
         seed: it.variationIndex || 0,
       })),
       null,
@@ -116,7 +176,21 @@ export class QuestionParaphraserService {
     );
 
     return `You are a Senior Item Writer and Board Examination Review Specialist for Medical Technology / Clinical Laboratory Science.
-Your objective is to paraphrase and linguistically refine the provided question stems.
+Your objective is to paraphrase and linguistically refine the provided question stems, STRICTLY adhering to each item's designated questionType.
+
+### QUESTION TYPE ALIGNMENT DIRECTIVES (CRITICAL):
+1. **TRUE_FALSE**:
+   - The output MUST be a **formal declarative statement / factual proposition** ending strictly with a period ('.').
+   - **ABSOLUTE RULE**: NEVER output an interrogative question ending with a question mark ('?'). Do NOT use question stems (e.g., "What is...", "Which of the following...", "Is it true that...").
+   - If the input stem was phrased as an interrogative (e.g., "is the corona vaccine effective?"), convert it into a testable declarative proposition (e.g., "The SARS-CoV-2 vaccine demonstrates documented clinical efficacy in mitigating disease severity.").
+   - Both "paraphrased" and all "alternatives" MUST be declarative assertions ending with a period ('.').
+
+2. **MCQ (Multiple Choice Questions)**:
+   - Formulate as a formal interrogative question stem ending with a question mark ('?') or a sentence completion stem ending with a colon (':').
+   - Example: "Which diagnostic biomarker exhibits the highest specificity for acute myocardial infarction?"
+
+3. **SHORT_ANSWER**:
+   - Formulate as a direct, concise question stem ending with '?' or an imperative prompt ending with a period ('.') that elicits a specific term, entity, laboratory value, or concept (e.g., "Identify the primary reagent used in...", "What is the critical threshold value for...?").
 
 ### PARAPHRASING STYLE DIRECTIVE:
 ${toneInstruction}
@@ -124,10 +198,12 @@ ${toneInstruction}
 ### MANDATORY RULES:
 1. Preserve exact numbers, units (e.g., mg/dL, mmol/L, % HbA1c), reference ranges, and scientific names.
 2. Do NOT add bracketed tags (e.g. no [Direct Recall], no [Scenario]).
-3. Output ONLY professional question stems ending with a question mark.
+3. Align punctuation and grammar strictly with the designated questionType:
+   - TRUE_FALSE items MUST end with a period ('.') and MUST NOT end with a question mark ('?').
+   - MCQ items MUST end with a question mark ('?') or a colon (':').
 4. For each question, provide:
-   - "paraphrased": The primary, highest quality rewritten stem.
-   - "alternatives": An array of 2 to 3 alternative paraphrased stems offering different sentence structures.
+   - "paraphrased": The primary, highest quality rewritten stem conforming to its questionType.
+   - "alternatives": An array of 2 to 3 alternative paraphrased stems offering different sentence structures, all conforming strictly to the same questionType.
 5. Return strictly a JSON array matching the schema specified below.
 
 ### INPUT QUESTIONS:
@@ -137,10 +213,10 @@ ${questionsJson}
 [
   {
     "id": "question_id_here",
-    "paraphrased": "Primary paraphrased stem text?",
+    "paraphrased": "Primary rewritten stem (declarative statement ending in '.' for TRUE_FALSE; question ending in '?' or ':' for MCQ)",
     "alternatives": [
-      "Alternative variant 1 stem text?",
-      "Alternative variant 2 stem text?"
+      "Alternative variant 1 stem text conforming to the questionType",
+      "Alternative variant 2 stem text conforming to the questionType"
     ]
   }
 ]`;
@@ -184,9 +260,11 @@ ${questionsJson}
       );
 
       if (!response.ok) {
-        console.warn(
-          `[QuestionParaphraserService] Gemini API returned status ${response.status}. Using fallback paraphraser.`,
-        );
+        if (process.env.NODE_ENV !== "test") {
+          console.warn(
+            `[QuestionParaphraserService] Gemini API returned status ${response.status}. Using fallback paraphraser.`,
+          );
+        }
         return validatedItems.map((item) =>
           this.generateFallbackParaphrases(item),
         );
@@ -206,13 +284,17 @@ ${questionsJson}
         ? parsedJson
         : parsedJson.questions || [parsedJson];
 
+      const typeMap = new Map<string, "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER">();
+      validatedItems.forEach((it) => typeMap.set(it.id, it.type));
+
       const resultMap = new Map<string, { paraphrased: string; alternatives?: string[] }>();
       rawArray.forEach((entry) => {
         if (entry.id) {
+          const itemType = typeMap.get(String(entry.id)) || "MCQ";
           resultMap.set(String(entry.id), {
-            paraphrased: this.cleanStemText(entry.paraphrased || ""),
+            paraphrased: this.cleanStemText(entry.paraphrased || "", itemType),
             alternatives: Array.isArray(entry.alternatives)
-              ? entry.alternatives.map((a: string) => this.cleanStemText(a))
+              ? entry.alternatives.map((a: string) => this.cleanStemText(a, itemType))
               : [],
           });
         }
@@ -223,7 +305,7 @@ ${questionsJson}
         if (generated && generated.paraphrased) {
           return {
             id: item.id,
-            original: this.cleanStemText(item.question),
+            original: this.cleanStemText(item.question, item.type),
             paraphrased: generated.paraphrased,
             alternatives: generated.alternatives || [],
           };
