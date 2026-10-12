@@ -9,7 +9,10 @@ export const bulkCreateGuidanceAssignments = async (assignedById, payload, creat
         creatorRole !== Role.TEAMLEAD) {
         throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
     }
-    const { studentIds, advisorId, subjectCategory, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
+    const { studentIds, advisorId, subjectCategory, subjectCategories, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
+    const resolvedCategory = Array.isArray(subjectCategories) && subjectCategories.length > 0
+        ? subjectCategories.join(", ")
+        : subjectCategory?.trim() || "General Academic Support";
     if (!Array.isArray(studentIds) ||
         studentIds.length === 0 ||
         !advisorId ||
@@ -43,7 +46,7 @@ export const bulkCreateGuidanceAssignments = async (assignedById, payload, creat
             studentId: student.id,
             advisorId,
             assignedById,
-            subjectCategory: subjectCategory || "General Academic Support",
+            subjectCategory: resolvedCategory,
             reason: reason.trim(),
             guidanceNotes: guidanceNotes?.trim() || "",
             drillQuota: drillQuota !== undefined && !isNaN(Number(drillQuota))
@@ -83,6 +86,7 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
             studentIds: payload.studentIds,
             advisorId: payload.advisorId,
             subjectCategory: payload.subjectCategory,
+            subjectCategories: payload.subjectCategories,
             reason: payload.reason,
             guidanceNotes: payload.guidanceNotes,
             drillQuota: payload.drillQuota,
@@ -96,7 +100,10 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
         creatorRole !== Role.TEAMLEAD) {
         throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
     }
-    const { studentId, advisorId, subjectCategory, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
+    const { studentId, advisorId, subjectCategory, subjectCategories, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
+    const resolvedCategory = Array.isArray(subjectCategories) && subjectCategories.length > 0
+        ? subjectCategories.join(", ")
+        : subjectCategory?.trim() || "General Academic Support";
     if (!studentId || !advisorId || !reason?.trim()) {
         throw new ApiError(400, "studentId, advisorId, and reason are required.");
     }
@@ -124,7 +131,7 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
             studentId,
             advisorId,
             assignedById,
-            subjectCategory: subjectCategory || "General Academic Support",
+            subjectCategory: resolvedCategory,
             reason: reason.trim(),
             guidanceNotes: guidanceNotes?.trim() || "",
             drillQuota: drillQuota !== undefined && !isNaN(Number(drillQuota))

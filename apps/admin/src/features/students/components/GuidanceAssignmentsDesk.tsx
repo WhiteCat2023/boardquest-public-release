@@ -182,9 +182,15 @@ export function GuidanceAssignmentsDesk() {
                   <TableCell className="hidden sm:table-cell text-xs max-w-xs">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="outline" className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9.5px] font-bold">
-                          {item.subjectCategory || "General Academic"}
-                        </Badge>
+                        {(item.subjectCategory ? item.subjectCategory.split(",") : ["General Academic"]).map((sub: string, subIdx: number) => (
+                          <Badge
+                            key={subIdx}
+                            variant="outline"
+                            className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9.5px] font-bold"
+                          >
+                            {sub.trim()}
+                          </Badge>
+                        ))}
                         {item.drillQuota && (
                           <span
                             className="px-1.5 py-0.2 rounded-md bg-primary/10 text-primary border border-primary/20 text-[9.5px] font-bold"

@@ -36,7 +36,7 @@ export function DashboardKpiCards() {
   const { data: dbCategories = [] } = useSubjects();
   const { data: categoriesTotalCount } = useSubjectsTotalCount();
   const { data: studentData, isLoading: isStudentsLoading } = useStudents({ skip: 0, take: 1 });
-  const { data: facultyData, isLoading: isFacultiesLoading } = useUsers({ limit: 1 });
+  const { data: facultyData, isLoading: isFacultiesLoading } = useUsers({ limit: 1, status: "ACTIVE" });
 
   const teacherAuthoredCount = statsData?.teacherAuthoredCount ?? 0;
   const totalQuestions = isTeacher

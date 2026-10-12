@@ -93,7 +93,7 @@ export function LeaderboardPage() {
   }, [filteredStudents, startIndex, pageSize]);
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full  font-sans bg-background text-foreground">
       {/* ── Page Header ── */}
       <LeaderboardHeader />
 

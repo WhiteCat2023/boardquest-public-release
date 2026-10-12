@@ -2,15 +2,7 @@ import { GraduationCap, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Student } from "@/features/students";
 import StudentTableRow from "./StudentTableRow";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-} from "@/components/ui/table";
 import useRoleFlags from "@/hooks/useRoleFlags";
 
 interface StudentTableProps {
@@ -55,7 +47,7 @@ export default function StudentTable({
   ).length;
 
   return (
-    <Card className="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden w-full p-0 flex flex-col gap-0 py-0">
+    <div className="w-full rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs flex flex-col">
       <phantom-ui loading={isLoading}>
         {!isLoading && students.length === 0 ? (
           <div className="py-20 px-4 text-center text-muted-foreground flex flex-col items-center justify-center gap-3.5">
@@ -83,17 +75,12 @@ export default function StudentTable({
             )}
           </div>
         ) : (
-          <Table
-            containerClassName="overflow-y-auto max-h-[380px] sm:max-h-[440px] md:max-h-[480px] w-full scroll-smooth"
-            className="w-full text-left border-collapse min-w-[680px]"
-          >
-            <TableHeader
-              className="bg-muted/95 backdrop-blur-xs border-b border-border sticky top-0 z-10 shadow-2xs"
-              data-shimmer-ignore
-            >
-              <TableRow className="border-b border-border hover:bg-transparent">
-                {canSelect && (
-                  <TableHead className="w-10 py-3 px-3 text-center h-auto bg-muted/95 backdrop-blur-xs">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  {canSelect && (
+                  <th className="w-10 py-2.5 px-3 text-center">
                     <input
                       type="checkbox"
                       checked={!!isAllSelected && assignableCount > 0}
@@ -107,43 +94,34 @@ export default function StudentTable({
                           : "Select all unassigned students on this page"
                       }
                     />
-                  </TableHead>
+                  </th>
                 )}
-                <TableHead className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  Student Profile
-                </TableHead>
-                <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  Academic Standing
-                </TableHead>
-                <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  Calendar Pace
-                </TableHead>
-                <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  Engagement
-                </TableHead>
-                <TableHead className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto bg-muted/95 backdrop-blur-xs">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-border">
-              {displayStudents.map((student, idx) => (
-                <StudentTableRow
-                  key={student.id || idx}
-                  student={student}
-                  onAssignGuidance={onAssignGuidance}
-                  onReachOut={onReachOut}
-                  canSelect={canSelect}
-                  isSelected={selectedIds.includes(student.id)}
-                  onToggleSelect={onToggleSelect}
-                />
-              ))}
-            </TableBody>
-          </Table>
+                <th className="py-2.5 px-4 font-extrabold">Student Profile</th>
+                <th className="py-2.5 px-3 font-extrabold">Academic Standing</th>
+                <th className="py-2.5 px-3 font-extrabold">Calendar Pace</th>
+                <th className="py-2.5 px-3 font-extrabold">Engagement</th>
+                <th className="py-2.5 px-4 font-extrabold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {displayStudents.map((student, idx) => (
+                  <StudentTableRow
+                    key={student.id || idx}
+                    student={student}
+                    onAssignGuidance={onAssignGuidance}
+                    onReachOut={onReachOut}
+                    canSelect={canSelect}
+                    isSelected={selectedIds.includes(student.id)}
+                    onToggleSelect={onToggleSelect}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </phantom-ui>
       {pagination}
-    </Card>
+    </div>
   );
 }
 

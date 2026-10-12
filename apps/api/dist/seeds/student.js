@@ -594,6 +594,8 @@ export async function seedStudents(prismaClient) {
             }
             // Seed Study Plans
             for (const sp of student.studyPlans) {
+                const startDate = sp.startDate || new Date();
+                const endDate = sp.endDate || sp.targetDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
                 await prismaClient.studyPlan.upsert({
                     where: {
                         userId_subject: {
@@ -602,12 +604,26 @@ export async function seedStudents(prismaClient) {
                         },
                     },
                     update: {
-                        targetDate: sp.targetDate,
+                        startDate,
+                        endDate,
+                        priority: sp.priority || "MEDIUM",
+                        goal: sp.goal || "",
+                        targetQuestions: sp.targetQuestions ?? 50,
+                        targetAccuracy: sp.targetAccuracy ?? 75,
+                        notes: sp.notes || "",
+                        status: sp.status || "IN_PROGRESS",
                     },
                     create: {
                         userId: student.id,
                         subject: sp.subject,
-                        targetDate: sp.targetDate,
+                        startDate,
+                        endDate,
+                        priority: sp.priority || "MEDIUM",
+                        goal: sp.goal || "",
+                        targetQuestions: sp.targetQuestions ?? 50,
+                        targetAccuracy: sp.targetAccuracy ?? 75,
+                        notes: sp.notes || "",
+                        status: sp.status || "IN_PROGRESS",
                     },
                 }).catch((e) => console.warn(`StudyPlan seed note for ${student.email}: ${e.message}`));
             }

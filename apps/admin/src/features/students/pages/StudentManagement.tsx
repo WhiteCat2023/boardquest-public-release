@@ -28,7 +28,7 @@ import AssignGuidanceModal from "../components/AssignGuidanceModal";
 import EmailStudentModal from "../components/EmailStudentModal";
 import { DataTablePagination } from "@/components/custom/pagination";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 25;
 
 export default function StudentManagement() {
   const { isTeacher, isAdminOrSuperAdmin, isTeamLead, currentUser } = useRoleFlags();
@@ -178,7 +178,7 @@ export default function StudentManagement() {
               : "CUSTOM";
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-3.5 p-4 md:p-6 pb-20 w-full font-sans bg-background text-foreground">
       {/* 1. Header Bar */}
       <StudentHeader
         canAddStudent={true}

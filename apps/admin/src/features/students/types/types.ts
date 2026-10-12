@@ -19,6 +19,12 @@ export interface StudyPlanItem {
   startDate?: string;
   endDate?: string;
   targetDate?: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW" | string;
+  goal?: string;
+  targetQuestions?: number;
+  targetAccuracy?: number;
+  notes?: string;
+  status?: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -78,6 +84,12 @@ export interface ActiveStudyObjective {
   mastery: number;
   completion: number;
   status: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW" | string;
+  goal?: string;
+  targetQuestions?: number;
+  targetAccuracy?: number;
+  notes?: string;
+  statusMastery?: string;
 }
 
 export type CalendarPaceStatus = "ON_TRACK" | "BEHIND" | "CRITICAL" | "NOT_SCHEDULED";

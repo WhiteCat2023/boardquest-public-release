@@ -1,4 +1,4 @@
-import { ShieldCheck, TrendingUp, Target, BookOpen, Sparkles, TrendingDown, ArrowRight, Clock } from "lucide-react";
+import { ShieldCheck, TrendingUp, Target, BookOpen, Sparkles, TrendingDown, ArrowRight, Clock, Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { StudentAnalyticsResult } from "../types/types";
@@ -228,25 +228,53 @@ export function OverviewTab({ report }: OverviewTabProps) {
             {Array.isArray(report?.studyPlans) && report.studyPlans.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {report.studyPlans.map((sp) => {
-                  const target = new Date(sp.targetDate);
+                  const target = new Date(sp.endDate || sp.targetDate || "");
                   const now = new Date();
                   const diffDays = Math.ceil((target.getTime() - now.getTime()) / (1000 * 3600 * 24));
                   const isPast = diffDays < 0;
 
                   return (
-                    <div key={sp.id} className="p-2 sm:p-2.5 bg-muted/30 border border-border/50 rounded-lg flex items-center justify-between gap-2 min-w-0">
-                      <div className="flex flex-col min-w-0 pr-1">
+                    <div key={sp.id} className="p-2 sm:p-2.5 bg-muted/30 border border-border/50 rounded-lg flex flex-col gap-1.5 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5">
                         <span className="text-xs font-bold text-foreground truncate">{sp.subject}</span>
-                        <span className="text-[10px] text-muted-foreground truncate">
-                          Target: {target.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {sp.priority && (
+                            <span
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[8px] font-black uppercase ${
+                                sp.priority.toUpperCase() === "HIGH"
+                                  ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                                  : sp.priority.toUpperCase() === "LOW"
+                                  ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+                                  : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                              }`}
+                            >
+                              {sp.priority.toUpperCase() === "HIGH" && <Flame size={8} />}
+                              {sp.priority}
+                            </span>
+                          )}
+                          <Badge 
+                            variant={isPast ? "destructive" : diffDays <= 7 ? "warning" : "success"}
+                            className="text-[8px] font-extrabold shrink-0"
+                          >
+                            {isPast ? "Overdue" : `${diffDays}d left`}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                        <span className="truncate">
+                          Target: {!isNaN(target.getTime()) ? target.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Scheduled"}
+                        </span>
+                        <span className="font-semibold text-primary shrink-0">
+                          🎯 {sp.targetQuestions ?? 50} Qs • {sp.targetAccuracy ?? 75}%
                         </span>
                       </div>
-                      <Badge 
-                        variant={isPast ? "destructive" : diffDays <= 7 ? "warning" : "success"}
-                        className="text-[8px] font-extrabold shrink-0"
-                      >
-                        {isPast ? "Overdue" : `${diffDays} days left`}
-                      </Badge>
+
+                      {sp.goal && (
+                        <p className="text-[9.5px] text-muted-foreground italic truncate">
+                          &ldquo;{sp.goal}&rdquo;
+                        </p>
+                      )}
                     </div>
                   );
                 })}

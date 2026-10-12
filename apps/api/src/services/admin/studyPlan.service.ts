@@ -7,7 +7,15 @@ import prisma from "../prisma";
 export const createStudyPlanSchema = z.object({
   studentId: z.string().min(1, "Student ID is required"),
   subject: z.string().min(1, "Subject is required"),
-  targetDate: z.string().datetime("Invalid date format"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  targetDate: z.string().optional(),
+  priority: z.enum(["HIGH", "MEDIUM", "LOW"]).optional().default("MEDIUM"),
+  goal: z.string().optional().default(""),
+  targetQuestions: z.number().int().optional().default(50),
+  targetAccuracy: z.number().optional().default(75),
+  notes: z.string().optional().default(""),
+  status: z.enum(["PLANNED", "IN_PROGRESS", "COMPLETED"]).optional().default("IN_PROGRESS"),
 });
 
 // ============ Type Definitions ============
@@ -30,7 +38,19 @@ export class StudyPlanService {
       throw new ApiError(400, "Validation failed", [JSON.stringify(errors)]);
     }
 
-    const { studentId, subject, targetDate } = parsed.data;
+    const {
+      studentId,
+      subject,
+      startDate,
+      endDate,
+      targetDate,
+      priority,
+      goal,
+      targetQuestions,
+      targetAccuracy,
+      notes,
+      status,
+    } = parsed.data;
 
     const student = await this.db.user.findUnique({
       where: { id: studentId },
@@ -40,15 +60,36 @@ export class StudyPlanService {
       throw new ApiError(404, "Student not found");
     }
 
+    const effectiveStart = startDate ? new Date(startDate) : new Date();
+    const effectiveEnd = endDate
+      ? new Date(endDate)
+      : targetDate
+      ? new Date(targetDate)
+      : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
     const studyPlan = await this.db.studyPlan.upsert({
       where: { userId_subject: { userId: studentId, subject } },
       update: {
-        targetDate: new Date(targetDate),
+        startDate: effectiveStart,
+        endDate: effectiveEnd,
+        priority: priority ?? "MEDIUM",
+        goal: goal ?? "",
+        targetQuestions: targetQuestions ?? 50,
+        targetAccuracy: targetAccuracy ?? 75,
+        notes: notes ?? "",
+        status: status ?? "IN_PROGRESS",
       },
       create: {
         userId: studentId,
         subject,
-        targetDate: new Date(targetDate),
+        startDate: effectiveStart,
+        endDate: effectiveEnd,
+        priority: priority ?? "MEDIUM",
+        goal: goal ?? "",
+        targetQuestions: targetQuestions ?? 50,
+        targetAccuracy: targetAccuracy ?? 75,
+        notes: notes ?? "",
+        status: status ?? "IN_PROGRESS",
       },
     });
 

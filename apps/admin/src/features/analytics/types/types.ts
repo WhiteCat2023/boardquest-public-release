@@ -94,7 +94,15 @@ export interface AchievementItem {
 export interface StudyPlanItem {
   id: string;
   subject: string;
-  targetDate: string;
+  startDate?: string;
+  endDate?: string;
+  targetDate?: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW" | string;
+  goal?: string;
+  targetQuestions?: number;
+  targetAccuracy?: number;
+  notes?: string;
+  status?: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | string;
   updatedAt?: string;
 }
 

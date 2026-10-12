@@ -112,7 +112,7 @@ export default function LogsManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full  font-sans bg-background text-foreground">
       {/* Header Toolbar */}
       <LogsHeader
         isLoading={isLogsLoading}

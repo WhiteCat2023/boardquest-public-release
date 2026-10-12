@@ -4,6 +4,9 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  Target,
+  Flame,
+  FileText,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +24,12 @@ interface SubjectTargetConfig {
   endDate: Date;
   status: "Active" | "Upcoming" | "Completed";
   color: string;
+  priority?: string;
+  goal?: string;
+  targetQuestions?: number;
+  targetAccuracy?: number;
+  notes?: string;
+  studyStatus?: string;
 }
 
 export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCardProps) {
@@ -66,6 +75,12 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
           endDate,
           status,
           color: "text-rose-500",
+          priority: p.priority,
+          goal: p.goal,
+          targetQuestions: p.targetQuestions,
+          targetAccuracy: p.targetAccuracy,
+          notes: p.notes,
+          studyStatus: p.status,
         };
       })
       .filter((t): t is SubjectTargetConfig => t !== null)
@@ -448,6 +463,63 @@ export function StudentLearningHabitsCard({ student }: StudentLearningHabitsCard
               )}
             </div>
           </div>
+
+          {/* Milestone Targets & Goal Callout */}
+          {(activeTarget.priority || activeTarget.goal || activeTarget.notes || activeTarget.targetQuestions || activeTarget.targetAccuracy) && (
+            <div className="mb-2.5 p-2 rounded-xl bg-muted/30 border border-border/60 flex flex-col gap-1 text-xs">
+              <div className="flex items-center justify-between flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {activeTarget.priority && (
+                    <span
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase ${
+                        activeTarget.priority.toUpperCase() === "HIGH"
+                          ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                          : activeTarget.priority.toUpperCase() === "LOW"
+                          ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                      }`}
+                    >
+                      {activeTarget.priority.toUpperCase() === "HIGH" && <Flame size={9} />}
+                      {activeTarget.priority} Priority
+                    </span>
+                  )}
+                  {activeTarget.studyStatus && (
+                    <Badge variant="outline" className="text-[8.5px] font-bold px-1.5 py-0">
+                      {activeTarget.studyStatus.replace("_", " ")}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
+                  <span className="text-indigo-600 dark:text-indigo-400">
+                    🎯 {activeTarget.targetQuestions ?? 50} Qs
+                  </span>
+                  <span>•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    📈 {activeTarget.targetAccuracy ?? 75}% Acc
+                  </span>
+                </div>
+              </div>
+
+              {activeTarget.goal && (
+                <div className="flex items-start gap-1.5 pt-0.5 text-[10.5px]">
+                  <Target size={12} className="text-primary shrink-0 mt-0.5" />
+                  <p className="font-semibold text-foreground truncate" title={activeTarget.goal}>
+                    Goal: &ldquo;{activeTarget.goal}&rdquo;
+                  </p>
+                </div>
+              )}
+
+              {activeTarget.notes && (
+                <div className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                  <FileText size={11} className="shrink-0 mt-0.5" />
+                  <p className="italic truncate" title={activeTarget.notes}>
+                    Notes: {activeTarget.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Interactive Mini-Calendar Grid */}
           <div className="space-y-1.5 my-auto">

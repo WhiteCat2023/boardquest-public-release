@@ -36,6 +36,7 @@ import { StudentAiSummaryKpiStrip } from "../components/profile/StudentAiSummary
 import { StudentCompetencyAnalytics } from "../components/profile/StudentCompetencyAnalytics";
 import { StudentPredictedOutcomesCard } from "../components/profile/StudentPredictedOutcomesCard";
 import { StudentLearningHabitsCard } from "../components/profile/StudentLearningHabitsCard";
+import { StudentStudyTargetPeriodCard } from "../components/profile/StudentStudyTargetPeriodCard";
 import { StudentCombatAttributesCard } from "../components/profile/StudentCombatAttributesCard";
 import { StudentDisciplineProgressCard } from "../components/profile/StudentDisciplineProgressCard";
 import { StudentAiInsightsCard } from "../components/profile/StudentAiActionCenterCard";
@@ -263,7 +264,10 @@ export default function ViewStudent() {
               <StudentCombatAttributesCard student={activeStudent} />
             </div>
 
-            {/* Row 3: Discipline / Lesson Progress */}
+            {/* Row 3: Study Target Period & Milestones Details */}
+            <StudentStudyTargetPeriodCard student={activeStudent} />
+
+            {/* Row 4: Discipline / Lesson Progress */}
             <StudentDisciplineProgressCard
               metrics={activeStudent.subjectMetrics || []}
               onOpenScorecard={() => setIsScorecardOpen(true)}
@@ -324,7 +328,8 @@ export default function ViewStudent() {
 
       {/* TAB 4: SYLLABUS & READINESS */}
       {activeTab === "readiness" && (
-        <div className="animate-in fade-in duration-200">
+        <div className="animate-in fade-in duration-200 flex flex-col gap-4">
+          <StudentStudyTargetPeriodCard student={activeStudent} />
           {analyticsReport ? (
             <SyllabusReadinessTab report={analyticsReport} />
           ) : isReportLoading ? (

@@ -148,9 +148,27 @@ export function SyllabusReadinessTab({ report }: SyllabusReadinessTabProps) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
                         <span>{m.lessonsDone} of {m.totalLessons} Modules Completed</span>
                         {plan && (
-                          <span className="font-semibold text-primary">
-                            • Target: {new Date(plan.targetDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-primary">
+                              • Target: {new Date(plan.endDate || plan.targetDate || "").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </span>
+                            {plan.priority && (
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase ${
+                                  plan.priority.toUpperCase() === "HIGH"
+                                    ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                                    : plan.priority.toUpperCase() === "LOW"
+                                    ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+                                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                                }`}
+                              >
+                                {plan.priority}
+                              </span>
+                            )}
+                            <span className="text-[9.5px] font-bold text-muted-foreground">
+                              ({plan.targetQuestions ?? 50} Qs • {plan.targetAccuracy ?? 75}% Min)
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>

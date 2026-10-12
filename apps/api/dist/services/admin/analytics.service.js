@@ -22,7 +22,7 @@ export class AnalyticsService {
                 mastery: true,
                 lessonCompletions: true,
                 achievements: { orderBy: { timestamp: "desc" } },
-                studyPlans: { orderBy: { targetDate: "asc" } },
+                studyPlans: { orderBy: { createdAt: "asc" } },
                 userBadges: {
                     include: {
                         badge: true,
@@ -416,8 +416,16 @@ export class AnalyticsService {
             .map((sp) => ({
             id: sp.id,
             subject: sp.subject,
-            targetDate: sp.targetDate,
-            updatedAt: sp.updatedAt
+            startDate: sp.startDate,
+            endDate: sp.endDate || sp.targetDate,
+            targetDate: sp.endDate || sp.targetDate,
+            priority: sp.priority || "MEDIUM",
+            goal: sp.goal || "",
+            targetQuestions: typeof sp.targetQuestions === "number" ? sp.targetQuestions : 50,
+            targetAccuracy: typeof sp.targetAccuracy === "number" ? sp.targetAccuracy : 75,
+            notes: sp.notes || "",
+            status: sp.status || "IN_PROGRESS",
+            updatedAt: sp.updatedAt,
         }));
         // 9. Construct state string for caching
         const stateString = `id:${student.id}|level:${student.level}|xp:${student.xp}|streak:${student.streak}|exams:${examsCount}|avg:${avgScore}|acc:${avgAccuracy}|lessons:${lessonsCompleted}|mastery:${masteryData.map(m => `${m.subject}:${m.proficiency}`).join(",")}|plans:${studyPlans.length}`;
