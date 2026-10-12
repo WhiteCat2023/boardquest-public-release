@@ -9,6 +9,7 @@ import {
   Calculator,
   GraduationCap,
   FileSpreadsheet,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,8 +41,10 @@ import { StudentDisciplineProgressCard } from "../components/profile/StudentDisc
 import { StudentAiInsightsCard } from "../components/profile/StudentAiActionCenterCard";
 import { PointScorecardModal } from "../components/profile/PointScorecardModal";
 import { AssignGuidanceModal } from "../components/AssignGuidanceModal";
+import { EmailStudentModal } from "../components/EmailStudentModal";
 import { StudentBadgesSection } from "../components/profile/StudentBadgesSection";
 import { StudentAchievementHistory } from "../components/profile/StudentAchievementHistory";
+import { StudentOutreachHistoryTab } from "../components/profile/StudentOutreachHistoryTab";
 import StudentReviewCenterTab from "../components/profile/StudentReviewCenterTab";
 import StudentExamResultsTab from "../components/profile/StudentExamResultsTab";
 
@@ -52,7 +55,8 @@ type StudentProfileTab =
   | "readiness"
   | "achievements"
   | "exam-results"
-  | "review-center";
+  | "review-center"
+  | "advising-outreach";
 
 export default function ViewStudent() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -62,6 +66,7 @@ export default function ViewStudent() {
   const [isScorecardOpen, setIsScorecardOpen] = useState(false);
   const [isFormulaOpen, setIsFormulaOpen] = useState(false);
   const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const { data: studentDirect, isLoading: isDirectLoading } = useStudent(studentId);
   const { data: allStudentsData, isLoading: isListLoading } = useStudents({
@@ -176,6 +181,12 @@ export default function ViewStudent() {
       icon: GraduationCap,
       badgeCount: activeStudent.reviewCenterTranscript?.scores?.length || undefined,
     },
+    {
+      id: "advising-outreach" as StudentProfileTab,
+      label: "Advising & Outreach Log",
+      icon: Mail,
+      badgeCount: activeStudent.outreachLogs?.length || undefined,
+    },
   ];
 
   return (
@@ -187,6 +198,7 @@ export default function ViewStudent() {
         onOpenScorecard={() => setIsScorecardOpen(true)}
         onOpenFormula={() => setIsFormulaOpen(true)}
         onAssignGuidance={() => setIsGuidanceOpen(true)}
+        onReachOut={() => setIsEmailModalOpen(true)}
       />
 
       {/* 2. The Hero AI Summary & 6-Item KPI Strip */}
@@ -354,6 +366,14 @@ export default function ViewStudent() {
         <StudentReviewCenterTab student={activeStudent} />
       )}
 
+      {/* TAB 8: ADVISING & OUTREACH LOG */}
+      {activeTab === "advising-outreach" && (
+        <StudentOutreachHistoryTab
+          student={activeStudent}
+          onReachOut={() => setIsEmailModalOpen(true)}
+        />
+      )}
+
       {/* MODAL: Official Candidate Scorecard Printable Document */}
       <PointScorecardModal
         open={isScorecardOpen}
@@ -422,6 +442,16 @@ export default function ViewStudent() {
         onClose={() => setIsGuidanceOpen(false)}
         student={activeStudent}
       />
+
+      {/* MODAL: Email Student Outreach */}
+      {activeStudent && (
+        <EmailStudentModal
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+          student={activeStudent}
+          defaultSubjectCategory={activeStudent.failingSubjects?.[0]}
+        />
+      )}
     </div>
   );
 }

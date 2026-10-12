@@ -2,13 +2,14 @@ import prisma from "../../services/prisma";
 import { ApiError } from "../../utils/apiError";
 import { GuidanceStatus, Role } from "../../types/prisma.types";
 import { createNotification } from "./notification.service";
+import { sendAdvisorOutreachEmail } from "../mail.service";
 export const bulkCreateGuidanceAssignments = async (assignedById, payload, creatorRole) => {
     if (creatorRole !== Role.SUPERADMIN &&
         creatorRole !== Role.DEAN &&
         creatorRole !== Role.TEAMLEAD) {
         throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
     }
-    const { studentIds, advisorId, subjectCategory, reason, guidanceNotes } = payload;
+    const { studentIds, advisorId, subjectCategory, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
     if (!Array.isArray(studentIds) ||
         studentIds.length === 0 ||
         !advisorId ||
@@ -45,6 +46,13 @@ export const bulkCreateGuidanceAssignments = async (assignedById, payload, creat
             subjectCategory: subjectCategory || "General Academic Support",
             reason: reason.trim(),
             guidanceNotes: guidanceNotes?.trim() || "",
+            drillQuota: drillQuota !== undefined && !isNaN(Number(drillQuota))
+                ? Math.max(5, Math.min(500, Number(drillQuota)))
+                : 30,
+            targetAccuracy: targetAccuracy !== undefined && !isNaN(Number(targetAccuracy))
+                ? Math.max(50, Math.min(100, Number(targetAccuracy)))
+                : 75.0,
+            deadline: deadline ? new Date(deadline) : null,
             status: GuidanceStatus.PENDING,
         },
         include: {
@@ -77,6 +85,9 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
             subjectCategory: payload.subjectCategory,
             reason: payload.reason,
             guidanceNotes: payload.guidanceNotes,
+            drillQuota: payload.drillQuota,
+            targetAccuracy: payload.targetAccuracy,
+            deadline: payload.deadline,
         }, creatorRole);
         return bulkResult.assignments[0];
     }
@@ -85,7 +96,7 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
         creatorRole !== Role.TEAMLEAD) {
         throw new ApiError(403, "Only Superadmin, Dean, and Team Lead users can assign students to advisors.");
     }
-    const { studentId, advisorId, subjectCategory, reason, guidanceNotes } = payload;
+    const { studentId, advisorId, subjectCategory, reason, guidanceNotes, drillQuota, targetAccuracy, deadline, } = payload;
     if (!studentId || !advisorId || !reason?.trim()) {
         throw new ApiError(400, "studentId, advisorId, and reason are required.");
     }
@@ -116,6 +127,13 @@ export const createGuidanceAssignment = async (assignedById, payload, creatorRol
             subjectCategory: subjectCategory || "General Academic Support",
             reason: reason.trim(),
             guidanceNotes: guidanceNotes?.trim() || "",
+            drillQuota: drillQuota !== undefined && !isNaN(Number(drillQuota))
+                ? Math.max(5, Math.min(500, Number(drillQuota)))
+                : 30,
+            targetAccuracy: targetAccuracy !== undefined && !isNaN(Number(targetAccuracy))
+                ? Math.max(50, Math.min(100, Number(targetAccuracy)))
+                : 75.0,
+            deadline: deadline ? new Date(deadline) : null,
             status: GuidanceStatus.PENDING,
         },
         include: {
@@ -227,6 +245,15 @@ export const updateGuidanceAssignment = async (assignmentId, userId, userRole, p
             resolutionNotes: payload.resolutionNotes !== undefined
                 ? payload.resolutionNotes
                 : existing.resolutionNotes,
+            drillQuota: payload.drillQuota !== undefined && !isNaN(Number(payload.drillQuota))
+                ? Math.max(5, Math.min(500, Number(payload.drillQuota)))
+                : existing.drillQuota,
+            targetAccuracy: payload.targetAccuracy !== undefined && !isNaN(Number(payload.targetAccuracy))
+                ? Math.max(50, Math.min(100, Number(payload.targetAccuracy)))
+                : existing.targetAccuracy,
+            deadline: payload.deadline !== undefined
+                ? payload.deadline ? new Date(payload.deadline) : null
+                : existing.deadline,
         },
         include: {
             student: {
@@ -273,4 +300,138 @@ export const getFailingStudents = async () => {
         };
     });
     return failingStudents;
+};
+export const sendStudentReachoutEmail = async (advisorId, advisorRole, payload) => {
+    const { studentId, guidanceId, subject, message, meetingLink, drillCategory, templateType } = payload;
+    if (!studentId || !subject?.trim() || !message?.trim()) {
+        throw new ApiError(400, "studentId, subject, and message are required.");
+    }
+    // 1. Fetch advisor profile
+    const advisor = await prisma.adminUser.findUnique({
+        where: { id: advisorId },
+        select: { id: true, name: true, email: true, role: true },
+    });
+    if (!advisor) {
+        throw new ApiError(404, "Advisor profile not found.");
+    }
+    // 2. Fetch student profile
+    const student = await prisma.user.findUnique({
+        where: { id: studentId },
+        select: { id: true, name: true, email: true },
+    });
+    if (!student) {
+        throw new ApiError(404, "Student profile not found.");
+    }
+    // 3. Check for guidance assignment
+    let guidanceAssignment = null;
+    if (guidanceId) {
+        guidanceAssignment = await prisma.guidanceAssignment.findUnique({
+            where: { id: guidanceId },
+        });
+    }
+    else {
+        guidanceAssignment = await prisma.guidanceAssignment.findFirst({
+            where: {
+                studentId,
+                advisorId,
+                status: { in: [GuidanceStatus.PENDING, GuidanceStatus.IN_PROGRESS] },
+            },
+        });
+    }
+    // 4. Send email via mail service
+    const emailResult = await sendAdvisorOutreachEmail({
+        toEmail: student.email,
+        studentName: student.name,
+        advisorName: advisor.name,
+        advisorEmail: advisor.email,
+        advisorRole: advisor.role,
+        subject: subject.trim(),
+        message: message.trim(),
+        meetingLink: meetingLink?.trim() || undefined,
+        drillCategory: drillCategory || guidanceAssignment?.subjectCategory,
+    });
+    // 5. Persist persistent OutreachLog record
+    const now = new Date();
+    const outreachLog = await prisma.outreachLog.create({
+        data: {
+            studentId: student.id,
+            advisorId: advisor.id,
+            guidanceId: guidanceAssignment?.id || null,
+            channel: "EMAIL",
+            subject: subject.trim(),
+            message: message.trim(),
+            templateType: templateType || null,
+            focusSubject: drillCategory || guidanceAssignment?.subjectCategory || null,
+            meetingLink: meetingLink?.trim() || null,
+            deliveryStatus: emailResult ? "SENT" : "SIMULATED",
+            createdAt: now,
+        },
+    }).catch((err) => {
+        console.warn("Failed to persist OutreachLog:", err?.message);
+        return null;
+    });
+    // 6. Update student's lastContactedAt timestamp
+    await prisma.user.update({
+        where: { id: student.id },
+        data: { lastContactedAt: now },
+    }).catch((err) => console.warn("Failed to update lastContactedAt on User:", err?.message));
+    // 7. Update guidance assignment notes and status if exists
+    if (guidanceAssignment) {
+        const timestamp = now.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+        const newNote = `[Outreach Email Sent on ${timestamp} by ${advisor.name}]: "${subject.trim()}"`;
+        const updatedNotes = guidanceAssignment.guidanceNotes
+            ? `${guidanceAssignment.guidanceNotes}\n\n${newNote}`
+            : newNote;
+        await prisma.guidanceAssignment.update({
+            where: { id: guidanceAssignment.id },
+            data: {
+                guidanceNotes: updatedNotes,
+                lastOutreachAt: now,
+                status: guidanceAssignment.status === GuidanceStatus.PENDING
+                    ? GuidanceStatus.IN_PROGRESS
+                    : guidanceAssignment.status,
+            },
+        }).catch((err) => console.warn("Failed to update GuidanceAssignment:", err?.message));
+    }
+    // 8. In-app notification for the student
+    createNotification({
+        recipientId: student.id,
+        title: `Academic Guidance from ${advisor.name}`,
+        message: `Your advisor ${advisor.name} sent you an outreach email regarding "${subject.trim()}".`,
+        type: "INFO",
+        link: "/study-plans",
+    }).catch((err) => console.warn("Notification error:", err?.message));
+    return {
+        success: true,
+        sentTo: student.email,
+        advisorName: advisor.name,
+        subject: subject.trim(),
+        deliveredAt: now.toISOString(),
+        logId: outreachLog?.id || null,
+        emailId: emailResult?.id || "simulated",
+    };
+};
+export const getStudentOutreachLogs = async (studentId) => {
+    if (!studentId) {
+        throw new ApiError(400, "Student ID is required.");
+    }
+    const logs = await prisma.outreachLog.findMany({
+        where: { studentId },
+        include: {
+            advisor: {
+                select: { id: true, name: true, email: true, role: true },
+            },
+            student: {
+                select: { id: true, name: true, email: true },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+    });
+    return logs;
 };

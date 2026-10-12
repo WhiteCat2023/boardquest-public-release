@@ -13,7 +13,8 @@ import CustomSelectWithLabel from "@/components/custom/select/Select";
 import { useCategories } from "@/features/question-bank";
 import { useTopics } from "@/features/question-bank/api/useTopics";
 import { TopicCMSModal } from "@/features/question-bank/components/dialog/TopicCMSModal";
-import { BookOpen, Check, ChevronDown, Plus, Settings2 } from "lucide-react";
+import { BookOpen, Brain, Check, ChevronDown, Plus, Settings2 } from "lucide-react";
+import { getCognitiveLevelMapping } from "@/utils/cognitiveLevel";
 
 interface QuestionMetaFieldsProps {
   categoryId: string;
@@ -41,6 +42,7 @@ export function QuestionMetaFields({
   const selectedCategory = categories.find((c: any) => c.id === categoryId);
   const categoryName = selectedCategory?.name || "Subject";
   const selectedTopicObj = topics.find((t) => t.name === topic);
+  const cognitiveInfo = getCognitiveLevelMapping(difficulty || "EASY");
 
   const handleOpenCMS = (mode: "create" | "manage" = "manage") => {
     setCmsMode(mode);
@@ -219,10 +221,36 @@ export function QuestionMetaFields({
             value={difficulty}
             onValueChange={onDifficultyChange}
           >
-            <SelectItem value="EASY">Easy Level</SelectItem>
-            <SelectItem value="MEDIUM">Medium Level</SelectItem>
-            <SelectItem value="HARD">Hard Level</SelectItem>
+            <SelectItem value="EASY">Easy Level (LOTS)</SelectItem>
+            <SelectItem value="MEDIUM">Medium Level (LOTS / Lower HOTS)</SelectItem>
+            <SelectItem value="HARD">Hard Level (HOTS)</SelectItem>
           </CustomSelectWithLabel>
+        </div>
+      </div>
+
+      {/* Dynamic Cognitive Level & Focus Guidance Banner tied to Difficulty */}
+      <div
+        className={`p-3 rounded-xl border text-xs flex items-start gap-3 transition-all duration-200 shadow-2xs ${cognitiveInfo.badgeClass}`}
+      >
+        <div className="p-1.5 rounded-lg bg-background/80 shadow-2xs shrink-0 mt-0.5 border border-current/15">
+          <Brain className="w-4 h-4 text-current" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider opacity-75">
+              Primary Cognitive Level:
+            </span>
+            <span className="font-bold text-xs bg-background/90 px-2 py-0.5 rounded-md border border-current/25 shadow-2xs">
+              {cognitiveInfo.label}
+            </span>
+            <span className="text-[11px] font-medium opacity-80">
+              ({cognitiveInfo.fullTitle})
+            </span>
+          </div>
+          <p className="text-xs opacity-95 leading-relaxed">
+            <strong className="font-semibold">Typical Focus:</strong>{" "}
+            {cognitiveInfo.typicalFocus}
+          </p>
         </div>
       </div>
 

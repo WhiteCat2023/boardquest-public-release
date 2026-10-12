@@ -20,6 +20,20 @@ export enum QuestionDifficulty {
   HARD = "HARD",
 }
 
+export enum CognitiveLevel {
+  LOTS = "LOTS",
+  HOTS = "HOTS",
+}
+
+export const getCognitiveLevelFromDifficulty = (
+  difficulty?: QuestionDifficulty | string,
+): CognitiveLevel => {
+  if (difficulty === QuestionDifficulty.HARD || difficulty === "HARD") {
+    return CognitiveLevel.HOTS;
+  }
+  return CognitiveLevel.LOTS;
+};
+
 export enum QuestionType {
   MCQ = "MCQ",
   TRUE_FALSE = "TRUE_FALSE",
@@ -166,7 +180,41 @@ export interface GuidanceAssignment {
   subject?: string;
   reason: string;
   status: GuidanceStatus;
+  guidanceNotes?: string;
+  resolutionNotes?: string;
+  drillQuota?: number;
+  targetAccuracy?: number;
+  deadline?: Date | string;
+  lastOutreachAt?: Date | string;
   createdAt?: Date;
+}
+
+export interface OutreachLog {
+  id: string;
+  studentId: string;
+  advisorId: string;
+  guidanceId?: string | null;
+  channel: string;
+  subject: string;
+  message: string;
+  templateType?: string | null;
+  focusSubject?: string | null;
+  meetingLink?: string | null;
+  deliveryStatus: string;
+  readAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  advisor?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  student?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface SystemLog {

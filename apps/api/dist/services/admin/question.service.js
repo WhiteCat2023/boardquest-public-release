@@ -1,7 +1,7 @@
 import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
-import { QuestionDifficulty, QuestionType, QuestionStatus, } from "../../types/prisma.types";
+import { QuestionDifficulty, QuestionType, QuestionStatus, CognitiveLevel, getCognitiveLevelFromDifficulty, } from "../../types/prisma.types";
 import { questionSynthesizerService, } from "./questionSynthesizer.service";
 import { questionParaphraserService, } from "./questionParaphraser.service";
 import { createNotification } from "./notification.service";
@@ -21,6 +21,13 @@ export const CreateQuestionSchema = z.object({
     authorId: z.string().optional(),
     topic: z.string().min(1, "Topic is required"),
     difficulty: z.preprocess((val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val), z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)),
+    cognitiveLevel: z.preprocess((val) => {
+        if (val === "HOTS")
+            return CognitiveLevel.HOTS;
+        if (val === "LOTS")
+            return CognitiveLevel.LOTS;
+        return undefined;
+    }, z.nativeEnum(CognitiveLevel).optional()),
     type: z.preprocess((val) => (val === "" || !val ? QuestionType.MCQ : val), z.nativeEnum(QuestionType).default(QuestionType.MCQ)),
     status: z.preprocess((val) => (val === "" || !val ? QuestionStatus.PENDING_REVIEW : val), z.nativeEnum(QuestionStatus).default(QuestionStatus.PENDING_REVIEW)),
     schoolYear: z.string().optional(),
@@ -36,6 +43,13 @@ export const UpdateQuestionSchema = z.object({
     authorId: z.string().optional(),
     topic: z.string().min(1, "Topic is required"),
     difficulty: z.preprocess((val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val), z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM)),
+    cognitiveLevel: z.preprocess((val) => {
+        if (val === "HOTS")
+            return CognitiveLevel.HOTS;
+        if (val === "LOTS")
+            return CognitiveLevel.LOTS;
+        return undefined;
+    }, z.nativeEnum(CognitiveLevel).optional()),
     type: z.preprocess((val) => (val === "" || !val ? QuestionType.MCQ : val), z.nativeEnum(QuestionType).default(QuestionType.MCQ)),
     status: z.nativeEnum(QuestionStatus).optional(),
 });
@@ -113,6 +127,8 @@ export class QuestionService {
                 : "currently pending review";
             throw new ApiError(409, `This question already exists in this subject (${statusLabel}). Duplicate questions cannot be uploaded.`);
         }
+        const computedCognitiveLevel = parsed.data.cognitiveLevel ||
+            getCognitiveLevelFromDifficulty(difficulty);
         const newQuestion = await this.db.question.create({
             data: {
                 question: question.trim(),
@@ -124,6 +140,7 @@ export class QuestionService {
                 authorId: finalAuthorId,
                 topic: topic.trim(),
                 difficulty,
+                cognitiveLevel: computedCognitiveLevel,
                 type,
                 status: computedStatus,
                 ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
@@ -220,6 +237,8 @@ export class QuestionService {
         if (existingDuplicate) {
             throw new ApiError(409, `Another question with the exact same wording already exists in this subject (${existingDuplicate.status}). Duplicate questions are not allowed.`);
         }
+        const computedCognitiveLevel = parsed.data.cognitiveLevel ||
+            getCognitiveLevelFromDifficulty(difficulty);
         const updatedQuestion = await this.db.question.update({
             where: {
                 id: questionId,
@@ -234,6 +253,7 @@ export class QuestionService {
                 authorId,
                 topic: topic.trim(),
                 difficulty,
+                cognitiveLevel: computedCognitiveLevel,
                 type,
                 ...(status && { status }),
             },
@@ -610,6 +630,8 @@ export class QuestionService {
                     authorUser?.role === "TEAMLEAD"
                     ? q.status || QuestionStatus.APPROVED
                     : q.status || resolvedStatus;
+            const computedCognitiveLevel = q.cognitiveLevel ||
+                getCognitiveLevelFromDifficulty(q.difficulty);
             return this.db.question.create({
                 data: {
                     question: q.question.trim(),
@@ -619,6 +641,7 @@ export class QuestionService {
                     authorId,
                     topic: q.topic.trim(),
                     difficulty: q.difficulty,
+                    cognitiveLevel: computedCognitiveLevel,
                     type: q.type,
                     status: qStatus,
                 },

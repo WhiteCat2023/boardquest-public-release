@@ -197,10 +197,10 @@ ${isMcq ? "- Choices: Provide 4 engineered multiple-choice options for each vari
 ${isTf ? '- Choices: Return strictly ["True", "False"]. Correct answer must be "True" or "False".' : ""}
 ${isSa ? "- Choices: Return an empty array []. Synthesize a concise reference correct answer string." : ""}
 
-### Target Difficulty Calibration (${input.targetDifficulty}):
-- **EASY**: Clear, direct factual phrasing with straightforward evaluation.
-- **MEDIUM**: Practical scenario context applying standard domain principles.
-- **HARD**: Multi-step scenario, edge-case parameters, and deep analytical reasoning.
+### Target Difficulty & Cognitive Level Calibration (${input.targetDifficulty}):
+- **EASY (Primary Cognitive Level: LOTS)**: Focus strictly on Lower-Order Thinking Skills: Direct recall of definitions, organisms, reagents, normal values.
+- **MEDIUM (Primary Cognitive Level: LOTS / Lower HOTS)**: Focus on Conceptual understanding or single-step formula application.
+- **HARD (Primary Cognitive Level: HOTS)**: Focus strictly on Higher-Order Thinking Skills: Multi-step clinical vignettes, Levey-Jennings/QC anomalies, discrepancy resolutions.
 
 ### Base Question Input:
 - Question Stem: "${input.question}"

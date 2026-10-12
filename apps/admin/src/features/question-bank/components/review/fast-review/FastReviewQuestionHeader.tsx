@@ -1,6 +1,7 @@
 import { ArrowLeft, BookOpen, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getDifficultyColor, getStatusColor } from "@/utils/style";
+import { getCognitiveLevelMapping } from "@/utils/cognitiveLevel";
 
 interface FastReviewQuestionHeaderProps {
   questionId: string;
@@ -51,13 +52,26 @@ export default function FastReviewQuestionHeader({
       </div>
 
       <div className="flex items-center gap-1.5">
-        <span
-          className={`rounded-md border px-2 py-0.5 text-[10.5px] font-bold ${getDifficultyColor(
-            difficulty
-          )}`}
-        >
-          {difficulty}
-        </span>
+        {(() => {
+          const cognitiveInfo = getCognitiveLevelMapping(difficulty);
+          return (
+            <>
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[10.5px] font-bold ${getDifficultyColor(
+                  difficulty
+                )}`}
+              >
+                {difficulty}
+              </span>
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${cognitiveInfo.badgeClass}`}
+                title={`Cognitive Focus: ${cognitiveInfo.typicalFocus} (${cognitiveInfo.fullTitle})`}
+              >
+                {cognitiveInfo.label}
+              </span>
+            </>
+          );
+        })()}
         <span
           className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusColor(
             displayStatus

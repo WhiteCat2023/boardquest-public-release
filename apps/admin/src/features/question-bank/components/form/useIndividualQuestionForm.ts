@@ -289,6 +289,7 @@ export function useIndividualQuestionForm({
       categoryId,
       topic: topic || "General",
       difficulty: difficulty || "MEDIUM",
+      cognitiveLevel: difficulty === "HARD" ? "HOTS" : "LOTS",
       correctAnswer: computedCorrectAnswer,
       choices: finalChoices,
       choiceImages: format === "MCQ" ? mcqChoiceImages : [],

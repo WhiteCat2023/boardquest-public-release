@@ -17,6 +17,7 @@ interface StudentTableProps {
   students: Student[];
   isLoading: boolean;
   onAssignGuidance?: (student: any) => void;
+  onReachOut?: (student: any) => void;
   selectedIds?: string[];
   onToggleSelect?: (studentId: string) => void;
   onToggleSelectAll?: () => void;
@@ -31,6 +32,7 @@ export default function StudentTable({
   students,
   isLoading,
   onAssignGuidance,
+  onReachOut,
   selectedIds = [],
   onToggleSelect,
   onToggleSelectAll,
@@ -111,16 +113,13 @@ export default function StudentTable({
                   Student Profile
                 </TableHead>
                 <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
+                  Academic Standing
+                </TableHead>
+                <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
                   Calendar Pace
                 </TableHead>
                 <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
                   Engagement
-                </TableHead>
-                <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  Progression Level
-                </TableHead>
-                <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto bg-muted/95 backdrop-blur-xs">
-                  EXP
                 </TableHead>
                 <TableHead className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right h-auto bg-muted/95 backdrop-blur-xs">
                   Actions
@@ -133,6 +132,7 @@ export default function StudentTable({
                   key={student.id || idx}
                   student={student}
                   onAssignGuidance={onAssignGuidance}
+                  onReachOut={onReachOut}
                   canSelect={canSelect}
                   isSelected={selectedIds.includes(student.id)}
                   onToggleSelect={onToggleSelect}

@@ -21,9 +21,48 @@ export interface PerformanceTrendItem {
   subject: string;
 }
 
+export interface StudentWarningSummaryData {
+  id?: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  totalWarnings: number;
+  allTimeWarnings?: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  fullscreenExits: number;
+  tabSwitches: number;
+  screenshots: number;
+  copyAttempts: number;
+  weeklyWarnings: number;
+  weeklyRiskLevel?: "LOW" | "MEDIUM" | "HIGH";
+  weeklyFullscreenExits?: number;
+  weeklyTabSwitches?: number;
+  weeklyScreenshots?: number;
+  weeklyCopyAttempts?: number;
+  currentWeekKey?: string;
+  lastIncidentType?: string | null;
+  lastIncidentAt?: string | null;
+  subjectsAffected?: string[];
+}
+
+export interface StudentWarningIncidentItem {
+  id: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  subject: string;
+  nodeId?: string;
+  quizMode?: string;
+  incidentType: string;
+  strikeCount: number;
+  details: string;
+  timestamp: string;
+  weekKey?: string;
+}
+
 export interface TimelineEventItem {
   id: string;
-  type: "exam" | "achievement" | "lesson" | "level_up";
+  type: "exam" | "achievement" | "lesson" | "level_up" | "cheating_incident" | "warning";
   title: string;
   description: string;
   timestamp: string;
@@ -33,6 +72,10 @@ export interface TimelineEventItem {
     subject?: string;
     badge?: string;
     xp?: number;
+    incidentType?: string;
+    strikeCount?: number;
+    quizMode?: string;
+    details?: string;
   };
 }
 
@@ -96,6 +139,8 @@ export interface StudentAnalyticsResult {
     studyHoursCompleted: number;
   };
   studyPlans?: StudyPlanItem[];
+  warningSummary?: StudentWarningSummaryData | null;
+  warningIncidents?: StudentWarningIncidentItem[];
   aiInsights: {
     strongAreas: string[];
     weakAreas: string[];

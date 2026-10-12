@@ -17,6 +17,17 @@ export var QuestionDifficulty;
     QuestionDifficulty["MEDIUM"] = "MEDIUM";
     QuestionDifficulty["HARD"] = "HARD";
 })(QuestionDifficulty || (QuestionDifficulty = {}));
+export var CognitiveLevel;
+(function (CognitiveLevel) {
+    CognitiveLevel["LOTS"] = "LOTS";
+    CognitiveLevel["HOTS"] = "HOTS";
+})(CognitiveLevel || (CognitiveLevel = {}));
+export const getCognitiveLevelFromDifficulty = (difficulty) => {
+    if (difficulty === QuestionDifficulty.HARD || difficulty === "HARD") {
+        return CognitiveLevel.HOTS;
+    }
+    return CognitiveLevel.LOTS;
+};
 export var QuestionType;
 (function (QuestionType) {
     QuestionType["MCQ"] = "MCQ";

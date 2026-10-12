@@ -318,6 +318,7 @@ export class StudentService {
     advisorId?: string;
     paceStatus?: string;
     engagement?: string;
+    academicStanding?: string;
     skip?: number;
     take?: number;
   }) {
@@ -328,6 +329,7 @@ export class StudentService {
       advisorId,
       paceStatus,
       engagement,
+      academicStanding,
       skip = 0,
       take = 50,
     } = options || {};
@@ -364,9 +366,10 @@ export class StudentService {
       };
     }
 
-    const hasPaceOrEngagementFilter =
+    const hasCustomFilter =
       (paceStatus && paceStatus !== "ALL") ||
-      (engagement && engagement !== "ALL");
+      (engagement && engagement !== "ALL") ||
+      (academicStanding && academicStanding !== "ALL");
 
     const selectFields = {
       id: true,
@@ -396,7 +399,7 @@ export class StudentService {
       mastery: true,
       examResults: {
         orderBy: { timestamp: "desc" },
-        take: 5,
+        take: 20,
       },
       lessonCompletions: {
         select: {
@@ -437,7 +440,7 @@ export class StudentService {
     let students: any[] = [];
     let total = 0;
 
-    if (hasPaceOrEngagementFilter) {
+    if (hasCustomFilter) {
       students = await this.db.user.findMany({
         where,
         select: selectFields as any,
@@ -517,7 +520,13 @@ export class StudentService {
       }
     }
 
-    // Ensure deactivated badges are stripped out and attach target period + pace + engagement info
+    // Fetch official curriculum subjects to calculate comprehensive subject metrics
+    const dbSubjects = await this.db.subject.findMany({
+      select: { id: true, name: true, modules: { select: { id: true, isPublished: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Ensure deactivated badges are stripped out and attach target period + pace + engagement + academic failure info
     const sanitizedStudents = students.map((s: any) => {
       const settings = userSettingsMap.get(s.id) || null;
       const rawPlans = (studyPlansMap.get(s.id) && studyPlansMap.get(s.id)!.length > 0)
@@ -550,6 +559,30 @@ export class StudentService {
           String(g.status).toUpperCase() === "IN_PROGRESS",
       ) || null;
 
+      // Comprehensive Subject Performance Calculation across ALL required subjects
+      const performance = this.computePerformanceAndTargets(s, settings, dbSubjects);
+      const subjectMetrics = performance.subjectMetrics || [];
+      const totalExamsTaken = (s.examResults || []).length;
+      const totalLessonsTaken = (s.lessonCompletions || []).length;
+      const totalAttempts = ((s as any).questionAttempts || []).length;
+      const hasAnyActivity = totalExamsTaken > 0 || totalLessonsTaken > 0 || totalAttempts > 0;
+
+      // The canonical academic standing score is based on the average across ALL required subjects
+      const avgAccuracy = Math.round(performance.avgProficiency);
+
+      // Check failing / lacking subjects (proficiency < 75% in a subject domain)
+      const failingSubjects = subjectMetrics
+        .filter((m: any) => (m.proficiency ?? 0) < 75)
+        .map((m: any) => m.subject);
+
+      // In PRC Board exam standards: A candidate fails if their overall average across all subjects is < 75%
+      // OR if any required subjects are failing/lacking.
+      const isFailing = hasAnyActivity ? (avgAccuracy < 75 || failingSubjects.length > 0) : false;
+      let standing: "FAILING" | "PASSING" | "UNTESTED" = "UNTESTED";
+      if (hasAnyActivity) {
+        standing = isFailing ? "FAILING" : "PASSING";
+      }
+
       return {
         ...s,
         studyPlans: rawPlans,
@@ -558,6 +591,13 @@ export class StudentService {
         activeObjective: activeObj,
         calendarPace,
         engagement: eng,
+        totalExamsTaken,
+        avgAccuracy,
+        failingSubjects,
+        isFailing,
+        academicStanding: standing,
+        subjectMetrics,
+        scorecardSummary: performance.scorecardSummary,
         userBadges: (s.userBadges || []).filter(
           (ub: any) => !ub.badge || ub.badge.isActive !== false,
         ),
@@ -566,17 +606,21 @@ export class StudentService {
 
     // Compute cohort summary counts
     const summary = {
-      total: hasPaceOrEngagementFilter ? sanitizedStudents.length : total,
+      total: hasCustomFilter ? sanitizedStudents.length : total,
       onTrack: sanitizedStudents.filter((s: any) => s.calendarPace?.status === "ON_TRACK").length,
       behind: sanitizedStudents.filter(
         (s: any) => s.calendarPace?.status === "BEHIND" || s.calendarPace?.status === "CRITICAL",
       ).length,
       critical: sanitizedStudents.filter((s: any) => s.calendarPace?.status === "CRITICAL").length,
       dormant: sanitizedStudents.filter((s: any) => s.engagement?.status === "DORMANT").length,
+      failing: sanitizedStudents.filter((s: any) => s.isFailing === true).length,
+      atRisk: sanitizedStudents.filter(
+        (s: any) => s.isFailing === true || s.calendarPace?.status === "CRITICAL" || s.engagement?.status === "DORMANT",
+      ).length,
     };
 
     let resultStudents = sanitizedStudents;
-    if (hasPaceOrEngagementFilter) {
+    if (hasCustomFilter) {
       if (paceStatus && paceStatus !== "ALL") {
         if (paceStatus === "BEHIND") {
           resultStudents = resultStudents.filter(
@@ -593,6 +637,20 @@ export class StudentService {
         resultStudents = resultStudents.filter(
           (s: any) => s.engagement?.status === engagement,
         );
+      }
+
+      if (academicStanding && academicStanding !== "ALL") {
+        if (academicStanding === "FAILING") {
+          resultStudents = resultStudents.filter((s: any) => s.isFailing === true);
+        } else if (academicStanding === "PASSING") {
+          resultStudents = resultStudents.filter((s: any) => s.academicStanding === "PASSING");
+        } else if (academicStanding === "UNTESTED") {
+          resultStudents = resultStudents.filter((s: any) => s.academicStanding === "UNTESTED");
+        } else if (academicStanding === "AT_RISK") {
+          resultStudents = resultStudents.filter(
+            (s: any) => s.isFailing === true || s.calendarPace?.status === "CRITICAL" || s.engagement?.status === "DORMANT",
+          );
+        }
       }
 
       total = resultStudents.length;
@@ -840,6 +898,7 @@ export class StudentService {
       studyPlans: allStudyPlans,
       subjectMetrics,
       accuracyHistory,
+      avgProficiency: Number(avgProficiency.toFixed(1)),
       scorecardSummary: {
         totalPoints,
         disciplinePoints,
@@ -1003,6 +1062,38 @@ export class StudentService {
           String(g.status).toUpperCase() === "IN_PROGRESS",
       ) || null;
 
+      // Comprehensive Subject Performance Calculation across ALL required subjects
+      const subjectMetrics = performanceData.subjectMetrics || [];
+      const totalExamsTaken = (sanitizedStudent.examResults || []).length;
+      const totalLessonsTaken = (sanitizedStudent.lessonCompletions || []).length;
+      const totalAttempts = ((sanitizedStudent as any).questionAttempts || []).length;
+      const hasAnyActivity = totalExamsTaken > 0 || totalLessonsTaken > 0 || totalAttempts > 0;
+
+      // The canonical academic standing score is based on the average across ALL required subjects
+      const avgAccuracy = Math.round(performanceData.avgProficiency);
+
+      // Check failing / lacking subjects (proficiency < 75% in a subject domain)
+      const failingSubjects = subjectMetrics
+        .filter((m: any) => (m.proficiency ?? 0) < 75)
+        .map((m: any) => m.subject);
+
+      // In PRC Board exam standards: A candidate fails if their overall average across all subjects is < 75%
+      // OR if any required subjects are failing/lacking.
+      const isFailing = hasAnyActivity ? (avgAccuracy < 75 || failingSubjects.length > 0) : false;
+      const standing: "FAILING" | "PASSING" | "UNTESTED" = hasAnyActivity
+        ? (isFailing ? "FAILING" : "PASSING")
+        : "UNTESTED";
+
+      const outreachLogs = await (this.db as any).outreachLog.findMany({
+        where: { studentId: sanitizedStudent.id },
+        include: {
+          advisor: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }).catch(() => []);
+
       return {
         ...sanitizedStudent,
         ...performanceData,
@@ -1010,6 +1101,13 @@ export class StudentService {
         calendarPace,
         engagement: eng,
         reviewCenterTranscript,
+        totalExamsTaken,
+        avgAccuracy,
+        failingSubjects,
+        isFailing,
+        academicStanding: standing,
+        outreachLogs,
+        lastContactedAt: sanitizedStudent.lastContactedAt || null,
       };
     } catch (err: any) {
       if (err instanceof ApiError) throw err;

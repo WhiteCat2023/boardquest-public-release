@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDifficultyColor, getStatusColor } from "@/utils/style";
+import { getCognitiveLevelMapping } from "@/utils/cognitiveLevel";
 import {
   BookOpen,
   Tag,
@@ -186,15 +187,28 @@ export default function ReviewQuestionsTable({
                     </span>
                   </TableCell>
 
-                  {/* Difficulty */}
+                  {/* Difficulty & Cognitive Level */}
                   <TableCell className="py-3 px-3 align-middle">
-                    <span
-                      className={`rounded-md border px-2 py-0.5 text-[10.5px] font-bold ${getDifficultyColor(
-                        question.difficulty
-                      )}`}
-                    >
-                      {question.difficulty}
-                    </span>
+                    {(() => {
+                      const cognitiveInfo = getCognitiveLevelMapping(question.difficulty);
+                      return (
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`rounded-md border px-2 py-0.5 text-[10.5px] font-bold ${getDifficultyColor(
+                              question.difficulty
+                            )}`}
+                          >
+                            {question.difficulty}
+                          </span>
+                          <span
+                            className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${cognitiveInfo.badgeClass}`}
+                            title={`Focus: ${cognitiveInfo.typicalFocus} (${cognitiveInfo.fullTitle})`}
+                          >
+                            {cognitiveInfo.label}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
 
                   {/* Status */}

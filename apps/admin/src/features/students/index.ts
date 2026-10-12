@@ -9,6 +9,7 @@ export { default as StudentTable } from "./components/StudentTable";
 export { default as StudentTableRow } from "./components/StudentTableRow";
 export { default as AssignGuidanceModal } from "./components/AssignGuidanceModal";
 export { default as GuidanceAssignmentsDesk } from "./components/GuidanceAssignmentsDesk";
+export { default as EmailStudentModal } from "./components/EmailStudentModal";
 export * from "./components/profile/StudentProfileHeader";
 export * from "./components/profile/StudentAiSummaryKpiStrip";
 export * from "./components/profile/StudentLearningActivityCard";
@@ -24,6 +25,7 @@ export * from "./components/profile/StudentBadgesSection";
 export * from "./components/profile/StudentAchievementHistory";
 export * from "./components/profile/StudentSubjectProgressCard";
 export { default as StudentExamResultsTab } from "./components/profile/StudentExamResultsTab";
+export * from "./components/profile/StudentOutreachHistoryTab";
 export * from "./components/enroll";
 
 // API & Types

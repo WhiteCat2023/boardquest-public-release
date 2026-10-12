@@ -25,6 +25,7 @@ export const getAllStudents = asyncHandler(async (req: Request, res: Response) =
   const advisorId = req.query.advisorId as string;
   const paceStatus = req.query.paceStatus as string;
   const engagement = req.query.engagement as string;
+  const academicStanding = req.query.academicStanding as string;
   const skip = parseInt(req.query.skip as string) || 0;
   const take = parseInt(req.query.take as string) || 50;
 
@@ -35,6 +36,7 @@ export const getAllStudents = asyncHandler(async (req: Request, res: Response) =
     advisorId,
     paceStatus,
     engagement,
+    academicStanding,
     skip,
     take,
   });

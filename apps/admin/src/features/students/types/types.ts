@@ -105,6 +105,8 @@ export interface StudentCohortSummary {
   behind: number;
   critical: number;
   dormant: number;
+  failing: number;
+  atRisk: number;
 }
 
 export interface Student {
@@ -128,6 +130,14 @@ export interface Student {
   userBadges?: any[];
   guidanceAssignments?: any[];
   activeGuidance?: any;
+
+  isFailing?: boolean;
+  avgAccuracy?: number;
+  totalExamsTaken?: number;
+  failingSubjects?: string[];
+  academicStanding?: "FAILING" | "PASSING" | "UNTESTED";
+  lastContactedAt?: string | null;
+  outreachLogs?: any[];
 
   // BoardQuesters Performance & Target synchronization fields
   userSettings?: UserSettings | null;

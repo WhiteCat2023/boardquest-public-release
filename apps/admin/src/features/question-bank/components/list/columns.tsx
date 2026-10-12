@@ -2,6 +2,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { UserRole, QuestionStatus, type Question } from "@/types/question";
 import { Eye, Trash2, Edit, Tag, Image as ImageIcon } from "lucide-react";
 import { getDifficultyColor, getStatusColor } from "@/utils/style";
+import { getCognitiveLevelMapping } from "@/utils/cognitiveLevel";
 
 interface GetColumnsProps {
   currentUserId: string;
@@ -94,13 +95,19 @@ export const getQuestionColumns = ({
                 <span>Image</span>
               </span>
             )}
-            {difficulty && (
-              <span
-                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold shrink-0 ${getDifficultyColor(difficulty)}`}
-              >
-                {difficulty}
-              </span>
-            )}
+            {difficulty && (() => {
+              const cognitiveInfo = getCognitiveLevelMapping(difficulty);
+              return (
+                <span
+                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold shrink-0 flex items-center gap-1 ${getDifficultyColor(difficulty)}`}
+                  title={`Cognitive Level: ${cognitiveInfo.label} (${cognitiveInfo.fullTitle})\nTypical Focus: ${cognitiveInfo.typicalFocus}`}
+                >
+                  <span>{difficulty}</span>
+                  <span className="opacity-50">•</span>
+                  <span className="font-bold text-[10px]">{cognitiveInfo.label}</span>
+                </span>
+              );
+            })()}
             {status && (
               <span
                 className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0 ${getStatusColor(status)}`}

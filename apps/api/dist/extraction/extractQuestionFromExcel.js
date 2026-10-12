@@ -17,6 +17,7 @@ export function extractQuestionsFromExcel(buffer) {
                 correctAnswer: (row.correctAnswer || row.correct_answer || row.Answer || row.answer || "").toString().trim(),
                 topic: (row.topic || row.Topic || row.subject || row.Subject || "").toString().trim(),
                 difficulty: (row.difficulty || row.Difficulty || row.level || row.Level || "").toString().trim(),
+                cognitiveLevel: (row.cognitiveLevel || row.CognitiveLevel || row.cognitive || row.Cognitive || "").toString().trim(),
                 type: (row.type || row.Type || row.questionType || row.question_type || "").toString().trim(),
             };
             if (!rawRow.question)
@@ -27,7 +28,13 @@ export function extractQuestionsFromExcel(buffer) {
                 validationErrors.push(`[Sheet: ${sheetName}] Row ${i + 2}: ${errorMsgs}`);
             }
             else {
-                results.push(parsed.data);
+                const itemDifficulty = parsed.data.difficulty;
+                const itemCognitiveLevel = parsed.data.cognitiveLevel ||
+                    (itemDifficulty === "HARD" ? "HOTS" : "LOTS");
+                results.push({
+                    ...parsed.data,
+                    cognitiveLevel: itemCognitiveLevel,
+                });
             }
         }
     }

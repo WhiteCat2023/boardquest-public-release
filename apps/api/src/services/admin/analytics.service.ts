@@ -17,9 +17,48 @@ export interface PerformanceTrendItem {
   subject: string;
 }
 
+export interface StudentWarningSummaryData {
+  id?: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  totalWarnings: number;
+  allTimeWarnings?: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  fullscreenExits: number;
+  tabSwitches: number;
+  screenshots: number;
+  copyAttempts: number;
+  weeklyWarnings: number;
+  weeklyRiskLevel?: "LOW" | "MEDIUM" | "HIGH";
+  weeklyFullscreenExits?: number;
+  weeklyTabSwitches?: number;
+  weeklyScreenshots?: number;
+  weeklyCopyAttempts?: number;
+  currentWeekKey?: string;
+  lastIncidentType?: string | null;
+  lastIncidentAt?: string | null;
+  subjectsAffected?: string[];
+}
+
+export interface StudentWarningIncidentItem {
+  id: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  subject: string;
+  nodeId?: string;
+  quizMode?: string;
+  incidentType: string;
+  strikeCount: number;
+  details: string;
+  timestamp: string;
+  weekKey?: string;
+}
+
 export interface TimelineEventItem {
   id: string;
-  type: "exam" | "achievement" | "lesson" | "level_up";
+  type: "exam" | "achievement" | "lesson" | "level_up" | "cheating_incident" | "warning";
   title: string;
   description: string;
   timestamp: string;
@@ -29,6 +68,10 @@ export interface TimelineEventItem {
     subject?: string;
     badge?: string;
     xp?: number;
+    incidentType?: string;
+    strikeCount?: number;
+    quizMode?: string;
+    details?: string;
   };
 }
 
@@ -90,6 +133,8 @@ export interface StudentAnalyticsResult {
     targetDate: Date | string;
     updatedAt?: Date | string;
   }>;
+  warningSummary?: StudentWarningSummaryData | null;
+  warningIncidents?: StudentWarningIncidentItem[];
   aiInsights: {
     strongAreas: string[];
     weakAreas: string[];
@@ -263,50 +308,215 @@ export class AnalyticsService {
       subject: e.subject || "General Board Review"
     })).reverse();
 
-    // 4. Construct Timeline Feed strictly from real DB records
-    const timeline: TimelineEventItem[] = [];
+    // 4. Fetch Student Warning Summary and Incidents from BoardQuesters collections
+    let warningSummary: StudentWarningSummaryData | null = null;
+    let warningIncidents: StudentWarningIncidentItem[] = [];
+
+    try {
+      const summaryRaw: any = await (this.db as any).$runCommandRaw({
+        find: "StudentWarningSummaries",
+        filter: { userId: studentId },
+        limit: 1,
+      });
+
+      if (summaryRaw?.cursor?.firstBatch && summaryRaw.cursor.firstBatch.length > 0) {
+        const raw = summaryRaw.cursor.firstBatch[0];
+        warningSummary = {
+          id: raw._id?.$oid || (typeof raw._id?.toString === "function" ? raw._id.toString() : raw._id) || raw.id,
+          userId: raw.userId || studentId,
+          userName: raw.userName || student.name,
+          userEmail: raw.userEmail || student.email,
+          totalWarnings: Number(raw.totalWarnings ?? raw.allTimeWarnings ?? 0),
+          allTimeWarnings: Number(raw.allTimeWarnings ?? raw.totalWarnings ?? 0),
+          riskLevel: ((raw.riskLevel || "LOW") as string).toUpperCase() as "LOW" | "MEDIUM" | "HIGH",
+          fullscreenExits: Number(raw.fullscreenExits ?? 0),
+          tabSwitches: Number(raw.tabSwitches ?? 0),
+          screenshots: Number(raw.screenshots ?? 0),
+          copyAttempts: Number(raw.copyAttempts ?? 0),
+          weeklyWarnings: Number(raw.weeklyWarnings ?? 0),
+          weeklyRiskLevel: ((raw.weeklyRiskLevel || "LOW") as string).toUpperCase() as "LOW" | "MEDIUM" | "HIGH",
+          weeklyFullscreenExits: Number(raw.weeklyFullscreenExits ?? 0),
+          weeklyTabSwitches: Number(raw.weeklyTabSwitches ?? 0),
+          weeklyScreenshots: Number(raw.weeklyScreenshots ?? 0),
+          weeklyCopyAttempts: Number(raw.weeklyCopyAttempts ?? 0),
+          currentWeekKey: raw.currentWeekKey || "",
+          lastIncidentType: raw.lastIncidentType || null,
+          lastIncidentAt: raw.lastIncidentAt?.$date || raw.lastIncidentAt || null,
+          subjectsAffected: Array.isArray(raw.subjectsAffected) ? raw.subjectsAffected : [],
+        };
+      }
+
+      const incidentsRaw: any = await (this.db as any).$runCommandRaw({
+        find: "StudentWarningIncidents",
+        filter: { userId: studentId },
+        sort: { timestamp: -1 },
+        limit: 100,
+      });
+
+      if (incidentsRaw?.cursor?.firstBatch && incidentsRaw.cursor.firstBatch.length > 0) {
+        warningIncidents = incidentsRaw.cursor.firstBatch.map((inc: any) => ({
+          id: inc._id?.$oid || (typeof inc._id?.toString === "function" ? inc._id.toString() : inc._id) || inc.id,
+          userId: inc.userId || studentId,
+          userName: inc.userName || student.name,
+          userEmail: inc.userEmail || student.email,
+          subject: inc.subject || "General Quest",
+          nodeId: inc.nodeId,
+          quizMode: inc.quizMode || "quest",
+          incidentType: inc.incidentType || "GENERAL_WARNING",
+          strikeCount: Number(inc.strikeCount ?? 1),
+          details: inc.details || "",
+          weekKey: inc.weekKey,
+          timestamp: inc.timestamp?.$date || inc.timestamp || inc.createdAt?.$date || inc.createdAt || new Date().toISOString(),
+        }));
+      }
+
+      // If no explicit summary document exists but incidents were found, construct summary from incidents
+      if (!warningSummary && warningIncidents.length > 0) {
+        const totalWarns = warningIncidents.length;
+        const fsExits = warningIncidents.filter((i) => i.incidentType === "FULLSCREEN_EXIT").length;
+        const tabSwitches = warningIncidents.filter((i) => i.incidentType === "TAB_SWITCH").length;
+        const screenshots = warningIncidents.filter((i) => i.incidentType === "SCREENSHOT_ATTEMPT").length;
+        const copyAttempts = warningIncidents.filter((i) => i.incidentType === "COPY_ATTEMPT").length;
+        const calculatedRisk = totalWarns >= 6 ? "HIGH" : totalWarns >= 3 ? "MEDIUM" : "LOW";
+        const subjects = Array.from(new Set(warningIncidents.map((i) => i.subject).filter(Boolean)));
+        const latestInc = warningIncidents[0];
+
+        warningSummary = {
+          userId: studentId,
+          userName: student.name,
+          userEmail: student.email,
+          totalWarnings: totalWarns,
+          allTimeWarnings: totalWarns,
+          riskLevel: calculatedRisk,
+          fullscreenExits: fsExits,
+          tabSwitches: tabSwitches,
+          screenshots: screenshots,
+          copyAttempts: copyAttempts,
+          weeklyWarnings: totalWarns,
+          weeklyRiskLevel: calculatedRisk,
+          weeklyFullscreenExits: fsExits,
+          weeklyTabSwitches: tabSwitches,
+          weeklyScreenshots: screenshots,
+          weeklyCopyAttempts: copyAttempts,
+          lastIncidentType: latestInc?.incidentType || null,
+          lastIncidentAt: latestInc?.timestamp || null,
+          subjectsAffected: subjects,
+        };
+      }
+    } catch (warnErr) {
+      console.warn("Failed to retrieve warning telemetry from BoardQuesters:", warnErr);
+    }
+
+    // 5. Construct Timeline Feed strictly from real DB records
+    interface TimelineEntryWithDate {
+      date: Date;
+      item: TimelineEventItem;
+    }
+    const timelineEntries: TimelineEntryWithDate[] = [];
 
     // Real DB exams to timeline
     (student.examResults || []).forEach((e: any) => {
-      timeline.push({
-        id: `exam-${e.id}`,
-        type: "exam",
-        title: e.subject ? `${e.subject} Exam` : "Comprehensive Diagnostic Exam",
-        description: `Scored ${e.score || 0}% with ${Math.round(e.accuracy || e.score || 0)}% accuracy`,
-        timestamp: new Date(e.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
-        metadata: {
-          score: e.score || 0,
-          accuracy: Math.round(e.accuracy || e.score || 0),
-          subject: e.subject || "General"
+      const examDate = new Date(e.timestamp || Date.now());
+      timelineEntries.push({
+        date: examDate,
+        item: {
+          id: `exam-${e.id}`,
+          type: "exam",
+          title: e.subject ? `${e.subject} Exam` : "Comprehensive Diagnostic Exam",
+          description: `Scored ${e.score || 0}% with ${Math.round(e.accuracy || e.score || 0)}% accuracy`,
+          timestamp: isNaN(examDate.getTime()) 
+            ? "Recent" 
+            : examDate.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+          metadata: {
+            score: e.score || 0,
+            accuracy: Math.round(e.accuracy || e.score || 0),
+            subject: e.subject || "General"
+          }
         }
       });
     });
 
     // Real DB achievements to timeline
     (student.achievements || []).forEach((a: any) => {
-      timeline.push({
-        id: `ach-${a.id}`,
-        type: "achievement",
-        title: `Achievement Unlocked: ${a.task}`,
-        description: `Earned +${a.xp || 0} XP in ${a.subject || "General Study"}`,
-        timestamp: new Date(a.timestamp).toLocaleString("en-US", { month: "short", day: "numeric" }),
-        metadata: {
-          badge: a.badge || "gold",
-          xp: a.xp || 0
+      const achDate = new Date(a.timestamp || Date.now());
+      timelineEntries.push({
+        date: achDate,
+        item: {
+          id: `ach-${a.id}`,
+          type: "achievement",
+          title: `Achievement Unlocked: ${a.task}`,
+          description: `Earned +${a.xp || 0} XP in ${a.subject || "General Study"}`,
+          timestamp: isNaN(achDate.getTime()) 
+            ? "Recent" 
+            : achDate.toLocaleString("en-US", { month: "short", day: "numeric" }),
+          metadata: {
+            badge: a.badge || "gold",
+            xp: a.xp || 0
+          }
         }
       });
     });
 
     // Real DB lesson completions to timeline
     (student.lessonCompletions || []).forEach((c: any) => {
-      timeline.push({
-        id: `lesson-${c.id}`,
-        type: "lesson",
-        title: `Completed Module: ${c.lessonId || "Syllabus Lesson"}`,
-        description: `Finished interactive study module`,
-        timestamp: new Date(c.completedAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      const lessonDate = new Date(c.completedAt || c.createdAt || Date.now());
+      timelineEntries.push({
+        date: lessonDate,
+        item: {
+          id: `lesson-${c.id}`,
+          type: "lesson",
+          title: `Completed Module: ${c.lessonId || "Syllabus Lesson"}`,
+          description: `Finished interactive study module`,
+          timestamp: isNaN(lessonDate.getTime()) 
+            ? "Recent" 
+            : lessonDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        }
       });
     });
+
+    // Real DB cheating & security incidents from BoardQuesters Arena
+    const formatIncidentTitle = (type?: string) => {
+      switch (type) {
+        case "FULLSCREEN_EXIT":
+          return "Fullscreen Exit Alert";
+        case "TAB_SWITCH":
+          return "Tab Switch Detected";
+        case "SCREENSHOT_ATTEMPT":
+          return "Screenshot Attempt Detected";
+        case "COPY_ATTEMPT":
+          return "Clipboard / Copy Attempt";
+        default:
+          return `Anti-Cheat Warning: ${(type || "Security Alert").replace(/_/g, " ")}`;
+      }
+    };
+
+    (warningIncidents || []).forEach((inc) => {
+      const incDate = new Date(inc.timestamp || Date.now());
+      timelineEntries.push({
+        date: incDate,
+        item: {
+          id: `cheat-${inc.id}`,
+          type: "cheating_incident",
+          title: formatIncidentTitle(inc.incidentType),
+          description: `${inc.details || "Integrity violation"} (Strike #${inc.strikeCount}) · Subject: ${inc.subject || "Arena"}`,
+          timestamp: isNaN(incDate.getTime()) 
+            ? "Recent Alert" 
+            : incDate.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+          metadata: {
+            incidentType: inc.incidentType,
+            strikeCount: inc.strikeCount,
+            subject: inc.subject,
+            quizMode: inc.quizMode,
+            details: inc.details,
+          }
+        }
+      });
+    });
+
+    // Sort all timeline entries chronologically descending (newest first)
+    timelineEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    const timeline: TimelineEventItem[] = timelineEntries.map(e => e.item);
 
     // Add level milestone if level > 1
     if ((student.level || 1) > 1) {
@@ -443,6 +653,8 @@ export class AnalyticsService {
         achievements,
         weeklyGoals,
         studyPlans,
+        warningSummary,
+        warningIncidents,
         aiInsights: JSON.parse(cached.analysis),
         cacheStats: {
           cached: true,
@@ -490,6 +702,8 @@ export class AnalyticsService {
       achievements,
       weeklyGoals,
       studyPlans,
+      warningSummary,
+      warningIncidents,
       aiInsights: insights,
       cacheStats: {
         cached: false,

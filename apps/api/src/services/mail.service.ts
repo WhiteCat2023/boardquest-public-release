@@ -1213,3 +1213,208 @@ export async function sendWeeklyDigestEmail({
   }
 }
 
+export interface SendAdvisorOutreachMailOptions {
+  toEmail: string;
+  studentName: string;
+  advisorName: string;
+  advisorEmail: string;
+  advisorRole?: string;
+  subject: string;
+  message: string;
+  meetingLink?: string;
+  weakSubjects?: string[];
+  drillCategory?: string;
+}
+
+export async function sendAdvisorOutreachEmail({
+  toEmail,
+  studentName,
+  advisorName,
+  advisorEmail,
+  advisorRole = "Faculty Advisor",
+  subject,
+  message,
+  meetingLink,
+  weakSubjects = [],
+  drillCategory,
+}: SendAdvisorOutreachMailOptions) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const formattedMessage = message
+    .split("\n")
+    .map((line) => line.trim())
+    .join("<br/>");
+
+  const weakSubjectsHtml =
+    (weakSubjects.length > 0 || drillCategory)
+      ? `
+      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 14px 18px; margin: 18px 0; text-align: left;">
+        <div style="font-size: 11px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+          Focus Subject / Area Needing Attention:
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: #b91c1c;">
+          ${drillCategory ? `<strong>${drillCategory}</strong>` : ""}
+          ${weakSubjects.length > 0 ? (drillCategory ? ` &bull; Weak domains: ${weakSubjects.join(", ")}` : weakSubjects.join(", ")) : ""}
+        </div>
+      </div>
+      `
+      : "";
+
+  const meetingLinkHtml = meetingLink
+    ? `
+      <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 14px 18px; margin: 18px 0; text-align: left;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+          Scheduled Consultation / Meeting Link:
+        </div>
+        <a href="${meetingLink}" target="_blank" style="font-size: 13px; font-weight: 700; color: #2563eb; text-decoration: underline; word-break: break-all;">
+          ${meetingLink}
+        </a>
+      </div>
+      `
+    : "";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="540" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td align="center" style="padding: 36px 30px 18px 30px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 14px; font-weight: 900; letter-spacing: 4px; color: #111827; margin-top: 6px;">
+                BOARDQUEST
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px 30px; text-align: left;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <span style="background-color: #fee2e2; color: #a60b0b; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  Academic Guidance Notice
+                </span>
+                <h2 style="margin: 12px 0 6px 0; font-size: 18px; font-weight: 800; color: #111827;">
+                  ${subject}
+                </h2>
+                <div style="font-size: 12px; color: #6b7280;">
+                  From <strong>${advisorName}</strong> (${advisorRole})
+                </div>
+              </div>
+
+              <!-- Greeting -->
+              <p style="margin: 0 0 16px 0; font-size: 14px; color: #374151; line-height: 1.6;">
+                Dear <strong>${studentName}</strong>,
+              </p>
+
+              <!-- Main Message -->
+              <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #a60b0b; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; font-size: 14px; color: #1f2937; line-height: 1.7;">
+                ${formattedMessage}
+              </div>
+
+              ${weakSubjectsHtml}
+              ${meetingLinkHtml}
+
+              <!-- Advisor Signature Card -->
+              <div style="background-color: #faf5ff; border: 1px solid #f3e8ff; border-radius: 14px; padding: 14px 18px; margin: 20px 0; text-align: left;">
+                <div style="font-size: 11px; font-weight: 800; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  Assigned Advisor Contact:
+                </div>
+                <div style="font-size: 13px; font-weight: 700; color: #111827;">
+                  ${advisorName}
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                  ${advisorRole} &bull; <a href="mailto:${advisorEmail}" style="color: #7e22ce; text-decoration: underline;">${advisorEmail}</a>
+                </div>
+              </div>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 28px auto 16px auto;">
+                <tr>
+                  <td align="center" style="background-color: #a60b0b; border-radius: 14px;">
+                    <a href="${frontendUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 13px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 1px; text-transform: uppercase;">
+                      Open BoardQuest Platform
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5; text-align: center;">
+                You can directly reply to this email to reach <strong>${advisorName}</strong> at <strong>${advisorEmail}</strong>.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 30px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Evaluation System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[MailService Warning] RESEND_API_KEY is not configured. Email will not be sent over network.`,
+    );
+    console.log(`\n==================================================`);
+    console.log(`📧 [ADVISOR OUTREACH EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail} (${studentName})`);
+    console.log(`👤 From Advisor: ${advisorName} <${advisorEmail}> (${advisorRole})`);
+    console.log(`📝 Subject: ${subject}`);
+    console.log(`💬 Message:\n${message}`);
+    if (meetingLink) console.log(`🔗 Consultation Link: ${meetingLink}`);
+    console.log(`==================================================\n`);
+    return { id: "simulated-outreach-id" };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      replyTo: advisorEmail,
+      subject: subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send advisor outreach email to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Advisor outreach email sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending advisor outreach email to ${toEmail}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+

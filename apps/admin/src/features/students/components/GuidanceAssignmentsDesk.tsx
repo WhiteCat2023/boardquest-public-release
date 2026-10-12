@@ -12,9 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Search } from "lucide-react";
+import { CheckCircle2, Search, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { DataTablePagination } from "@/components/custom/pagination";
+import EmailStudentModal from "./EmailStudentModal";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -24,6 +25,7 @@ export function GuidanceAssignmentsDesk() {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedAssignmentForEmail, setSelectedAssignmentForEmail] = useState<any>(null);
 
   // Reset pagination on filter or search term change
   useEffect(() => {
@@ -177,12 +179,38 @@ export function GuidanceAssignmentsDesk() {
                     </div>
                   </TableCell>
 
-                  <TableCell className="hidden sm:table-cell text-xs max-w-xs truncate">
-                    <div className="flex flex-col">
-                      <Badge variant="outline" className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9.5px] font-bold">
-                        {item.subjectCategory || "General Academic"}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground truncate mt-0.5" title={item.reason}>
+                  <TableCell className="hidden sm:table-cell text-xs max-w-xs">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9.5px] font-bold">
+                          {item.subjectCategory || "General Academic"}
+                        </Badge>
+                        {item.drillQuota && (
+                          <span
+                            className="px-1.5 py-0.2 rounded-md bg-primary/10 text-primary border border-primary/20 text-[9.5px] font-bold"
+                            title={`Remedial target: ${item.drillQuota} drill questions`}
+                          >
+                            🎯 {item.drillQuota} Qs
+                          </span>
+                        )}
+                        {item.targetAccuracy && (
+                          <span
+                            className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9.5px] font-bold"
+                            title={`Passing target: ≥${item.targetAccuracy}% accuracy`}
+                          >
+                            ≥{item.targetAccuracy}%
+                          </span>
+                        )}
+                        {item.deadline && (
+                          <span
+                            className="text-[9.5px] text-muted-foreground font-medium"
+                            title={`Target completion deadline: ${new Date(item.deadline).toLocaleDateString()}`}
+                          >
+                            Due {new Date(item.deadline).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground truncate" title={item.reason}>
                         "{item.reason}"
                       </span>
                     </div>
@@ -209,6 +237,17 @@ export function GuidanceAssignmentsDesk() {
 
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedAssignmentForEmail(item)}
+                        className="h-7 px-2.5 text-[11px] font-bold rounded-lg cursor-pointer text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-1"
+                        title={`Reach out to ${item.student?.name || "student"} via email`}
+                      >
+                        <Mail size={12} />
+                        <span>Reach Out</span>
+                      </Button>
                       {item.status !== "RESOLVED" && (
                         <Button
                           type="button"
@@ -258,6 +297,17 @@ export function GuidanceAssignmentsDesk() {
           />
         )}
       </div>
+
+      {/* Email Student Outreach Modal */}
+      {selectedAssignmentForEmail && (
+        <EmailStudentModal
+          isOpen={!!selectedAssignmentForEmail}
+          onClose={() => setSelectedAssignmentForEmail(null)}
+          student={selectedAssignmentForEmail.student}
+          guidanceId={selectedAssignmentForEmail.id}
+          defaultSubjectCategory={selectedAssignmentForEmail.subjectCategory}
+        />
+      )}
     </div>
   );
 }

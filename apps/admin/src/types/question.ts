@@ -13,6 +13,11 @@ export enum QuestionDifficulty {
   HARD = "HARD",
 }
 
+export enum CognitiveLevel {
+  LOTS = "LOTS",
+  HOTS = "HOTS",
+}
+
 export enum QuestionType {
   MCQ = "MCQ",
   TRUE_FALSE = "TRUE_FALSE",
@@ -44,6 +49,7 @@ export interface Question {
   imageUrl?: string;
   type: QuestionType;
   difficulty: QuestionDifficulty;
+  cognitiveLevel?: CognitiveLevel | string;
   subject?: Subject;
   category?: Category;
   subjectId?: string;

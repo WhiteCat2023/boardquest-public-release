@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Info, Settings, Zap, Trophy, Sparkles, UserCheck } from "lucide-react";
+import { ArrowLeft, Info, Settings, Zap, Trophy, Sparkles, UserCheck, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +11,7 @@ interface StudentProfileHeaderProps {
   onOpenScorecard?: () => void;
   onOpenFormula?: () => void;
   onAssignGuidance?: () => void;
+  onReachOut?: () => void;
 }
 
 export function StudentProfileHeader({
@@ -19,6 +20,7 @@ export function StudentProfileHeader({
   onOpenScorecard,
   onOpenFormula,
   onAssignGuidance,
+  onReachOut,
 }: StudentProfileHeaderProps) {
   const navigate = useNavigate();
 
@@ -126,6 +128,20 @@ export function StudentProfileHeader({
             <Settings size={14} className="text-muted-foreground" />
             <span>Point Formula</span>
           </Button>
+
+          {/* Reach Out via Email Button */}
+          {onReachOut && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReachOut}
+              className="h-9 px-3 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shadow-2xs cursor-pointer flex items-center gap-1.5"
+              title={`Reach out to ${student.name} via email`}
+            >
+              <Mail size={14} />
+              <span>Reach Out</span>
+            </Button>
+          )}
 
           {/* Primary Action Button or Active Guidance Status */}
           {activeGuidance ? (

@@ -2,6 +2,7 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, ChevronDown, ChevronUp, Tag } from "lucide-react";
 import { getDifficultyColor } from "@/utils/style";
+import { getCognitiveLevelMapping } from "@/utils/cognitiveLevel";
 import type { ExtractedQuestionItem } from "./extractedTypes";
 
 interface ExtractedQuestionSummaryRowProps {
@@ -96,13 +97,26 @@ export default function ExtractedQuestionSummaryRow({
 
       {/* Difficulty Column */}
       <TableCell className="hidden lg:table-cell">
-        <span
-          className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(
-            currentDifficulty
-          )}`}
-        >
-          {currentDifficulty}
-        </span>
+        {(() => {
+          const cognitiveInfo = getCognitiveLevelMapping(currentDifficulty);
+          return (
+            <div className="flex flex-col gap-1 items-start">
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getDifficultyColor(
+                  currentDifficulty
+                )}`}
+              >
+                {currentDifficulty}
+              </span>
+              <span
+                className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${cognitiveInfo.badgeClass}`}
+                title={`Cognitive Focus: ${cognitiveInfo.typicalFocus}`}
+              >
+                {cognitiveInfo.label}
+              </span>
+            </div>
+          );
+        })()}
       </TableCell>
 
       {/* Answer Key Column */}

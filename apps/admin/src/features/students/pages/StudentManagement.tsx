@@ -6,6 +6,8 @@ import {
   GraduationCap,
   UserCheck,
   Users,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ import StudentHeader from "../components/StudentHeader";
 import StudentTable from "../components/StudentTable";
 import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
 import AssignGuidanceModal from "../components/AssignGuidanceModal";
+import EmailStudentModal from "../components/EmailStudentModal";
 import { DataTablePagination } from "@/components/custom/pagination";
 
 const ITEMS_PER_PAGE = 10;
@@ -35,16 +38,17 @@ export default function StudentManagement() {
     "DIRECTORY",
   );
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
-  const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
   const [selectedPaceStatus, setSelectedPaceStatus] = useState<string>("ALL");
   const [selectedEngagement, setSelectedEngagement] = useState<string>("ALL");
+  const [selectedAcademicStanding, setSelectedAcademicStanding] = useState<string>("ALL");
+  const [filterMyAdviseesOnly, setFilterMyAdviseesOnly] = useState<boolean>(false);
   const [selectedStudentForGuidance, setSelectedStudentForGuidance] =
     useState<any>(null);
   const [selectedStudentsForGuidance, setSelectedStudentsForGuidance] =
     useState<any[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [isGuidanceModalOpen, setIsGuidanceModalOpen] = useState(false);
+  const [emailTargetStudent, setEmailTargetStudent] = useState<any>(null);
 
   // Pagination State (offset-based, mirrors FacultyManagement cursor-stack pattern)
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,11 +56,10 @@ export default function StudentManagement() {
 
   const { data, isLoading } = useStudents({
     search: searchTerm,
-    level: selectedLevel,
-    location: selectedLocation,
     paceStatus: selectedPaceStatus,
     engagement: selectedEngagement,
-    advisorId: isTeacher ? currentUser?.id : undefined,
+    academicStanding: selectedAcademicStanding,
+    advisorId: filterMyAdviseesOnly && currentUser?.id ? currentUser.id : undefined,
     skip,
     take: ITEMS_PER_PAGE,
   });
@@ -143,30 +146,52 @@ export default function StudentManagement() {
 
   const resetFilters = () => {
     setSearchTerm("");
-    setSelectedLevel("ALL");
-    setSelectedLocation("ALL");
     setSelectedPaceStatus("ALL");
     setSelectedEngagement("ALL");
+    setSelectedAcademicStanding("ALL");
+    setFilterMyAdviseesOnly(false);
     setSelectedStudentIds([]);
     resetPagination();
   };
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
-    selectedLevel !== "ALL" ||
-    selectedLocation !== "ALL" ||
     selectedPaceStatus !== "ALL" ||
-    selectedEngagement !== "ALL";
+    selectedEngagement !== "ALL" ||
+    selectedAcademicStanding !== "ALL" ||
+    filterMyAdviseesOnly;
+
+  const activePill =
+    filterMyAdviseesOnly
+      ? "MY_ADVISEES"
+      : selectedAcademicStanding === "FAILING"
+        ? "FAILING"
+        : selectedPaceStatus === "BEHIND"
+          ? "BEHIND"
+          : selectedEngagement === "DORMANT"
+            ? "DORMANT"
+            : selectedAcademicStanding === "ALL" &&
+                selectedPaceStatus === "ALL" &&
+                selectedEngagement === "ALL" &&
+                searchTerm === ""
+              ? "ALL"
+              : "CUSTOM";
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       {/* 1. Header Bar */}
       <StudentHeader
         canAddStudent={true}
-        title={isTeacher ? "My Students" : "Student Directory & Advising"}
+        title={
+          filterMyAdviseesOnly
+            ? "My Advisees"
+            : "Student Directory & Advising"
+        }
         description={
-          isTeacher
+          filterMyAdviseesOnly
             ? "View and monitor the students assigned to you for academic guidance and mentoring."
+            : isTeacher
+            ? "View and monitor all enrolled students, academic standing, and game progress."
             : "Manage enrolled students, academic standing, and guidance advising."
         }
       />
@@ -186,8 +211,8 @@ export default function StudentManagement() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {isTeacher ? <Users size={14} /> : <GraduationCap size={14} />}
-            <span>{isTeacher ? "My Students" : "Student Roster"}</span>
+            {filterMyAdviseesOnly ? <Users size={14} /> : <GraduationCap size={14} />}
+            <span>{filterMyAdviseesOnly ? "My Advisees" : "Student Roster"}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-bold border border-primary/20">
               {total}
             </span>
@@ -215,6 +240,104 @@ export default function StudentManagement() {
 
       {activeTab === "DIRECTORY" ? (
         <>
+          {/* Triage Quick Filter Navigation Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAcademicStanding("ALL");
+                setSelectedPaceStatus("ALL");
+                setSelectedEngagement("ALL");
+                setFilterMyAdviseesOnly(false);
+                resetPagination();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                activePill === "ALL"
+                  ? "bg-foreground text-background border-foreground shadow-2xs font-bold"
+                  : "bg-card text-muted-foreground hover:text-foreground border-border/80 hover:bg-muted/50"
+              }`}
+            >
+              <span>All Students</span>
+            </button>
+
+            {isTeacher && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAcademicStanding("ALL");
+                  setSelectedPaceStatus("ALL");
+                  setSelectedEngagement("ALL");
+                  setFilterMyAdviseesOnly(true);
+                  resetPagination();
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                  activePill === "MY_ADVISEES"
+                    ? "bg-primary text-primary-foreground border-primary shadow-2xs font-bold"
+                    : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                }`}
+              >
+                <UserCheck size={13} className="shrink-0" />
+                <span>My Advisees</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAcademicStanding("FAILING");
+                setSelectedPaceStatus("ALL");
+                setSelectedEngagement("ALL");
+                setFilterMyAdviseesOnly(false);
+                resetPagination();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                activePill === "FAILING"
+                  ? "bg-rose-500 text-white border-rose-600 shadow-2xs font-bold"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
+              }`}
+            >
+              <AlertTriangle size={13} className="shrink-0" />
+              <span>At-Risk & Failing</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPaceStatus("BEHIND");
+                setSelectedAcademicStanding("ALL");
+                setSelectedEngagement("ALL");
+                setFilterMyAdviseesOnly(false);
+                resetPagination();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                activePill === "BEHIND"
+                  ? "bg-amber-500 text-white border-amber-600 shadow-2xs font-bold"
+                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+              }`}
+            >
+              <Clock size={13} className="shrink-0" />
+              <span>Behind Schedule</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedEngagement("DORMANT");
+                setSelectedAcademicStanding("ALL");
+                setSelectedPaceStatus("ALL");
+                setFilterMyAdviseesOnly(false);
+                resetPagination();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                activePill === "DORMANT"
+                  ? "bg-slate-700 text-white border-slate-800 shadow-2xs font-bold dark:bg-slate-300 dark:text-slate-900"
+                  : "bg-muted text-muted-foreground border-border/80 hover:bg-muted/80 hover:text-foreground"
+              }`}
+            >
+              <span>Dormant</span>
+            </button>
+          </div>
+
           {/* Search & Filters Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border/80 p-2.5 px-3 rounded-2xl shadow-2xs w-full">
             {/* Search Input */}
@@ -222,7 +345,7 @@ export default function StudentManagement() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
               <Input
                 type="text"
-                placeholder="Search students by name, email, location..."
+                placeholder="Search students by name or email..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -245,6 +368,25 @@ export default function StudentManagement() {
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Academic Standing Filter */}
+              <Select
+                value={selectedAcademicStanding}
+                onValueChange={(v) => {
+                  setSelectedAcademicStanding(v);
+                  resetPagination();
+                }}
+              >
+                <SelectTrigger className="h-9 w-[155px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
+                  <SelectValue placeholder="Academic Standing" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="ALL">All Standings</SelectItem>
+                  <SelectItem value="FAILING">🚨 Failing (&lt;75%)</SelectItem>
+                  <SelectItem value="PASSING">Passing (≥75%)</SelectItem>
+                  <SelectItem value="UNTESTED">Untested</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Calendar Pace Filter */}
               <Select
                 value={selectedPaceStatus}
@@ -281,46 +423,6 @@ export default function StudentManagement() {
                   <SelectItem value="ACTIVE">Active (≤2d)</SelectItem>
                   <SelectItem value="LOW_CADENCE">Low Cadence</SelectItem>
                   <SelectItem value="DORMANT">Dormant (5d+)</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Progression Level Filter */}
-              <Select
-                value={selectedLevel}
-                onValueChange={(v) => {
-                  setSelectedLevel(v);
-                  resetPagination();
-                }}
-              >
-                <SelectTrigger className="h-9 w-[115px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-                  <SelectValue placeholder="Level" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ALL">All Levels</SelectItem>
-                  <SelectItem value="1">Level 1</SelectItem>
-                  <SelectItem value="2">Level 2</SelectItem>
-                  <SelectItem value="3">Level 3</SelectItem>
-                  <SelectItem value="4+">Level 4+</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Location Filter */}
-              <Select
-                value={selectedLocation}
-                onValueChange={(v) => {
-                  setSelectedLocation(v);
-                  resetPagination();
-                }}
-              >
-                <SelectTrigger className="h-9 w-[125px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ALL">All Locations</SelectItem>
-                  <SelectItem value="Philippines">Philippines</SelectItem>
-                  <SelectItem value="Manila">Manila</SelectItem>
-                  <SelectItem value="Cebu">Cebu</SelectItem>
-                  <SelectItem value="Davao">Davao</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -371,18 +473,19 @@ export default function StudentManagement() {
             students={studentsList}
             isLoading={isLoading}
             onAssignGuidance={handleOpenAssignGuidance}
+            onReachOut={(student) => setEmailTargetStudent(student)}
             selectedIds={selectedStudentIds}
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
             isAllSelected={isAllSelected}
             canSelect={canAssignGuidance}
             emptyTitle={
-              isTeacher
-                ? "No Assigned Students"
+              filterMyAdviseesOnly
+                ? "No Assigned Advisees"
                 : "No Enrolled Students Registered"
             }
             emptyDescription={
-              isTeacher
+              filterMyAdviseesOnly
                 ? "You currently do not have any students assigned to you for academic guidance."
                 : "No students match the selected filter criteria."
             }
@@ -422,6 +525,15 @@ export default function StudentManagement() {
           }}
           student={selectedStudentForGuidance}
           students={selectedStudentsForGuidance}
+        />
+      )}
+
+      {emailTargetStudent && (
+        <EmailStudentModal
+          isOpen={!!emailTargetStudent}
+          onClose={() => setEmailTargetStudent(null)}
+          student={emailTargetStudent}
+          defaultSubjectCategory={emailTargetStudent.failingSubjects?.[0]}
         />
       )}
     </div>

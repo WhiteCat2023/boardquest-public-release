@@ -42,19 +42,22 @@ export function AiWeaknessesSection({
         </div>
 
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          {primaryGap.completion === 0 &&
-          (primaryGap.totalQuestionsAnswered || 0) === 0
-            ? "Severe curriculum void: Candidate has not attempted diagnostic simulations or completed syllabus modules in this high-yield discipline."
-            : `Proficiency is currently at ${primaryGap.proficiency}%, significantly lagging the 75% PRC board exam standard with low module completion (${primaryGap.completion}%).`}
+          {primaryGap.dynamicRationale ||
+            (primaryGap.completion === 0 &&
+            (primaryGap.totalQuestionsAnswered || 0) === 0
+              ? "Severe curriculum void: Candidate has not attempted diagnostic simulations or completed syllabus modules in this high-yield discipline."
+              : `Proficiency is currently at ${primaryGap.proficiency}%, significantly lagging the 75% PRC board exam standard with low module completion (${primaryGap.completion}%).`)}
         </p>
 
         {/* Gap Tags */}
         <div className="flex flex-wrap gap-1.5 pt-0.5">
           <span className="text-[9.5px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
-            Syllabus Void: {primaryGap.completion}% Done
+            {primaryGap.completion === 0
+              ? "Syllabus Void: 0% Done"
+              : `Completion: ${primaryGap.completion}% Done`}
           </span>
           <span className="text-[9.5px] font-semibold px-2 py-0.5 rounded bg-muted/60 text-muted-foreground">
-            High Board Weight (20%)
+            {primaryGap.weight || "High Board Weight (20%)"}
           </span>
           <span className="text-[9.5px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
             Needs Remediation

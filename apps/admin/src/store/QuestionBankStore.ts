@@ -59,6 +59,9 @@ interface QuestionFormStore {
   difficulty: string;
   setDifficulty: (difficulty: string) => void;
 
+  cognitiveLevel: string;
+  setCognitiveLevel: (cognitiveLevel: string) => void;
+
   format: string;
   setFormat: (format: string) => void;
 
@@ -76,8 +79,14 @@ export const useQuestionFormStore = create<QuestionFormStore>((set) => ({
   setSubjectId: (subjectId: string) => set({ categoryId: subjectId, subjectId }),
   topic: "",
   setTopic: (topic: string) => set({ topic }),
-  difficulty: "",
-  setDifficulty: (difficulty: string) => set({ difficulty }),
+  difficulty: "EASY",
+  cognitiveLevel: "LOTS",
+  setDifficulty: (difficulty: string) =>
+    set({
+      difficulty,
+      cognitiveLevel: difficulty === "HARD" ? "HOTS" : "LOTS",
+    }),
+  setCognitiveLevel: (cognitiveLevel: string) => set({ cognitiveLevel }),
   format: "",
   setFormat: (format: string) => set({ format }),
   questionWording: "",

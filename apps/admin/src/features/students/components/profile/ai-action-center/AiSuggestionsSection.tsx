@@ -18,6 +18,10 @@ export function AiSuggestionsSection({
   targetBatch,
   onAssignGuidance,
 }: AiSuggestionsSectionProps) {
+  const isUnstarted =
+    primaryGap.completion === 0 &&
+    (primaryGap.totalQuestionsAnswered || 0) === 0;
+
   const primaryGapKeyword = primaryGap.subject.split(" ")[0];
 
   return (
@@ -39,20 +43,20 @@ export function AiSuggestionsSection({
         </Badge>
       </div>
 
-      {/* Suggestion 1: Targeted Diagnostic Drill */}
+      {/* Suggestion 1: Targeted Diagnostic Drill or Remediation */}
       <div className="bg-card/80 border border-primary/20 rounded-lg p-2.5 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-extrabold text-foreground">
-            1. Prescribe Diagnostic Drill in {primaryGapKeyword}
+            1. {isUnstarted ? `Prescribe Diagnostic Drill in ${primaryGapKeyword}` : `Prescribe Targeted Remediation in ${primaryGapKeyword}`}
           </span>
           <span className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400">
-            +25% Pass Lift
+            {isUnstarted ? "+25% Pass Lift" : "+20% Pass Lift"}
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Assign an initial 15-minute diagnostic drill (15–20 high-yield
-          questions) to establish baseline mastery and identify conceptual
-          misconceptions.
+          {isUnstarted
+            ? `Assign an initial 15-minute diagnostic drill (15–20 high-yield questions) to establish baseline mastery and uncover conceptual misconceptions in ${primaryGap.subject}.`
+            : `Assign a targeted remediation drill with clinical rationales to boost question accuracy from ${primaryGap.proficiency}% toward the 75% benchmark in ${primaryGap.subject}.`}
         </p>
         <div className="flex items-center justify-between pt-1">
           <span className="text-[9.5px] font-medium text-muted-foreground">
@@ -81,25 +85,24 @@ export function AiSuggestionsSection({
         </div>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           Maintain {dailyQuota} questions/day quota pace for the {targetBatch}.
-          Allocate 60% of daily volume to lagging topics ({primaryGapKeyword}) to
-          achieve 94%+ syllabus completion.
+          Allocate 60% of daily volume to lagging discipline ({primaryGap.subject}) to
+          achieve 90%+ syllabus completion.
         </p>
       </div>
 
-      {/* Suggestion 3: Rationale Review & Misconception Remediation */}
+      {/* Suggestion 3: Rationale Review & Cognitive Feedback */}
       <div className="bg-card/80 border border-border/80 rounded-lg p-2.5 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-extrabold text-foreground">
-            3. Misconception Rationale Review
+            3. Cognitive Error &amp; Rationale Review
           </span>
           <span className="text-[9.5px] font-semibold text-muted-foreground">
             10–15 min/session
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Require student review of detailed explanation rationales on incorrect
-          answers immediately following simulation sets to prevent repeated
-          mistakes.
+          Require student review of detailed explanation rationales on incorrect HOTS
+          and LOTS items in {primaryGap.subject} to eliminate recurrent clinical misconceptions.
         </p>
       </div>
     </div>

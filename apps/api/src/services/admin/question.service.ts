@@ -5,6 +5,8 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionStatus,
+  CognitiveLevel,
+  getCognitiveLevelFromDifficulty,
 } from "../../types/prisma.types";
 import {
   questionSynthesizerService,
@@ -36,6 +38,14 @@ export const CreateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
     z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
+  cognitiveLevel: z.preprocess(
+    (val) => {
+      if (val === "HOTS") return CognitiveLevel.HOTS;
+      if (val === "LOTS") return CognitiveLevel.LOTS;
+      return undefined;
+    },
+    z.nativeEnum(CognitiveLevel).optional(),
+  ),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
     z.nativeEnum(QuestionType).default(QuestionType.MCQ),
@@ -61,6 +71,14 @@ export const UpdateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
     z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
+  cognitiveLevel: z.preprocess(
+    (val) => {
+      if (val === "HOTS") return CognitiveLevel.HOTS;
+      if (val === "LOTS") return CognitiveLevel.LOTS;
+      return undefined;
+    },
+    z.nativeEnum(CognitiveLevel).optional(),
+  ),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
     z.nativeEnum(QuestionType).default(QuestionType.MCQ),
@@ -79,6 +97,7 @@ export interface ImportedQuestion {
   correctAnswer: string;
   topic: string;
   difficulty: QuestionDifficulty;
+  cognitiveLevel?: CognitiveLevel;
   type: QuestionType;
   feedback?: string;
   status?: QuestionStatus;
@@ -198,6 +217,10 @@ export class QuestionService {
       );
     }
 
+    const computedCognitiveLevel =
+      parsed.data.cognitiveLevel ||
+      getCognitiveLevelFromDifficulty(difficulty);
+
     const newQuestion = await this.db.question.create({
       data: {
         question: question.trim(),
@@ -209,6 +232,7 @@ export class QuestionService {
         authorId: finalAuthorId,
         topic: topic.trim(),
         difficulty,
+        cognitiveLevel: computedCognitiveLevel,
         type,
         status: computedStatus,
         ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
@@ -348,6 +372,10 @@ export class QuestionService {
       );
     }
 
+    const computedCognitiveLevel =
+      parsed.data.cognitiveLevel ||
+      getCognitiveLevelFromDifficulty(difficulty);
+
     const updatedQuestion = await this.db.question.update({
       where: {
         id: questionId,
@@ -362,6 +390,7 @@ export class QuestionService {
         authorId,
         topic: topic.trim(),
         difficulty,
+        cognitiveLevel: computedCognitiveLevel,
         type,
         ...(status && { status }),
       },
@@ -831,6 +860,10 @@ export class QuestionService {
           ? q.status || QuestionStatus.APPROVED
           : q.status || resolvedStatus;
 
+      const computedCognitiveLevel =
+        q.cognitiveLevel ||
+        getCognitiveLevelFromDifficulty(q.difficulty);
+
       return this.db.question.create({
         data: {
           question: q.question.trim(),
@@ -840,6 +873,7 @@ export class QuestionService {
           authorId,
           topic: q.topic.trim(),
           difficulty: q.difficulty,
+          cognitiveLevel: computedCognitiveLevel,
           type: q.type,
           status: qStatus,
         },

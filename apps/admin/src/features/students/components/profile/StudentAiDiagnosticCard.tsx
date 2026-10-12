@@ -37,7 +37,8 @@ export function StudentAiDiagnosticCard({ student, aiInsights }: StudentAiDiagno
   // Sort subjects by proficiency
   const sortedSubjects = [...metrics].sort((a, b) => a.proficiency - b.proficiency);
   const weakest = sortedSubjects[0] || null;
-  const strongest = sortedSubjects[sortedSubjects.length - 1] || null;
+  const validStrongCandidates = sortedSubjects.filter((s) => (s.proficiency || 0) >= 40 && (s.completion > 0 || s.totalQuestionsAnswered > 0));
+  const strongest = validStrongCandidates.length > 0 ? validStrongCandidates[validStrongCandidates.length - 1] : null;
 
   const accountFocusSubject =
     userSettings?.focusSubject && userSettings.focusSubject !== "none"
@@ -160,21 +161,40 @@ export function StudentAiDiagnosticCard({ student, aiInsights }: StudentAiDiagno
           <span className="text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground block">
             Strongest Anchor Discipline
           </span>
-          <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
-            {strongest?.subject || "Hematology"}
-          </h4>
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-muted-foreground text-[11px]">Proficiency:</span>
-            <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-xs">
-              {strongest?.proficiency || 0}%
-            </span>
-            <Badge variant="outline" className="text-[8.5px] px-1.5 py-0 font-extrabold uppercase text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-              High Competency
-            </Badge>
-          </div>
-          <span className="text-[10px] text-muted-foreground block pt-0.5">
-            Demonstrates consistent scoring stability across chapter challenges.
-          </span>
+          {strongest ? (
+            <>
+              <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
+                {strongest.subject}
+              </h4>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground text-[11px]">Proficiency:</span>
+                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-xs">
+                  {strongest.proficiency}%
+                </span>
+                <Badge variant="outline" className="text-[8.5px] px-1.5 py-0 font-extrabold uppercase text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                  {strongest.proficiency >= 75 ? "High Competency" : "Developing"}
+                </Badge>
+              </div>
+              <span className="text-[10px] text-muted-foreground block pt-0.5">
+                Demonstrates consistent scoring stability across chapter challenges.
+              </span>
+            </>
+          ) : (
+            <>
+              <h4 className="text-sm font-bold text-muted-foreground truncate">
+                Diagnostic Baseline Needed
+              </h4>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground text-[11px]">Status:</span>
+                <Badge variant="outline" className="text-[8.5px] px-1.5 py-0 font-extrabold uppercase text-muted-foreground border-border">
+                  Awaiting Drills
+                </Badge>
+              </div>
+              <span className="text-[10px] text-muted-foreground block pt-0.5">
+                Complete initial diagnostic drill to identify anchor disciplines.
+              </span>
+            </>
+          )}
         </div>
       </div>
 

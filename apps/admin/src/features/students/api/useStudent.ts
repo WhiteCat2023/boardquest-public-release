@@ -9,6 +9,7 @@ export function useStudents(params?: {
   advisorId?: string;
   paceStatus?: string;
   engagement?: string;
+  academicStanding?: string;
   skip?: number;
   take?: number;
   enabled?: boolean;

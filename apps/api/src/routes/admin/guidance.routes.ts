@@ -9,11 +9,25 @@ import {
   getGuidanceAssignments,
   updateGuidanceAssignment,
   getFailingStudents,
+  reachOutToStudent,
+  getStudentOutreachLogs,
 } from "../../controller/admin/guidance.controller";
 
 const router = Router();
 
 router.use(authenticateToken);
+
+router.post(
+  "/reachout",
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]),
+  reachOutToStudent
+);
+
+router.get(
+  "/outreach-logs/:studentId",
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"]),
+  getStudentOutreachLogs
+);
 
 router.post(
   "/",

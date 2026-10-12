@@ -135,4 +135,31 @@ describe("Guidance Routes", () => {
       expect(response.body.data.assignments).toHaveLength(2);
     });
   });
+
+  describe("POST /api/guidance/reachout", () => {
+    it("should send outreach email to assigned student successfully", async () => {
+      const mockResult = {
+        success: true,
+        sentTo: "student@example.com",
+        advisorName: "Prof. Advisor",
+        subject: "Academic Check-In",
+        deliveredAt: new Date().toISOString(),
+      };
+
+      (guidanceService.sendStudentReachoutEmail as jest.Mock).mockResolvedValue(mockResult);
+
+      const response = await request(app)
+        .post("/api/guidance/reachout")
+        .send({
+          studentId: "student_123",
+          subject: "Academic Check-In",
+          message: "Please review your study plan.",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.success).toBe(true);
+      expect(response.body.data.sentTo).toBe("student@example.com");
+    });
+  });
 });
+

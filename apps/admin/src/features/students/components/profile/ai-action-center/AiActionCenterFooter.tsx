@@ -2,14 +2,21 @@ import { ChevronRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AiActionCenterFooterProps {
+  currentReadiness?: number;
+  projectedReadiness?: number;
   onAssignGuidance?: () => void;
   onOpenScorecard?: () => void;
 }
 
 export function AiActionCenterFooter({
+  currentReadiness = 0,
+  projectedReadiness = 84,
   onAssignGuidance,
   onOpenScorecard,
 }: AiActionCenterFooterProps) {
+  const growth = Math.max(15, projectedReadiness - currentReadiness);
+  const baselinePass = currentReadiness > 0 ? Math.round(currentReadiness * 0.7) : 0;
+
   return (
     <>
       {/* Expected Overall Outcome Banner */}
@@ -17,13 +24,13 @@ export function AiActionCenterFooter({
         <div className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
           <span>Projected Readiness Growth</span>
           <span className="text-emerald-600 dark:text-emerald-400 font-black">
-            +36% Expected
+            +{growth}% Expected
           </span>
         </div>
         <div className="text-xs font-bold text-foreground">
           Passing Probability:{" "}
           <span className="text-emerald-600 dark:text-emerald-400">
-            48% &rarr; 84%
+            {baselinePass}% &rarr; {projectedReadiness}%
           </span>{" "}
           upon addressing top 2 gaps.
         </div>

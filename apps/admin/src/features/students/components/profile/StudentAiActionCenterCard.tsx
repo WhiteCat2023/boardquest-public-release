@@ -22,15 +22,7 @@ export function StudentAiActionCenterCard({
 }: StudentAiActionCenterCardProps) {
   const [activeTab, setActiveTab] = useState<InsightFilter>("all");
 
-  const {
-    primaryStrength,
-    primaryGap,
-    secondaryGap,
-    targetBatch,
-    dailyQuota,
-    daysRemaining,
-    streak,
-  } = computeStrengthsAndGaps(student);
+  const insights = computeStrengthsAndGaps(student, report);
 
   return (
     <Card className="bg-card border border-border rounded-2xl overflow-hidden shadow-2xs flex flex-col">
@@ -49,26 +41,28 @@ export function StudentAiActionCenterCard({
           {/* SECTION 1: STRENGTHS */}
           {(activeTab === "all" || activeTab === "strengths") && (
             <AiStrengthsSection
-              primaryStrength={primaryStrength}
-              streak={streak}
+              primaryStrength={insights.primaryStrength}
+              streak={insights.streak}
+              hasAcademicStrength={insights.hasAcademicStrength}
+              academicStrengthRationale={insights.academicStrengthRationale}
             />
           )}
 
           {/* SECTION 2: GAPS & WEAKNESSES */}
           {(activeTab === "all" || activeTab === "gaps") && (
             <AiWeaknessesSection
-              primaryGap={primaryGap}
-              secondaryGap={secondaryGap}
+              primaryGap={insights.primaryGap}
+              secondaryGap={insights.secondaryGap}
             />
           )}
 
           {/* SECTION 3: SUGGESTIONS FOR IMPROVEMENT */}
           {(activeTab === "all" || activeTab === "suggestions") && (
             <AiSuggestionsSection
-              primaryGap={primaryGap}
-              dailyQuota={dailyQuota}
-              daysRemaining={daysRemaining}
-              targetBatch={targetBatch}
+              primaryGap={insights.primaryGap}
+              dailyQuota={insights.dailyQuota}
+              daysRemaining={insights.daysRemaining}
+              targetBatch={insights.targetBatch}
               onAssignGuidance={onAssignGuidance}
             />
           )}
@@ -76,6 +70,8 @@ export function StudentAiActionCenterCard({
 
         {/* Expected Overall Outcome Banner & Quick Action Buttons */}
         <AiActionCenterFooter
+          currentReadiness={insights.currentReadiness}
+          projectedReadiness={insights.projectedReadiness}
           onAssignGuidance={onAssignGuidance}
           onOpenScorecard={onOpenScorecard}
         />

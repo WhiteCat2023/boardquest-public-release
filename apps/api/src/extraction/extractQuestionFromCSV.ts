@@ -18,6 +18,12 @@ export const QuestionImportRowSchema = z.object({
     const s = String(val).toUpperCase().trim();
     return s || "EASY";
   }, z.nativeEnum(QuestionDifficulty)),
+  cognitiveLevel: z.preprocess((val) => {
+    const s = String(val).toUpperCase().trim();
+    if (s === "HOTS") return "HOTS";
+    if (s === "LOTS") return "LOTS";
+    return undefined;
+  }, z.enum(["LOTS", "HOTS"]).optional()),
   type: z.preprocess((val) => {
     const s = String(val).toUpperCase().trim().replace(/[-\s]/g, "_");
     if (s === "TF" || s === "TRUE/FALSE" || s === "TRUE_FALSE") return "TRUE_FALSE";
@@ -64,6 +70,7 @@ export function extractQuestionsFromCSV(csvText: string): any[] {
       correctAnswer: getColVal(parsedLine, ["correctanswer", "answer", "correct_answer"]),
       topic: getColVal(parsedLine, ["topic", "subject"]),
       difficulty: getColVal(parsedLine, ["difficulty", "level"]),
+      cognitiveLevel: getColVal(parsedLine, ["cognitivelevel", "cognitive_level", "cognitive"]),
       type: getColVal(parsedLine, ["type", "questiontype"]),
     };
 
@@ -75,7 +82,15 @@ export function extractQuestionsFromCSV(csvText: string): any[] {
       const errorMsgs = parsed.error.issues.map(issue => `${issue.path.join(".")}: ${issue.message}`).join(", ");
       validationErrors.push(`Row ${i + 1}: ${errorMsgs}`);
     } else {
-      results.push(parsed.data);
+      const itemDifficulty = parsed.data.difficulty;
+      const itemCognitiveLevel =
+        parsed.data.cognitiveLevel ||
+        (itemDifficulty === QuestionDifficulty.HARD ? "HOTS" : "LOTS");
+
+      results.push({
+        ...parsed.data,
+        cognitiveLevel: itemCognitiveLevel,
+      });
     }
   }
 

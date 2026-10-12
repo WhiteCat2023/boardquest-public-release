@@ -105,3 +105,44 @@ export const getFailingStudents = asyncHandler(
     ).send(res);
   },
 );
+
+export const reachOutToStudent = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const advisorId = req.user?.id;
+    const advisorRole = req.user?.role;
+    if (!advisorId || !advisorRole) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const result = await guidanceService.sendStudentReachoutEmail(
+      advisorId,
+      advisorRole as unknown as Role,
+      req.body,
+    );
+
+    return new ApiResponse(
+      200,
+      result,
+      "Guidance outreach email dispatched to student successfully",
+    ).send(res);
+  },
+);
+
+export const getStudentOutreachLogs = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { studentId } = req.params;
+    if (!studentId) {
+      throw new ApiError(400, "Student ID parameter is required");
+    }
+
+    const logs = await guidanceService.getStudentOutreachLogs(studentId as string);
+
+    return new ApiResponse(
+      200,
+      { logs },
+      "Student outreach logs retrieved successfully",
+    ).send(res);
+  },
+);
+
+
