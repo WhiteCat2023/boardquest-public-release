@@ -1,13 +1,14 @@
 # Multi-stage Dockerfile for Backend API
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
-# Install required build tools & libraries for Prisma / Argon2 on Alpine
-RUN apk add --no-cache openssl libc6-compat python3 make g++
+# Install OpenSSL & certificates required for Prisma and network requests
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm reliably
+RUN npm install -g pnpm@11.20.0
 
 # Copy root workspace configs and package manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -15,7 +16,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/admin/package.json apps/admin/
 COPY apps/review-center/package.json apps/review-center/
 
-# Install workspace dependencies
+# Install workspace dependencies (utilizing precompiled glibc binaries on Debian)
 RUN pnpm install --frozen-lockfile
 
 # Copy backend source and Prisma schema
@@ -28,16 +29,17 @@ RUN npx prisma generate
 RUN pnpm build
 
 # Production Runner Image
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install runtime libraries for Prisma
-RUN apk add --no-cache openssl libc6-compat
+# Install OpenSSL for Prisma engine runtime
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm
+RUN npm install -g pnpm@11.20.0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/

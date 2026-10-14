@@ -1,0 +1,39 @@
+# Ignore dependencies (crucial for fast Docker context transfer)
+**/node_modules
+node_modules
+
+# Version control and editor
+.git
+.gitignore
+.vscode
+.changeset
+
+# Build outputs and cache
+.turbo
+.next
+dist
+build
+coverage
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Documentation, scratch and PDF files
+*.md
+Project_Cost_and_Hosting_Proposal.pdf
+
+# Frontend source assets not needed for API image build
+apps/admin/src
+apps/admin/public
+apps/admin/dist
+apps/review-center/src
+apps/review-center/public
+apps/review-center/dist
