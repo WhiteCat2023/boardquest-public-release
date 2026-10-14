@@ -3,8 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useReviewCenterAuth } from "./useReviewCenterAuth";
 
-const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-const BASE_URL = rawUrl.endsWith("/api") ? rawUrl : `${rawUrl.replace(/\/$/, "")}/api`;
+const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
+const formatBaseUrl = (url: string) => {
+  const trimmed = url.replace(/\/+$/, "");
+  if (trimmed.endsWith("/api/v1") || trimmed.endsWith("/api")) {
+    return trimmed;
+  }
+  return `${trimmed}/api/v1`;
+};
+const BASE_URL = formatBaseUrl(rawUrl);
 
 export function useNotificationStream() {
   const queryClient = useQueryClient();

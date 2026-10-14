@@ -107,8 +107,9 @@ export function useBadgeEditorForm({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image size exceeds 10MB limit");
+    const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 10;
+    if (file.size > maxFileSizeMb * 1024 * 1024) {
+      toast.error(`Image size exceeds ${maxFileSizeMb}MB limit`);
       return;
     }
 

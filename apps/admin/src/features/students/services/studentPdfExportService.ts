@@ -20,10 +20,11 @@ export async function fetchAllStudents(
   axiosPrivate: AxiosInstance
 ): Promise<Student[]> {
   try {
+    const exportLimit = Number(import.meta.env.VITE_EXPORT_FETCH_LIMIT) || 1000;
     const response = await axiosPrivate.get("/students/get", {
       params: {
         skip: 0,
-        take: 1000,
+        take: exportLimit,
       },
     });
 

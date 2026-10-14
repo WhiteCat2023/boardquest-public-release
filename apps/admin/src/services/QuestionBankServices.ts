@@ -107,8 +107,8 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
     totalCount,
   });
 
-  // Upload in chunks of 10 to track real-time queueing progress
-  const CHUNK_SIZE = 10;
+  // Upload in chunks of 10 (or configured size) to track real-time queueing progress
+  const CHUNK_SIZE = Number(import.meta.env.VITE_BULK_UPLOAD_CHUNK_SIZE) || 10;
   const chunks: any[][] = [];
   for (let i = 0; i < totalCount; i += CHUNK_SIZE) {
     chunks.push(extractedQuestions.slice(i, i + CHUNK_SIZE));

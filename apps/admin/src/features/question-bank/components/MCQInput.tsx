@@ -51,8 +51,9 @@ export default function MultipleChoiceInput({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image file size must be less than 5MB");
+    const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 5;
+    if (file.size > maxFileSizeMb * 1024 * 1024) {
+      toast.error(`Image file size must be less than ${maxFileSizeMb}MB`);
       return;
     }
 

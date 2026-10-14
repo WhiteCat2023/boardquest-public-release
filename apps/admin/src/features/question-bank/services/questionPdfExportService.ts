@@ -1194,12 +1194,13 @@ export async function fetchAllApprovedQuestions(
       questionsList = rawData.questions;
     }
 
-    // Safety fallback: if limit: 'all' was constrained by backend to 20, fetch up to 10,000
+    // Safety fallback: if limit: 'all' was constrained by backend to 20, fetch up to export limit
     if (questionsList.length === 20 && rawData?.total && rawData.total > 20) {
+      const exportLimit = Number(import.meta.env.VITE_EXPORT_FETCH_LIMIT) || 10000;
       const fallbackRes = await axiosPrivate.get("/questions/get", {
         params: {
           ...cleanParams,
-          limit: 10000,
+          limit: exportLimit,
         },
       });
       const fallbackData = fallbackRes.data?.data;

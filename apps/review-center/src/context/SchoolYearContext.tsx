@@ -17,8 +17,10 @@ import {
 import { isValidSchoolYear } from "@/lib/utils";
 import { SchoolYearCMSModal } from "@/components/custom/sidebar/SchoolYearCMSModal";
 
-const STORAGE_KEY = "bq_rc_active_school_year";
-const DEFAULT_FALLBACK_YEAR = "2026-2027";
+const STORAGE_KEY =
+  import.meta.env.VITE_STORAGE_KEY || "bq_rc_active_school_year";
+const DEFAULT_FALLBACK_YEAR =
+  import.meta.env.VITE_DEFAULT_FALLBACK_YEAR || "2026-2027";
 
 export interface SchoolYearContextType {
   activeSchoolYear: string;

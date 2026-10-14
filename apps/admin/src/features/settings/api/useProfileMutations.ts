@@ -93,8 +93,9 @@ export function useProfileMutations() {
       return null;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image file size should not exceed 5MB.");
+    const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 5;
+    if (file.size > maxFileSizeMb * 1024 * 1024) {
+      toast.error(`Image file size should not exceed ${maxFileSizeMb}MB.`);
       return null;
     }
 

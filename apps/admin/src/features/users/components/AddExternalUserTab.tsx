@@ -92,7 +92,7 @@ export default function AddExternalUserTab({
           companyName: createdUser?.companyName || payload.companyName,
           role: "EXTERNAL",
           temporaryPassword: tempPass,
-          portalUrl: "http://localhost:5174/login",
+          portalUrl: `${import.meta.env.VITE_REVIEW_CENTER_URL || "http://localhost:5174"}/login`,
         };
         toast.success(
           "Review Center representative account created successfully!",
