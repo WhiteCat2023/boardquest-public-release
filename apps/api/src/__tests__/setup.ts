@@ -109,6 +109,23 @@ jest.mock('../services/prisma', () => ({
       update: jest.fn().mockResolvedValue({}),
       delete: jest.fn().mockResolvedValue({}),
     },
+    notification: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+      count: jest.fn().mockResolvedValue(0),
+    },
+    reviewCenterAssessment: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+      create: jest.fn().mockResolvedValue({ id: '1' }),
+      update: jest.fn().mockResolvedValue({ id: '1' }),
+      delete: jest.fn().mockResolvedValue({ id: '1' }),
+      count: jest.fn().mockResolvedValue(0),
+    },
     $runCommandRaw: jest.fn().mockResolvedValue({ cursor: { firstBatch: [] } }),
   },
 }));

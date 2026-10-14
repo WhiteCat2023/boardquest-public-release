@@ -11,6 +11,17 @@ jobs:
     name: Build & Validate Monorepo
     runs-on: ubuntu-latest
 
+    env:
+      CI: "true"
+      NODE_ENV: test
+      DATABASE_URL: "mongodb://localhost:27017/boardquest?authSource=admin"
+      JWT_SECRET: "ci_jwt_secret_test_key_12345"
+      PRIVATE_KEY: "ci_jwt_private_key_test_12345"
+      PUBLIC_KEY: "ci_jwt_public_key_test_12345"
+      SUPABASE_URL: "https://placeholder.supabase.co"
+      SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-key"
+      SUPABASE_STORAGE_BUCKET: "boardquest-storage"
+
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -36,7 +47,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Run Backend Tests
-        run: pnpm test:api
+        run: pnpm --filter backend test
 
       - name: Run Production Build
         run: pnpm build

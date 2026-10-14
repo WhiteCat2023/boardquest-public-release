@@ -39,7 +39,7 @@ export const getSupabaseKey = (): string => {
 };
 
 export const getStorageBucket = (): string => {
-  const raw = process.env.SUPABASE_STORAGE_BUCKET!;
+  const raw = process.env.SUPABASE_STORAGE_BUCKET || "boardquest-storage";
   return raw.replace(/['";]/g, "").trim();
 };
 
