@@ -21,7 +21,7 @@ const cwd = process.cwd();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import apiRoutes from "./routes/index.js";
+import apiRoutes, { v1Router } from "./routes/index.js";
 import { apiLimiter } from "./middleware/rateLimit.middleware";
 import { ensureSuperAdminExists } from "./services/admin/bootstrap.service";
 import { startQueue, stopQueue } from "./services/queue.service";
@@ -67,6 +67,10 @@ app.use(cookieParser());
 await ensureSuperAdminExists();
 await startQueue(); 
 
+// Primary versioned API v1
+app.use("/api/v1", apiLimiter, v1Router);
+
+// Backward-compatibility alias for unversioned /api calls
 app.use("/api", apiLimiter, apiRoutes);
 
 const PORT = process.env.PORT;
