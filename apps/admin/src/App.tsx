@@ -41,6 +41,11 @@ const EnrollStudentPage = lazy(() =>
 const ViewStudent = lazy(() =>
   import("@/features/students").then((m) => ({ default: m.ViewStudent })),
 );
+const ExportStudentsPdfPage = lazy(() =>
+  import("@/features/students").then((m) => ({
+    default: m.ExportStudentsPdfPage,
+  })),
+);
 
 const ReviewCenterManagement = lazy(() =>
   import("@/features/review-center").then((m) => ({
@@ -55,6 +60,11 @@ const ReviewCenterDetailsPage = lazy(() =>
 const CalendarManagement = lazy(() =>
   import("@/features/review-center").then((m) => ({
     default: m.CalendarManagement,
+  })),
+);
+const ExportReviewCenterPdfPage = lazy(() =>
+  import("@/features/review-center").then((m) => ({
+    default: m.ExportReviewCenterPdfPage,
   })),
 );
 const LogsManagement = lazy(() =>
@@ -102,6 +112,12 @@ const FacultyEncodingTracker = lazy(() =>
     default: m.FacultyEncodingTracker,
   })),
 );
+const ExportQuestionsPdfPage = lazy(() =>
+  import("@/features/question-bank").then((m) => ({
+    default: m.ExportQuestionsPdfPage,
+  })),
+);
+
 
 const Analytics = lazy(() =>
   import("@/features/analytics").then((m) => ({ default: m.Analytics })),
@@ -212,6 +228,10 @@ function App() {
                     element={<StudentManagement />}
                   />
                   <Route
+                    path="student-management/export-pdf"
+                    element={<ExportStudentsPdfPage />}
+                  />
+                  <Route
                     path="student-management/:studentId"
                     element={<ViewStudent />}
                   />
@@ -254,12 +274,20 @@ function App() {
                     element={<ReviewCenterManagement />}
                   />
                   <Route
+                    path="review-center/:reviewCenterId/export-pdf"
+                    element={<ExportReviewCenterPdfPage />}
+                  />
+                  <Route
                     path="review-center/:reviewCenterId"
                     element={<ReviewCenterDetailsPage />}
                   />
                   <Route
                     path="review-center-management"
                     element={<ReviewCenterManagement />}
+                  />
+                  <Route
+                    path="review-center-management/:reviewCenterId/export-pdf"
+                    element={<ExportReviewCenterPdfPage />}
                   />
                   <Route
                     path="review-center-management/:reviewCenterId"
@@ -361,6 +389,10 @@ function App() {
                   <Route
                     path="question-bank/shared-library"
                     element={<SharedLibrary />}
+                  />
+                  <Route
+                    path="question-bank/export-pdf"
+                    element={<ExportQuestionsPdfPage />}
                   />
                   <Route
                     path="question-bank/create"

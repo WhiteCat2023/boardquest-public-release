@@ -9,6 +9,7 @@ interface QuestionLibraryHeaderProps {
   badgeLabel: string;
   isSidebarOpen: boolean;
   onOpenSidebar: () => void;
+  actions?: React.ReactNode;
 }
 
 export function QuestionLibraryHeader({
@@ -17,6 +18,7 @@ export function QuestionLibraryHeader({
   badgeLabel,
   isSidebarOpen,
   onOpenSidebar,
+  actions,
 }: QuestionLibraryHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border font-sans">
@@ -47,6 +49,7 @@ export function QuestionLibraryHeader({
       </div>
 
       <div className="flex items-center gap-2.5">
+        {actions}
         <AddQuestionButton />
       </div>
     </div>

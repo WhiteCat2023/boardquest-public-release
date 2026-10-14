@@ -62,4 +62,5 @@ export interface Question {
   correctAnswer: string;
   status: QuestionStatus;
   createdAt: string;
+  feedback?: string;
 }

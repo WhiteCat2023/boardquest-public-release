@@ -137,7 +137,6 @@ export default function FacultyEncodingTracker() {
         selectedStatus={selectedStatus}
         onStatusChange={handleStatusChange}
         subjects={subjectOptions}
-        schoolYear={schoolYear}
         onNudgeAllClick={() => setIsBulkNudgeOpen(true)}
         onResetFilters={handleResetFilters}
         hasActiveFilters={hasActiveFilters}

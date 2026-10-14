@@ -22,7 +22,7 @@ export default function AddQuestionButton() {
   const handleAddQuestion = () => {
     if (isQuotaMet) {
       toast.info(
-        "Authoring Quota Met: You have completed all question authoring goals for this school year.",
+        "Authoring Quota Met: You have completed all question authoring goals.",
         {
           description: `You authored ${progress?.overall.totalEncoded} of ${progress?.overall.totalTarget} assigned questions.`,
         },

@@ -9,7 +9,7 @@ export interface QuestionFilters {
     type?: string;
     status?: string;
     cursor?: string;
-    limit?: number;
+    limit?: number | string;
     authorId?: string;
 }
 

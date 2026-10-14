@@ -73,13 +73,13 @@ export default function AddQuestion() {
           <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
           <div className="flex-1">
             <h3 className="text-sm font-bold flex items-center gap-2">
-              <span>Authoring Quota Completed ({progress?.schoolYear})</span>
+              <span>Authoring Quota Completed</span>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/30">
                 Goal Met
               </span>
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              You have authored all required questions ({progress?.overall.totalEncoded} of {progress?.overall.totalTarget}) across your assigned subjects. You cannot add additional questions for this school year.
+              You have authored all required questions ({progress?.overall.totalEncoded} of {progress?.overall.totalTarget}) across your assigned subjects. You cannot add additional questions.
             </p>
           </div>
         </div>

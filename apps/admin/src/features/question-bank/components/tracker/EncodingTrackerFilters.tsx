@@ -15,7 +15,7 @@ interface EncodingTrackerFiltersProps {
   selectedStatus: string;
   onStatusChange: (val: string) => void;
   subjects: SubjectOption[];
-  schoolYear: string;
+  schoolYear?: string;
   onNudgeAllClick: () => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
@@ -87,12 +87,8 @@ export function EncodingTrackerFilters({
           )}
         </div>
 
-        {/* School Year indicator & Bulk Nudge action */}
+        {/* Bulk Nudge action */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium border border-border/60">
-            <span>{schoolYear}</span>
-          </div>
-
           <Button
             variant="outline"
             size="sm"

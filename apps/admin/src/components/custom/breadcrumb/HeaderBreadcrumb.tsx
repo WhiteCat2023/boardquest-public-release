@@ -22,6 +22,9 @@ const formatSegment = (segment: string) => {
   if (segment.toLowerCase() === "shared-library") {
     return "All Questions";
   }
+  if (segment.toLowerCase() === "export-pdf") {
+    return "Export to PDF";
+  }
   if (segment.toLowerCase() === "faculty-management") {
     return "Users";
   }
@@ -65,7 +68,8 @@ export default function HeaderBreadcrumb() {
     pathSegments[0] === "student-management" &&
     pathSegments.length >= 2 &&
     pathSegments[1] !== "create" &&
-    pathSegments[1] !== "import";
+    pathSegments[1] !== "import" &&
+    pathSegments[1] !== "export-pdf";
 
   const questionId =
     isQuestionViewOrEdit && pathSegments[2] ? pathSegments[2] : null;

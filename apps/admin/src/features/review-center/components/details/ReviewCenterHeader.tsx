@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import type { ReviewCenterRepresentative } from "../../types/types";
+import ExportReviewCenterPdfButton from "../button/ExportReviewCenterPdfButton";
 
 interface ReviewCenterHeaderProps {
   reviewCenter: ReviewCenterRepresentative | null | undefined;
@@ -101,6 +102,10 @@ export default function ReviewCenterHeader({
 
         {/* Right Actions & Segmented Tabs */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          {reviewCenter && (
+            <ExportReviewCenterPdfButton reviewCenterId={reviewCenter.id} />
+          )}
+
           {canManage && reviewCenter && (
             <Button
               onClick={onOpenEdit}

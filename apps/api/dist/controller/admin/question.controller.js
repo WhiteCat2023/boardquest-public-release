@@ -71,7 +71,11 @@ export const getQuestions = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Authentication required");
     }
     const { search, difficulty, category, type, status, cursor, limit, authorId, isPublished, } = req.query;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const limitNum = limit === "all" || limit === "0"
+        ? undefined
+        : limit
+            ? parseInt(limit, 10)
+            : 20;
     const isPublishedBool = isPublished === "true"
         ? true
         : isPublished === "false"

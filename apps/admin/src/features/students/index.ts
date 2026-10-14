@@ -2,6 +2,12 @@
 export { default as StudentManagement } from "./pages/StudentManagement";
 export { default as EnrollStudentPage } from "./pages/EnrollStudentPage";
 export { default as ViewStudent } from "./pages/ViewStudent";
+export { default as ExportStudentsPdfPage } from "./pages/ExportStudentsPdfPage";
+
+// Export Components & Services
+export { default as ExportStudentsPdfButton } from "./components/button/ExportStudentsPdfButton";
+export * from "./services/studentPdfExportService";
+export * from "./services/studentExcelExportService";
 
 // Components
 export { default as StudentHeader } from "./components/StudentHeader";

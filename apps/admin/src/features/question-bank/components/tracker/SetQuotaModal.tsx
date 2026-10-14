@@ -118,7 +118,7 @@ export function SetQuotaModal({ isOpen, onClose, item }: SetQuotaModalProps) {
               className="h-9 text-xs"
             />
             <p className="text-[11px] text-muted-foreground">
-              Optional deadline date for this school year ({item.schoolYear}).
+              Optional completion deadline date for this target.
             </p>
           </div>
 

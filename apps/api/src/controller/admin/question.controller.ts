@@ -139,7 +139,12 @@ export const getQuestions = asyncHandler(
       isPublished,
     } = req.query;
 
-    const limitNum = limit ? parseInt(limit as string, 10) : 20;
+    const limitNum =
+      limit === "all" || limit === "0"
+        ? undefined
+        : limit
+          ? parseInt(limit as string, 10)
+          : 20;
     const isPublishedBool =
       isPublished === "true"
         ? true

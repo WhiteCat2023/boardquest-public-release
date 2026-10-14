@@ -35,7 +35,7 @@ export function TeacherQuotaProgressBanner() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold tracking-tight text-foreground">
-                  Question Authoring Goal ({schoolYear})
+                  Question Authoring Goal
                 </span>
                 {isGoalMet ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">

@@ -194,6 +194,9 @@ export default function StudentManagement() {
             ? "View and monitor all enrolled students, academic standing, and game progress."
             : "Manage enrolled students, academic standing, and guidance advising."
         }
+        currentStanding={selectedAcademicStanding}
+        currentPace={selectedPaceStatus}
+        currentEngagement={selectedEngagement}
       />
 
       {/* 2. Top Tabs: Student Roster vs Academic Guidance Desk */}

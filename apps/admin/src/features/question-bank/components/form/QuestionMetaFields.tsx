@@ -81,7 +81,7 @@ export function QuestionMetaFields({
           </CustomSelectWithLabel>
         </div>
 
-        {/* Benchmark Topic (Custom Dropdown matching Sidebar School Year design) */}
+        {/* Benchmark Topic */}
         <div className="flex flex-col gap-1">
           <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             Topic

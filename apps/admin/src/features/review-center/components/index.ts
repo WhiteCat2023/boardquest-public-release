@@ -12,4 +12,6 @@ export { default as ReviewCalendarView } from "./ReviewCalendarView";
 export { default as SetReviewScheduleModal } from "./SetReviewScheduleModal";
 export * from "./details";
 export * from "./calendar";
+export * from "./button/ExportReviewCenterPdfButton";
+export { default as ExportReviewCenterPdfButton } from "./button/ExportReviewCenterPdfButton";
 

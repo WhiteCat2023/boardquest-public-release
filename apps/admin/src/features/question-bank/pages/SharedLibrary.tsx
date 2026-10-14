@@ -8,6 +8,7 @@ import {
   MobileSubjectSelector,
   QuestionLibraryHeader,
 } from "../components/sidebar";
+import { ExportPdfButton } from "../components/button/ExportPdfButton";
 
 export default function SharedLibrary() {
   const [isSubjectSidebarOpen, setIsSubjectSidebarOpen] = useState(true);
@@ -73,6 +74,16 @@ export default function SharedLibrary() {
           badgeLabel={badgeLabel}
           isSidebarOpen={isSubjectSidebarOpen}
           onOpenSidebar={() => setIsSubjectSidebarOpen(true)}
+          actions={
+            <ExportPdfButton
+              currentCategory={selectedCategory}
+              currentCategoryName={
+                categories.find((c: any) => c.id === selectedCategory)?.name ||
+                "All Subjects"
+              }
+              totalApprovedCount={totalAllQuestionsCount}
+            />
+          }
         />
 
         {/* Question Filter & Question List */}

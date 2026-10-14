@@ -34,3 +34,7 @@ export { default as FacultyEncodingTracker } from './pages/FacultyEncodingTracke
 export * from './api/useEncodingTracker';
 export * from './types/encodingTracker.types';
 export * from './components/tracker';
+export * from './services/questionPdfExportService';
+export * from './api/useExportQuestionsToPdf';
+export { default as ExportPdfButton } from './components/button/ExportPdfButton';
+export { default as ExportQuestionsPdfPage } from './pages/ExportQuestionsPdfPage';
