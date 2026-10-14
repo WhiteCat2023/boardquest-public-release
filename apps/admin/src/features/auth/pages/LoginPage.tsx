@@ -58,23 +58,24 @@ function LoginPage() {
   const isLoginInvalid = loginMutation.isError && !isDeactivatedDialogOpen;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4">
-      <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
-        {/* Logo Section */}
-        <div className="flex flex-col items-center mb-6">
-          <img
-            src={boardQuestLogo}
-            alt="BoardQuest Logo"
-            className="h-16 sm:h-20 w-auto object-contain mb-1"
-          />
-        </div>
+    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-background text-foreground font-sans p-4 sm:p-6">
+      <div className="w-full flex-1 flex items-center justify-center py-6 sm:py-8">
+        <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
+          {/* Logo Section */}
+          <div className="flex flex-col items-center mb-6">
+            <img
+              src={boardQuestLogo}
+              alt="BoardQuest Logo"
+              className="h-16 sm:h-20 w-auto object-contain mb-1"
+            />
+          </div>
 
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="w-full space-y-5">
           <FieldGroup>
             <FieldSet className="text-center mb-8">
               <FieldLegend className="text-lg font-extrabold text-foreground mb-1">
-                ADMIN <span className="text-primary">LOG IN</span>
+                LOG<span className="text-primary"> IN</span>
               </FieldLegend>
               <FieldDescription className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wide max-w-[250px] mx-auto leading-snug">
                 ENTER YOUR CREDENTIALS TO ACCESS YOUR PORTAL
@@ -138,7 +139,11 @@ function LoginPage() {
                         onClick={() => setTogglePassword(!togglePassword)}
                         className="text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        {togglePassword ? <Eye className="size-4" /> : <EyeClosed className="size-4" />}
+                        {togglePassword ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeClosed className="size-4" />
+                        )}
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>
@@ -183,6 +188,14 @@ function LoginPage() {
           </FieldGroup>
         </form>
       </div>
+    </div>
+
+      {/* Footer */}
+      <footer className="w-full py-4 text-center text-xs text-muted-foreground select-none shrink-0">
+        <p className="tracking-wide">
+          &copy; {new Date().getFullYear()} <span className="font-semibold text-foreground/80">BoardQuest</span>. All rights reserved.
+        </p>
+      </footer>
 
       {/* Account Deactivated Notification Modal Dialog */}
       <AlertDialog
@@ -199,7 +212,12 @@ function LoginPage() {
                 Account Deactivated
               </AlertDialogTitle>
               <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
-                Your account is currently <strong className="text-destructive font-bold">deactivated</strong>. You cannot access the BoardQuest administrative platform while your status is inactive.
+                Your account is currently{" "}
+                <strong className="text-destructive font-bold">
+                  deactivated
+                </strong>
+                . You cannot access the BoardQuest administrative platform while
+                your status is inactive.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>

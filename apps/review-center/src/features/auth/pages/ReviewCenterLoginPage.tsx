@@ -90,16 +90,17 @@ export function ReviewCenterLoginPage() {
   const isLoginInvalid = Boolean(localError) && !isDeactivatedDialogOpen;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground font-sans p-4">
-      <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
-        {/* Logo Section */}
-        <div className="flex flex-col items-center mb-6">
-          <img
-            src={boardQuestLogo}
-            alt="BoardQuest Logo"
-            className="h-16 sm:h-20 w-auto object-contain mb-1"
-          />
-        </div>
+    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-background text-foreground font-sans p-4 sm:p-6">
+      <div className="w-full flex-1 flex items-center justify-center py-6 sm:py-8">
+        <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
+          {/* Logo Section */}
+          <div className="flex flex-col items-center mb-6">
+            <img
+              src={boardQuestLogo}
+              alt="BoardQuest Logo"
+              className="h-16 sm:h-20 w-auto object-contain mb-1"
+            />
+          </div>
 
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="w-full space-y-5">
@@ -203,6 +204,14 @@ export function ReviewCenterLoginPage() {
           </FieldGroup>
         </form>
       </div>
+    </div>
+
+      {/* Footer */}
+      <footer className="w-full py-4 text-center text-xs text-muted-foreground select-none shrink-0">
+        <p className="tracking-wide">
+          &copy; {new Date().getFullYear()} <span className="font-semibold text-foreground/80">BoardQuest</span>. All rights reserved.
+        </p>
+      </footer>
 
       {/* Account Deactivated Notification Modal Dialog */}
       <AlertDialog
