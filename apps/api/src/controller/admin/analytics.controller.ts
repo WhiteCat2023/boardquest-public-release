@@ -15,6 +15,22 @@ export const getStudentAnalyticsReport = asyncHandler(async (req: AuthenticatedR
   return new ApiResponse(200, report, "Student analytics generated successfully").send(res);
 });
 
+export const getStudentTopicMasteryReport = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { studentId } = req.params;
+  if (!studentId) {
+    throw new ApiError(400, "Student ID is required");
+  }
+
+  const subject = req.query.subject as string | undefined;
+  const forceRefresh = req.query.forceRefresh === "true";
+
+  const topicMastery = await analyticsService.getStudentTopicMastery(studentId as string, {
+    subject,
+    forceRefresh,
+  });
+  return new ApiResponse(200, topicMastery, "Student topic mastery diagnostics retrieved successfully").send(res);
+});
+
 export const getDashboardAnalyticsSummary = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const summary = await analyticsService.getDashboardAnalyticsSummary();
   return new ApiResponse(200, summary, "Dashboard analytics summary retrieved successfully").send(res);

@@ -1,27 +1,27 @@
 $ jest
-PASS src/__tests__/questionParaphraser.test.ts (8.54 s)
-PASS src/__tests__/calendar.test.ts (9.061 s)
-PASS src/__tests__/upload.test.ts (9.247 s)
-PASS src/__tests__/user.test.ts (9.534 s)
-PASS src/__tests__/game.test.ts (9.569 s)
-PASS src/__tests__/reviewCenter.test.ts (9.574 s)
-PASS src/__tests__/reviewCenterAuth.test.ts (9.798 s)
-PASS src/__tests__/analytics.test.ts
-PASS src/__tests__/candidate.test.ts (9.801 s)
+PASS src/__tests__/questionParaphraser.test.ts (8.684 s)
+PASS src/__tests__/upload.test.ts (8.987 s)
+PASS src/__tests__/calendar.test.ts (9.154 s)
+PASS src/__tests__/user.test.ts (9.261 s)
+PASS src/__tests__/candidate.test.ts (9.36 s)
+PASS src/__tests__/reviewCenter.test.ts (9.403 s)
+PASS src/__tests__/reviewCenterAuth.test.ts (9.429 s)
 PASS src/__tests__/guidance.test.ts
+PASS src/__tests__/game.test.ts (9.816 s)
 PASS src/__tests__/statsCalculator.test.ts
-PASS src/__tests__/questionCommentReview.test.ts
-PASS src/__tests__/encodingQuotaRestriction.test.ts
 PASS src/__tests__/logs.test.ts
+PASS src/__tests__/questionCommentReview.test.ts
+PASS src/__tests__/analytics.test.ts
 PASS src/__tests__/notification.test.ts
-PASS src/__tests__/auth.test.ts (10.126 s)
 PASS src/__tests__/assessment.test.ts
-PASS src/__tests__/student.test.ts (10.201 s)
-PASS src/__tests__/question.test.ts (10.512 s)
+PASS src/__tests__/encodingQuotaRestriction.test.ts
+PASS src/__tests__/auth.test.ts (9.924 s)
+PASS src/__tests__/question.test.ts (10.134 s)
+PASS src/__tests__/student.test.ts (10.142 s)
 
 Test Suites: 19 passed, 19 total
 Tests:       192 passed, 192 total
 Snapshots:   0 total
-Time:        11.863 s, estimated 15 s
+Time:        11.486 s, estimated 14 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

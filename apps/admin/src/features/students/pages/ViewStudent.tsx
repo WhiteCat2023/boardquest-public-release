@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,6 +10,9 @@ import {
   GraduationCap,
   FileSpreadsheet,
   Mail,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -48,12 +51,14 @@ import { StudentAchievementHistory } from "../components/profile/StudentAchievem
 import { StudentOutreachHistoryTab } from "../components/profile/StudentOutreachHistoryTab";
 import StudentReviewCenterTab from "../components/profile/StudentReviewCenterTab";
 import StudentExamResultsTab from "../components/profile/StudentExamResultsTab";
+import { StudentTopicMasteryTab } from "../components/profile/StudentTopicMasteryTab";
 
 type StudentProfileTab =
   | "overview"
   | "timeline"
   | "graphs"
   | "readiness"
+  | "topic-mastery"
   | "achievements"
   | "exam-results"
   | "review-center"
@@ -67,7 +72,64 @@ export default function ViewStudent() {
   const [isScorecardOpen, setIsScorecardOpen] = useState(false);
   const [isFormulaOpen, setIsFormulaOpen] = useState(false);
   const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
+  const [guidancePrefill, setGuidancePrefill] = useState<{ subject?: string; reason?: string } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+
+  // Horizontal Tab Scroll & Overflow Management
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollState = useCallback(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+  }, []);
+
+  useLayoutEffect(() => {
+    updateScrollState();
+    const el = tabsContainerRef.current;
+    if (!el) return;
+
+    const handleResize = () => updateScrollState();
+    window.addEventListener("resize", handleResize);
+
+    const resizeObserver = new ResizeObserver(() => updateScrollState());
+    resizeObserver.observe(el);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+    };
+  }, [updateScrollState]);
+
+  // Smoothly ensure active tab is in view when changed
+  useEffect(() => {
+    const container = tabsContainerRef.current;
+    const tabEl = tabRefs.current[activeTab];
+    if (container && tabEl) {
+      const containerRect = container.getBoundingClientRect();
+      const tabRect = tabEl.getBoundingClientRect();
+      if (tabRect.left < containerRect.left) {
+        container.scrollBy({ left: tabRect.left - containerRect.left - 24, behavior: "smooth" });
+      } else if (tabRect.right > containerRect.right) {
+        container.scrollBy({ left: tabRect.right - containerRect.right + 24, behavior: "smooth" });
+      }
+    }
+  }, [activeTab]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const scrollAmount = Math.max(220, Math.floor(el.clientWidth * 0.6));
+    el.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   const { data: studentDirect, isLoading: isDirectLoading } = useStudent(studentId);
   const { data: allStudentsData, isLoading: isListLoading } = useStudents({
@@ -165,6 +227,11 @@ export default function ViewStudent() {
     { id: "graphs" as StudentProfileTab, label: "Performance Graphs", icon: TrendingUp },
     { id: "readiness" as StudentProfileTab, label: "Syllabus & Readiness", icon: Target },
     {
+      id: "topic-mastery" as StudentProfileTab,
+      label: "Topic Mastery",
+      icon: Sparkles,
+    },
+    {
       id: "achievements" as StudentProfileTab,
       label: "Achievements & Badges",
       icon: Award,
@@ -205,38 +272,84 @@ export default function ViewStudent() {
       {/* 2. The Hero AI Summary & 6-Item KPI Strip */}
       <StudentAiSummaryKpiStrip student={activeStudent} />
 
-      {/* 3. Horizontal Navigation Tabs Bar (Underline / Minimalist Style from Reference) */}
-      <div className="border-b border-border flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-none pt-1">
-        {NAV_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap border-b-2 -mb-[1px] ${
-                isActive
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <Icon size={14} className={isActive ? "text-primary" : "text-muted-foreground"} />
-              <span>{tab.label}</span>
-              {tab.badgeCount !== undefined && tab.badgeCount > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-extrabold ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {tab.badgeCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* 3. Horizontal Navigation Tabs Bar with Left & Right Scroll Arrows */}
+      <div className="border-b border-border flex items-center gap-1 pt-1 relative">
+        {/* Left Arrow Button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={!canScrollLeft}
+          onClick={() => handleScroll("left")}
+          className={`h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all ${
+            !canScrollLeft
+              ? "opacity-20 cursor-default pointer-events-none"
+              : "cursor-pointer active:scale-95 shadow-2xs"
+          }`}
+          aria-label="Scroll tabs left"
+          title="Scroll tabs left"
+        >
+          <ChevronLeft size={16} />
+        </Button>
+
+        {/* Scrollable Tabs Track */}
+        <div
+          ref={tabsContainerRef}
+          onScroll={updateScrollState}
+          className="flex-1 flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-none scroll-smooth -mb-[1px]"
+        >
+          {NAV_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabRefs.current[tab.id] = el;
+                }}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap border-b-2 ${
+                  isActive
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+              >
+                <Icon size={14} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                <span>{tab.label}</span>
+                {tab.badgeCount !== undefined && tab.badgeCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-extrabold ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {tab.badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Arrow Button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={!canScrollRight}
+          onClick={() => handleScroll("right")}
+          className={`h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all ${
+            !canScrollRight
+              ? "opacity-20 cursor-default pointer-events-none"
+              : "cursor-pointer active:scale-95 shadow-2xs"
+          }`}
+          aria-label="Scroll tabs right"
+          title="Scroll tabs right"
+        >
+          <ChevronRight size={16} />
+        </Button>
       </div>
 
       {/* 4. Tab Contents */}
@@ -347,6 +460,21 @@ export default function ViewStudent() {
         </div>
       )}
 
+      {/* TAB: TOPIC MASTERY VIA AI ANALYTICS */}
+      {activeTab === "topic-mastery" && (
+        <StudentTopicMasteryTab
+          student={activeStudent}
+          onPrescribeGuidance={(initialData) => {
+            if (initialData) {
+              setGuidancePrefill(initialData);
+            } else {
+              setGuidancePrefill(null);
+            }
+            setIsGuidanceOpen(true);
+          }}
+        />
+      )}
+
       {/* TAB 5: ACHIEVEMENTS & BADGES */}
       {activeTab === "achievements" && (
         <div className="animate-in fade-in duration-200">
@@ -444,8 +572,13 @@ export default function ViewStudent() {
       {/* MODAL: Assign Guidance / Academic Advisor */}
       <AssignGuidanceModal
         isOpen={isGuidanceOpen}
-        onClose={() => setIsGuidanceOpen(false)}
+        onClose={() => {
+          setIsGuidanceOpen(false);
+          setGuidancePrefill(null);
+        }}
         student={activeStudent}
+        initialSubject={guidancePrefill?.subject}
+        initialReason={guidancePrefill?.reason}
       />
 
       {/* MODAL: Email Student Outreach */}

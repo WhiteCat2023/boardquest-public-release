@@ -162,4 +162,58 @@ export interface StudentAnalyticsResult {
   };
 }
 
-export type TabType = "overview" | "graphs" | "timeline" | "progress" | "achievements";
+export type TabType = "overview" | "graphs" | "timeline" | "progress" | "achievements" | "topic-mastery";
+
+export interface TopicDiagnosticItem {
+  topic: string;
+  subject: string;
+  accuracy: number;
+  totalAttempts: number;
+  totalQuestions: number;
+  status: "Needs Review" | "Proficient" | "Mastered" | "Unattempted";
+  diagnosticNote: string;
+}
+
+export interface StudentTopicMasteryDetail {
+  id: string;
+  name: string;
+  subject: string;
+  totalQuestions: number;
+  attemptedQuestions: number;
+  totalAttempts: number;
+  totalCorrect: number;
+  accuracy: number;
+  mastery: number;
+  status: "Needs Review" | "Proficient" | "Mastered" | "Unattempted";
+  diagnosticNote?: string;
+  lastPracticed?: string | null;
+}
+
+export interface StudentTopicMasteryResponse {
+  studentId: string;
+  studentName: string;
+  summary: {
+    overallTopicReadinessSummary: string;
+    priorityWeakTopics: TopicDiagnosticItem[];
+    masteredAnchorTopics: TopicDiagnosticItem[];
+    coachingTip: string;
+    overallAccuracy: number;
+    totalTopicsCount: number;
+    masteredCount: number;
+    proficientCount: number;
+    needsReviewCount: number;
+    unattemptedCount: number;
+  };
+  subjectsBreakdown: Array<{
+    subject: string;
+    totalTopics: number;
+    masteredCount: number;
+    proficientCount: number;
+    needsReviewCount: number;
+    unattemptedCount: number;
+    overallAccuracy: number;
+    totalQuestions: number;
+    totalAnswered: number;
+  }>;
+  allTopics: StudentTopicMasteryDetail[];
+}

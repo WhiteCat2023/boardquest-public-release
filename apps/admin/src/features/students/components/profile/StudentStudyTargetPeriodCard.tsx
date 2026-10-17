@@ -123,14 +123,15 @@ export function StudentStudyTargetPeriodCard({ student }: StudentStudyTargetPeri
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border pb-3">
         <div>
-          <div className="flex items-center gap-1.5">
+          {/* <div className="flex items-center gap-1.5">
             <span className="p-1 rounded-md bg-primary/10 text-primary">
               <Target className="w-3.5 h-3.5" />
             </span>
             <span className="text-[9.5px] font-black uppercase tracking-widest text-primary">
               In-Game Study Targets &amp; Milestones
             </span>
-          </div>
+          </div> */}
+          
           <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight mt-0.5">
             Study Target Period &amp; Licensure Objectives
           </h2>

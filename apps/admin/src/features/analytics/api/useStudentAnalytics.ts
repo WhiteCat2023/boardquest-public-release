@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import type { StudentListItem, StudentAnalyticsResult } from "../types/types";
+import type { StudentListItem, StudentAnalyticsResult, StudentTopicMasteryResponse } from "../types/types";
 
 export function useStudentsList(params?: { search?: string; take?: number }) {
   const axiosPrivate = useAxiosPrivate();
@@ -36,6 +36,27 @@ export function useStudentAnalyticsReport(selectedStudentId: string | null) {
       if (!selectedStudentId) return null;
       try {
         const response = await axiosPrivate.get(`/analytics/student/${selectedStudentId}`);
+        if (response.data?.data) return response.data.data;
+        return null;
+      } catch (err) {
+        return null;
+      }
+    },
+    enabled: !!selectedStudentId,
+  });
+}
+
+export function useStudentTopicMastery(selectedStudentId: string | null, subject?: string) {
+  const axiosPrivate = useAxiosPrivate();
+
+  return useQuery<StudentTopicMasteryResponse | null>({
+    queryKey: ["studentTopicMastery", selectedStudentId, subject],
+    queryFn: async () => {
+      if (!selectedStudentId) return null;
+      try {
+        const response = await axiosPrivate.get(`/analytics/student/${selectedStudentId}/topic-mastery`, {
+          params: subject && subject !== "ALL" ? { subject } : undefined,
+        });
         if (response.data?.data) return response.data.data;
         return null;
       } catch (err) {

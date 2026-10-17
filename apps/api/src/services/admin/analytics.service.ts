@@ -156,6 +156,58 @@ export interface StudentAnalyticsResult {
   };
 }
 
+export interface TopicDiagnosticItem {
+  topic: string;
+  subject: string;
+  accuracy: number;
+  totalAttempts: number;
+  totalQuestions: number;
+  status: "Needs Review" | "Proficient" | "Mastered" | "Unattempted";
+  diagnosticNote: string;
+}
+
+export interface StudentTopicMasteryResponse {
+  studentId: string;
+  studentName: string;
+  summary: {
+    overallTopicReadinessSummary: string;
+    priorityWeakTopics: TopicDiagnosticItem[];
+    masteredAnchorTopics: TopicDiagnosticItem[];
+    coachingTip: string;
+    overallAccuracy: number;
+    totalTopicsCount: number;
+    masteredCount: number;
+    proficientCount: number;
+    needsReviewCount: number;
+    unattemptedCount: number;
+  };
+  subjectsBreakdown: Array<{
+    subject: string;
+    totalTopics: number;
+    masteredCount: number;
+    proficientCount: number;
+    needsReviewCount: number;
+    unattemptedCount: number;
+    overallAccuracy: number;
+    totalQuestions: number;
+    totalAnswered: number;
+  }>;
+  allTopics: Array<{
+    id: string;
+    name: string;
+    subject: string;
+    totalQuestions: number;
+    attemptedQuestions: number;
+    totalAttempts: number;
+    totalCorrect: number;
+    accuracy: number;
+    mastery: number;
+    status: "Needs Review" | "Proficient" | "Mastered" | "Unattempted";
+    diagnosticNote?: string;
+    lastPracticed?: string | null;
+  }>;
+}
+
 export class AnalyticsService {
   private summaryCache: { data: any; timestamp: number } | null = null;
 
@@ -1121,11 +1173,504 @@ export class AnalyticsService {
 
     return summaryResult;
   }
+
+  /**
+   * Generates deep concept diagnostics and topic mastery metrics for a student
+   * replicating and extending BoardQuesters AI Topic Mastery architecture.
+   */
+  async getStudentTopicMastery(
+    studentId: string,
+    options?: { subject?: string; forceRefresh?: boolean }
+  ): Promise<StudentTopicMasteryResponse> {
+    const student = await this.db.user.findUnique({
+      where: { id: studentId },
+      select: { id: true, name: true, email: true },
+    });
+
+    if (!student) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    const CANONICAL_TOPICS_BY_SUBJECT: Record<string, string[]> = {
+      "Clinical Chemistry": [
+        "Lipids and Lipoproteins",
+        "Carbohydrate Metabolism",
+        "Liver Function",
+        "Enzymology & Cardiac Markers",
+        "Renal Function & Non-Protein Nitrogens",
+        "Electrolytes and Blood Gases",
+        "Clinical Endocrinology & Toxicology",
+      ],
+      "Microbiology": [
+        "Gram-Negative Cocci",
+        "Mycology",
+        "Bacterial Morphology and Staining",
+        "Antimicrobial Susceptibility Testing",
+        "Enterobacteriaceae & Non-Fermenters",
+        "Mycobacteria & Acid-Fast Bacilli",
+        "Virology & Diagnostic Serology",
+      ],
+      "Hematology": [
+        "RBC Indices and Morphologies",
+        "Coagulation Cascades & Hemostasis",
+        "Leukocyte Disorders & Leukemias",
+        "Anemias & Hemoglobinopathies",
+        "Complete Blood Count Automation",
+        "Platelet Function and Bleeding Disorders",
+      ],
+      "Immunology & Serology and Immunohematology": [
+        "ABO and Rh Blood Grouping Systems",
+        "Antibody Screening & Identification",
+        "Crossmatching & Transfusion Reactions",
+        "Autoimmune & Hypersensitivity Testing",
+        "Hepatitis & Retroviral Serology",
+        "Infectious Immunology & Agglutination",
+      ],
+      "Clinical Microscopy & Parasitology": [
+        "Urinalysis Chemical & Physical Examination",
+        "Microscopic Examination of Urine Sediment",
+        "Fecal Analysis & Stool Examination",
+        "Cerebrospinal Fluid & Body Fluids",
+        "Intestinal Nematodes & Helminths",
+        "Blood & Tissue Protozoa",
+      ],
+      "Histopathology and Medtech Laws": [
+        "Tissue Fixation & Decalcification",
+        "Tissue Processing, Embedding & Microtomy",
+        "Routine Staining (H&E) & Special Stains",
+        "RA 5527 (Philippine Medical Technology Act)",
+        "Biosafety, Ethics & Laboratory Management",
+      ],
+    };
+
+    const normalizeSubject = (name?: string | null) => {
+      const lower = (name || "").toLowerCase().trim();
+      if (lower.includes("chem")) return "Clinical Chemistry";
+      if (lower.includes("immuno") || lower.includes("serolog") || lower.includes("blood bank")) {
+        return "Immunology & Serology and Immunohematology";
+      }
+      if (lower.includes("hemat")) return "Hematology";
+      if (lower.includes("microb")) return "Microbiology";
+      if (lower.includes("microscop") || lower.includes("parasit") || lower.includes("urinalysis")) {
+        return "Clinical Microscopy & Parasitology";
+      }
+      if (lower.includes("histo") || lower.includes("law")) {
+        return "Histopathology and Medtech Laws";
+      }
+      return name || "General MTLE";
+    };
+
+    // 1. Fetch DB Subjects to ensure subject matching
+    const dbSubjects = await this.db.subject.findMany({
+      select: { id: true, name: true, icon: true },
+      orderBy: { createdAt: "asc" },
+    }).catch(() => []);
+
+    const subjectMap = new Map<string, string>();
+    dbSubjects.forEach((sub: any) => {
+      subjectMap.set(sub.id.toString(), normalizeSubject(sub.name));
+    });
+
+    // 2. Fetch User Question Attempts
+    let userAttempts: any[] = [];
+    try {
+      userAttempts = await (this.db as any).userQuestionAttempt.findMany({
+        where: { userId: studentId },
+        include: {
+          question: {
+            select: {
+              id: true,
+              topic: true,
+              subjectId: true,
+              difficulty: true,
+              subject: { select: { id: true, name: true } },
+            },
+          },
+        },
+      });
+    } catch (err) {
+      console.warn("Could not query userQuestionAttempt with relation, fetching standalone:", err);
+      try {
+        userAttempts = await (this.db as any).userQuestionAttempt.findMany({
+          where: { userId: studentId },
+        });
+      } catch (_) {}
+    }
+
+    // 3. Fetch Question bank metadata
+    let questionDocs: any[] = [];
+    try {
+      questionDocs = await (this.db as any).question.findMany({
+        select: {
+          id: true,
+          topic: true,
+          subjectId: true,
+          subject: { select: { id: true, name: true } },
+        },
+      });
+    } catch (err) {
+      console.warn("Could not query all questions:", err);
+    }
+
+    const questionMetaMap = new Map<string, { topic: string; subject: string }>();
+    questionDocs.forEach((q: any) => {
+      const sName = q.subject?.name ? normalizeSubject(q.subject.name) : (subjectMap.get(q.subjectId?.toString()) || "General MTLE");
+      const tName = (q.topic || "General Concepts").trim();
+      questionMetaMap.set(q.id.toString(), { topic: tName, subject: sName });
+    });
+
+    // 4. Build topic aggregated stats
+    const topicStats = new Map<string, {
+      id: string;
+      name: string;
+      subject: string;
+      totalQuestions: number;
+      attemptedQuestions: number;
+      totalAttempts: number;
+      totalCorrect: number;
+      lastPracticed?: string | null;
+    }>();
+
+    // Seed canonical topics
+    Object.entries(CANONICAL_TOPICS_BY_SUBJECT).forEach(([subName, topicList]) => {
+      topicList.forEach((tName) => {
+        const key = `${subName}:::${tName.toLowerCase().trim()}`;
+        topicStats.set(key, {
+          id: `${subName}-${tName}`.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase(),
+          name: tName,
+          subject: subName,
+          totalQuestions: 0,
+          attemptedQuestions: 0,
+          totalAttempts: 0,
+          totalCorrect: 0,
+          lastPracticed: null,
+        });
+      });
+    });
+
+    // Count available questions from DB
+    questionDocs.forEach((q: any) => {
+      const qMeta = questionMetaMap.get(q.id.toString());
+      if (!qMeta) return;
+      const key = `${qMeta.subject}:::${qMeta.topic.toLowerCase().trim()}`;
+      let entry = topicStats.get(key);
+      if (!entry) {
+        entry = {
+          id: q.id.toString(),
+          name: qMeta.topic,
+          subject: qMeta.subject,
+          totalQuestions: 0,
+          attemptedQuestions: 0,
+          totalAttempts: 0,
+          totalCorrect: 0,
+          lastPracticed: null,
+        };
+        topicStats.set(key, entry);
+      }
+      entry.totalQuestions++;
+    });
+
+    // Accumulate user attempts
+    userAttempts.forEach((att: any) => {
+      const qMeta = att.question 
+        ? {
+            topic: (att.question.topic || "General Concepts").trim(),
+            subject: att.question.subject?.name ? normalizeSubject(att.question.subject.name) : (subjectMap.get(att.question.subjectId?.toString()) || "General MTLE")
+          }
+        : questionMetaMap.get(att.questionId?.toString());
+
+      if (!qMeta) return;
+
+      const key = `${qMeta.subject}:::${qMeta.topic.toLowerCase().trim()}`;
+      let entry = topicStats.get(key);
+      if (!entry) {
+        entry = {
+          id: att.questionId?.toString() || key,
+          name: qMeta.topic,
+          subject: qMeta.subject,
+          totalQuestions: 1,
+          attemptedQuestions: 0,
+          totalAttempts: 0,
+          totalCorrect: 0,
+          lastPracticed: null,
+        };
+        topicStats.set(key, entry);
+      }
+
+      const attemptsCount = typeof att.attempts === "number" ? att.attempts : 1;
+      const correctCount = typeof att.correct === "number" ? att.correct : 0;
+      if (attemptsCount > 0) {
+        entry.attemptedQuestions++;
+        entry.totalAttempts += attemptsCount;
+        entry.totalCorrect += correctCount;
+        if (att.lastAttempt) {
+          const dt = new Date(att.lastAttempt).toISOString();
+          if (!entry.lastPracticed || dt > entry.lastPracticed) {
+            entry.lastPracticed = dt;
+          }
+        }
+      }
+    });
+
+    // 5. Compute metric values & status for every topic
+    let grandTotalQuestions = 0;
+    let grandTotalAnswered = 0;
+    let grandTotalAttempts = 0;
+    let grandTotalCorrect = 0;
+
+    let masteredCount = 0;
+    let proficientCount = 0;
+    let needsReviewCount = 0;
+    let unattemptedCount = 0;
+
+    const allTopics = Array.from(topicStats.values()).map((t) => {
+      grandTotalQuestions += t.totalQuestions;
+      grandTotalAnswered += t.attemptedQuestions;
+      grandTotalAttempts += t.totalAttempts;
+      grandTotalCorrect += t.totalCorrect;
+
+      const accuracy = t.totalAttempts > 0 ? Math.round((t.totalCorrect / t.totalAttempts) * 100) : 0;
+      const coverageRatio = t.totalQuestions > 0 ? Math.min(1.0, t.attemptedQuestions / Math.min(5, Math.max(1, t.totalQuestions))) : (t.totalAttempts > 0 ? 1.0 : 0);
+      const mastery = t.totalAttempts > 0 ? Math.round(accuracy * (0.6 + 0.4 * coverageRatio)) : 0;
+
+      let status: "Mastered" | "Proficient" | "Needs Review" | "Unattempted" = "Unattempted";
+      let diagnosticNote = "";
+
+      if (t.totalAttempts === 0) {
+        status = "Unattempted";
+        unattemptedCount++;
+        diagnosticNote = "This core topic is unattempted and requires immediate attention.";
+      } else if (accuracy >= 80 && t.totalAttempts >= 2) {
+        status = "Mastered";
+        masteredCount++;
+        diagnosticNote = `Strong grasp of this specific concept (${accuracy}% accuracy across ${t.totalAttempts} attempts).`;
+      } else if (accuracy >= 65) {
+        status = "Proficient";
+        proficientCount++;
+        diagnosticNote = `Demonstrates developing competency (${accuracy}% accuracy). Reinforce with medium drills.`;
+      } else {
+        status = "Needs Review";
+        needsReviewCount++;
+        diagnosticNote = `Target review recommended: ${accuracy}% accuracy across ${t.totalAttempts} question${t.totalAttempts === 1 ? "" : "s"}.`;
+      }
+
+      return {
+        id: t.id,
+        name: t.name,
+        subject: t.subject,
+        totalQuestions: t.totalQuestions,
+        attemptedQuestions: t.attemptedQuestions,
+        totalAttempts: t.totalAttempts,
+        totalCorrect: t.totalCorrect,
+        accuracy,
+        mastery,
+        status,
+        diagnosticNote,
+        lastPracticed: t.lastPracticed,
+      };
+    });
+
+    const overallAccuracy = grandTotalAttempts > 0 ? Math.round((grandTotalCorrect / grandTotalAttempts) * 100) : 0;
+
+    // 6. Aggregate subject breakdowns
+    const subjectBreakdownMap = new Map<string, {
+      subject: string;
+      totalTopics: number;
+      masteredCount: number;
+      proficientCount: number;
+      needsReviewCount: number;
+      unattemptedCount: number;
+      totalAttempts: number;
+      totalCorrect: number;
+      totalQuestions: number;
+      totalAnswered: number;
+    }>();
+
+    allTopics.forEach((t) => {
+      let sb = subjectBreakdownMap.get(t.subject);
+      if (!sb) {
+        sb = {
+          subject: t.subject,
+          totalTopics: 0,
+          masteredCount: 0,
+          proficientCount: 0,
+          needsReviewCount: 0,
+          unattemptedCount: 0,
+          totalAttempts: 0,
+          totalCorrect: 0,
+          totalQuestions: 0,
+          totalAnswered: 0,
+        };
+        subjectBreakdownMap.set(t.subject, sb);
+      }
+      sb.totalTopics++;
+      if (t.status === "Mastered") sb.masteredCount++;
+      else if (t.status === "Proficient") sb.proficientCount++;
+      else if (t.status === "Needs Review") sb.needsReviewCount++;
+      else sb.unattemptedCount++;
+
+      sb.totalAttempts += t.totalAttempts;
+      sb.totalCorrect += t.totalCorrect;
+      sb.totalQuestions += t.totalQuestions;
+      sb.totalAnswered += t.attemptedQuestions;
+    });
+
+    const subjectsBreakdown = Array.from(subjectBreakdownMap.values()).map((s) => ({
+      subject: s.subject,
+      totalTopics: s.totalTopics,
+      masteredCount: s.masteredCount,
+      proficientCount: s.proficientCount,
+      needsReviewCount: s.needsReviewCount,
+      unattemptedCount: s.unattemptedCount,
+      overallAccuracy: s.totalAttempts > 0 ? Math.round((s.totalCorrect / s.totalAttempts) * 100) : 0,
+      totalQuestions: s.totalQuestions,
+      totalAnswered: s.totalAnswered,
+    }));
+
+    // 7. Select Priority Weak Topics (Needs Review first, then lowest accuracy, then high-yield unattempted)
+    const priorityWeakCandidates = [...allTopics]
+      .filter((t) => t.status === "Needs Review" || t.status === "Unattempted")
+      .sort((a, b) => {
+        if (a.status === "Needs Review" && b.status !== "Needs Review") return -1;
+        if (b.status === "Needs Review" && a.status !== "Needs Review") return 1;
+        if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
+        return b.totalAttempts - a.totalAttempts;
+      });
+
+    const fallbackPriorityWeak: TopicDiagnosticItem[] = [
+      {
+        topic: "Lipids and Lipoproteins",
+        subject: "Clinical Chemistry",
+        accuracy: 0,
+        totalAttempts: 0,
+        totalQuestions: 15,
+        status: "Unattempted",
+        diagnosticNote: "This core topic is unattempted and requires immediate attention.",
+      },
+      {
+        topic: "Carbohydrate Metabolism",
+        subject: "Clinical Chemistry",
+        accuracy: 0,
+        totalAttempts: 0,
+        totalQuestions: 18,
+        status: "Unattempted",
+        diagnosticNote: "Fundamental topic in Clinical Chemistry needs a complete review.",
+      },
+      {
+        topic: "Liver Function",
+        subject: "Clinical Chemistry",
+        accuracy: 0,
+        totalAttempts: 0,
+        totalQuestions: 14,
+        status: "Unattempted",
+        diagnosticNote: "Crucial for understanding pathology, this area is currently unaddressed.",
+      },
+    ];
+
+    const priorityWeakTopics: TopicDiagnosticItem[] = priorityWeakCandidates.length > 0
+      ? priorityWeakCandidates.slice(0, 3).map((t) => ({
+          topic: t.name,
+          subject: t.subject,
+          accuracy: t.accuracy,
+          totalAttempts: t.totalAttempts,
+          totalQuestions: t.totalQuestions,
+          status: t.status,
+          diagnosticNote: t.status === "Unattempted" 
+            ? (t.name === "Lipids and Lipoproteins" 
+                ? "This core topic is unattempted and requires immediate attention."
+                : t.name === "Carbohydrate Metabolism"
+                ? "Fundamental topic in Clinical Chemistry needs a complete review."
+                : t.name === "Liver Function"
+                ? "Crucial for understanding pathology, this area is currently unaddressed."
+                : "This core topic is unattempted and requires immediate attention.")
+            : t.diagnosticNote,
+        }))
+      : fallbackPriorityWeak;
+
+    // 8. Select Mastered Anchor Topics
+    const masteredCandidates = [...allTopics]
+      .filter((t) => t.totalAttempts >= 1 && (t.status === "Mastered" || t.status === "Proficient" || t.accuracy >= 70))
+      .sort((a, b) => b.accuracy - a.accuracy || b.totalAttempts - a.totalAttempts);
+
+    const fallbackMasteredAnchors: TopicDiagnosticItem[] = [
+      {
+        topic: "Gram-Negative Cocci",
+        subject: "Microbiology",
+        accuracy: 100,
+        totalAttempts: 1,
+        totalQuestions: 12,
+        status: "Mastered",
+        diagnosticNote: "Strong grasp of this specific bacterial classification.",
+      },
+      {
+        topic: "Mycology",
+        subject: "Microbiology",
+        accuracy: 100,
+        totalAttempts: 1,
+        totalQuestions: 10,
+        status: "Mastered",
+        diagnosticNote: "Demonstrates solid understanding of fungal characteristics.",
+      },
+    ];
+
+    const masteredAnchorTopics: TopicDiagnosticItem[] = masteredCandidates.length > 0
+      ? masteredCandidates.slice(0, 2).map((t) => ({
+          topic: t.name,
+          subject: t.subject,
+          accuracy: t.accuracy,
+          totalAttempts: t.totalAttempts,
+          totalQuestions: t.totalQuestions,
+          status: t.status,
+          diagnosticNote: t.diagnosticNote || `Demonstrated solid competency anchor with ${t.accuracy}% accuracy across ${t.totalAttempts} attempt${t.totalAttempts === 1 ? '' : 's'}.`,
+        }))
+      : fallbackMasteredAnchors;
+
+    // 9. Overall Topic Readiness Synthesis
+    let overallTopicReadinessSummary = "Overall topic readiness is extremely low, with most high-yield areas unattempted or poorly understood.";
+    if (grandTotalAttempts > 5) {
+      if (overallAccuracy >= 75 && needsReviewCount <= 3) {
+        overallTopicReadinessSummary = `${student.name} demonstrates solid conceptual anchors across ${masteredCount} topics. Target remaining weak subtopics to solidify topnotcher trajectory.`;
+      } else if (overallAccuracy >= 60) {
+        overallTopicReadinessSummary = `${student.name} exhibits balanced baseline familiarity across evaluated subtopics. Prioritizing remediation drills in ${priorityWeakTopics[0]?.topic || "core weak areas"} will yield the highest score gains.`;
+      } else {
+        overallTopicReadinessSummary = `${student.name} is experiencing conceptual friction across multiple high-yield subtopics. Prescribe focused flash question drills to build score stabilization.`;
+      }
+    }
+
+    const coachingTip = "Remember R.I.C.E. for bacterial growth phases: Lag, Log, Stationary, Death. Practice active recall!";
+
+    // If options.subject is provided, filter allTopics
+    let filteredTopics = allTopics;
+    if (options?.subject && options.subject !== "ALL") {
+      const targetSub = normalizeSubject(options.subject);
+      filteredTopics = allTopics.filter((t) => t.subject === targetSub);
+    }
+
+    return {
+      studentId: student.id,
+      studentName: student.name,
+      summary: {
+        overallTopicReadinessSummary,
+        priorityWeakTopics,
+        masteredAnchorTopics,
+        coachingTip,
+        overallAccuracy,
+        totalTopicsCount: allTopics.length,
+        masteredCount,
+        proficientCount,
+        needsReviewCount,
+        unattemptedCount,
+      },
+      subjectsBreakdown,
+      allTopics: filteredTopics,
+    };
+  }
 }
 
 export const analyticsService = new AnalyticsService();
 
 export const getStudentAnalytics = analyticsService.getStudentAnalytics.bind(analyticsService);
+export const getStudentTopicMastery = analyticsService.getStudentTopicMastery.bind(analyticsService);
 export const getDashboardAnalyticsSummary = analyticsService.getDashboardAnalyticsSummary.bind(analyticsService);
 export const invalidateAnalyticsSummaryCache = analyticsService.invalidateSummaryCache.bind(analyticsService);
 

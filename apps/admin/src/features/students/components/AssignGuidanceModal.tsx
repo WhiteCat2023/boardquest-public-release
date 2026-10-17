@@ -23,6 +23,8 @@ export interface AssignGuidanceModalProps {
   onClose: () => void;
   student?: any;
   students?: any[];
+  initialSubject?: string;
+  initialReason?: string;
   onSuccess?: () => void;
 }
 
@@ -31,6 +33,8 @@ export function AssignGuidanceModal({
   onClose,
   student,
   students,
+  initialSubject,
+  initialReason,
   onSuccess,
 }: AssignGuidanceModalProps) {
   const axiosPrivate = useAxiosPrivate();
@@ -83,6 +87,16 @@ export function AssignGuidanceModal({
   const isBulk = targetStudents.length > 1;
 
   useEffect(() => {
+    if (initialSubject || initialReason) {
+      if (initialSubject) setSelectedSubjects([initialSubject]);
+      if (initialReason) setReason(initialReason);
+      setDrillQuota(50);
+      setTargetAccuracy(75);
+      setDeadlinePreset("7D");
+      setDeadlineDate(computeDeadline("7D"));
+      return;
+    }
+
     if (isBulk) {
       const failingCount = targetStudents.filter((s: any) => s.isFailing).length;
       const allFailingSubs = Array.from(
