@@ -4,7 +4,6 @@ import MainLayout from "./layout/MainLayout";
 import { RequireAuth } from "@/features/auth";
 import { PersistentSession } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
-import { Toaster } from "@/components/ui/sonner";
 import { GlobalModalContainer } from "@/components/modal";
 import { UserRole } from "@/types/question";
 
@@ -235,6 +234,14 @@ function App() {
                     path="student-management/:studentId"
                     element={<ViewStudent />}
                   />
+                  <Route
+                    path="students"
+                    element={<Navigate to="/student-management" replace />}
+                  />
+                  <Route
+                    path="students/:studentId"
+                    element={<Navigate to="/student-management" replace />}
+                  />
                 </Route>
 
                 {/* Student Enrollment - Accessible by ADMIN, TEAMLEAD, and TEACHER */}
@@ -414,6 +421,10 @@ function App() {
                     path="question-bank/import"
                     element={<AddedQuestionUsingCSV />}
                   />
+                  <Route
+                    path="question-bank/add"
+                    element={<Navigate to="/question-bank/create" replace />}
+                  />
                 </Route>
 
                 {/* Analytics - Accessible by SUPERADMIN, ADMIN, TEAMLEAD, and TEACHER */}
@@ -489,7 +500,6 @@ function App() {
           </Route>
         </Routes>
       </Suspense>
-      <Toaster />
       <GlobalModalContainer />
     </>
   );

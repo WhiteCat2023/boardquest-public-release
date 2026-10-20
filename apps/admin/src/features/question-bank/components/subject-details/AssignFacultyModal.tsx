@@ -15,7 +15,7 @@ import { Search, UserCheck, ShieldCheck, Users, Loader2 } from "lucide-react";
 import { useUsers } from "@/features/users";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface AssignFacultyModalProps {
   isOpen: boolean;
@@ -125,7 +125,7 @@ export function AssignFacultyModal({
           : { ...old, categories: updatedList };
       });
 
-      toast.success(`Updated faculty handlers for ${categoryName}`);
+      showFeedback.success(`Updated faculty handlers for ${categoryName}`);
 
       return { previousCategoryDetail, previousCategory, previousCategories };
     },
@@ -145,7 +145,7 @@ export function AssignFacultyModal({
       if (context?.previousCategories) {
         queryClient.setQueryData(["categories"], context.previousCategories);
       }
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message ||
           "Failed to update assigned faculty handlers",
       );

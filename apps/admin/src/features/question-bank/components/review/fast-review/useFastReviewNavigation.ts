@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { Question } from "@/types/question";
 
 interface UseFastReviewNavigationProps {
@@ -58,13 +58,13 @@ export function useFastReviewNavigation({
       await axiosPrivate.post("/questions/bulk/approve", { ids: [questionId] });
     },
     onSuccess: () => {
-      toast.success("Question approved successfully!");
+      showFeedback.success("Question approved successfully!");
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       onRefresh?.();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to approve question.");
+      showFeedback.error(err.response?.data?.message || "Failed to approve question.");
     },
   });
 

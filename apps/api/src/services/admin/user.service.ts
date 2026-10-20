@@ -691,6 +691,7 @@ export class UserService {
         password: hash,
         accountStatus: "ACTIVE",
         isActive: true,
+        mustChangePassword: String(role).toUpperCase() !== "SUPERADMIN",
         handledSubjectIds:
           String(role).toUpperCase() === "REVIEWCENTER" ||
           String(role).toUpperCase() === "EXTERNAL"
@@ -1198,6 +1199,7 @@ export class UserService {
               handledSubjectIds: [],
               accountStatus: "ACTIVE",
               isActive: true,
+              mustChangePassword: String(targetRole).toUpperCase() !== "SUPERADMIN",
             },
           });
 

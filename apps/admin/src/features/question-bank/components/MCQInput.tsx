@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { uploadQuestionImage, fileToBase64 } from "../services/questionImageUploadService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface MultipleChoiceInputProps {
   mcqChoices: string[];
@@ -47,13 +47,13 @@ export default function MultipleChoiceInput({
 
   const processChoiceFile = async (index: number, file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file (PNG, JPG, WebP, GIF)");
+      showFeedback.error("Please upload a valid image file (PNG, JPG, WebP, GIF)");
       return;
     }
 
     const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 5;
     if (file.size > maxFileSizeMb * 1024 * 1024) {
-      toast.error(`Image file size must be less than ${maxFileSizeMb}MB`);
+      showFeedback.error(`Image file size must be less than ${maxFileSizeMb}MB`);
       return;
     }
 
@@ -71,9 +71,9 @@ export default function MultipleChoiceInput({
       if (handleImageChange) {
         handleImageChange(index, uploadedUrl);
       }
-      toast.success(`Option ${String.fromCharCode(65 + index)} image uploaded!`);
+      showFeedback.success(`Option ${String.fromCharCode(65 + index)} image uploaded!`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to upload choice image.");
+      showFeedback.error(err.message || "Failed to upload choice image.");
     } finally {
       setUploadingIndex(null);
       if (fileInputRefs.current[index]) {

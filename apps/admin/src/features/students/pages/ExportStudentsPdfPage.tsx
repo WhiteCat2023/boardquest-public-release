@@ -31,7 +31,7 @@ import {
   printStudentsPdf,
 } from "../services/studentPdfExportService";
 import { exportStudentsToExcel } from "../services/studentExcelExportService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ExportStudentsPdfPage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function ExportStudentsPdfPage() {
         setAllStudents(data);
       } catch (err: any) {
         if (!isSubscribed) return;
-        toast.error(err?.message || "Failed to load students roster for PDF.");
+        showFeedback.error(err?.message || "Failed to load students roster for PDF.");
       } finally {
         if (isSubscribed) setIsLoading(false);
       }
@@ -269,21 +269,21 @@ export default function ExportStudentsPdfPage() {
 
   const handlePrintOrSavePdf = async () => {
     if (!previewHtml || activeStudents.length === 0) {
-      toast.warning("No student records available to export.");
+      showFeedback.warning("No student records available to export.");
       return;
     }
 
     setIsPrinting(true);
     try {
       await printStudentsPdf(previewHtml);
-      toast.success(
+      showFeedback.success(
         `Export ready! Prepared ${activeStudents.length} student records for PDF save.`,
         {
           description: "Choose 'Save as PDF' in the destination dropdown to download.",
         }
       );
     } catch (err: any) {
-      toast.error("Failed to trigger print dialog.");
+      showFeedback.error("Failed to trigger print dialog.");
     } finally {
       setIsPrinting(false);
     }
@@ -291,7 +291,7 @@ export default function ExportStudentsPdfPage() {
 
   const handleExportToExcel = () => {
     if (activeCount === 0 || activeStudents.length === 0) {
-      toast.warning("No student records available to export.");
+      showFeedback.warning("No student records available to export.");
       return;
     }
 
@@ -303,14 +303,14 @@ export default function ExportStudentsPdfPage() {
         includeMetrics,
         institutionName: "PHINMA Education",
       });
-      toast.success(
+      showFeedback.success(
         `Exported ${activeStudents.length} student records to Excel (.xlsx)`,
         {
           description: "Spreadsheet file downloaded to your system.",
         }
       );
     } catch (err: any) {
-      toast.error(err?.message || "Failed to generate Excel spreadsheet.");
+      showFeedback.error(err?.message || "Failed to generate Excel spreadsheet.");
     } finally {
       setIsExportingExcel(false);
     }

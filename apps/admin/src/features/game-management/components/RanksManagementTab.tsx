@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { RankTier } from "../types/types";
 import {
   useGameRanks,
@@ -70,9 +70,9 @@ export function RanksManagementTab({
     if (onDeleteRank) return onDeleteRank(id);
     try {
       await deleteRankMutation.mutateAsync(id);
-      toast.success("Aspirant rank tier deleted successfully.");
+      showFeedback.success("Aspirant rank tier deleted successfully.");
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err?.response?.data?.message || "Failed to delete rank tier.",
       );
     }
@@ -82,9 +82,9 @@ export function RanksManagementTab({
     if (onToggleActive) return onToggleActive(id);
     try {
       await toggleRankMutation.mutateAsync(id);
-      toast.info("Rank tier active status updated.");
+      showFeedback.info("Rank tier active status updated.");
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err?.response?.data?.message || "Failed to toggle rank status.",
       );
     }
@@ -97,14 +97,14 @@ export function RanksManagementTab({
           id: editingRank.id,
           data: rankData,
         });
-        toast.success("Rank tier updated successfully!");
+        showFeedback.success("Rank tier updated successfully!");
       } else {
         await createRankMutation.mutateAsync(rankData);
-        toast.success("New Aspirant rank tier created!");
+        showFeedback.success("New Aspirant rank tier created!");
       }
       setIsRankModalOpen(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to save rank tier.");
+      showFeedback.error(err?.response?.data?.message || "Failed to save rank tier.");
     }
   };
 

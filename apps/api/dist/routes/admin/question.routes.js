@@ -53,12 +53,13 @@ router.get("/subject/:subjectId", authenticateToken, getQuestionsByCategory);
 // Learning Module routes
 router.get("/category/:categoryId/modules", authenticateToken, getModulesByCategory);
 router.get("/subject/:subjectId/modules", authenticateToken, getModulesByCategory);
-router.post("/category/:categoryId/modules", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), createModule);
-router.post("/subject/:subjectId/modules", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), createModule);
-router.put("/category/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), updateModule);
-router.put("/subject/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), updateModule);
-router.delete("/category/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), deleteModule);
-router.delete("/subject/modules/:moduleId", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), deleteModule);
+const moduleRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
+router.post("/category/:categoryId/modules", authenticateToken, requireRoles(moduleRoles), createModule);
+router.post("/subject/:subjectId/modules", authenticateToken, requireRoles(moduleRoles), createModule);
+router.put("/category/modules/:moduleId", authenticateToken, requireRoles(moduleRoles), updateModule);
+router.put("/subject/modules/:moduleId", authenticateToken, requireRoles(moduleRoles), updateModule);
+router.delete("/category/modules/:moduleId", authenticateToken, requireRoles(moduleRoles), deleteModule);
+router.delete("/subject/modules/:moduleId", authenticateToken, requireRoles(moduleRoles), deleteModule);
 // Topic CMS routes
 const topicRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
 router.get("/category/:categoryId/topics", authenticateToken, getTopicsBySubject);

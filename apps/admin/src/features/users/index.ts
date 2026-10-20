@@ -13,7 +13,6 @@ export { default as UserTableRow } from "./components/UserTableRow";
 export { default as UserSearchFiltersBar } from "./components/UserSearchFiltersBar";
 export { default as ToggleUserStatusDialog } from "./components/ToggleUserStatusDialog";
 export { default as AddUserHeader } from "./components/AddUserHeader";
-export { default as UserCredentialsModal } from "./components/UserCredentialsModal";
 export { default as AddIndividualUserTab } from "./components/AddIndividualUserTab";
 export { default as AddBulkUserTab } from "./components/AddBulkUserTab";
 export { default as AddExternalUserTab } from "./components/AddExternalUserTab";

@@ -85,7 +85,7 @@ export function CalendarPaceLagCard({
         </div>
 
         <Link
-          to="/students"
+          to="/student-management"
           className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
         >
           Roster <ArrowRight size={12} />

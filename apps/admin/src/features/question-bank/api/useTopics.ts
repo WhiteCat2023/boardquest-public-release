@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface Topic {
   id: string;
@@ -56,11 +56,11 @@ export function useCreateTopic(categoryId: string | null | undefined) {
     },
     onSuccess: (topic) => {
       queryClient.invalidateQueries({ queryKey: ["topics", categoryId] });
-      toast.success(`Topic "${topic?.name || "Topic"}" added successfully!`);
+      showFeedback.success(`Topic "${topic?.name || "Topic"}" added successfully!`);
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.message || "Failed to create topic";
-      toast.error(msg);
+      showFeedback.error(msg);
     },
   });
 }
@@ -80,11 +80,11 @@ export function useUpdateTopic(categoryId: string | null | undefined) {
     onSuccess: (topic) => {
       queryClient.invalidateQueries({ queryKey: ["topics", categoryId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
-      toast.success(`Topic "${topic?.name || "Topic"}" updated successfully!`);
+      showFeedback.success(`Topic "${topic?.name || "Topic"}" updated successfully!`);
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.message || "Failed to update topic";
-      toast.error(msg);
+      showFeedback.error(msg);
     },
   });
 }
@@ -102,11 +102,11 @@ export function useDeleteTopic(categoryId: string | null | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topics", categoryId] });
-      toast.success("Topic removed successfully!");
+      showFeedback.success("Topic removed successfully!");
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.message || "Failed to remove topic";
-      toast.error(msg);
+      showFeedback.error(msg);
     },
   });
 }

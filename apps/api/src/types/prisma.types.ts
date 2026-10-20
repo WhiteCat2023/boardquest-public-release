@@ -80,6 +80,8 @@ export interface AdminUser {
   handledSubjectIds?: string[];
   accountStatus?: AccountStatus | string;
   isActive?: boolean;
+  mustChangePassword?: boolean;
+  termsAcceptedAt?: Date;
   lastActiveAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;

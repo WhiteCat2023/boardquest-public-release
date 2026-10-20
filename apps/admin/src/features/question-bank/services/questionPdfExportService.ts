@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { Question } from "@/types/question";
 
 type PDFMode = "comprehensive" | "exam_only" | "exam_with_key";
@@ -1104,7 +1104,7 @@ export function printQuestionsPdf(html: string): Promise<void> {
 
     const doc = iframe.contentWindow?.document;
     if (!doc) {
-      toast.error("Failed to initialize PDF print window.");
+      showFeedback.error("Failed to initialize PDF print window.");
       iframe.remove();
       resolve();
       return;
@@ -1265,7 +1265,7 @@ export async function exportApprovedQuestionsToPdf(
   });
 
   if (!questions || questions.length === 0) {
-    toast.warning("No approved questions found matching the selected criteria.");
+    showFeedback.warning("No approved questions found matching the selected criteria.");
     return { count: 0, html: "" };
   }
 
@@ -1303,7 +1303,7 @@ export async function exportApprovedQuestionsToPdf(
   notifyProgress("Launching Print / Save as PDF dialog...");
   await printQuestionsPdf(html);
 
-  toast.success(
+  showFeedback.success(
     `Export ready! Prepared ${questions.length} approved questions for PDF save.`,
     {
       description: "Select 'Save as PDF' in the destination dropdown to download.",

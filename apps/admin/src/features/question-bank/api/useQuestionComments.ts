@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface QuestionCommentAuthor {
   id: string;
@@ -54,13 +54,13 @@ export function useAddQuestionComment(questionId: string) {
       queryClient.invalidateQueries({ queryKey: ["questionStats"] });
 
       if (wasApproved) {
-        toast.success("Comment posted. Question reopened and moved to Review Questions desk.");
+        showFeedback.success("Comment posted. Question reopened and moved to Review Questions desk.");
       } else {
-        toast.success("Comment added successfully.");
+        showFeedback.success("Comment added successfully.");
       }
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to add comment.");
+      showFeedback.error(err.response?.data?.message || "Failed to add comment.");
     },
   });
 }
@@ -82,14 +82,14 @@ export function useToggleResolveComment(questionId: string) {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["questionStats"] });
-      toast.success(
+      showFeedback.success(
         updatedComment?.isResolved
           ? "Comment marked as resolved."
           : "Comment marked as unresolved."
       );
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update comment resolution status.");
+      showFeedback.error(err.response?.data?.message || "Failed to update comment resolution status.");
     },
   });
 }
@@ -108,10 +108,10 @@ export function useDeleteQuestionComment(questionId: string) {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["questionStats"] });
-      toast.success("Comment deleted.");
+      showFeedback.success("Comment deleted.");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete comment.");
+      showFeedback.error(err.response?.data?.message || "Failed to delete comment.");
     },
   });
 }

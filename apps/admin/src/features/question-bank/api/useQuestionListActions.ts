@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import useAuth from "@/hooks/useAuth";
 import { UserRole } from "@/types/question";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { showUndoToast } from "@/utils/toast";
 import { useQuestionBank, type QuestionFilters } from "@/features/question-bank";
 import { useQuestionListStore } from "@/store/QuestionListStore";
@@ -93,7 +93,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                 await axiosPrivate.delete(`/questions/${id}`);
                 queryClient.invalidateQueries({ queryKey: ["questions"] });
             } catch (err: any) {
-                toast.error(err.response?.data?.message || "Failed to delete question permanently.");
+                showFeedback.error(err.response?.data?.message || "Failed to delete question permanently.");
                 queryClient.setQueryData(queryKey, previousData);
             }
         }, 4000);
@@ -110,7 +110,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                     delete pendingDeletes.current[id];
                 }
                 queryClient.setQueryData(queryKey, previousData);
-                toast.success("Delete action undone.");
+                showFeedback.success("Delete action undone.");
             },
             duration: 4000,
         });
@@ -132,12 +132,12 @@ export function useQuestionListActions(filters?: QuestionFilters) {
             await axiosPrivate.post("/questions/bulk/delete", { ids });
         },
         onSuccess: (_, ids) => {
-            toast.success(`Successfully deleted ${ids.length} questions.`);
+            showFeedback.success(`Successfully deleted ${ids.length} questions.`);
             clearRowSelection();
             queryClient.invalidateQueries({ queryKey: ["questions"] });
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to bulk delete questions.");
+            showFeedback.error(err.response?.data?.message || "Failed to bulk delete questions.");
         },
     });
 
@@ -158,23 +158,23 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                             ids,
                             status: "PENDING_REVIEW",
                         });
-                        toast.info(`Reverted status for ${ids.length} question(s).`);
+                        showFeedback.info(`Reverted status for ${ids.length} question(s).`);
                         queryClient.invalidateQueries({ queryKey: ["questions"] });
                     } catch (err: any) {
-                        toast.error(err.response?.data?.message || "Failed to undo question approval.");
+                        showFeedback.error(err.response?.data?.message || "Failed to undo question approval.");
                     }
                 },
             });
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to bulk approve questions.");
+            showFeedback.error(err.response?.data?.message || "Failed to bulk approve questions.");
         },
     });
 
     // Bulk Action Handlers
     const handleBulkApprove = () => {
         if (!canManageBulk) {
-            toast.error("Only administrators and team leads can approve questions.");
+            showFeedback.error("Only administrators and team leads can approve questions.");
             return;
         }
 
@@ -196,7 +196,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
         });
 
         if (!canDeleteAll) {
-            toast.error("You do not have permission to delete some of the selected questions.");
+            showFeedback.error("You do not have permission to delete some of the selected questions.");
             return;
         }
 
@@ -221,7 +221,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                 await axiosPrivate.post("/questions/bulk/delete", { ids: idsToDelete });
                 queryClient.invalidateQueries({ queryKey: ["questions"] });
             } catch (err: any) {
-                toast.error(err.response?.data?.message || "Failed to permanently delete questions.");
+                showFeedback.error(err.response?.data?.message || "Failed to permanently delete questions.");
                 if (previousData) {
                     queryClient.setQueryData(queryKey, previousData);
                 }
@@ -243,7 +243,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
                 if (previousData) {
                     queryClient.setQueryData(queryKey, previousData);
                 }
-                toast.success("Bulk delete action undone.");
+                showFeedback.success("Bulk delete action undone.");
             },
         });
     };
@@ -281,11 +281,11 @@ export function useQuestionListActions(filters?: QuestionFilters) {
 
     const handleOpenParaphrase = () => {
         if (selectedQuestions.length === 0) {
-            toast.error("Please select at least one question to paraphrase.");
+            showFeedback.error("Please select at least one question to paraphrase.");
             return;
         }
         if (selectedQuestions.length > 5) {
-            toast.error(
+            showFeedback.error(
                 `Bulk paraphrasing has a limit of 5 questions per batch. You currently have ${selectedQuestions.length} questions selected.`
             );
             return;

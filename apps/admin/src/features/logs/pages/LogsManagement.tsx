@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { useLogs, useLogStats, useClearLogs } from "@/features/logs";
 
 import LogsHeader from "../components/LogsHeader";
 import LogStatsCards from "../components/LogStatsCards";
 import LogFilters from "../components/LogFilters";
 import LogTable from "../components/LogTable";
-import { useConfirm } from "@/components/modal";
+import { useConfirm, showFeedback } from "@/components/modal";
 
 export default function LogsManagement() {
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
@@ -69,10 +68,10 @@ export default function LogsManagement() {
 
     clearLogsMutation.mutate(undefined, {
       onSuccess: () => {
-        toast.success("Cleared system audit logs.");
+        showFeedback.success("Cleared system audit logs.");
       },
       onError: (err: any) => {
-        toast.error(err.response?.data?.message || "Failed to clear logs.");
+        showFeedback.error(err.response?.data?.message || "Failed to clear logs.");
       },
     });
   };
@@ -80,7 +79,7 @@ export default function LogsManagement() {
   // Export visible logs to CSV
   const handleExportCSV = () => {
     if (logs.length === 0) {
-      toast.error("No log entries available to export.");
+      showFeedback.error("No log entries available to export.");
       return;
     }
 
@@ -108,7 +107,7 @@ export default function LogsManagement() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`Exported ${logs.length} log records to CSV.`);
+    showFeedback.success(`Exported ${logs.length} log records to CSV.`);
   };
 
   return (

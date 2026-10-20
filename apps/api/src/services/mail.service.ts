@@ -34,7 +34,7 @@ export async function sendPasswordResetEmail({
   resetUrl: customResetUrl,
   portalName,
 }: SendPasswordResetMailOptions) {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.FRONTEND_URL;
   const resetUrl = customResetUrl || `${frontendUrl}/reset-password?token=${resetToken}`;
 
   const htmlContent = `
@@ -84,11 +84,7 @@ export async function sendPasswordResetEmail({
                 </tr>
               </table>
 
-              <p style="margin: 24px 0 0 0; font-size: 12px; color: #6b7280; line-height: 1.5;">
-                Or copy and paste this link into your browser:<br>
-                <a href="${resetUrl}" style="color: #a60b0b; word-break: break-all; font-weight: 600;">${resetUrl}</a>
-              </p>
-
+             
               <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5;">
                 <strong style="color: #4b5563;">Important:</strong> This link will expire in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email.
               </div>
@@ -171,7 +167,7 @@ export async function sendFacultyCredentialsEmail({
   role,
   employeeId,
 }: SendFacultyCredentialsMailOptions) {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.FRONTEND_URL;
   const loginUrl = `${frontendUrl}/login`;
 
   const htmlContent = `
@@ -335,7 +331,7 @@ export async function sendStudentCredentialsEmail({
   password,
   studentId,
 }: SendStudentCredentialsMailOptions) {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.FRONTEND_URL;
   const loginUrl = `${frontendUrl}/login`;
 
   const htmlContent = `
@@ -496,7 +492,7 @@ export async function sendReviewCenterCredentialsEmail({
   employeeId,
 }: SendReviewCenterCredentialsMailOptions) {
   const frontendUrl =
-    process.env.REVIEW_CENTER_FRONTEND_URL || "http://localhost:5174";
+    process.env.REVIEW_CENTER_FRONTEND_URL ;
   const loginUrl = `${frontendUrl}/login`;
 
   const htmlContent = `
@@ -1238,7 +1234,7 @@ export async function sendAdvisorOutreachEmail({
   weakSubjects = [],
   drillCategory,
 }: SendAdvisorOutreachMailOptions) {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.FRONTEND_URL;
   const formattedMessage = message
     .split("\n")
     .map((line) => line.trim())

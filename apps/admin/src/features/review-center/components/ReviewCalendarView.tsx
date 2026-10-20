@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useDeleteReviewSchedule } from "../api/useCalendar";
 import type { ReviewSchedule } from "../types/types";
 import { MonthCalendarGrid, ScheduledPeriodsList } from "./calendar";
@@ -59,10 +59,10 @@ export function ReviewCalendarView({
 
     deleteScheduleMutation.mutate(sched.id, {
       onSuccess: () => {
-        toast.success(`Deleted review schedule "${sched.title}".`);
+        showFeedback.success(`Deleted review schedule "${sched.title}".`);
       },
       onError: (err: any) => {
-        toast.error(
+        showFeedback.error(
           err.response?.data?.message || "Failed to delete schedule.",
         );
       },

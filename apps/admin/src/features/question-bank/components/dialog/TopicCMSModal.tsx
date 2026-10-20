@@ -30,7 +30,7 @@ import {
   useDeleteTopic,
   type Topic,
 } from "@/features/question-bank/api/useTopics";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface TopicCMSModalProps {
   open: boolean;
@@ -94,7 +94,7 @@ export function TopicCMSModal({
 
     // Check client-side duplicate
     if (topics.some((t) => t.name.toLowerCase() === clean.toLowerCase())) {
-      toast.error(`Topic "${clean}" already exists for this subject.`);
+      showFeedback.error(`Topic "${clean}" already exists for this subject.`);
       return;
     }
 
@@ -123,7 +123,7 @@ export function TopicCMSModal({
   const handleSaveEdit = async (topicId: string, oldName: string) => {
     const clean = editingTopicName.trim();
     if (!clean) {
-      toast.error("Topic name cannot be empty.");
+      showFeedback.error("Topic name cannot be empty.");
       return;
     }
     if (clean.toLowerCase() === oldName.toLowerCase()) {

@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   Clock,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,7 +130,7 @@ export default function StudentManagement() {
       selectedStudentIds.includes(s.id)
     );
     if (targets.length === 0) {
-      toast.error("Please select at least one student to assign guidance.");
+      showFeedback.error("Please select at least one student to assign guidance.");
       return;
     }
     setSelectedStudentsForGuidance(targets);

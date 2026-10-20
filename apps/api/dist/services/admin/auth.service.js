@@ -71,6 +71,27 @@ export const createReviewCenterRepUserSchema = z
     .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
 });
+export const firstLoginSetupSchema = z
+    .object({
+    password: z
+        .string()
+        .min(8, "Password must be at least 8 characters long")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z.string().min(8, "Confirm Password is required"),
+    acceptedTerms: z.boolean().refine((val) => val === true, {
+        message: "You must accept the Terms and Conditions to proceed.",
+    }),
+    acceptedPrivacyPolicy: z.boolean().refine((val) => val === true, {
+        message: "You must acknowledge and consent to the Data Privacy Act of 2012 to proceed.",
+    }),
+})
+    .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+});
 export class AuthService {
     db;
     constructor(db = prisma) {
@@ -109,12 +130,18 @@ export class AuthService {
                     },
                     accountStatus: "ACTIVE",
                     isActive: true,
+                    mustChangePassword: false,
+                    termsAcceptedAt: new Date(0),
                     lastActiveAt: new Date(),
                     createdAt: dbSuperAdmin.createdAt,
                     updatedAt: dbSuperAdmin.updatedAt,
                 };
             }
-            return getSuperAdminProfile();
+            return {
+                ...getSuperAdminProfile(),
+                mustChangePassword: false,
+                termsAcceptedAt: new Date(0),
+            };
         }
         const user = await this.db.adminUser.findUnique({
             where: { email },
@@ -131,6 +158,8 @@ export class AuthService {
                 notificationPreferences: true,
                 accountStatus: true,
                 isActive: true,
+                mustChangePassword: true,
+                termsAcceptedAt: true,
                 lastActiveAt: true,
                 createdAt: true,
                 updatedAt: true,
@@ -169,8 +198,14 @@ export class AuthService {
             },
         });
         const { password: _password, ...sanitizeUser } = user;
+        const isFacultyRole = ["DEAN", "TEAMLEAD", "TEACHER"].includes(String(user.role).toUpperCase());
+        const mustChangePassword = isFacultyRole
+            ? user.mustChangePassword !== false
+            : false;
         return {
             ...sanitizeUser,
+            mustChangePassword,
+            termsAcceptedAt: user.termsAcceptedAt || null,
             notificationPreferences: sanitizeUser.notificationPreferences || {
                 emailNotifications: true,
                 securityAlerts: true,
@@ -232,6 +267,7 @@ export class AuthService {
                 role,
                 phoneNumber,
                 password: hash,
+                mustChangePassword: role !== "SUPERADMIN",
             },
             select: {
                 id: true,
@@ -376,6 +412,7 @@ export class AuthService {
         }
         if (data.password) {
             updateData.password = await hashedPassword(data.password);
+            updateData.mustChangePassword = false;
         }
         const updated = await this.db.adminUser.update({
             where: { id: userId },
@@ -391,6 +428,87 @@ export class AuthService {
         }
         return sanitized;
     }
+    async firstLoginSetup(userId, data) {
+        const parsed = firstLoginSetupSchema.safeParse(data);
+        if (!parsed.success) {
+            const errors = parsed.error.flatten().fieldErrors;
+            const firstErrorMessage = Object.values(errors).flat()[0] || "Validation failed";
+            throw new ApiError(400, firstErrorMessage, [JSON.stringify(errors)]);
+        }
+        const user = await this.db.adminUser.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new ApiError(404, "User account not found");
+        }
+        const role = String(user.role).toUpperCase();
+        if (!["DEAN", "TEAMLEAD", "TEACHER"].includes(role)) {
+            throw new ApiError(403, "First-login setup is not required for this role");
+        }
+        const isSameAsCurrent = await verifyPassword(user.password, parsed.data.password);
+        if (isSameAsCurrent || user.password === parsed.data.password) {
+            throw new ApiError(400, "New password must be different from your current temporary password");
+        }
+        const hash = await hashedPassword(parsed.data.password);
+        const now = new Date();
+        const updatedUser = await this.db.adminUser.update({
+            where: { id: userId },
+            data: {
+                password: hash,
+                mustChangePassword: false,
+                termsAcceptedAt: now,
+                lastActiveAt: now,
+            },
+            select: {
+                id: true,
+                employeeId: true,
+                email: true,
+                name: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                phoneNumber: true,
+                avatarUrl: true,
+                location: true,
+                accountStatus: true,
+                isActive: true,
+                mustChangePassword: true,
+                termsAcceptedAt: true,
+                handledSubjectIds: true,
+                notificationPreferences: true,
+            },
+        });
+        return {
+            ...updatedUser,
+            mustChangePassword: false,
+            termsAcceptedAt: now,
+        };
+    }
+    async acceptTerms(userId) {
+        const user = await this.db.adminUser.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new ApiError(404, "User account not found");
+        }
+        const now = new Date();
+        const updated = await this.db.adminUser.update({
+            where: { id: userId },
+            data: {
+                termsAcceptedAt: now,
+            },
+            select: {
+                id: true,
+                employeeId: true,
+                email: true,
+                name: true,
+                role: true,
+                termsAcceptedAt: true,
+                mustChangePassword: true,
+            },
+        });
+        return updated;
+    }
 }
 export const authService = new AuthService();
 export const login = authService.login.bind(authService);
@@ -402,3 +520,5 @@ export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(auth
 export const forgotPassword = authService.forgotPassword.bind(authService);
 export const resetPassword = authService.resetPassword.bind(authService);
 export const updateProfile = authService.updateProfile.bind(authService);
+export const firstLoginSetup = authService.firstLoginSetup.bind(authService);
+export const acceptTerms = authService.acceptTerms.bind(authService);

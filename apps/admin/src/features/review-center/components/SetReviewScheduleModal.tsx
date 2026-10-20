@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { ReviewSchedule } from "../types/types";
 import { useCreateReviewSchedule, useUpdateReviewSchedule } from "../api/useCalendar";
 
@@ -86,19 +86,19 @@ export default function SetReviewScheduleModal({
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error("Final review title is required.");
+      showFeedback.error("Final review title is required.");
       return;
     }
     if (!startDate) {
-      toast.error("Start date is required.");
+      showFeedback.error("Start date is required.");
       return;
     }
     if (!endDate) {
-      toast.error("End date is required.");
+      showFeedback.error("End date is required.");
       return;
     }
     if (new Date(startDate) > new Date(endDate)) {
-      toast.error("End date cannot be earlier than start date.");
+      showFeedback.error("End date cannot be earlier than start date.");
       return;
     }
 
@@ -117,11 +117,11 @@ export default function SetReviewScheduleModal({
         },
         {
           onSuccess: () => {
-            toast.success("Game final review schedule updated successfully!");
+            showFeedback.success("Game final review schedule updated successfully!");
             onClose();
           },
           onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to update review schedule.");
+            showFeedback.error(err.response?.data?.message || "Failed to update review schedule.");
           },
         }
       );
@@ -137,11 +137,11 @@ export default function SetReviewScheduleModal({
         },
         {
           onSuccess: () => {
-            toast.success("Game final review schedule created successfully!");
+            showFeedback.success("Game final review schedule created successfully!");
             onClose();
           },
           onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to create review schedule.");
+            showFeedback.error(err.response?.data?.message || "Failed to create review schedule.");
           },
         }
       );

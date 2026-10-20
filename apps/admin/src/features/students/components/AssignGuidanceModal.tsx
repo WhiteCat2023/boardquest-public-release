@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { UserCheck, Send, Target, Calendar, Sparkles, Check, BookOpen, ChevronDown, Plus, X } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useSubjects } from "@/features/users";
 
 export interface AssignGuidanceModalProps {
@@ -292,9 +292,9 @@ export function AssignGuidanceModal({
     },
     onSuccess: () => {
       if (isBulk) {
-        toast.success(`Assigned ${targetStudents.length} students to advisor for guidance!`);
+        showFeedback.success(`Assigned ${targetStudents.length} students to advisor for guidance!`);
       } else {
-        toast.success(`Assigned ${targetStudents[0]?.name || "student"} to advisor for guidance!`);
+        showFeedback.success(`Assigned ${targetStudents[0]?.name || "student"} to advisor for guidance!`);
       }
       queryClient.invalidateQueries({ queryKey: ["guidanceAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["failingStudents"] });
@@ -303,7 +303,7 @@ export function AssignGuidanceModal({
       onClose();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to assign student for guidance.");
+      showFeedback.error(err?.response?.data?.message || "Failed to assign student for guidance.");
     },
   });
 

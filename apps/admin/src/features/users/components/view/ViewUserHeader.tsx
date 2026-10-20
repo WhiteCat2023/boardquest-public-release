@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import ToggleUserStatusDialog from "../ToggleUserStatusDialog";
 import {
   getRoleBadgeColor,
@@ -49,7 +49,7 @@ export default function ViewUserHeader({
 
   const handleOpenConfirm = () => {
     if (user.id === currentUserId) {
-      toast.error("You cannot change your own account status.");
+      showFeedback.error("You cannot change your own account status.");
       return;
     }
     setIsConfirmOpen(true);

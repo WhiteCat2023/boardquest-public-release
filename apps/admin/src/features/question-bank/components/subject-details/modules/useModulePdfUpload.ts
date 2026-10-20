@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { uploadMultipleModulePdfs } from "../../../services/moduleUploadService";
 import type { AttachedPdfItem } from "./moduleTypes";
 
@@ -33,7 +33,7 @@ export function useModulePdfUpload(onFirstFileAdded?: (firstFileName: string) =>
     );
 
     if (pdfList.length === 0) {
-      toast.error("Please select valid PDF documents (.pdf).");
+      showFeedback.error("Please select valid PDF documents (.pdf).");
       return;
     }
 

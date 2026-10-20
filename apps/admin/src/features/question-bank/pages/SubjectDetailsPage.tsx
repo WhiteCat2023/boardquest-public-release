@@ -29,11 +29,13 @@ export default function SubjectDetailsPage() {
 
   const currentUserRole =
     (auth as any)?.data?.user?.role || (auth as any)?.user?.role || (auth as any)?.role;
-  const canManage =
+  const canManageSubject =
     !currentUserRole ||
     currentUserRole === "SUPERADMIN" ||
     currentUserRole === "DEAN" ||
     currentUserRole === "TEAMLEAD";
+  const canManageModules =
+    canManageSubject || currentUserRole === "TEACHER";
 
   const [activeTab, setActiveTab] = useState<"overview" | "modules">("overview");
 
@@ -142,7 +144,7 @@ export default function SubjectDetailsPage() {
         category={category}
         categoryId={categoryId}
         isCategoryLoading={isCategoryLoading}
-        canManage={canManage}
+        canManage={canManageSubject}
         activeTab={activeTab}
         modulesCount={modules.length}
         onTabChange={setActiveTab}
@@ -170,7 +172,7 @@ export default function SubjectDetailsPage() {
           category={category}
           modules={modules}
           isModulesLoading={isModulesLoading}
-          canManage={canManage}
+          canManage={canManageModules}
           onAddModule={() => setIsAddModuleOpen(true)}
           onEditModule={setEditingModule}
           onDeleteModule={setDeletingModule}
@@ -178,7 +180,7 @@ export default function SubjectDetailsPage() {
       )}
 
       {/* Edit Subject Modal */}
-      {canManage && (
+      {canManageSubject && (
         <EditSubjectModal
           isOpen={isEditSubjectOpen}
           onOpenChange={setIsEditSubjectOpen}
@@ -192,7 +194,7 @@ export default function SubjectDetailsPage() {
       )}
 
       {/* Add Module Modal */}
-      {canManage && (
+      {canManageModules && (
         <AddModuleModal
           isOpen={isAddModuleOpen}
           onOpenChange={setIsAddModuleOpen}
@@ -203,7 +205,7 @@ export default function SubjectDetailsPage() {
       )}
 
       {/* Edit Module Modal */}
-      {canManage && (
+      {canManageModules && (
         <EditModuleModal
           editingModule={editingModule}
           onOpenChange={(open) => !open && setEditingModule(null)}
@@ -213,7 +215,7 @@ export default function SubjectDetailsPage() {
       )}
 
       {/* Delete Module Dialog */}
-      {canManage && (
+      {canManageModules && (
         <DeleteModuleModal
           deletingModule={deletingModule}
           onOpenChange={(open: boolean) => !open && setDeletingModule(null)}

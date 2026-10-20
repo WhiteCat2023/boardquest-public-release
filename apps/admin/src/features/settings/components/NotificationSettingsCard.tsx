@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, ShieldCheck, Globe, Send, Loader2, Mail } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useProfileMutations } from "../api/useProfileMutations";
 
 export default function NotificationSettingsCard() {
@@ -46,7 +46,7 @@ export default function NotificationSettingsCard() {
       emailNotifications: checked,
     });
     if (success) {
-      toast.success(
+      showFeedback.success(
         checked
           ? "Email notifications enabled for question approvals & alerts."
           : "Email notifications disabled.",
@@ -63,7 +63,7 @@ export default function NotificationSettingsCard() {
       securityAlerts: checked,
     });
     if (success) {
-      toast.success(
+      showFeedback.success(
         checked
           ? "Security & login alerts enabled."
           : "Security & login alerts disabled.",
@@ -80,7 +80,7 @@ export default function NotificationSettingsCard() {
       weeklyDigest: checked,
     });
     if (success) {
-      toast.success(
+      showFeedback.success(
         checked
           ? "Weekly performance digest enabled."
           : "Weekly performance digest disabled.",

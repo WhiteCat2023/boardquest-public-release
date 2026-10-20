@@ -11,17 +11,16 @@ import {
   AlertCircle,
   IdCard
 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserRole } from "@/types/question";
 import type { CreateUserPayload } from "@/features/users/types/types";
 import { useCreateUser } from "@/features/users/api/useUsers";
-import type { UserCredentialsInfo } from "./UserCredentialsModal";
 
 interface AddExternalUserTabProps {
-  onSuccess: (credentials: UserCredentialsInfo) => void;
+  onSuccess?: () => void;
   onCancel?: () => void;
 }
 
@@ -82,29 +81,22 @@ export default function AddExternalUserTab({
     };
 
     createMutation.mutate(payload, {
-      onSuccess: (res: any) => {
-        const createdUser = res?.data?.data?.user || res?.data?.user;
-        const tempPass = createdUser?.temporaryPassword;
-        const credentials: UserCredentialsInfo = {
-          name: createdUser?.name || payload.name,
-          email: createdUser?.email || payload.email,
-          employeeId: createdUser?.employeeId || payload.employeeId,
-          companyName: createdUser?.companyName || payload.companyName,
-          role: "EXTERNAL",
-          temporaryPassword: tempPass,
-          portalUrl: `${import.meta.env.VITE_REVIEW_CENTER_URL || "http://localhost:5174"}/login`,
-        };
-        toast.success(
+      onSuccess: () => {
+        showFeedback.success(
           "Review Center representative account created successfully!",
         );
-        onSuccess(credentials);
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate("/faculty-management");
+        }
       },
       onError: (err: any) => {
         const msg =
           err.response?.data?.message ||
           "Failed to create external partner account.";
         setErrorMsg(msg);
-        toast.error(msg);
+        showFeedback.error(msg);
       },
     });
   };

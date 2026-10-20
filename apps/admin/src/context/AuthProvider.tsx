@@ -14,6 +14,8 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;
+  mustChangePassword?: boolean;
+  termsAcceptedAt?: string | Date | null;
   [key: string]: unknown;
 }
 

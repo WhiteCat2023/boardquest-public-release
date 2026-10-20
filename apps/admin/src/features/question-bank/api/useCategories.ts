@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface Category {
   id: string;
@@ -76,14 +76,14 @@ export function useCreateCategory() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      toast.success(`Category "${variables.name}" created successfully!`);
+      showFeedback.success(`Category "${variables.name}" created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
       queryClient.invalidateQueries({ queryKey: ["categoriesTotalCount"] });
       queryClient.invalidateQueries({ queryKey: ["subjectsTotalCount"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to create category.");
+      showFeedback.error(err.response?.data?.message || "Failed to create category.");
     },
   });
 }
@@ -100,14 +100,14 @@ export function useDeleteCategory() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Subject category deleted successfully!");
+      showFeedback.success("Subject category deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
       queryClient.invalidateQueries({ queryKey: ["categoriesTotalCount"] });
       queryClient.invalidateQueries({ queryKey: ["subjectsTotalCount"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete category.");
+      showFeedback.error(err.response?.data?.message || "Failed to delete category.");
     },
   });
 }

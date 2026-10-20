@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, CheckCircle2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import {
   Dialog,
   DialogContent,
@@ -95,7 +95,7 @@ export function EditModuleModal({
 
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to update module.");
+      showFeedback.error(err?.message || "Failed to update module.");
     } finally {
       setIsUploading(false);
     }

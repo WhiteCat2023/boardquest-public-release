@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAuth from "./useAuth";
 
 const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
@@ -34,7 +34,7 @@ export function useNotificationStream() {
           const data = JSON.parse(event.data);
           if (data && data.title) {
             // Trigger instant toast notification
-            toast.info(data.title, {
+            showFeedback.info(data.title, {
               description: data.message,
             });
 

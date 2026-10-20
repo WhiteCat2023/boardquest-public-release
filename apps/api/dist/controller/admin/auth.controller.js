@@ -141,6 +141,8 @@ export const refreshToken = async (req, res) => {
                 location: true,
                 accountStatus: true,
                 isActive: true,
+                mustChangePassword: true,
+                termsAcceptedAt: true,
                 handledSubjectIds: true,
                 notificationPreferences: true,
                 handledSubjects: {
@@ -165,6 +167,11 @@ export const refreshToken = async (req, res) => {
     if (user.accountStatus === "DEACTIVATED") {
         return new ApiResponse(403, null, "Account is deactivated").send(res);
     }
+    const isFacultyRole = ["DEAN", "TEAMLEAD", "TEACHER"].includes(String(user.role).toUpperCase());
+    user.mustChangePassword = isFacultyRole
+        ? user.mustChangePassword !== false
+        : false;
+    user.termsAcceptedAt = user.termsAcceptedAt || null;
     const newAccessToken = signJWT({ id: user.id, email: user.email, role: user.role }, "15m");
     res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
@@ -205,4 +212,22 @@ export const updateProfile = asyncHandler(async (req, res) => {
     }
     const updatedUser = await authService.updateProfile(userId, req.body);
     return new ApiResponse(200, { user: updatedUser }, "Profile updated successfully").send(res);
+});
+export const firstLoginSetup = asyncHandler(async (req, res) => {
+    const userId = req.user?.id;
+    if (!userId) {
+        throw new ApiError(401, "Authentication required");
+    }
+    const updatedUser = await authService.firstLoginSetup(userId, req.body);
+    await logInfo("USER_FIRST_LOGIN_SETUP", `${updatedUser.role} (${updatedUser.email}) successfully completed first-login setup and accepted Terms and Data Privacy Act of 2012.`, "AuthService", updatedUser.email, req.ip);
+    return new ApiResponse(200, { user: updatedUser }, "Password changed and policy agreement recorded successfully").send(res);
+});
+export const acceptTerms = asyncHandler(async (req, res) => {
+    const userId = req.user?.id;
+    if (!userId) {
+        throw new ApiError(401, "Authentication required");
+    }
+    const updatedUser = await authService.acceptTerms(userId);
+    await logInfo("USER_TERMS_ACCEPTED", `${updatedUser.role} (${updatedUser.email}) accepted Terms and Conditions and Data Privacy Act of 2012.`, "AuthService", updatedUser.email, req.ip);
+    return new ApiResponse(200, { user: updatedUser }, "Terms and conditions accepted successfully").send(res);
 });

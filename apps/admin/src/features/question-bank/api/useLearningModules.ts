@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface LearningModule {
   id: string;
@@ -12,8 +12,13 @@ export interface LearningModule {
   categoryId: string;
   authorId?: string | null;
   author?: {
-    name: string;
-  };
+    id?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+    avatarUrl?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,7 +72,7 @@ export function useCreateLearningModule(categoryId: string | null) {
       return response.data;
     },
     onSuccess: (_, data) => {
-      toast.success(`Module "${data.title}" added successfully!`);
+      showFeedback.success(`Module "${data.title}" added successfully!`);
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
       });
@@ -79,7 +84,7 @@ export function useCreateLearningModule(categoryId: string | null) {
       });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to add module.");
+      showFeedback.error(err.response?.data?.message || "Failed to add module.");
     },
   });
 }
@@ -103,7 +108,7 @@ export function useUpdateLearningModule(categoryId: string | null) {
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Module updated successfully!");
+      showFeedback.success("Module updated successfully!");
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
       });
@@ -115,7 +120,7 @@ export function useUpdateLearningModule(categoryId: string | null) {
       });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update module.");
+      showFeedback.error(err.response?.data?.message || "Failed to update module.");
     },
   });
 }
@@ -132,7 +137,7 @@ export function useDeleteLearningModule(categoryId: string | null) {
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Module deleted successfully!");
+      showFeedback.success("Module deleted successfully!");
       queryClient.invalidateQueries({
         queryKey: ["learningModules", categoryId],
       });
@@ -144,7 +149,7 @@ export function useDeleteLearningModule(categoryId: string | null) {
       });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete module.");
+      showFeedback.error(err.response?.data?.message || "Failed to delete module.");
     },
   });
 }

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import ExtractedQuestionAccordionRow from "../components/ExtractedQuestionAccordionRow";
 
 function ExtractedFilePreview() {
@@ -78,7 +78,7 @@ function ExtractedFilePreview() {
     const removedCount = extractedQuestions.length - unique.length;
     setExtractedQuestions(unique);
     setExpandedIndices(new Set());
-    toast.success(`Removed ${removedCount} duplicate question(s) from the preview.`);
+    showFeedback.success(`Removed ${removedCount} duplicate question(s) from the preview.`);
   };
 
   const onUploadClick = () => {
@@ -122,7 +122,7 @@ function ExtractedFilePreview() {
       });
       return next;
     });
-    toast.success(`Removed question #${index + 1}`);
+    showFeedback.success(`Removed question #${index + 1}`);
   };
 
   const allExpanded =
@@ -339,7 +339,7 @@ function ExtractedFilePreview() {
                 onClick: () => {
                   closeUploadSummary();
                   setExtractedQuestions([]);
-                  navigate("/question-bank/add");
+                  navigate("/question-bank/import");
                 },
               }
             : undefined

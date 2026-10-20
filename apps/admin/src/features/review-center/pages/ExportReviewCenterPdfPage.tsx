@@ -31,7 +31,7 @@ import {
   printReviewCenterPdf,
 } from "../services/reviewCenterPdfExportService";
 import { exportReviewCenterCandidatesToExcel } from "../services/reviewCenterExcelExportService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ExportReviewCenterPdfPage() {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ export default function ExportReviewCenterPdfPage() {
 
     async function loadData() {
       if (!reviewCenterId) {
-        toast.error("No Review Center ID provided.");
+        showFeedback.error("No Review Center ID provided.");
         return;
       }
 
@@ -95,7 +95,7 @@ export default function ExportReviewCenterPdfPage() {
         setAvailableSchoolYears(candidatesRes.schoolYears);
       } catch (err: any) {
         if (!isSubscribed) return;
-        toast.error(err?.message || "Failed to load review center candidates for PDF.");
+        showFeedback.error(err?.message || "Failed to load review center candidates for PDF.");
       } finally {
         if (isSubscribed) setIsLoading(false);
       }
@@ -190,21 +190,21 @@ export default function ExportReviewCenterPdfPage() {
 
   const handlePrintOrSavePdf = async () => {
     if (!previewHtml || activeCandidates.length === 0) {
-      toast.warning("No candidate records available to export.");
+      showFeedback.warning("No candidate records available to export.");
       return;
     }
 
     setIsPrinting(true);
     try {
       await printReviewCenterPdf(previewHtml);
-      toast.success(
+      showFeedback.success(
         `Export ready! Prepared ${activeCandidates.length} candidate records for PDF save.`,
         {
           description: "Choose 'Save as PDF' in the destination dropdown to download.",
         }
       );
     } catch (err: any) {
-      toast.error("Failed to trigger print dialog.");
+      showFeedback.error("Failed to trigger print dialog.");
     } finally {
       setIsPrinting(false);
     }
@@ -212,7 +212,7 @@ export default function ExportReviewCenterPdfPage() {
 
   const handleExportToExcel = () => {
     if (activeCount === 0 || activeCandidates.length === 0) {
-      toast.warning("No candidate records available to export.");
+      showFeedback.warning("No candidate records available to export.");
       return;
     }
 
@@ -223,14 +223,14 @@ export default function ExportReviewCenterPdfPage() {
         includeGameStats,
         includeSchoolYear,
       });
-      toast.success(
+      showFeedback.success(
         `Exported ${activeCandidates.length} candidate records to Excel (.xlsx)`,
         {
           description: "Spreadsheet file downloaded to your system.",
         }
       );
     } catch (err: any) {
-      toast.error(err?.message || "Failed to generate Excel spreadsheet.");
+      showFeedback.error(err?.message || "Failed to generate Excel spreadsheet.");
     } finally {
       setIsExportingExcel(false);
     }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
 import { useUserDirectory } from "../api/useUserDirectory";
 import UserHeader from "../components/UserHeader";
@@ -47,7 +47,7 @@ export default function UserManagement() {
     email?: string,
   ) => {
     if (id === currentUserId) {
-      toast.error("You cannot change your own account status.");
+      showFeedback.error("You cannot change your own account status.");
       return;
     }
     setTargetMemberToToggle({

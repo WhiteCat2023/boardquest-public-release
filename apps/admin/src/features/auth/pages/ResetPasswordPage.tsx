@@ -6,7 +6,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet 
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -25,12 +25,12 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (!token) {
-      toast.error("Invalid or missing password reset token.");
+      showFeedback.error("Invalid or missing password reset token.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      showFeedback.error("Passwords do not match.");
       return;
     }
 
@@ -42,9 +42,9 @@ export default function ResetPasswordPage() {
         confirmPassword,
       });
       setIsSuccess(true);
-      toast.success("Password reset successful!");
+      showFeedback.success("Password reset successful!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to reset password. Link may be expired.");
+      showFeedback.error(err.response?.data?.message || "Failed to reset password. Link may be expired.");
     } finally {
       setLoading(false);
     }

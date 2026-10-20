@@ -28,7 +28,13 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
     const superUser = dbSuperAdmin || getSuperAdminProfile();
     return new ApiResponse(
       200,
-      { user: superUser },
+      {
+        user: {
+          ...superUser,
+          mustChangePassword: false,
+          termsAcceptedAt: new Date(0),
+        },
+      },
       "User retrieved successfully",
     ).send(res);
   }
@@ -44,6 +50,8 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
       phoneNumber: true,
       avatarUrl: true,
       location: true,
+      mustChangePassword: true,
+      termsAcceptedAt: true,
       handledSubjectIds: true,
       handledSubjects: {
         select: {
@@ -58,8 +66,17 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
     return new ApiResponse(404, null, "User not found").send(res);
   }
 
+  const isFacultyRole = ["DEAN", "TEAMLEAD", "TEACHER"].includes(
+    String(user.role).toUpperCase(),
+  );
+  const mustChangePassword = isFacultyRole
+    ? (user as any).mustChangePassword !== false
+    : false;
+
   const formattedUser = {
     ...user,
+    mustChangePassword,
+    termsAcceptedAt: (user as any).termsAcceptedAt || null,
     handledCategoryIds: user.handledSubjectIds || [],
     handledCategories: user.handledSubjects || [],
     handledSubjectIds: user.handledSubjectIds || [],

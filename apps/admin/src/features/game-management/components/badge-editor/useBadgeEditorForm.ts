@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { GameBadge, BadgeType } from "../../types/types";
 import { uploadBadgeImage } from "../../services/badgeUploadService";
 import {
@@ -103,13 +103,13 @@ export function useBadgeEditorForm({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file (PNG, JPG, WEBP, SVG, GIF)");
+      showFeedback.error("Please select a valid image file (PNG, JPG, WEBP, SVG, GIF)");
       return;
     }
 
     const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 10;
     if (file.size > maxFileSizeMb * 1024 * 1024) {
-      toast.error(`Image size exceeds ${maxFileSizeMb}MB limit`);
+      showFeedback.error(`Image size exceeds ${maxFileSizeMb}MB limit`);
       return;
     }
 
@@ -126,7 +126,7 @@ export function useBadgeEditorForm({
     setImagePreviewUrl(localUrl);
     setIsCloudUploaded(false);
     setFormData((prev) => ({ ...prev, imageUrl: localUrl }));
-    toast.info("Image loaded for preview. It will be uploaded to cloud when you save.");
+    showFeedback.info("Image loaded for preview. It will be uploaded to cloud when you save.");
   };
 
   const handleRemoveImage = () => {
@@ -139,7 +139,7 @@ export function useBadgeEditorForm({
     setIsCloudUploaded(false);
     setFormData((prev) => ({ ...prev, imageUrl: "", spriteUrl: undefined }));
     if (fileInputRef.current) fileInputRef.current.value = "";
-    toast.info("Image removed. Fallback icon will be used.");
+    showFeedback.info("Image removed. Fallback icon will be used.");
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -177,13 +177,13 @@ export function useBadgeEditorForm({
     setImagePreviewUrl(preset.spriteUrl || "");
     setIsCloudUploaded(Boolean(preset.spriteUrl));
     setSelectedFile(null);
-    toast.success(`Loaded '${preset.name}' preset!`);
+    showFeedback.success(`Loaded '${preset.name}' preset!`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim() || !formData.description?.trim()) {
-      toast.error("Please fill in badge title and description.");
+      showFeedback.error("Please fill in badge title and description.");
       return;
     }
 
@@ -213,10 +213,10 @@ export function useBadgeEditorForm({
           imageUrl: finalImageUrl,
           spriteUrl: finalImageUrl,
         }));
-        toast.success("Badge image uploaded to Supabase Cloud Storage!");
+        showFeedback.success("Badge image uploaded to Supabase Cloud Storage!");
       } catch (err: any) {
         console.error("Storage upload before save failed:", err);
-        toast.error(
+        showFeedback.error(
           err?.response?.data?.message ||
             "Failed to upload image to Cloud Storage before saving. Please try again."
         );

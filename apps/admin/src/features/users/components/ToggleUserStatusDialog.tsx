@@ -1,5 +1,5 @@
 import { Power, AlertTriangle, ShieldAlert } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useToggleUserStatus, useActiveDean } from "@/features/users/api/useUsers";
 import {
   AlertDialog,
@@ -63,11 +63,11 @@ export default function ToggleUserStatusDialog({
         onSuccess: (res: any) => {
           const replaced = res?.data?.data?.user?.replacedDean || activeDean;
           if (hasActiveDeanConflict && replaced) {
-            toast.success(
+            showFeedback.success(
               `${targetMember.name} is now the active Dean. ${replaced.name} has been deactivated.`,
             );
           } else {
-            toast.success(
+            showFeedback.success(
               `${targetMember.name}'s account was ${nextStatus ? "activated" : "deactivated"}.`,
             );
           }
@@ -75,7 +75,7 @@ export default function ToggleUserStatusDialog({
           onSuccess?.();
         },
         onError: (err: any) => {
-          toast.error(
+          showFeedback.error(
             err.response?.data?.message || "Failed to update account status.",
           );
           onClose();

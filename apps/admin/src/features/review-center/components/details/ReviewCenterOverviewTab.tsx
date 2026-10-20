@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { ReviewCenterRepresentative } from "../../types/types";
 
 interface ReviewCenterOverviewTabProps {
@@ -45,7 +45,7 @@ export default function ReviewCenterOverviewTab({
     if (!reviewCenter?.email) return;
     navigator.clipboard.writeText(reviewCenter.email);
     setCopiedEmail(true);
-    toast.success("Email copied to clipboard!");
+    showFeedback.success("Email copied to clipboard!");
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 

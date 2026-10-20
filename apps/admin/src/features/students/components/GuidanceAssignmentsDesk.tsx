@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Search, Mail } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { DataTablePagination } from "@/components/custom/pagination";
 import EmailStudentModal from "./EmailStudentModal";
 
@@ -60,12 +60,12 @@ export function GuidanceAssignmentsDesk() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Guidance case status updated successfully!");
+      showFeedback.success("Guidance case status updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["guidanceAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["failingStudents"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to update guidance status.");
+      showFeedback.error(err?.response?.data?.message || "Failed to update guidance status.");
     },
   });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, Edit3, ChevronRight, Check } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,9 +69,9 @@ export default function UserHandledSubjectsTab({
         subjectIds: selectedSubjectIds,
       });
       setIsEditCategoriesOpen(false);
-      toast.success("Handled subjects updated successfully");
+      showFeedback.success("Handled subjects updated successfully");
     } catch {
-      toast.error("Failed to update subjects");
+      showFeedback.error("Failed to update subjects");
     }
   };
 

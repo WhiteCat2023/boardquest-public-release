@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LayoutGrid, Layers, SlidersHorizontal } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function DisplaySettingsCard() {
   const [defaultPageSize, setDefaultPageSize] = useState("10");
@@ -31,7 +31,7 @@ export default function DisplaySettingsCard() {
             value={defaultPageSize}
             onChange={(e) => {
               setDefaultPageSize(e.target.value);
-              toast.success(`Default page size set to ${e.target.value} rows`);
+              showFeedback.success(`Default page size set to ${e.target.value} rows`);
             }}
             className="h-8 px-2.5 bg-background border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary cursor-pointer"
           >
@@ -56,7 +56,7 @@ export default function DisplaySettingsCard() {
             checked={compactMode}
             onChange={(e) => {
               setCompactMode(e.target.checked);
-              toast.info(`Compact mode ${e.target.checked ? "enabled" : "disabled"}`);
+              showFeedback.info(`Compact mode ${e.target.checked ? "enabled" : "disabled"}`);
             }}
             className="h-4 w-4 accent-primary rounded cursor-pointer"
           />

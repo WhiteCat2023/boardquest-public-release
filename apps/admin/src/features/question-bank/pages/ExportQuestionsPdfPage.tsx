@@ -32,7 +32,7 @@ import {
   normalizeQuestionType,
   getQuestionTypeFullLabel,
 } from "../services/questionPdfExportService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ExportQuestionsPdfPage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function ExportQuestionsPdfPage() {
         setAllQuestions(data);
       } catch (err: any) {
         if (!isSubscribed) return;
-        toast.error(err?.message || "Failed to load approved questions for PDF.");
+        showFeedback.error(err?.message || "Failed to load approved questions for PDF.");
       } finally {
         if (isSubscribed) setIsLoading(false);
       }
@@ -339,21 +339,21 @@ export default function ExportQuestionsPdfPage() {
 
   const handlePrintOrSavePdf = async () => {
     if (!previewHtml || activeQuestions.length === 0) {
-      toast.warning("No questions available to export.");
+      showFeedback.warning("No questions available to export.");
       return;
     }
 
     setIsPrinting(true);
     try {
       await printQuestionsPdf(previewHtml);
-      toast.success(
+      showFeedback.success(
         `Export ready! Prepared ${activeQuestions.length} approved questions for PDF save.`,
         {
           description: "Choose 'Save as PDF' in the destination dropdown to download.",
         }
       );
     } catch (err: any) {
-      toast.error("Failed to trigger print dialog.");
+      showFeedback.error("Failed to trigger print dialog.");
     } finally {
       setIsPrinting(false);
     }

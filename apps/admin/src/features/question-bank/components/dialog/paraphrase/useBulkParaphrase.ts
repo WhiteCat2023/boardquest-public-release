@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import type {
   ParaphraseTone,
@@ -28,7 +28,7 @@ export function useBulkParaphrase({
   useEffect(() => {
     if (open && selectedQuestions.length > 0) {
       if (selectedQuestions.length > 5) {
-        toast.error(
+        showFeedback.error(
           `Bulk paraphrasing has a limit of 5 questions per batch. You selected ${selectedQuestions.length} questions.`
         );
         onOpenChange(false);
@@ -66,7 +66,7 @@ export function useBulkParaphrase({
     if (targetItems.length === 0) return;
 
     if (targetItems.length > 5) {
-      toast.error("Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
+      showFeedback.error("Bulk paraphrasing is limited to a maximum of 5 questions per batch.");
       return;
     }
 
@@ -123,9 +123,9 @@ export function useBulkParaphrase({
         })
       );
 
-      toast.success(`Paraphrased ${results.length} question(s) successfully!`);
+      showFeedback.success(`Paraphrased ${results.length} question(s) successfully!`);
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message ||
           "Failed to paraphrase selected questions."
       );
@@ -193,12 +193,12 @@ export function useBulkParaphrase({
               : it
           )
         );
-        toast.success("New question variant generated!");
+        showFeedback.success("New question variant generated!");
       } else {
         throw new Error("No variant returned");
       }
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message || "Failed to re-paraphrase question."
       );
       setItems((prev) =>
@@ -226,7 +226,7 @@ export function useBulkParaphrase({
         return it;
       })
     );
-    toast.info("Reverted back to original wording.");
+    showFeedback.info("Reverted back to original wording.");
   };
 
   // Revert all questions back to original
@@ -239,7 +239,7 @@ export function useBulkParaphrase({
         isReverted: true,
       }))
     );
-    toast.info("Reverted all questions to original wording.");
+    showFeedback.info("Reverted all questions to original wording.");
   };
 
   // Apply an alternative variant directly
@@ -286,7 +286,7 @@ export function useBulkParaphrase({
     );
 
     if (modifiedItems.length === 0) {
-      toast.info(
+      showFeedback.info(
         "No modifications detected. Questions remain at original wording."
       );
       onOpenChange(false);
@@ -310,7 +310,7 @@ export function useBulkParaphrase({
         updates,
       });
 
-      toast.success(
+      showFeedback.success(
         `Successfully updated ${updates.length} question stem${
           updates.length !== 1 ? "s" : ""
         }!`
@@ -321,7 +321,7 @@ export function useBulkParaphrase({
       }
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message || "Failed to save paraphrased questions."
       );
     } finally {

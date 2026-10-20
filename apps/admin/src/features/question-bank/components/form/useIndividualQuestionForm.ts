@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAuth from "@/hooks/useAuth";
 import { useQuestionFormStore } from "@/store/QuestionBankStore";
 import { useQuestionQualityCheck } from "@/features/question-bank/api/useQuestionQualityCheck";
@@ -214,12 +214,12 @@ export function useIndividualQuestionForm({
       setSaCorrectAnswer(originalBackup.correctAnswer);
     }
 
-    toast.success("Restored original base question to form!");
+    showFeedback.success("Restored original base question to form!");
   };
 
   const handleOpenParaphraser = () => {
     if (!questionWording.trim()) {
-      toast.error(
+      showFeedback.error(
         "Please enter the question text before paraphrasing with AI."
       );
       return;
@@ -235,7 +235,7 @@ export function useIndividualQuestionForm({
       setOriginalQuestionDraft(questionWording);
     }
     setQuestionWording(newStem);
-    toast.success("Applied paraphrased wording to question!");
+    showFeedback.success("Applied paraphrased wording to question!");
   };
 
   const isNotOriginalQuestion =

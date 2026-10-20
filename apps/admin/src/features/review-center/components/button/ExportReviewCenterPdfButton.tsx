@@ -21,7 +21,7 @@ import {
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { fetchReviewCenterCandidates } from "../../services/reviewCenterPdfExportService";
 import { exportReviewCenterCandidatesToExcel } from "../../services/reviewCenterExcelExportService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface ExportReviewCenterPdfButtonProps {
   reviewCenterId: string;
@@ -64,7 +64,7 @@ export default function ExportReviewCenterPdfButton({
 
   const handleQuickExportExcel = async () => {
     setIsExportingExcel(true);
-    const toastId = toast.loading("Preparing candidates Excel spreadsheet...");
+    const toastId = showFeedback.loading("Preparing candidates Excel spreadsheet...");
     try {
       const { candidates } = await fetchReviewCenterCandidates(axiosPrivate, reviewCenterId, {
         schoolYear: currentSchoolYear && currentSchoolYear !== "ALL" ? currentSchoolYear : undefined,
@@ -73,9 +73,9 @@ export default function ExportReviewCenterPdfButton({
         includeGameStats: true,
         includeSchoolYear: true,
       });
-      toast.success(`Exported ${candidates.length} candidates to Excel (.xlsx)`, { id: toastId });
+      showFeedback.success(`Exported ${candidates.length} candidates to Excel (.xlsx)`, { id: toastId });
     } catch (err: any) {
-      toast.error(err?.message || "Failed to export candidates to Excel", { id: toastId });
+      showFeedback.error(err?.message || "Failed to export candidates to Excel", { id: toastId });
     } finally {
       setIsExportingExcel(false);
     }

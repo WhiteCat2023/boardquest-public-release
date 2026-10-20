@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { uploadQuestionImage, fileToBase64 } from "../services/questionImageUploadService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface QuestionInputProps {
   questionWording: string;
@@ -39,13 +39,13 @@ function QuestionInput({
 
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file (PNG, JPG, WebP, GIF)");
+      showFeedback.error("Please upload a valid image file (PNG, JPG, WebP, GIF)");
       return;
     }
 
     const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 5;
     if (file.size > maxFileSizeMb * 1024 * 1024) {
-      toast.error(`Image file size must be less than ${maxFileSizeMb}MB`);
+      showFeedback.error(`Image file size must be less than ${maxFileSizeMb}MB`);
       return;
     }
 
@@ -62,9 +62,9 @@ function QuestionInput({
       if (setImageUrl) {
         setImageUrl(uploadedUrl);
       }
-      toast.success("Question prompt image uploaded successfully!");
+      showFeedback.success("Question prompt image uploaded successfully!");
     } catch (err: any) {
-      toast.error(err.message || "Failed to upload image.");
+      showFeedback.error(err.message || "Failed to upload image.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

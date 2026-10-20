@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAuth from "./useAuth";
 import { getPusherClient } from "@/lib/pusher";
 
@@ -41,7 +41,7 @@ export function usePusherNotifications() {
     const handleNotification = (data: any) => {
       if (data && data.title) {
         // Trigger live toast alert
-        toast.info(data.title, {
+        showFeedback.info(data.title, {
           description: data.message,
         });
 

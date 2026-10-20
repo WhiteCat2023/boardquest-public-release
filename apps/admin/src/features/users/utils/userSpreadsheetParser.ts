@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import * as XLSX from "xlsx";
 import type { ParsedUserRow } from "@/features/users/types/types";
 
@@ -18,7 +18,7 @@ export const downloadSampleUserCSV = (category: "internal" | "external") => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.info("Sample External Partners template (.csv) downloaded.");
+    showFeedback.info("Sample External Partners template (.csv) downloaded.");
   } else {
     const csvContent =
       "FirstName,MiddleName,LastName,EmployeeID,Email,PhoneNumber,Role\n" +
@@ -34,7 +34,7 @@ export const downloadSampleUserCSV = (category: "internal" | "external") => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.info("Sample Internal Users template (.csv) downloaded.");
+    showFeedback.info("Sample Internal Users template (.csv) downloaded.");
   }
 };
 
@@ -82,7 +82,7 @@ export const downloadSampleUserXLSX = (category: "internal" | "external") => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "External Partners");
     XLSX.writeFile(wb, "BoardQuest_External_Users_Template.xlsx");
-    toast.info("Sample External Partners template (.xlsx) downloaded.");
+    showFeedback.info("Sample External Partners template (.xlsx) downloaded.");
   } else {
     const data = [
       [
@@ -126,7 +126,7 @@ export const downloadSampleUserXLSX = (category: "internal" | "external") => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Internal Users");
     XLSX.writeFile(wb, "BoardQuest_Internal_Users_Template.xlsx");
-    toast.info("Sample Internal Users template (.xlsx) downloaded.");
+    showFeedback.info("Sample Internal Users template (.xlsx) downloaded.");
   }
 };
 
@@ -135,7 +135,7 @@ export const parseUserSpreadsheetData = (
   category: "internal" | "external",
 ): ParsedUserRow[] => {
   if (!sheetData || sheetData.length <= 1) {
-    toast.error("Spreadsheet contains no records or header only.");
+    showFeedback.error("Spreadsheet contains no records or header only.");
     return [];
   }
 
@@ -475,7 +475,7 @@ export const parseUserSpreadsheetFile = async (
   const isXLSX = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
 
   if (!isCSV && !isXLSX) {
-    toast.error("Please upload a valid .csv or .xlsx file");
+    showFeedback.error("Please upload a valid .csv or .xlsx file");
     return [];
   }
 
@@ -484,7 +484,7 @@ export const parseUserSpreadsheetFile = async (
     const workbook = XLSX.read(buffer, { type: "array" });
     const firstSheetName = workbook.SheetNames[0];
     if (!firstSheetName) {
-      toast.error("Spreadsheet file contains no sheets.");
+      showFeedback.error("Spreadsheet file contains no sheets.");
       return [];
     }
     const worksheet = workbook.Sheets[firstSheetName];
@@ -497,7 +497,7 @@ export const parseUserSpreadsheetFile = async (
     return parseUserSpreadsheetData(sheetData, category);
   } catch (err) {
     console.error("Error parsing spreadsheet:", err);
-    toast.error("Failed to read spreadsheet file. Please check file format.");
+    showFeedback.error("Failed to read spreadsheet file. Please check file format.");
     return [];
   }
 };

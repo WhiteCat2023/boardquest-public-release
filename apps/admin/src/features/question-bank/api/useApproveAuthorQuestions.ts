@@ -1,6 +1,6 @@
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export function useApproveAuthorQuestions() {
   const axiosPrivate = useAxiosPrivate();
@@ -22,14 +22,14 @@ export function useApproveAuthorQuestions() {
       const pendingRevisionCount = qList.length - pendingReviewOnly.length;
 
       if (pendingRevisionCount > 0) {
-        toast.warning(
+        showFeedback.warning(
           `Warning: ${pendingRevisionCount} question(s) for this author are in Pending Revision status and cannot be approved until resubmitted.`,
         );
       }
 
       const ids = pendingReviewOnly.map((q: any) => q.id);
       if (ids.length === 0) {
-        toast.error(
+        showFeedback.error(
           "No questions in Pending Review status available to approve for this author.",
         );
         throw new Error("No pending review questions to approve");
@@ -37,13 +37,13 @@ export function useApproveAuthorQuestions() {
       await axiosPrivate.post("/questions/bulk/approve", { ids });
     },
     onSuccess: () => {
-      toast.success("Approved all pending questions for selected author.");
+      showFeedback.success("Approved all pending questions for selected author.");
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
     onError: (err: any) => {
       if (err.message !== "No pending review questions to approve") {
-        toast.error(
+        showFeedback.error(
           err.response?.data?.message || "Failed to approve author questions.",
         );
       }

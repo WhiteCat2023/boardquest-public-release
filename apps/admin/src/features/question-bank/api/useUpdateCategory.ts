@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface UpdateCategoryParams {
   categoryId?: string;
@@ -31,7 +31,7 @@ export function useUpdateCategory() {
     },
     onSuccess: (_, variables) => {
       const targetId = variables.subjectId || variables.categoryId;
-      toast.success("Subject updated successfully!");
+      showFeedback.success("Subject updated successfully!");
       queryClient.invalidateQueries({
         queryKey: ["categoryDetail", targetId],
       });
@@ -42,7 +42,7 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update subject.");
+      showFeedback.error(err.response?.data?.message || "Failed to update subject.");
     },
   });
 }

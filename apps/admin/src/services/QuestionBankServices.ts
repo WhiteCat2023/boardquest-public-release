@@ -1,6 +1,6 @@
 import { useBulkUploadQuestionStore, useExtractedQuestionsStore } from "@/store/QuestionBankStore";
 import { useQuestionListStore } from "@/store/QuestionListStore";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { createProgressToast } from "@/utils/toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -18,7 +18,7 @@ export const downloadSampleCSV = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.info("Sample CSV template downloaded.");
+    showFeedback.info("Sample CSV template downloaded.");
   };
     
 export const extractQuestions = async (axiosPrivate: any) => {
@@ -26,11 +26,11 @@ export const extractQuestions = async (axiosPrivate: any) => {
   const { setExtractedQuestions } = useExtractedQuestionsStore.getState();
 
   if (!file) {
-    toast.error("Please select a file to parse.");
+    showFeedback.error("Please select a file to parse.");
     return;
   }
   if (!selectedCategoryId) {
-    toast.error("Please select a target category.");
+    showFeedback.error("Please select a target category.");
     return;
   }
 
@@ -43,7 +43,7 @@ export const extractQuestions = async (axiosPrivate: any) => {
     reader.onload = async (e) => {
       const result = e.target?.result;
       if (!result) {
-        toast.error("Failed to read file.");
+        showFeedback.error("Failed to read file.");
         setIsExtracting(false);
         return;
       }
@@ -67,13 +67,13 @@ export const extractQuestions = async (axiosPrivate: any) => {
 
         const extracted = response.data?.data?.questions || [];
         if (extracted.length === 0) {
-          toast.warning("No questions could be extracted from the file.");
+          showFeedback.warning("No questions could be extracted from the file.");
         } else {
           setExtractedQuestions(extracted);
-          toast.success(`Successfully parsed ${extracted.length} questions. Please review them below.`);
+          showFeedback.success(`Successfully parsed ${extracted.length} questions. Please review them below.`);
         }
       } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to extract questions.");
+        showFeedback.error(err.response?.data?.message || "Failed to extract questions.");
       } finally {
         setIsExtracting(false);
       }
@@ -85,7 +85,7 @@ export const extractQuestions = async (axiosPrivate: any) => {
       reader.readAsText(file);
     }
   } catch (err: any) {
-    toast.error("An error occurred during file extraction.");
+    showFeedback.error("An error occurred during file extraction.");
     setIsExtracting(false);
   }
 };
@@ -96,7 +96,7 @@ export const bulkUploadQuestions = async (axiosPrivate: any, navigate: any, from
 
   const totalCount = extractedQuestions.length;
   if (totalCount === 0) {
-    toast.error("No questions to upload.");
+    showFeedback.error("No questions to upload.");
     return;
   }
   setIsUploading(true);

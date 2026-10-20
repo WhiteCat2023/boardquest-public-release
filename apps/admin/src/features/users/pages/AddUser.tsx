@@ -4,9 +4,6 @@ import AddUserHeader from "../components/AddUserHeader";
 import AddIndividualUserTab from "../components/AddIndividualUserTab";
 import AddBulkUserTab from "../components/AddBulkUserTab";
 import AddExternalUserTab from "../components/AddExternalUserTab";
-import UserCredentialsModal, {
-  type UserCredentialsInfo,
-} from "../components/UserCredentialsModal";
 
 export default function AddUser() {
   const navigate = useNavigate();
@@ -27,9 +24,6 @@ export default function AddUser() {
   const initialTab = tabParam === "bulk" ? "bulk" : "individual";
   const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
 
-  const [createdCredentials, setCreatedCredentials] =
-    useState<UserCredentialsInfo | null>(null);
-
   const handleCategoryChange = (cat: "internal" | "external") => {
     setAccountCategory(cat);
     setSearchParams({ type: cat, tab: activeTab });
@@ -40,8 +34,8 @@ export default function AddUser() {
     setSearchParams({ type: accountCategory, tab });
   };
 
-  const handleCredentialsSuccess = (credentials: UserCredentialsInfo) => {
-    setCreatedCredentials(credentials);
+  const handleSuccess = () => {
+    navigate("/faculty-management");
   };
 
   return (
@@ -56,7 +50,7 @@ export default function AddUser() {
 
       {/* EXTERNAL: TAB 1 (Individual) */}
       {accountCategory === "external" && activeTab === "individual" && (
-        <AddExternalUserTab onSuccess={handleCredentialsSuccess} />
+        <AddExternalUserTab onSuccess={handleSuccess} />
       )}
 
       {/* EXTERNAL: TAB 2 (Bulk) */}
@@ -66,23 +60,13 @@ export default function AddUser() {
 
       {/* INTERNAL: TAB 1 (Individual) */}
       {accountCategory === "internal" && activeTab === "individual" && (
-        <AddIndividualUserTab onSuccess={handleCredentialsSuccess} />
+        <AddIndividualUserTab onSuccess={handleSuccess} />
       )}
 
       {/* INTERNAL: TAB 2 (Bulk) */}
       {accountCategory === "internal" && activeTab === "bulk" && (
         <AddBulkUserTab accountCategory="internal" />
       )}
-
-      {/* Account Created & Credentials Modal */}
-      <UserCredentialsModal
-        isOpen={!!createdCredentials}
-        onClose={() => {
-          setCreatedCredentials(null);
-          navigate("/faculty-management");
-        }}
-        credentials={createdCredentials}
-      />
     </div>
   );
 }

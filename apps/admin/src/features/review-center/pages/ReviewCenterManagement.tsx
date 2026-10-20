@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useConfirm } from "@/components/modal";
+import { useConfirm, showFeedback } from "@/components/modal";
 import type { ReviewCenterRepresentative } from "../types/types";
 import { useDeleteReviewCenter } from "../api/useReviewCenter";
 import { useReviewCenterDirectory } from "../api/useReviewCenterDirectory";
@@ -59,12 +58,12 @@ export default function ReviewCenterManagement() {
 
     deleteCenterMutation.mutate(item.id, {
       onSuccess: () => {
-        toast.success(
+        showFeedback.success(
           `Review Center partner "${item?.companyName || item?.name}" removed.`,
         );
       },
       onError: (err: any) => {
-        toast.error(
+        showFeedback.error(
           err.response?.data?.message || "Failed to remove review center.",
         );
       },

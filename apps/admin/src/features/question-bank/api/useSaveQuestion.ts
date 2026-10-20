@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useQuestionListStore } from "@/store/QuestionListStore";
 
 export interface SaveQuestionPayload {
@@ -33,10 +33,10 @@ export function useCreateQuestion() {
       queryClient.invalidateQueries({ queryKey: ["pendingReviewAuthors"] });
       queryClient.invalidateQueries({ queryKey: ["questionStats"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardAnalyticsSummary"] });
-      toast.success("New question added to repository!");
+      showFeedback.success("New question added to repository!");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to create question.");
+      showFeedback.error(err.response?.data?.message || "Failed to create question.");
     },
   });
 }
@@ -56,10 +56,10 @@ export function useUpdateQuestion(questionId?: string) {
       if (questionId) {
         queryClient.invalidateQueries({ queryKey: ["questionDetail", questionId] });
       }
-      toast.success("Question updated successfully!");
+      showFeedback.success("Question updated successfully!");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update question.");
+      showFeedback.error(err.response?.data?.message || "Failed to update question.");
     },
   });
 }

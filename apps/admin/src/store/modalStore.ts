@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import type React from "react";
+import React, { isValidElement } from "react";
 
 export type ModalVariant = "default" | "destructive" | "warning" | "info";
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+export type FeedbackVariant = "success" | "error" | "warning" | "info" | "default";
 
 export interface ConfirmOptions {
   id?: string;
@@ -28,10 +29,29 @@ export interface CustomModalOptions {
   onClose?: () => void;
 }
 
+export interface FeedbackDialogOptions {
+  id?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  variant?: FeedbackVariant;
+  confirmText?: string;
+  action?: {
+    label: string;
+    onClick: (e?: React.MouseEvent) => void;
+  };
+  cancel?: {
+    label: string;
+    onClick?: (e?: React.MouseEvent) => void;
+  };
+  onConfirm?: () => void;
+  onClose?: () => void;
+}
+
 // Extensible modal map for type-safe registered modals
 export interface ModalRegistry {
   CONFIRM: ConfirmOptions;
   CUSTOM: CustomModalOptions;
+  FEEDBACK: FeedbackDialogOptions;
   [key: string]: Record<string, any>;
 }
 
@@ -51,6 +71,9 @@ interface ModalStore {
   
   /** Open a custom inline dialog */
   openCustom: (options: CustomModalOptions) => string;
+  
+  /** Open an alert/feedback notification dialog (replacing toasts) */
+  openFeedback: (options: FeedbackDialogOptions) => string;
   
   /** Open a confirmation dialog that returns a Promise<boolean> */
   confirm: (options: ConfirmOptions) => Promise<boolean>;
@@ -82,6 +105,23 @@ export const useModalStore = create<ModalStore>((set, get) => ({
 
   openCustom: (options) => {
     return get().openModal("CUSTOM", options);
+  },
+
+  openFeedback: (options) => {
+    const id = options.id || generateModalId();
+    const instance: ModalInstance = {
+      id,
+      type: "FEEDBACK",
+      props: { ...options, id } as any,
+    };
+    set((state) => ({
+      // Dismiss any existing feedback dialog so rapid toasts don't stack multiple backdrops
+      modalStack: [
+        ...state.modalStack.filter((m) => m.type !== "FEEDBACK" && m.id !== id),
+        instance,
+      ],
+    }));
+    return id;
   },
 
   confirm: (options) => {
@@ -153,6 +193,88 @@ export const useModalStore = create<ModalStore>((set, get) => ({
 
 /** Standalone confirm function usable outside React components */
 export const confirm = (options: ConfirmOptions) => useModalStore.getState().confirm(options);
+
+function normalizeFeedback(
+  variant: FeedbackVariant,
+  message: React.ReactNode | Error | any,
+  options?: Record<string, any>,
+): string {
+  let displayMessage: React.ReactNode = message;
+  if (message instanceof Error) {
+    displayMessage = message.message;
+  }
+
+  let title: React.ReactNode | undefined;
+  let description: React.ReactNode | undefined;
+
+  if (options?.description) {
+    title = displayMessage;
+    description = options.description;
+  } else {
+    description = displayMessage;
+  }
+
+  const id = options?.id ? String(options.id) : undefined;
+
+  return useModalStore.getState().openFeedback({
+    id,
+    variant,
+    title: options?.title || title,
+    description,
+    confirmText: options?.confirmText,
+    action: options?.action,
+    cancel: options?.cancel,
+    onClose: () => {
+      if (options?.onDismiss) options.onDismiss({ id });
+      if (options?.onClose) options.onClose();
+    },
+  });
+}
+
+const baseFeedback = (messageOrOptions: React.ReactNode | FeedbackDialogOptions, options?: Record<string, any>): string => {
+  if (messageOrOptions && typeof messageOrOptions === "object" && !React.isValidElement(messageOrOptions) && "variant" in (messageOrOptions as any)) {
+    return useModalStore.getState().openFeedback(messageOrOptions as FeedbackDialogOptions);
+  }
+  return normalizeFeedback("default", messageOrOptions, options);
+};
+
+/** Standalone feedback/alert dialog function usable outside React components */
+export const showFeedback = Object.assign(baseFeedback, {
+  success: (message: React.ReactNode, options?: Record<string, any>) =>
+    normalizeFeedback("success", message, options),
+  error: (message: React.ReactNode, options?: Record<string, any>) =>
+    normalizeFeedback("error", message, options),
+  warning: (message: React.ReactNode, options?: Record<string, any>) =>
+    normalizeFeedback("warning", message, options),
+  info: (message: React.ReactNode, options?: Record<string, any>) =>
+    normalizeFeedback("info", message, options),
+  loading: (message: React.ReactNode, options?: Record<string, any>) =>
+    normalizeFeedback("info", message, options),
+  custom: (
+    jsx: (id: string | number) => React.ReactNode | React.ReactNode,
+    options?: Record<string, any>,
+  ) => {
+    const id = options?.id ? String(options.id) : `custom_${Date.now()}`;
+    const content = typeof jsx === "function" ? jsx(id) : jsx;
+    useModalStore.getState().openCustom({
+      id,
+      content,
+      showCloseButton: true,
+      onClose: () => {
+        if (options?.onDismiss) options.onDismiss({ id });
+        if (options?.onClose) options.onClose();
+      },
+    });
+    return id;
+  },
+  dismiss: (id?: string | number) => {
+    if (id !== undefined) {
+      useModalStore.getState().closeModal(String(id));
+    } else {
+      useModalStore.getState().closeModal();
+    }
+  },
+});
 
 /** Standalone modal actions */
 export const openModal = <T extends ModalType>(type: T, props: ModalRegistry[T]) =>

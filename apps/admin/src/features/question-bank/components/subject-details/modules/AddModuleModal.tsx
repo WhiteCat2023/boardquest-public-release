@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Plus, Paperclip, CheckCircle2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import {
   Dialog,
   DialogContent,
@@ -71,7 +71,7 @@ export function AddModuleModal({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      toast.error("Please provide a module title.");
+      showFeedback.error("Please provide a module title.");
       return;
     }
 
@@ -97,7 +97,7 @@ export function AddModuleModal({
       setShowManualUrl(false);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to upload files and save module.");
+      showFeedback.error(err?.message || "Failed to upload files and save module.");
     } finally {
       setIsUploading(false);
     }

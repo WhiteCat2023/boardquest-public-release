@@ -185,42 +185,44 @@ router.get("/subject/:subjectId", authenticateToken, getQuestionsByCategory);
 router.get("/category/:categoryId/modules", authenticateToken, getModulesByCategory);
 router.get("/subject/:subjectId/modules", authenticateToken, getModulesByCategory);
 
+const moduleRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
+
 router.post(
   "/category/:categoryId/modules",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   createModule,
 );
 router.post(
   "/subject/:subjectId/modules",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   createModule,
 );
 
 router.put(
   "/category/modules/:moduleId",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   updateModule,
 );
 router.put(
   "/subject/modules/:moduleId",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   updateModule,
 );
 
 router.delete(
   "/category/modules/:moduleId",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   deleteModule,
 );
 router.delete(
   "/subject/modules/:moduleId",
   authenticateToken,
-  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  requireRoles(moduleRoles),
   deleteModule,
 );
 

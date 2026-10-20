@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { GameBadge } from "../types/types";
 import { BadgeEditorModal } from "./BadgeEditorModal";
 import {
@@ -75,9 +75,9 @@ export function BadgesManagementTab({
     if (onDeleteBadge) return onDeleteBadge(id);
     try {
       await deleteBadgeMutation.mutateAsync(id);
-      toast.success("Gamification badge deleted successfully.");
+      showFeedback.success("Gamification badge deleted successfully.");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to delete badge.");
+      showFeedback.error(err?.response?.data?.message || "Failed to delete badge.");
     }
   };
 
@@ -85,9 +85,9 @@ export function BadgesManagementTab({
     if (onToggleActive) return onToggleActive(id);
     try {
       await toggleBadgeMutation.mutateAsync(id);
-      toast.info("Badge status updated.");
+      showFeedback.info("Badge status updated.");
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err?.response?.data?.message || "Failed to toggle badge status.",
       );
     }
@@ -100,15 +100,15 @@ export function BadgesManagementTab({
           id: editingBadge.id,
           data: badgeData,
         });
-        toast.success("Badge updated successfully!");
+        showFeedback.success("Badge updated successfully!");
       } else {
         await createBadgeMutation.mutateAsync(badgeData);
         setCurrentPage(1);
-        toast.success("New gamification badge created!");
+        showFeedback.success("New gamification badge created!");
       }
       setIsBadgeModalOpen(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to save badge.");
+      showFeedback.error(err?.response?.data?.message || "Failed to save badge.");
     }
   };
 

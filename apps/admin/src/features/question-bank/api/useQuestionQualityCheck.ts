@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface QualityCheckInput {
   questionWording: string;
@@ -25,20 +25,20 @@ export function useQuestionQualityCheck() {
     } = input;
 
     if (!questionWording || questionWording.trim().length < 5) {
-      toast.error(
+      showFeedback.error(
         "Quality Check: Question wording must be at least 5 characters long.",
       );
       return false;
     }
 
     if (!categoryId) {
-      toast.error("Quality Check: Please select an academic subject category.");
+      showFeedback.error("Quality Check: Please select an academic subject category.");
       return false;
     }
 
     if (format === "MCQ") {
       if (mcqChoices.length < 2) {
-        toast.error(
+        showFeedback.error(
           "Quality Check: MCQ format requires at least 2 option choices.",
         );
         return false;
@@ -49,7 +49,7 @@ export function useQuestionQualityCheck() {
         const text = (mcqChoices[i] || "").trim();
         const img = (mcqChoiceImages[i] || "").trim();
         if (!text && !img) {
-          toast.error(
+          showFeedback.error(
             `Quality Check: Option ${String.fromCharCode(65 + i)} requires wording or an attached image.`,
           );
           return false;
@@ -62,28 +62,28 @@ export function useQuestionQualityCheck() {
         .filter((c) => c.length > 0);
       const hasDuplicates = new Set(textChoices).size !== textChoices.length;
       if (hasDuplicates) {
-        toast.error(
+        showFeedback.error(
           "Quality Check: Multiple choice options cannot contain duplicate text wording.",
         );
         return false;
       }
 
       if (mcqCorrectIndex < 0 || mcqCorrectIndex >= mcqChoices.length) {
-        toast.error(
+        showFeedback.error(
           "Quality Check: Please designate a valid correct answer key option.",
         );
         return false;
       }
     } else if (format === "TRUE_FALSE") {
       if (!tfCorrect) {
-        toast.error(
+        showFeedback.error(
           "Quality Check: Please specify True or False as the answer key.",
         );
         return false;
       }
     } else if (format === "SHORT_ANSWER") {
       if (!saCorrectAnswer || !saCorrectAnswer.trim()) {
-        toast.error(
+        showFeedback.error(
           "Quality Check: Please provide an expected short answer key.",
         );
         return false;

@@ -26,8 +26,10 @@ import {
   ArrowUpDown,
   Search,
   X,
+  Clock,
 } from "lucide-react";
 import { getFileNameFromUrl } from "../../services/moduleUploadService";
+import { getInitials } from "@/utils/style";
 import { PdfPreviewModal } from "./PdfPreviewModal";
 
 export type ModuleSortOptionKey =
@@ -99,7 +101,8 @@ export default function SubjectModulesTab({
       list = list.filter(
         (m) =>
           m.title.toLowerCase().includes(q) ||
-          (m.description && m.description.toLowerCase().includes(q))
+          (m.description && m.description.toLowerCase().includes(q)) ||
+          (m.author?.name && m.author.name.toLowerCase().includes(q))
       );
     }
 
@@ -318,6 +321,61 @@ export default function SubjectModulesTab({
                         </span>
                       )}
                     </div>
+
+                    {/* Author line under the module title */}
+                    {(() => {
+                      const authorName =
+                        mod.author?.name ||
+                        (mod.author?.firstName
+                          ? `${mod.author.firstName} ${mod.author.lastName || ""}`.trim()
+                          : null) ||
+                        category?.author?.name ||
+                        "Faculty Instructor";
+                      const authorRole = mod.author?.role;
+                      const authorAvatar = mod.author?.avatarUrl;
+
+                      const formatModuleDate = (dateStr?: string) => {
+                        if (!dateStr) return "";
+                        try {
+                          return new Date(dateStr).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          });
+                        } catch {
+                          return "";
+                        }
+                      };
+
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-[11px] text-muted-foreground font-medium">
+                              
+                              <span className="font-semibold text-foreground">
+                                {authorName}
+                              </span>
+                            </span>
+                          </div>
+
+                          {authorRole && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground border border-border/70 capitalize">
+                              {authorRole.toLowerCase()}
+                            </span>
+                          )}
+
+                          {mod.createdAt && (
+                            <>
+                              <span className="text-muted-foreground/30 text-[10px]">&bull;</span>
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                <Clock size={11} className="text-muted-foreground/70" />
+                                {formatModuleDate(mod.createdAt)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {mod.description && (
                       <p className="text-xs text-muted-foreground leading-relaxed">

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { showUndoToast } from "@/utils/toast";
 import { QuestionStatus, type Question } from "@/types/question";
 
@@ -30,10 +30,10 @@ export function useQuestionDetailActions({
         queryKey: ["questionDetail", questionId],
       });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
-      toast.success("Question approved successfully.");
+      showFeedback.success("Question approved successfully.");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to approve question.");
+      showFeedback.error(err.response?.data?.message || "Failed to approve question.");
     },
   });
 
@@ -60,25 +60,25 @@ export function useQuestionDetailActions({
               ids: [questionId],
               status: QuestionStatus.PENDING_REVISION,
             });
-            toast.info("Reverted revision submission.");
+            showFeedback.info("Reverted revision submission.");
             queryClient.invalidateQueries({
               queryKey: ["questionDetail", questionId],
             });
             queryClient.invalidateQueries({ queryKey: ["questions"] });
           } catch (err: any) {
-            toast.error("Failed to undo revision submission.");
+            showFeedback.error("Failed to undo revision submission.");
           }
         },
       });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to submit revisions.");
+      showFeedback.error(err.response?.data?.message || "Failed to submit revisions.");
     },
   });
 
   const handleSubmitRevisions = (unresolvedCommentsCount: number) => {
     if (unresolvedCommentsCount > 0) {
-      toast.error(
+      showFeedback.error(
         `Cannot resubmit question while there ${
           unresolvedCommentsCount === 1
             ? "is 1 unresolved comment"
@@ -112,7 +112,7 @@ export function useQuestionDetailActions({
         await axiosPrivate.delete(`/questions/${questionId}`);
         queryClient.invalidateQueries({ queryKey: ["questions"] });
       } catch (err: any) {
-        toast.error(
+        showFeedback.error(
           err.response?.data?.message ||
             "Failed to delete question permanently.",
         );
@@ -129,7 +129,7 @@ export function useQuestionDetailActions({
       onUndo: () => {
         clearTimeout(timeoutId);
         queryClient.invalidateQueries({ queryKey: ["questions"] });
-        toast.success("Delete action undone.");
+        showFeedback.success("Delete action undone.");
       },
       duration: 4000,
     });

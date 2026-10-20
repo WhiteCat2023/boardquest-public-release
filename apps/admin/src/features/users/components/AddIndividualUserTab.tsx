@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types/question";
 import type { RoleType, CreateUserPayload } from "@/features/users/types/types";
 import { getAllowedRolesToCreate } from "@/features/users/utils/userUtils";
 import { useCreateUser } from "@/features/users/api/useUsers";
 import useRoleFlags from "@/hooks/useRoleFlags";
-import type { UserCredentialsInfo } from "./UserCredentialsModal";
 import UserProfileForm from "./UserProfileForm";
 
 interface AddIndividualUserTabProps {
-  onSuccess: (credentials: UserCredentialsInfo) => void;
+  onSuccess?: () => void;
   onCancel?: () => void;
 }
 
@@ -85,24 +84,18 @@ export default function AddIndividualUserTab({
     };
 
     createMutation.mutate(payload, {
-      onSuccess: (res: any) => {
-        const createdUser = res?.data?.data?.user || res?.data?.user;
-        const tempPass = createdUser?.temporaryPassword;
-        const credentials: UserCredentialsInfo = {
-          name: createdUser?.name || payload.name,
-          email: createdUser?.email || payload.email,
-          employeeId: createdUser?.employeeId || payload.employeeId,
-          role: String(payload.role || "TEACHER"),
-          temporaryPassword: tempPass,
-          portalUrl: `${window.location.origin}/login`,
-        };
-        toast.success("User registered successfully!");
-        onSuccess(credentials);
+      onSuccess: () => {
+        showFeedback.success("User registered successfully!");
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate("/faculty-management");
+        }
       },
       onError: (err: any) => {
         const msg = err.response?.data?.message || "Failed to register user.";
         setErrorMsg(msg);
-        toast.error(msg);
+        showFeedback.error(msg);
       },
     });
   };

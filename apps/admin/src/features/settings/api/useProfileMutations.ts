@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface UpdateProfileParams {
   name: string;
@@ -22,7 +22,7 @@ export function useProfileMutations() {
 
   const updateProfile = async (data: UpdateProfileParams) => {
     if (!data.name.trim() || !data.email.trim()) {
-      toast.error("Please fill in all required profile fields.");
+      showFeedback.error("Please fill in all required profile fields.");
       return false;
     }
 
@@ -51,10 +51,10 @@ export function useProfileMutations() {
         },
       }));
 
-      toast.success("Profile information updated successfully!");
+      showFeedback.success("Profile information updated successfully!");
       return true;
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update profile settings.");
+      showFeedback.error(err.response?.data?.message || "Failed to update profile settings.");
       return false;
     } finally {
       setIsSavingProfile(false);
@@ -63,11 +63,11 @@ export function useProfileMutations() {
 
   const updatePassword = async (newPassword: string, confirmPassword: string) => {
     if (!newPassword || newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters.");
+      showFeedback.error("New password must be at least 6 characters.");
       return false;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirm password do not match.");
+      showFeedback.error("New password and confirm password do not match.");
       return false;
     }
 
@@ -77,10 +77,25 @@ export function useProfileMutations() {
         password: newPassword,
       });
 
-      toast.success("Security password updated successfully!");
+      setAuth((prev: any) => ({
+        ...prev,
+        data: {
+          ...prev?.data,
+          user: {
+            ...prev?.data?.user,
+            mustChangePassword: false,
+          },
+        },
+        user: {
+          ...(prev?.user || {}),
+          mustChangePassword: false,
+        },
+      }));
+
+      showFeedback.success("Security password updated successfully!");
       return true;
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update password.");
+      showFeedback.error(err.response?.data?.message || "Failed to update password.");
       return false;
     } finally {
       setIsSavingPassword(false);
@@ -89,13 +104,13 @@ export function useProfileMutations() {
 
   const uploadAvatar = async (file: File): Promise<string | null> => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file (PNG, JPG, JPEG, WebP).");
+      showFeedback.error("Please select a valid image file (PNG, JPG, JPEG, WebP).");
       return null;
     }
 
     const maxFileSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 5;
     if (file.size > maxFileSizeMb * 1024 * 1024) {
-      toast.error(`Image file size should not exceed ${maxFileSizeMb}MB.`);
+      showFeedback.error(`Image file size should not exceed ${maxFileSizeMb}MB.`);
       return null;
     }
 
@@ -140,10 +155,10 @@ export function useProfileMutations() {
             },
           }));
 
-          toast.success("Profile picture updated successfully!");
+          showFeedback.success("Profile picture updated successfully!");
           resolve(uploadedUrl);
         } catch (err: any) {
-          toast.error(
+          showFeedback.error(
             err.response?.data?.message ||
               err.message ||
               "Failed to upload profile picture."
@@ -156,7 +171,7 @@ export function useProfileMutations() {
 
       reader.onerror = () => {
         setIsUploadingAvatar(false);
-        toast.error("Failed to read image file.");
+        showFeedback.error("Failed to read image file.");
         resolve(null);
       };
 
@@ -184,10 +199,10 @@ export function useProfileMutations() {
         },
       }));
 
-      toast.success("Profile picture removed successfully.");
+      showFeedback.success("Profile picture removed successfully.");
       return true;
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message || "Failed to remove profile picture."
       );
       return false;
@@ -239,7 +254,7 @@ export function useProfileMutations() {
 
       return true;
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message || "Failed to update notification preferences.",
       );
       return false;
@@ -254,12 +269,12 @@ export function useProfileMutations() {
       const response = await axiosPrivate.post("/notifications/send-digest", {
         forSelfOnly: true,
       });
-      toast.success(
+      showFeedback.success(
         response.data?.message || "Weekly digest dispatched to your email!",
       );
       return true;
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err.response?.data?.message || "Failed to send weekly digest test.",
       );
       return false;

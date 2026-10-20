@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { ReviewCenterRepresentative } from "../types/types";
 import { useCreateReviewCenter, useUpdateReviewCenter } from "../api/useReviewCenter";
 
@@ -73,15 +73,15 @@ export default function AddEditReviewCenterModal({
     e.preventDefault();
 
     if (!companyName.trim()) {
-      toast.error("Review Center / Company name is required.");
+      showFeedback.error("Review Center / Company name is required.");
       return;
     }
     if (!name.trim()) {
-      toast.error("Representative name is required.");
+      showFeedback.error("Representative name is required.");
       return;
     }
     if (!email.trim()) {
-      toast.error("Contact email address is required.");
+      showFeedback.error("Contact email address is required.");
       return;
     }
 
@@ -100,11 +100,11 @@ export default function AddEditReviewCenterModal({
         },
         {
           onSuccess: () => {
-            toast.success("Review Center details updated successfully!");
+            showFeedback.success("Review Center details updated successfully!");
             onClose();
           },
           onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to update review center.");
+            showFeedback.error(err.response?.data?.message || "Failed to update review center.");
           },
         }
       );
@@ -121,11 +121,11 @@ export default function AddEditReviewCenterModal({
         },
         {
           onSuccess: () => {
-            toast.success("New Review Center representative added successfully!");
+            showFeedback.success("New Review Center representative added successfully!");
             onClose();
           },
           onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to create review center.");
+            showFeedback.error(err.response?.data?.message || "Failed to create review center.");
           },
         }
       );

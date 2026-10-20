@@ -15,7 +15,7 @@ import {
   useSendTeacherNudgeMutation,
   useSendBulkTeacherNudgesMutation,
 } from "../../api/useEncodingTracker";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface NudgeTeacherModalProps {
   isOpen: boolean;
@@ -65,12 +65,12 @@ export function NudgeTeacherModal({
           subjectId: selectedSubject === "ALL" ? undefined : selectedSubject,
           schoolYear,
         });
-        toast.success(
+        showFeedback.success(
           `Reminders dispatched to ${res.data?.totalNudged || incompleteCount} faculty members!`,
         );
         onClose();
       } catch (err: any) {
-        toast.error(
+        showFeedback.error(
           err?.response?.data?.message || "Failed to dispatch bulk reminders",
         );
       }
@@ -81,10 +81,10 @@ export function NudgeTeacherModal({
           subjectId: item.subject.id,
           customMessage: customMessage.trim() || undefined,
         });
-        toast.success(`Reminder sent to ${item.teacher.name}!`);
+        showFeedback.success(`Reminder sent to ${item.teacher.name}!`);
         onClose();
       } catch (err: any) {
-        toast.error(
+        showFeedback.error(
           err?.response?.data?.message || "Failed to send reminder to teacher",
         );
       }

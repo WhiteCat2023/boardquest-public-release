@@ -4,7 +4,7 @@ import { UserPlus, Mail, User, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useCreateStudent } from "@/features/students";
 
 export function IndividualEnrollForm() {
@@ -21,11 +21,11 @@ export function IndividualEnrollForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      toast.error("First Name and Last Name are required.");
+      showFeedback.error("First Name and Last Name are required.");
       return;
     }
     if (!formData.email.trim()) {
-      toast.error("Email is required.");
+      showFeedback.error("Email is required.");
       return;
     }
 
@@ -41,11 +41,11 @@ export function IndividualEnrollForm() {
       },
       {
         onSuccess: () => {
-          toast.success("Student account enrolled successfully! Login credentials sent to their email.");
+          showFeedback.success("Student account enrolled successfully! Login credentials sent to their email.");
           navigate("/student-management");
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.message || "Failed to create student account.");
+          showFeedback.error(err.response?.data?.message || "Failed to create student account.");
         },
       }
     );

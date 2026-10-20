@@ -21,7 +21,7 @@ import {
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { fetchAllStudents } from "../../services/studentPdfExportService";
 import { exportStudentsToExcel } from "../../services/studentExcelExportService";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface ExportStudentsPdfButtonProps {
   currentStanding?: string;
@@ -65,7 +65,7 @@ export default function ExportStudentsPdfButton({
 
   const handleQuickExportExcel = async () => {
     setIsExportingExcel(true);
-    const toastId = toast.loading("Preparing students Excel spreadsheet...");
+    const toastId = showFeedback.loading("Preparing students Excel spreadsheet...");
     try {
       const data = await fetchAllStudents(axiosPrivate);
       exportStudentsToExcel(data, {
@@ -73,9 +73,9 @@ export default function ExportStudentsPdfButton({
         includeContactInfo: true,
         includeMetrics: true,
       });
-      toast.success(`Exported ${data.length} students to Excel (.xlsx)`, { id: toastId });
+      showFeedback.success(`Exported ${data.length} students to Excel (.xlsx)`, { id: toastId });
     } catch (err: any) {
-      toast.error(err?.message || "Failed to export students to Excel", { id: toastId });
+      showFeedback.error(err?.message || "Failed to export students to Excel", { id: toastId });
     } finally {
       setIsExportingExcel(false);
     }

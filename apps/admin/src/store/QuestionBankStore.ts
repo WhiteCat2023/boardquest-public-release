@@ -4,7 +4,7 @@ import {
   bulkUploadQuestions,
   extractQuestions,
 } from "../services/QuestionBankServices";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface QuestionBankStore {
   questions: Question[];
@@ -290,7 +290,7 @@ export const useUploadZoneState = create<UploadZoneState>((set) => ({
       if (matchesType) {
         useBulkUploadQuestionStore.getState().setFile(droppedFile);
       } else {
-        toast.error("Invalid file format. Please upload a CSV or Excel file.");
+        showFeedback.error("Invalid file format. Please upload a CSV or Excel file.");
       }
     }
   },

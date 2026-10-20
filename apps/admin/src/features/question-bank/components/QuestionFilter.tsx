@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient, useIsFetching } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export function QuestionFilter({
   showSearch = true,
@@ -46,7 +46,7 @@ export function QuestionFilter({
 
   const handleReload = async () => {
     await queryClient.invalidateQueries({ queryKey: ["questions"] });
-    toast.success("Question bank data reloaded!");
+    showFeedback.success("Question bank data reloaded!");
   };
 
   const hasActiveFilters =

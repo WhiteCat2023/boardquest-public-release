@@ -21,7 +21,13 @@ export const me = asyncHandler(async (req, res) => {
     if (isSuperAdmin(id)) {
         const dbSuperAdmin = await ensureSuperAdminExists();
         const superUser = dbSuperAdmin || getSuperAdminProfile();
-        return new ApiResponse(200, { user: superUser }, "User retrieved successfully").send(res);
+        return new ApiResponse(200, {
+            user: {
+                ...superUser,
+                mustChangePassword: false,
+                termsAcceptedAt: new Date(0),
+            },
+        }, "User retrieved successfully").send(res);
     }
     const user = await prisma.adminUser.findUnique({
         where: { id },
@@ -34,6 +40,8 @@ export const me = asyncHandler(async (req, res) => {
             phoneNumber: true,
             avatarUrl: true,
             location: true,
+            mustChangePassword: true,
+            termsAcceptedAt: true,
             handledSubjectIds: true,
             handledSubjects: {
                 select: {
@@ -46,8 +54,14 @@ export const me = asyncHandler(async (req, res) => {
     if (!user) {
         return new ApiResponse(404, null, "User not found").send(res);
     }
+    const isFacultyRole = ["DEAN", "TEAMLEAD", "TEACHER"].includes(String(user.role).toUpperCase());
+    const mustChangePassword = isFacultyRole
+        ? user.mustChangePassword !== false
+        : false;
     const formattedUser = {
         ...user,
+        mustChangePassword,
+        termsAcceptedAt: user.termsAcceptedAt || null,
         handledCategoryIds: user.handledSubjectIds || [],
         handledCategories: user.handledSubjects || [],
         handledSubjectIds: user.handledSubjectIds || [],

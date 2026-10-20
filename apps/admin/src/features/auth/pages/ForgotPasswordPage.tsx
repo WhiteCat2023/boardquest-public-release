@@ -6,7 +6,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet 
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -22,9 +22,9 @@ export default function ForgotPasswordPage() {
     try {
       await axiosPrivate.post("/auth/forgot-password", { email });
       setIsSubmitted(true);
-      toast.success("Password reset link sent to your email!");
+      showFeedback.success("Password reset link sent to your email!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send password reset email.");
+      showFeedback.error(err.response?.data?.message || "Failed to send password reset email.");
     } finally {
       setLoading(false);
     }

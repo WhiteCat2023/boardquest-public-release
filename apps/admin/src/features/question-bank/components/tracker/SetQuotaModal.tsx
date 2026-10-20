@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Sliders, Loader2 } from "lucide-react";
 import type { FacultyTrackItem } from "../../types/encodingTracker.types";
 import { useUpsertQuotaMutation } from "../../api/useEncodingTracker";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 interface SetQuotaModalProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export function SetQuotaModal({ isOpen, onClose, item }: SetQuotaModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (targetCount <= 0) {
-      toast.error("Target question count must be greater than 0");
+      showFeedback.error("Target question count must be greater than 0");
       return;
     }
 
@@ -57,12 +57,12 @@ export function SetQuotaModal({ isOpen, onClose, item }: SetQuotaModalProps) {
         notes: notes.trim() || undefined,
       });
 
-      toast.success(
+      showFeedback.success(
         `Quota updated for ${item.teacher.name} (${item.subject.name})`,
       );
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to update quota");
+      showFeedback.error(err?.response?.data?.message || "Failed to update quota");
     }
   };
 

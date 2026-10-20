@@ -10,6 +10,7 @@ import HeaderBreadcrumb from "../components/custom/breadcrumb/HeaderBreadcrumb";
 import { NotificationDropdown } from "@/features/notifications";
 import { SystemSearchBar } from "../components/custom/search/SystemSearchBar";
 import usePusherNotifications from "../hooks/usePusherNotifications";
+import { FirstLoginDialog } from "@/features/auth";
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
@@ -51,6 +52,7 @@ function DashboardLayout() {
           </div>
         </div>
       </main>
+      <FirstLoginDialog />
     </SidebarProvider>
   );
 }

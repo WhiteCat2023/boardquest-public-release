@@ -1,7 +1,7 @@
 import { useTheme } from "next-themes";
 import { Sun, Moon, Laptop, Sparkles, Check } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function ThemeSettingsCard() {
   const { theme, setTheme } = useTheme();
@@ -48,7 +48,7 @@ export default function ThemeSettingsCard() {
                 type="button"
                 onClick={() => {
                   setTheme(opt.id);
-                  toast.success(`Theme set to ${opt.name}`);
+                  showFeedback.success(`Theme set to ${opt.name}`);
                 }}
                 className={`relative flex items-center gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected

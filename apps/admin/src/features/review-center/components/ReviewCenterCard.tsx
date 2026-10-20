@@ -11,7 +11,7 @@ import {
   Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { ReviewCenterRepresentative } from "../types/types";
 
 interface ReviewCenterCardProps {
@@ -41,7 +41,7 @@ export default function ReviewCenterCard({
     e.stopPropagation();
     navigator.clipboard.writeText(reviewCenter.email);
     setCopied(true);
-    toast.success("Email copied to clipboard!");
+    showFeedback.success("Email copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 

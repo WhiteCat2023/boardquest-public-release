@@ -844,7 +844,7 @@ export class QuestionService {
             title: "Revision Requested",
             message: `Revision feedback was provided for ${ids.length} question(s) by ${reviewerName}.`,
             type: "WARNING",
-            link: "/question-bank?view=my-questions",
+            link: "/question-bank/my-questions",
         }).catch((err) => console.warn("Notification error:", err?.message));
         // Notify authors individually via in-app & email
         const uniqueAuthorIds = Array.from(new Set(targetQuestions.map((q) => q.authorId).filter(Boolean)));
@@ -856,7 +856,7 @@ export class QuestionService {
                 title: "Revision Requested",
                 message: notifMsg,
                 type: "WARNING",
-                link: "/question-bank?view=my-questions",
+                link: "/question-bank/my-questions",
             }).catch(() => { });
             (async () => {
                 try {

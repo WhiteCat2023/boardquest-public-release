@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import MarronButton from "./MarronButton";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import { useMyEncodingProgress } from "@/features/question-bank";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export default function AddQuestionButton() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function AddQuestionButton() {
 
   const handleAddQuestion = () => {
     if (isQuotaMet) {
-      toast.info(
+      showFeedback.info(
         "Authoring Quota Met: You have completed all question authoring goals.",
         {
           description: `You authored ${progress?.overall.totalEncoded} of ${progress?.overall.totalTarget} assigned questions.`,

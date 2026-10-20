@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useBulkCreateUser } from "@/features/users/api/useUsers";
 import type { ParsedUserRow } from "@/features/users/types/types";
 import {
@@ -79,7 +79,7 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
       next[index] = updatedRow;
       return next;
     });
-    toast.success(`Entry #${index + 1} updated successfully.`);
+    showFeedback.success(`Entry #${index + 1} updated successfully.`);
   };
 
   const validCount = parsedRows.filter((r) => r.isValid).length;
@@ -87,7 +87,7 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
   const handleBulkSubmit = () => {
     const validMembers = parsedRows.filter((r) => r.isValid);
     if (validMembers.length === 0) {
-      toast.error("No valid user entries to import.");
+      showFeedback.error("No valid user entries to import.");
       return;
     }
 
@@ -164,7 +164,7 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
             // Do NOT navigate; user views the summary modal on the current screen
           } else {
             // 100% clean success: Toast only, auto-redirect immediately
-            toast.success(
+            showFeedback.success(
               accountCategory === "external"
                 ? `Successfully registered ${createdCount} external review center account(s)!`
                 : `Successfully registered ${createdCount} internal user account(s)!`,
@@ -175,7 +175,7 @@ export function useBulkUserUpload(accountCategory: "internal" | "external") {
         onError: (err: any) => {
           const msg =
             err.response?.data?.message || "Failed to process bulk import.";
-          toast.error(msg);
+          showFeedback.error(msg);
         },
       },
     );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FileSpreadsheet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAuth from "@/hooks/useAuth";
 import { useBulkCreateStudents } from "@/features/students";
 import { parseStudentCSV, type ParsedStudentRow } from "../../utils/csvParser";
@@ -34,7 +34,7 @@ export function BulkEnrollTab() {
 
   const processFile = (selectedFile: File) => {
     if (!selectedFile.name.endsWith(".csv")) {
-      toast.error("Please upload a valid .csv file");
+      showFeedback.error("Please upload a valid .csv file");
       return;
     }
 
@@ -49,7 +49,7 @@ export function BulkEnrollTab() {
       setIsParsing(false);
     };
     reader.onerror = () => {
-      toast.error("Failed to read CSV file.");
+      showFeedback.error("Failed to read CSV file.");
       setIsParsing(false);
     };
     reader.readAsText(selectedFile);
@@ -82,7 +82,7 @@ export function BulkEnrollTab() {
   const handleBulkSubmit = () => {
     const validStudents = parsedRows.filter((r) => r.isValid);
     if (validStudents.length === 0) {
-      toast.error("No valid student entries to import.");
+      showFeedback.error("No valid student entries to import.");
       return;
     }
 
@@ -126,14 +126,14 @@ export function BulkEnrollTab() {
                     })),
             });
           } else {
-            toast.success(
+            showFeedback.success(
               `Successfully enrolled ${createdCount} student(s)! Credentials sent to emails.`,
             );
             navigate("/student-management");
           }
         },
         onError: (err: any) => {
-          toast.error(
+          showFeedback.error(
             err.response?.data?.message || "Failed to import student accounts.",
           );
         },

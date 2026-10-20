@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { CheckCircle2, AlertCircle, AlertTriangle, UploadCloud, Loader2 } from "lucide-react";
 
 interface UndoToastOptions {
@@ -21,7 +21,7 @@ export const showUndoToast = ({
   onUndo,
   duration = 4000,
 }: UndoToastOptions) => {
-  return toast.warning(
+  return showFeedback.warning(
     <div className="flex flex-col gap-0.5 font-sans">
       <span className="font-bold text-foreground">{title}</span>
       <span className="text-xs text-muted-foreground italic line-clamp-1" title={message}>
@@ -92,7 +92,7 @@ export const createProgressToast = ({
     const validTotal = Math.max(1, total);
     const progress = Math.min(100, Math.max(0, (currentCount / validTotal) * 100));
 
-    toast.custom(
+    showFeedback.custom(
       (t) => (
         <div className="w-[356px] sm:w-[390px] bg-card border border-border shadow-2xl rounded-2xl p-4 flex flex-col gap-2.5 font-sans text-foreground transition-all duration-300">
           {/* Header */}
@@ -228,7 +228,7 @@ export const createProgressToast = ({
       );
     },
     dismiss: () => {
-      toast.dismiss(toastId);
+      showFeedback.dismiss(toastId);
     },
   };
 };

@@ -27,7 +27,7 @@ import {
   BookOpen,
   Calendar,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface EmailStudentModalProps {
   isOpen: boolean;
@@ -128,7 +128,7 @@ export function EmailStudentModal({
       return res.data;
     },
     onSuccess: () => {
-      toast.success(`Outreach email successfully sent to ${student?.name || "student"}!`);
+      showFeedback.success(`Outreach email successfully sent to ${student?.name || "student"}!`);
       queryClient.invalidateQueries({ queryKey: ["guidanceAssignments"] });
       queryClient.invalidateQueries({ queryKey: ["student", student?.id] });
       queryClient.invalidateQueries({ queryKey: ["students"] });
@@ -136,17 +136,17 @@ export function EmailStudentModal({
       onClose();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to dispatch email.");
+      showFeedback.error(err?.response?.data?.message || "Failed to dispatch email.");
     },
   });
 
   const handleSend = () => {
     if (!subject.trim()) {
-      toast.error("Please enter an email subject line.");
+      showFeedback.error("Please enter an email subject line.");
       return;
     }
     if (!message.trim()) {
-      toast.error("Please compose a message for the student.");
+      showFeedback.error("Please compose a message for the student.");
       return;
     }
     sendMutation.mutate();

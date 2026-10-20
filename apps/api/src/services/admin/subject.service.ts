@@ -363,7 +363,12 @@ export class SubjectService {
       include: {
         author: {
           select: {
+            id: true,
             name: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            avatarUrl: true,
           },
         },
       },
@@ -401,6 +406,18 @@ export class SubjectService {
         subjectId,
         ...(authorId ? { authorId } : {}),
       },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
 
     return module;
@@ -432,6 +449,18 @@ export class SubjectService {
     const updated = await (this.db as any).learningModule.update({
       where: { id: moduleId },
       data: updatePayload,
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
 
     return updated;

@@ -3,9 +3,11 @@ import {
   useModalStore,
   type ConfirmOptions,
   type CustomModalOptions,
+  type FeedbackDialogOptions,
 } from "@/store/modalStore";
 import ConfirmDialog from "./ConfirmDialog";
 import CustomDialogRenderer from "./CustomDialogRenderer";
+import FeedbackDialog from "./FeedbackDialog";
 import { Loader2 } from "lucide-react";
 
 export const GlobalModalContainer: React.FC = () => {
@@ -47,6 +49,18 @@ export const GlobalModalContainer: React.FC = () => {
               key={modal.id}
               isOpen={true}
               {...customProps}
+              onClose={() => closeModal(modal.id)}
+            />
+          );
+        }
+
+        if (modal.type === "FEEDBACK") {
+          const feedbackProps = modal.props as unknown as FeedbackDialogOptions;
+          return (
+            <FeedbackDialog
+              key={modal.id}
+              isOpen={true}
+              {...feedbackProps}
               onClose={() => closeModal(modal.id)}
             />
           );

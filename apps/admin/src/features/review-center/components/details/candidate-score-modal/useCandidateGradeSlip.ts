@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { useEmailGradeReports } from "../../../api/useReviewCenter";
 
@@ -27,7 +27,7 @@ export function useCandidateGradeSlip(defaultCandidateId: string | null) {
       const res = await axiosPrivate.get(url);
       setPdfHtml(res.data?.data?.html || null);
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err?.response?.data?.message || "Failed to load grade slip preview."
       );
       setPdfPreviewAssessmentId(null);
@@ -50,10 +50,10 @@ export function useCandidateGradeSlip(defaultCandidateId: string | null) {
       },
       {
         onSuccess: () => {
-          toast.success("Grade report email sent to student!");
+          showFeedback.success("Grade report email sent to student!");
         },
         onError: (err: any) => {
-          toast.error(err?.response?.data?.message || "Failed to send email.");
+          showFeedback.error(err?.response?.data?.message || "Failed to send email.");
         },
       }
     );

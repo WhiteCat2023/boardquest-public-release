@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { useReviewCenterCandidateScores } from "@/features/review-center/api/useReviewCenter";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 
@@ -75,7 +75,7 @@ export default function StudentReviewCenterTab({
       const res = await axiosPrivate.get(url);
       setPdfHtml(res.data?.data?.html || null);
     } catch (err: any) {
-      toast.error(
+      showFeedback.error(
         err?.response?.data?.message || "Failed to load grade report slip preview.",
       );
       setPdfAssessmentId(null);

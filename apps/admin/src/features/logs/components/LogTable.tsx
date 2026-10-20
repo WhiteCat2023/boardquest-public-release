@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import { DataTablePagination } from "@/components/custom/pagination";
 import type { LogItem, LogLevelType } from "@/features/logs";
 
@@ -58,7 +58,7 @@ export default function LogTable({
   const handleCopyMetadata = (id: string, metadata: string) => {
     navigator.clipboard.writeText(metadata);
     setCopiedId(id);
-    toast.success("Copied log metadata to clipboard.");
+    showFeedback.success("Copied log metadata to clipboard.");
     setTimeout(() => setCopiedId(null), 2000);
   };
 

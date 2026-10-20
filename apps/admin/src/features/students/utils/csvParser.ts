@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 
 export interface ParsedStudentRow {
   firstName?: string;
@@ -23,13 +23,13 @@ export const downloadStudentSampleCSV = () => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  toast.info("Sample Student CSV template downloaded.");
+  showFeedback.info("Sample Student CSV template downloaded.");
 };
 
 export const parseStudentCSV = (text: string): ParsedStudentRow[] => {
   const lines = text.split(/\r\n|\n/).filter((line) => line.trim().length > 0);
   if (lines.length <= 1) {
-    toast.error("CSV file contains no records or header only.");
+    showFeedback.error("CSV file contains no records or header only.");
     return [];
   }
 

@@ -18,7 +18,7 @@ import {
   Sparkles,
   Sliders,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/modal";
 import type { GameConfigSettings } from "../types/types";
 
 export function GameConfigTab() {
@@ -32,7 +32,7 @@ export function GameConfigTab() {
   });
 
   const handleSave = () => {
-    toast.success("Game engine configuration updated successfully!");
+    showFeedback.success("Game engine configuration updated successfully!");
   };
 
   const handleReset = () => {
@@ -44,7 +44,7 @@ export function GameConfigTab() {
       levelUpXpBase: 100,
       maxLevelCap: 50,
     });
-    toast.info("Restored default game engine parameters.");
+    showFeedback.info("Restored default game engine parameters.");
   };
 
   return (
