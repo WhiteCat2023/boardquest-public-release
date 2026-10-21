@@ -663,8 +663,7 @@ export async function sendQuestionStatusNotificationEmail({
   feedback,
   linkUrl: customLinkUrl,
 }: SendQuestionStatusMailOptions) {
-  const adminUrl =
-    process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+  const adminUrl = process.env.FRONTEND_URL;
   const targetUrl = customLinkUrl || `${adminUrl}/question-bank`;
 
   const isApproved = status === "APPROVED";
@@ -862,8 +861,7 @@ export async function sendSecurityAlertEmail({
   userAgent,
   location,
 }: SendSecurityAlertMailOptions) {
-  const adminUrl =
-    process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+  const adminUrl = process.env.FRONTEND_URL ;
   const resetUrl = `${adminUrl}/forgot-password`;
 
   const formattedTime = loginTime
