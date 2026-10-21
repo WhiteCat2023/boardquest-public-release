@@ -170,6 +170,11 @@ export function RanksManagementTab({
         ranks={paginatedRanks}
         isLoading={isLoading}
         hasActiveFilters={hasActiveFilters}
+        selectedStatus={selectedStatus}
+        onStatusChange={(val) => {
+          setSelectedStatus(val);
+          setCurrentPage(1);
+        }}
         onResetFilters={handleResetFilters}
         onAddRank={handleAddRank}
         onEditRank={handleEditRank}

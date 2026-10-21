@@ -6,6 +6,7 @@ import {
   reviewCenterRefreshToken,
   reviewCenterForgotPassword,
   reviewCenterResetPassword,
+  reviewCenterVerifyResetToken,
   updateReviewCenterProfile,
 } from "../../controller/review-center/auth.controller";
 import {
@@ -20,6 +21,7 @@ const router = Router();
 router.post("/login", authLimiter, reviewCenterLogin);
 router.post("/logout", reviewCenterLogout);
 router.post("/forgot-password", passwordResetLimiter, reviewCenterForgotPassword);
+router.get("/verify-reset-token", passwordResetLimiter, reviewCenterVerifyResetToken);
 router.post("/reset-password", passwordResetLimiter, reviewCenterResetPassword);
 router.get("/refresh", reviewCenterRefreshToken);
 router.get("/me", authenticateReviewCenterToken, getReviewCenterMe);

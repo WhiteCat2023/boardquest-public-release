@@ -25,17 +25,20 @@ export default function AddedQuestionUsingCSV() {
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full max-w-full animate-in fade-in duration-300 font-sans bg-background text-foreground">
       {/* Back link */}
       <button 
+        type="button"
         onClick={() => {
           if (extractedQuestions.length > 0) {
             setExtractedQuestions([]);
+          } else if (window.history.length > 1) {
+            navigate(-1);
           } else {
             navigate("/question-bank");
           }
         }}
-        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
+        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit group"
       >
-        <ArrowLeft size={14} />
-        {extractedQuestions.length > 0 ? "Back to File Upload" : "Back to Question Bank"}
+        <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+        <span>Back</span>
       </button>
 
       {extractedQuestions.length === 0 ? (

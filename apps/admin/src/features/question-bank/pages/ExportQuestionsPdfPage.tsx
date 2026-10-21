@@ -367,14 +367,18 @@ export default function ExportQuestionsPdfPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate("/question-bank/shared-library")}
+            onClick={() =>
+              window.history.length > 1
+                ? navigate(-1)
+                : navigate("/question-bank/shared-library")
+            }
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer group"
           >
             <ArrowLeft
               size={13}
               className="group-hover:-translate-x-0.5 transition-transform"
             />
-            Back to Question Bank
+            Back
           </button>
         </div>
 

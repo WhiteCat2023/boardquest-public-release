@@ -4,10 +4,7 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { topicService } from "../../services/admin/topic.service.js";
 
 export const getTopicsBySubject = asyncHandler(async (req: Request, res: Response) => {
-  const subjectId = String(req.params.categoryId || req.params.subjectId || "").trim();
-  if (!subjectId) {
-    return new ApiResponse(400, null, "Subject ID is required").send(res);
-  }
+  const subjectId = String(req.params.categoryId || req.params.subjectId || "ALL").trim();
 
   const topics = await topicService.getTopicsBySubject(subjectId);
   return new ApiResponse(200, { topics }, "Topics retrieved successfully").send(res);

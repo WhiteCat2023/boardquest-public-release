@@ -9,7 +9,11 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
-import { isAllowedToManageRole } from "@/features/users/utils/userUtils";
+import { ColumnHeaderFilter } from "@/components/custom/table";
+import {
+  isAllowedToManageRole,
+  getManagedRolesForFilter,
+} from "@/features/users/utils/userUtils";
 
 interface UserTableProps {
   users: UserMember[];
@@ -25,6 +29,11 @@ interface UserTableProps {
   ) => void;
   pagination?: React.ReactNode;
   activeTab?: "internal" | "external";
+  selectedRole?: string;
+  onRoleChange?: (val: string) => void;
+  selectedStatus?: string;
+  onStatusChange?: (val: string) => void;
+  showRoleFilter?: boolean;
 }
 
 export default function UserTable({
@@ -35,8 +44,18 @@ export default function UserTable({
   onToggleStatus,
   pagination,
   activeTab = "internal",
+  selectedRole,
+  onRoleChange,
+  selectedStatus,
+  onStatusChange,
+  showRoleFilter: propShowRoleFilter,
 }: UserTableProps) {
   const isExternal = activeTab === "external";
+  const roleFilterOptions = getManagedRolesForFilter(currentUserRole);
+  const showRoleFilter =
+    propShowRoleFilter !== undefined
+      ? propShowRoleFilter
+      : !isExternal && roleFilterOptions.length > 0;
   const displayUsers =
     isLoading && users.length === 0
       ? (Array(5).fill({
@@ -87,10 +106,36 @@ export default function UserTable({
                     User Profile
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Role
+                    {showRoleFilter && onRoleChange && selectedRole ? (
+                      <ColumnHeaderFilter
+                        title="Role"
+                        selectedValue={selectedRole}
+                        onSelect={onRoleChange}
+                        options={roleFilterOptions.map((opt) => ({
+                          label: opt.label,
+                          value: opt.value,
+                        }))}
+                        allOptionLabel="All Roles"
+                      />
+                    ) : (
+                      "Role"
+                    )}
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                    Account Status
+                    {onStatusChange && selectedStatus ? (
+                      <ColumnHeaderFilter
+                        title="Account Status"
+                        selectedValue={selectedStatus}
+                        onSelect={onStatusChange}
+                        options={[
+                          { label: "Active Accounts", value: "ACTIVE" },
+                          { label: "Deactivated", value: "DEACTIVATED" },
+                        ]}
+                        allOptionLabel="All Statuses"
+                      />
+                    ) : (
+                      "Account Status"
+                    )}
                   </TableHead>
                   <TableHead className="hidden sm:table-cell py-2.5 px-3 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                     Last Login Activity

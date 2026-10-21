@@ -12,7 +12,6 @@ import {
 } from "../api/useStudentAnalytics";
 import { AspirantRosterSidebar } from "../components/AspirantRosterSidebar";
 import { StudentAnalyticsHeader } from "../components/StudentAnalyticsHeader";
-import { LLMOptimizationBar } from "../components/LLMOptimizationBar";
 import { AnalyticsNavTabs } from "../components/AnalyticsNavTabs";
 import { OverviewTab } from "../components/OverviewTab";
 import { PerformanceGraphsTab } from "../components/PerformanceGraphsTab";

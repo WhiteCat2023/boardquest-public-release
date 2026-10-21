@@ -18,6 +18,8 @@ export interface QuestionBankFilter {
   setSelectedCategory: (category: string) => void;
   selectedSubject?: string;
   setSelectedSubject?: (subject: string) => void;
+  selectedTopic: string;
+  setSelectedTopic: (topic: string) => void;
   selectedDifficulty: string;
   setSelectedDifficulty: (difficulty: string) => void;
   selectedType: string;
@@ -30,12 +32,16 @@ export const useQuestionBankFilterStore = create<QuestionBankFilter>((set) => ({
   search: "",
   selectedCategory: "",
   selectedSubject: "",
+  selectedTopic: "",
   selectedDifficulty: "",
   selectedType: "",
   selectedStatus: "ALL",
   setSearch: (search: string) => set({ search }),
-  setSelectedCategory: (selectedCategory: string) => set({ selectedCategory, selectedSubject: selectedCategory }),
-  setSelectedSubject: (selectedSubject: string) => set({ selectedCategory: selectedSubject, selectedSubject }),
+  setSelectedCategory: (selectedCategory: string) =>
+    set({ selectedCategory, selectedSubject: selectedCategory, selectedTopic: "" }),
+  setSelectedSubject: (selectedSubject: string) =>
+    set({ selectedCategory: selectedSubject, selectedSubject, selectedTopic: "" }),
+  setSelectedTopic: (selectedTopic: string) => set({ selectedTopic }),
   setSelectedDifficulty: (selectedDifficulty: string) =>
     set({ selectedDifficulty }),
   setSelectedType: (selectedType: string) => set({ selectedType }),

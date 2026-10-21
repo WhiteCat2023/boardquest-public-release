@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useStudents } from "@/features/students";
+import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
+import { Trophy, Sparkles, Flame, ShieldCheck } from "lucide-react";
 import {
   LeaderboardHeader,
   LeaderboardPodium,
@@ -92,18 +94,54 @@ export function LeaderboardPage() {
     return filteredStudents.slice(startIndex, startIndex + pageSize);
   }, [filteredStudents, startIndex, pageSize]);
 
+  const categoryTabs: NavTabItem<LeaderboardCategory>[] = [
+    {
+      id: "overall",
+      label: "Overall XP",
+      icon: <Trophy size={14} className="text-amber-500" />,
+    },
+    {
+      id: "accuracy",
+      label: "Accuracy",
+      icon: <Sparkles size={14} className="text-emerald-500" />,
+    },
+    {
+      id: "streak",
+      label: "Streaks",
+      icon: <Flame size={14} className="text-orange-500" />,
+    },
+    {
+      id: "mastery",
+      label: "Subject Mastery",
+      icon: <ShieldCheck size={14} className="text-blue-500" />,
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full  font-sans bg-background text-foreground">
+    <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full font-sans bg-background text-foreground">
       {/* ── Page Header ── */}
       <LeaderboardHeader />
 
+      {/* ── Standardized Category Navigation Tabs ── */}
+      <StandardNavTabs<LeaderboardCategory>
+        tabs={categoryTabs}
+        activeTab={category}
+        onTabChange={(newCat) => setCategory(newCat)}
+        showScrollButtons="auto"
+        rightContent={
+          filteredStudents.length > 0 ? (
+            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <span>Total Candidates:</span>
+              <span className="text-foreground font-bold">
+                {filteredStudents.length}
+              </span>
+            </div>
+          ) : null
+        }
+      />
+
       {isLoading ? (
         <LeaderboardLoadingState />
-      ) : filteredStudents.length === 0 ? (
-        <LeaderboardEmptyState
-          searchTerm={searchTerm}
-          onResetSearch={() => setSearchTerm("")}
-        />
       ) : (
         <>
           {/* ── Top 3 Podium Showcase (Only if 3+ candidates and no active search) ── */}
@@ -111,30 +149,35 @@ export function LeaderboardPage() {
             <LeaderboardPodium top1={top1} top2={top2} top3={top3} />
           )}
 
-          {/* ── Unified Redesigned Toolbar ── */}
+          {/* ── Unified Search & Filter Toolbar ── */}
           <LeaderboardToolbar
-            category={category}
-            onCategoryChange={setCategory}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             timeHorizon={timeHorizon}
             onTimeHorizonChange={setTimeHorizon}
           />
 
-          {/* ── Main Rankings Table ── */}
-          <LeaderboardTable
-            students={paginatedStudents}
-            totalCount={filteredStudents.length}
-            startIndex={startIndex}
-            pageSize={pageSize}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setCurrentPage(1);
-            }}
-          />
+          {/* ── Main Rankings Table or Empty State ── */}
+          {filteredStudents.length === 0 ? (
+            <LeaderboardEmptyState
+              searchTerm={searchTerm}
+              onResetSearch={() => setSearchTerm("")}
+            />
+          ) : (
+            <LeaderboardTable
+              students={paginatedStudents}
+              totalCount={filteredStudents.length}
+              startIndex={startIndex}
+              pageSize={pageSize}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+            />
+          )}
         </>
       )}
     </div>

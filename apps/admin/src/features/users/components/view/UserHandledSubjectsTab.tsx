@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Edit3, ChevronRight, Check } from "lucide-react";
+import { BookOpen, Edit3, ChevronRight, Check, ShieldCheck } from "lucide-react";
 import { showFeedback } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -83,6 +83,18 @@ export default function UserHandledSubjectsTab({
     );
   };
 
+  const userRoleStr = String(user.role || "").toUpperCase();
+  const isTeacher = userRoleStr === "TEACHER";
+  const roleLabel =
+    userRoleStr === "DEAN"
+      ? "Dean"
+      : userRoleStr === "TEAMLEAD"
+      ? "Team Lead"
+      : userRoleStr === "SUPERADMIN"
+      ? "Super Admin"
+      : user.role || "User";
+  const canEdit = canManageCategories && isTeacher;
+
   return (
     <div className="flex flex-col gap-4 w-full animate-in fade-in duration-200">
       <Card className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden">
@@ -93,12 +105,13 @@ export default function UserHandledSubjectsTab({
                 Handled Subjects & Categories
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Licensure examination subject categories assigned to this
-                faculty member
+                {isTeacher
+                  ? "Licensure examination subject categories assigned to this teacher"
+                  : `${roleLabel} accounts automatically oversee and handle all licensure examination subjects.`}
               </p>
             </div>
 
-            {canManageCategories && (
+            {canEdit && (
               <Button
                 onClick={() => setIsEditCategoriesOpen(true)}
                 variant="outline"
@@ -111,7 +124,29 @@ export default function UserHandledSubjectsTab({
             )}
           </div>
 
-          {handledCategories.length > 0 ? (
+          {!isTeacher ? (
+            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  <ShieldCheck size={22} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    All Subjects & Categories (Global Access)
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-semibold border-primary/30 text-primary bg-primary/10"
+                    >
+                      Auto-Handled
+                    </Badge>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                    As a <strong className="text-foreground">{roleLabel}</strong>, this account automatically oversees and handles all licensure examination subjects, modules, and questions across the curriculum. Manual subject assignment applies exclusively to Teacher roles.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : handledCategories.length > 0 ? (
             <div className="divide-y divide-border/60 border border-border/80 rounded-2xl overflow-hidden bg-card/60 shadow-2xs">
               {handledCategories.map((cat: any) => {
                 const detailedCat =

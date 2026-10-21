@@ -7,6 +7,7 @@ export interface NavContentProps {
     title: string;
     path: string;
     icon: string;
+    badge?: number | string;
     subItems?: {
         title: string;
         path: string;

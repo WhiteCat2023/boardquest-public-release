@@ -1,7 +1,6 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";
 import fs from "fs";
 
 // Explicitly load .env from apps/api/.env or workspace root

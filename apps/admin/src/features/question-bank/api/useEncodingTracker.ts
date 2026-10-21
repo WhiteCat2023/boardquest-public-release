@@ -24,6 +24,8 @@ export interface UpsertQuotaPayload {
   targetCount: number;
   deadline?: string | null;
   notes?: string;
+  term?: string;
+  title?: string;
 }
 
 export interface NudgePayload {
@@ -34,6 +36,15 @@ export interface NudgePayload {
 
 export interface BulkNudgePayload {
   subjectId?: string;
+  schoolYear?: string;
+  customMessage?: string;
+}
+
+export interface UpsertSubjectQuotaPayload {
+  subjectId: string;
+  totalTargetCount: number;
+  deadline?: string | null;
+  notes?: string;
   schoolYear?: string;
 }
 
@@ -85,6 +96,25 @@ export function useUpsertQuotaMutation() {
     mutationFn: async (payload: UpsertQuotaPayload) => {
       const response = await axiosPrivate.post(
         "/questions/encoding-tracker/quota",
+        payload,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["encodingTrackerOverview"] });
+      queryClient.invalidateQueries({ queryKey: ["myEncodingProgress"] });
+    },
+  });
+}
+
+export function useUpsertSubjectQuotaMutation() {
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: UpsertSubjectQuotaPayload) => {
+      const response = await axiosPrivate.post(
+        "/questions/encoding-tracker/quota-subject",
         payload,
       );
       return response.data;

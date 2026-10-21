@@ -76,11 +76,14 @@ export default function AddIndividualUserTab({
       .filter(Boolean)
       .join(" ");
 
+    const isTeacher = String(formData.role).toUpperCase() === "TEACHER";
     const payload: CreateUserPayload = {
       ...formData,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       name: fullName,
+      handledCategoryIds: isTeacher ? formData.handledCategoryIds : [],
+      handledSubjectIds: isTeacher ? formData.handledSubjectIds : [],
     };
 
     createMutation.mutate(payload, {

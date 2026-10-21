@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import {
   AddQuestionHeader,
@@ -28,15 +28,21 @@ export default function AddQuestion() {
     );
 
   // Active Tab: "individual" | "bulk"
-  const initialTab =
-    searchParams.get("tab") === "bulk" || location.pathname.includes("/import")
+  const tabParam = searchParams.get("tab");
+  const activeTab: "individual" | "bulk" =
+    tabParam === "bulk" || location.pathname.includes("/import")
       ? "bulk"
       : "individual";
-  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
 
   const handleTabChange = (tab: "individual" | "bulk") => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
+    if (tab === activeTab) return;
+    if (tab === "individual") {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("tab");
+      setSearchParams(newParams);
+    } else {
+      setSearchParams({ tab: "bulk" });
+    }
   };
 
   const from = location.state?.from?.pathname
@@ -44,10 +50,10 @@ export default function AddQuestion() {
     : location.state?.from || null;
 
   const handleBackNav = () => {
-    if (from) {
-      navigate(from);
-    } else if (window.history.length > 1) {
+    if (window.history.length > 1) {
       navigate(-1);
+    } else if (from) {
+      navigate(from);
     } else {
       navigate("/question-bank");
     }

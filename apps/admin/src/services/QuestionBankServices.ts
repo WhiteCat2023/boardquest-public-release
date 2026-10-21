@@ -84,7 +84,7 @@ export const extractQuestions = async (axiosPrivate: any) => {
     } else {
       reader.readAsText(file);
     }
-  } catch (err: any) {
+  } catch {
     showFeedback.error("An error occurred during file extraction.");
     setIsExtracting(false);
   }

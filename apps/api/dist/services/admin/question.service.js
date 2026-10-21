@@ -127,8 +127,7 @@ export class QuestionService {
                 : "currently pending review";
             throw new ApiError(409, `This question already exists in this subject (${statusLabel}). Duplicate questions cannot be uploaded.`);
         }
-        const computedCognitiveLevel = parsed.data.cognitiveLevel ||
-            getCognitiveLevelFromDifficulty(difficulty);
+        const computedCognitiveLevel = parsed.data.cognitiveLevel || getCognitiveLevelFromDifficulty(difficulty);
         const newQuestion = await this.db.question.create({
             data: {
                 question: question.trim(),
@@ -143,7 +142,9 @@ export class QuestionService {
                 cognitiveLevel: computedCognitiveLevel,
                 type,
                 status: computedStatus,
-                ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
+                ...(parsed.data.schoolYear
+                    ? { schoolYear: parsed.data.schoolYear }
+                    : {}),
             },
         });
         const authorName = authorUser?.name || "User";
@@ -237,8 +238,7 @@ export class QuestionService {
         if (existingDuplicate) {
             throw new ApiError(409, `Another question with the exact same wording already exists in this subject (${existingDuplicate.status}). Duplicate questions are not allowed.`);
         }
-        const computedCognitiveLevel = parsed.data.cognitiveLevel ||
-            getCognitiveLevelFromDifficulty(difficulty);
+        const computedCognitiveLevel = parsed.data.cognitiveLevel || getCognitiveLevelFromDifficulty(difficulty);
         const updatedQuestion = await this.db.question.update({
             where: {
                 id: questionId,
@@ -320,7 +320,7 @@ export class QuestionService {
             return { questions, nextCursor, hasNextPage, total };
         }
     }
-    async getFilteredQuestions(search, difficulty, category, type, status, cursor, limit, authorId, isPublished, schoolYear, handledCategoryIds, userRole) {
+    async getFilteredQuestions(search, difficulty, category, type, status, cursor, limit, authorId, isPublished, schoolYear, handledCategoryIds, userRole, topic) {
         let statusFilter = undefined;
         if (status) {
             if (typeof status === "string" && status.includes(",")) {
@@ -342,11 +342,15 @@ export class QuestionService {
             String(status) !== "APPROVED") {
             categoryFilter = { in: handledCategoryIds };
         }
+        const cleanTopic = typeof topic === "string" ? topic.trim() : undefined;
         const whereClause = {
             question: search ? { contains: search } : undefined,
             difficulty,
             subjectId: categoryFilter,
             type,
+            topic: cleanTopic && cleanTopic !== "ALL"
+                ? { equals: cleanTopic, mode: "insensitive" }
+                : undefined,
             status: statusFilter,
             authorId: authorId === "unassigned" ? null : authorId,
             isPublished,
@@ -443,7 +447,9 @@ export class QuestionService {
         if (targetAuthorId && isSuperAdmin(targetAuthorId)) {
             targetAuthorId = superAdminCredentials.id;
         }
-        targetAuthorId = isValidObjectId(targetAuthorId) ? targetAuthorId : undefined;
+        targetAuthorId = isValidObjectId(targetAuthorId)
+            ? targetAuthorId
+            : undefined;
         const [totalQuestions, publishedQuestions, pendingReviewQuestions, teacherAuthoredCount, teacherPublishedCount, teacherDraftCount,] = await Promise.all([
             this.db.question.count(),
             this.db.question.count({
@@ -630,8 +636,7 @@ export class QuestionService {
                     authorUser?.role === "TEAMLEAD"
                     ? q.status || QuestionStatus.APPROVED
                     : q.status || resolvedStatus;
-            const computedCognitiveLevel = q.cognitiveLevel ||
-                getCognitiveLevelFromDifficulty(q.difficulty);
+            const computedCognitiveLevel = q.cognitiveLevel || getCognitiveLevelFromDifficulty(q.difficulty);
             return this.db.question.create({
                 data: {
                     question: q.question.trim(),
@@ -667,7 +672,9 @@ export class QuestionService {
                     title: "Bulk Questions Uploaded",
                     message: `${authorName} uploaded ${count} new question(s) to the question bank.`,
                     type: "INFO",
-                    link: categoryId ? `/subject-management/${categoryId}` : "/question-bank",
+                    link: categoryId
+                        ? `/subject-management/${categoryId}`
+                        : "/question-bank",
                 }).catch((err) => console.warn("Notification error:", err?.message));
             }
         }
@@ -921,9 +928,7 @@ export class QuestionService {
             const authorQuestions = pendingQuestions.filter((q) => q.authorId === author.id);
             const latestSubmissionAt = authorQuestions.reduce((latest, q) => {
                 const date = q.updatedAt || q.createdAt;
-                return !latest || new Date(date) > new Date(latest)
-                    ? date
-                    : latest;
+                return !latest || new Date(date) > new Date(latest) ? date : latest;
             }, null);
             return {
                 ...author,
@@ -936,9 +941,7 @@ export class QuestionService {
         if (unassignedQuestions.length > 0) {
             const latestSubmissionAt = unassignedQuestions.reduce((latest, q) => {
                 const date = q.updatedAt || q.createdAt;
-                return !latest || new Date(date) > new Date(latest)
-                    ? date
-                    : latest;
+                return !latest || new Date(date) > new Date(latest) ? date : latest;
             }, null);
             result.push({
                 id: "unassigned",
@@ -1045,7 +1048,11 @@ export class QuestionService {
                     try {
                         const author = await this.db.adminUser.findUnique({
                             where: { id: question.authorId },
-                            select: { email: true, name: true, notificationPreferences: true },
+                            select: {
+                                email: true,
+                                name: true,
+                                notificationPreferences: true,
+                            },
                         });
                         if (author?.email) {
                             const prefs = author.notificationPreferences;

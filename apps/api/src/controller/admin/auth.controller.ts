@@ -1,7 +1,5 @@
-import { Router } from "express";
 import { Request, Response } from "express";
 import * as authService from "../../services/admin/auth.service";
-import { generateToken } from "../../utils/generateToken";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -282,6 +280,16 @@ export const resetPassword = asyncHandler(async (req, res) => {
     200,
     result,
     "Password has been successfully reset",
+  ).send(res);
+});
+
+export const verifyResetToken = asyncHandler(async (req, res) => {
+  const token = (req.query.token as string) || (req.body.token as string);
+  const result = await authService.verifyResetToken(token);
+  return new ApiResponse(
+    200,
+    result,
+    "Reset token is valid",
   ).send(res);
 });
 

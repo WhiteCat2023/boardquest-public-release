@@ -11,12 +11,10 @@ export function QuestionBackButton({ from, onBack }: QuestionBackButtonProps) {
     <button
       type="button"
       onClick={onBack}
-      className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
+      className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit group"
     >
-      <ArrowLeft size={14} />
-      {from?.includes("/review")
-        ? "Back to Review Questions Desk"
-        : "Back to Question Bank"}
+      <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+      <span>Back</span>
     </button>
   );
 }

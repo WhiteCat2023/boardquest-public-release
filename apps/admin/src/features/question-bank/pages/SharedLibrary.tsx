@@ -17,6 +17,7 @@ export default function SharedLibrary() {
     search,
     selectedCategory,
     setSelectedCategory,
+    selectedTopic,
     selectedDifficulty,
     selectedType,
   } = useQuestionBankFilterStore();
@@ -36,6 +37,8 @@ export default function SharedLibrary() {
       selectedCategory === "ALL" || !selectedCategory
         ? undefined
         : selectedCategory,
+    topic:
+      selectedTopic && selectedTopic !== "ALL" ? selectedTopic : undefined,
     difficulty: selectedDifficulty,
     type: selectedType,
     status: "APPROVED",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Shield,
@@ -33,6 +33,7 @@ export default function ViewUserHeader({
   currentUserId,
   currentUserRole,
 }: ViewUserHeaderProps) {
+  const navigate = useNavigate();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const isAccountActive =
@@ -55,16 +56,25 @@ export default function ViewUserHeader({
     setIsConfirmOpen(true);
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/faculty-management");
+    }
+  };
+
   return (
     <>
       {/* Back navigation button */}
-      <Link
-        to="/faculty-management"
-        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
+      <button
+        type="button"
+        onClick={handleBack}
+        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit group"
       >
-        <ArrowLeft size={14} />
-        <span>Back to Users Directory</span>
-      </Link>
+        <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+        <span>Back</span>
+      </button>
 
       {/* Main Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">

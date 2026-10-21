@@ -305,7 +305,13 @@ export class AuthService {
         }
         else {
             console.log(`\n[AuthService] Password reset requested for: ${email} (User: ${user.name})`);
-            const resetToken = signJWT({ id: user.id, email: user.email, type: "password_reset" }, "1h");
+            // Cryptographically bind token to current password hash slice (-12) and strictly 5 minutes expiry
+            const resetToken = signJWT({
+                id: user.id,
+                email: user.email,
+                type: "password_reset",
+                sig: user.password ? user.password.slice(-12) : undefined,
+            }, "5m");
             await sendPasswordResetEmail({
                 toEmail: user.email,
                 resetToken,
@@ -314,6 +320,34 @@ export class AuthService {
         }
         return {
             message: "If an account with that email exists, password reset instructions have been sent.",
+        };
+    }
+    async verifyResetToken(token) {
+        if (!token) {
+            throw new ApiError(400, "Password reset token is required");
+        }
+        const { payload, expired } = verifyJWT(token);
+        if (expired || !payload) {
+            throw new ApiError(400, "This password reset link has expired (links are valid for 5 minutes). Please request a new one.");
+        }
+        const tokenPayload = payload;
+        if (tokenPayload.type !== "password_reset") {
+            throw new ApiError(400, "Invalid password reset token type");
+        }
+        const user = await this.db.adminUser.findUnique({
+            where: { id: tokenPayload.id },
+        });
+        if (!user) {
+            throw new ApiError(404, "User account not found");
+        }
+        // Single-use check: if password was already changed/reset, current hash slice won't match
+        if (tokenPayload.sig && tokenPayload.sig !== user.password.slice(-12)) {
+            throw new ApiError(400, "This password reset link has already been used. Please request a new reset email.");
+        }
+        return {
+            valid: true,
+            email: user.email,
+            name: user.name,
         };
     }
     async resetPassword(data) {
@@ -325,7 +359,7 @@ export class AuthService {
         const { token, newPassword } = parsed.data;
         const { payload, expired } = verifyJWT(token);
         if (expired || !payload) {
-            throw new ApiError(400, "Invalid or expired password reset token");
+            throw new ApiError(400, "This password reset link has expired (links are valid for 5 minutes). Please request a new one.");
         }
         const tokenPayload = payload;
         if (tokenPayload.type !== "password_reset") {
@@ -336,6 +370,10 @@ export class AuthService {
         });
         if (!user) {
             throw new ApiError(404, "User account not found");
+        }
+        // Single-use check: if password was already changed/reset
+        if (tokenPayload.sig && tokenPayload.sig !== user.password.slice(-12)) {
+            throw new ApiError(400, "This password reset link has already been used. Please request a new reset email.");
         }
         const hash = await hashedPassword(newPassword);
         await this.db.adminUser.update({
@@ -518,6 +556,7 @@ export const createNewPartner = authService.createNewPartner.bind(authService);
 export const signupAdmin = authService.signupAdmin.bind(authService);
 export const signupReviewCenterRep = authService.signupReviewCenterRep.bind(authService);
 export const forgotPassword = authService.forgotPassword.bind(authService);
+export const verifyResetToken = authService.verifyResetToken.bind(authService);
 export const resetPassword = authService.resetPassword.bind(authService);
 export const updateProfile = authService.updateProfile.bind(authService);
 export const firstLoginSetup = authService.firstLoginSetup.bind(authService);

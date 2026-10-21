@@ -2,11 +2,19 @@ import { Award, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { GameBadge } from "../../types/types";
 import BadgeTableRow from "./BadgeTableRow";
+import { ColumnHeaderFilter } from "@/components/custom/table";
+import { BADGE_TYPES } from "../badge-editor/badgeEditorConstants";
 
 interface BadgesTableProps {
   badges: GameBadge[];
   isLoading: boolean;
   hasActiveFilters: boolean;
+  selectedTier?: string;
+  onTierChange?: (val: string) => void;
+  selectedCategory?: string;
+  onCategoryChange?: (val: string) => void;
+  selectedStatus?: string;
+  onStatusChange?: (val: string) => void;
   imageErrorUrls: Record<string, boolean>;
   onImageError: (url?: string | null) => void;
   onResetFilters: () => void;
@@ -21,6 +29,12 @@ export default function BadgesTable({
   badges,
   isLoading,
   hasActiveFilters,
+  selectedTier = "ALL",
+  onTierChange,
+  selectedCategory = "ALL",
+  onCategoryChange,
+  selectedStatus = "ALL",
+  onStatusChange,
   imageErrorUrls,
   onImageError,
   onResetFilters,
@@ -37,12 +51,61 @@ export default function BadgesTable({
           <thead className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="py-2.5 px-4 font-extrabold">Badge & Artwork</th>
-              <th className="py-2.5 px-3 font-extrabold">Tier</th>
-              <th className="py-2.5 px-3 font-extrabold">Category</th>
+              <th className="py-2.5 px-3 font-extrabold">
+                {onTierChange ? (
+                  <ColumnHeaderFilter
+                    title="Tier"
+                    selectedValue={selectedTier}
+                    onSelect={onTierChange}
+                    options={BADGE_TYPES.map((bt) => ({
+                      label: <span className={bt.color}>{bt.badgeTag}</span>,
+                      value: bt.type,
+                    }))}
+                  />
+                ) : (
+                  "Tier"
+                )}
+              </th>
+              <th className="py-2.5 px-3 font-extrabold">
+                {onCategoryChange ? (
+                  <ColumnHeaderFilter
+                    title="Category"
+                    selectedValue={selectedCategory}
+                    onSelect={onCategoryChange}
+                    options={[
+                      { label: "🏆 Performance", value: "PERFORMANCE" },
+                      { label: "⚡ Speed", value: "SPEED" },
+                      { label: "🌟 Mastery", value: "MASTERY" },
+                      { label: "✨ Special", value: "SPECIAL" },
+                      { label: "🔥 Streak", value: "STREAK" },
+                      { label: "⚔️ Quest", value: "QUEST" },
+                      { label: "👑 Boss", value: "BOSS" },
+                      { label: "📚 Subject", value: "SUBJECT" },
+                      { label: "⚡ Exam", value: "EXAM" },
+                    ]}
+                  />
+                ) : (
+                  "Category"
+                )}
+              </th>
               <th className="py-2.5 px-3 font-extrabold">XP Reward</th>
               <th className="py-2.5 px-3 font-extrabold">Unlock Rule</th>
               <th className="py-2.5 px-3 font-extrabold">Unlocked</th>
-              <th className="py-2.5 px-3 font-extrabold">Status</th>
+              <th className="py-2.5 px-3 font-extrabold">
+                {onStatusChange ? (
+                  <ColumnHeaderFilter
+                    title="Status"
+                    selectedValue={selectedStatus}
+                    onSelect={onStatusChange}
+                    options={[
+                      { label: "Active", value: "active" },
+                      { label: "Disabled", value: "inactive" },
+                    ]}
+                  />
+                ) : (
+                  "Status"
+                )}
+              </th>
               <th className="py-2.5 px-4 font-extrabold text-right">Actions</th>
             </tr>
           </thead>

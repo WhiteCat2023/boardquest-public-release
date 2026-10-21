@@ -1,4 +1,4 @@
- import z from "zod";
+import z from "zod";
 import { ApiError } from "../../utils/apiError";
 import prisma from "../prisma";
 import {
@@ -38,14 +38,11 @@ export const CreateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
     z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
-  cognitiveLevel: z.preprocess(
-    (val) => {
-      if (val === "HOTS") return CognitiveLevel.HOTS;
-      if (val === "LOTS") return CognitiveLevel.LOTS;
-      return undefined;
-    },
-    z.nativeEnum(CognitiveLevel).optional(),
-  ),
+  cognitiveLevel: z.preprocess((val) => {
+    if (val === "HOTS") return CognitiveLevel.HOTS;
+    if (val === "LOTS") return CognitiveLevel.LOTS;
+    return undefined;
+  }, z.nativeEnum(CognitiveLevel).optional()),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
     z.nativeEnum(QuestionType).default(QuestionType.MCQ),
@@ -71,14 +68,11 @@ export const UpdateQuestionSchema = z.object({
     (val) => (val === "" || !val ? QuestionDifficulty.MEDIUM : val),
     z.nativeEnum(QuestionDifficulty).default(QuestionDifficulty.MEDIUM),
   ),
-  cognitiveLevel: z.preprocess(
-    (val) => {
-      if (val === "HOTS") return CognitiveLevel.HOTS;
-      if (val === "LOTS") return CognitiveLevel.LOTS;
-      return undefined;
-    },
-    z.nativeEnum(CognitiveLevel).optional(),
-  ),
+  cognitiveLevel: z.preprocess((val) => {
+    if (val === "HOTS") return CognitiveLevel.HOTS;
+    if (val === "LOTS") return CognitiveLevel.LOTS;
+    return undefined;
+  }, z.nativeEnum(CognitiveLevel).optional()),
   type: z.preprocess(
     (val) => (val === "" || !val ? QuestionType.MCQ : val),
     z.nativeEnum(QuestionType).default(QuestionType.MCQ),
@@ -218,8 +212,7 @@ export class QuestionService {
     }
 
     const computedCognitiveLevel =
-      parsed.data.cognitiveLevel ||
-      getCognitiveLevelFromDifficulty(difficulty);
+      parsed.data.cognitiveLevel || getCognitiveLevelFromDifficulty(difficulty);
 
     const newQuestion = await this.db.question.create({
       data: {
@@ -235,7 +228,9 @@ export class QuestionService {
         cognitiveLevel: computedCognitiveLevel,
         type,
         status: computedStatus,
-        ...(parsed.data.schoolYear ? { schoolYear: parsed.data.schoolYear } : {}),
+        ...(parsed.data.schoolYear
+          ? { schoolYear: parsed.data.schoolYear }
+          : {}),
       },
     });
 
@@ -271,7 +266,11 @@ export class QuestionService {
         authorId: newQuestion.authorId,
       };
       sseService.broadcastEvent("questions-updated", eventPayload);
-      pusherService.broadcastEvent("admin-events", "questions-updated", eventPayload);
+      pusherService.broadcastEvent(
+        "admin-events",
+        "questions-updated",
+        eventPayload,
+      );
     } catch (err) {
       console.warn("Broadcast error:", err);
     }
@@ -373,8 +372,7 @@ export class QuestionService {
     }
 
     const computedCognitiveLevel =
-      parsed.data.cognitiveLevel ||
-      getCognitiveLevelFromDifficulty(difficulty);
+      parsed.data.cognitiveLevel || getCognitiveLevelFromDifficulty(difficulty);
 
     const updatedQuestion = await this.db.question.update({
       where: {
@@ -483,6 +481,7 @@ export class QuestionService {
     schoolYear?: string,
     handledCategoryIds?: string[],
     userRole?: string,
+    topic?: string,
   ) {
     let statusFilter: any = undefined;
     if (status) {
@@ -507,11 +506,17 @@ export class QuestionService {
       categoryFilter = { in: handledCategoryIds };
     }
 
+    const cleanTopic = typeof topic === "string" ? topic.trim() : undefined;
+
     const whereClause: any = {
       question: search ? { contains: search } : undefined,
       difficulty,
       subjectId: categoryFilter,
       type,
+      topic:
+        cleanTopic && cleanTopic !== "ALL"
+          ? { equals: cleanTopic, mode: "insensitive" }
+          : undefined,
       status: statusFilter,
       authorId: authorId === "unassigned" ? null : authorId,
       isPublished,
@@ -629,7 +634,9 @@ export class QuestionService {
     if (targetAuthorId && isSuperAdmin(targetAuthorId)) {
       targetAuthorId = superAdminCredentials.id;
     }
-    targetAuthorId = isValidObjectId(targetAuthorId) ? targetAuthorId : undefined;
+    targetAuthorId = isValidObjectId(targetAuthorId)
+      ? targetAuthorId
+      : undefined;
 
     const [
       totalQuestions,
@@ -855,14 +862,13 @@ export class QuestionService {
         authorUser?.role === "TEACHER"
           ? QuestionStatus.PENDING_REVIEW
           : authorUser?.role === "SUPERADMIN" ||
-            authorUser?.role === "DEAN" ||
-            authorUser?.role === "TEAMLEAD"
-          ? q.status || QuestionStatus.APPROVED
-          : q.status || resolvedStatus;
+              authorUser?.role === "DEAN" ||
+              authorUser?.role === "TEAMLEAD"
+            ? q.status || QuestionStatus.APPROVED
+            : q.status || resolvedStatus;
 
       const computedCognitiveLevel =
-        q.cognitiveLevel ||
-        getCognitiveLevelFromDifficulty(q.difficulty);
+        q.cognitiveLevel || getCognitiveLevelFromDifficulty(q.difficulty);
 
       return this.db.question.create({
         data: {
@@ -903,7 +909,9 @@ export class QuestionService {
           title: "Bulk Questions Uploaded",
           message: `${authorName} uploaded ${count} new question(s) to the question bank.`,
           type: "INFO",
-          link: categoryId ? `/subject-management/${categoryId}` : "/question-bank",
+          link: categoryId
+            ? `/subject-management/${categoryId}`
+            : "/question-bank",
         }).catch((err) => console.warn("Notification error:", err?.message));
       }
     }
@@ -917,7 +925,11 @@ export class QuestionService {
         status: resolvedStatus,
       };
       sseService.broadcastEvent("questions-updated", eventPayload);
-      pusherService.broadcastEvent("admin-events", "questions-updated", eventPayload);
+      pusherService.broadcastEvent(
+        "admin-events",
+        "questions-updated",
+        eventPayload,
+      );
     } catch (err) {
       console.warn("Broadcast error:", err);
     }
@@ -1040,7 +1052,10 @@ export class QuestionService {
             }
           }
         } catch (err: any) {
-          console.warn("Failed to dispatch approval email notification:", err?.message);
+          console.warn(
+            "Failed to dispatch approval email notification:",
+            err?.message,
+          );
         }
       })();
     }
@@ -1150,7 +1165,9 @@ export class QuestionService {
       new Set(targetQuestions.map((q: any) => q.authorId).filter(Boolean)),
     );
     for (const authorId of uniqueAuthorIds) {
-      const authorQuestions = targetQuestions.filter((q: any) => q.authorId === authorId);
+      const authorQuestions = targetQuestions.filter(
+        (q: any) => q.authorId === authorId,
+      );
       const notifMsg = `Revision feedback was provided for ${authorQuestions.length} of your question(s) by ${reviewerName}.`;
       createNotification({
         recipientId: authorId as string,
@@ -1181,7 +1198,10 @@ export class QuestionService {
             }
           }
         } catch (err: any) {
-          console.warn("Failed to dispatch revision email notification:", err?.message);
+          console.warn(
+            "Failed to dispatch revision email notification:",
+            err?.message,
+          );
         }
       })();
     }
@@ -1232,9 +1252,7 @@ export class QuestionService {
       const latestSubmissionAt = authorQuestions.reduce(
         (latest: any, q: any) => {
           const date = q.updatedAt || q.createdAt;
-          return !latest || new Date(date) > new Date(latest)
-            ? date
-            : latest;
+          return !latest || new Date(date) > new Date(latest) ? date : latest;
         },
         null as Date | null,
       );
@@ -1255,9 +1273,7 @@ export class QuestionService {
       const latestSubmissionAt = unassignedQuestions.reduce(
         (latest: any, q: any) => {
           const date = q.updatedAt || q.createdAt;
-          return !latest || new Date(date) > new Date(latest)
-            ? date
-            : latest;
+          return !latest || new Date(date) > new Date(latest) ? date : latest;
         },
         null as Date | null,
       );
@@ -1391,7 +1407,11 @@ export class QuestionService {
           try {
             const author = await (this.db as any).adminUser.findUnique({
               where: { id: question.authorId },
-              select: { email: true, name: true, notificationPreferences: true },
+              select: {
+                email: true,
+                name: true,
+                notificationPreferences: true,
+              },
             });
             if (author?.email) {
               const prefs = author.notificationPreferences as any;
@@ -1411,7 +1431,10 @@ export class QuestionService {
               }
             }
           } catch (emailErr: any) {
-            console.warn("Failed to dispatch comment email notification:", emailErr?.message);
+            console.warn(
+              "Failed to dispatch comment email notification:",
+              emailErr?.message,
+            );
           }
         })();
       } catch (err) {
@@ -1691,4 +1714,3 @@ export const deleteQuestionComment =
   questionService.deleteQuestionComment.bind(questionService);
 export const toggleResolveComment =
   questionService.toggleResolveComment.bind(questionService);
-

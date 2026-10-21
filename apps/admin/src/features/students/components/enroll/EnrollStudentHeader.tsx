@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, UserPlus, Users } from "lucide-react";
 import { StandardNavTabs } from "@/components/custom/tabs";
 
@@ -11,16 +11,27 @@ export function EnrollStudentHeader({
   activeTab,
   onTabChange,
 }: EnrollStudentHeaderProps) {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/student-management");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3 sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-2 -mt-2 z-10 border-b border-border/80 w-full">
       <div className="flex items-center gap-2">
-        <Link
-          to="/student-management"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors group"
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-          Back to Directory
-        </Link>
+          Back
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">

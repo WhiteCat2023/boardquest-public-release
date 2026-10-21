@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   EnrollStudentHeader,
@@ -10,12 +9,18 @@ export default function EnrollStudentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active Tab: "individual" | "bulk"
-  const initialTab = searchParams.get("tab") === "bulk" ? "bulk" : "individual";
-  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+  const tabParam = searchParams.get("tab");
+  const activeTab: "individual" | "bulk" = tabParam === "bulk" ? "bulk" : "individual";
 
   const handleTabChange = (tab: "individual" | "bulk") => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
+    if (tab === activeTab) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === "individual") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", tab);
+    }
+    setSearchParams(newParams);
   };
 
   return (

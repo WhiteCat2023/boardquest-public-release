@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticateToken, requireRoles, } from "../../middleware/auth.middleware";
 import { createQuestion, deleteQuestion, getQuestionById, getQuestions, getQuestionsByCategory, updateQuestion, bulkUploadQuestions, extractQuestions, bulkDeleteQuestions, bulkApproveQuestions, bulkUpdateStatusQuestions, bulkFeedbackQuestions, synthesizeQuestion, createSynthesizedQuestion, getPendingReviewAuthors, getQuestionStats, getQuestionComments, createQuestionComment, deleteQuestionComment, toggleResolveComment, bulkParaphraseQuestions, bulkApplyParaphrase, } from "../../controller/admin/question.controller";
-import { getEncodingTrackerOverview, upsertQuotaAssignment, sendTeacherNudge, sendBulkTeacherNudges, getMyEncodingProgress, } from "../../controller/admin/encoding-tracker.controller";
+import { getEncodingTrackerOverview, upsertQuotaAssignment, upsertSubjectQuota, sendTeacherNudge, sendBulkTeacherNudges, getMyEncodingProgress, } from "../../controller/admin/encoding-tracker.controller";
 import { createCategory, getCategories, getCategory, updateCategory, deleteCategory, getCategoriesTotalCount, getModulesByCategory, createModule, updateModule, deleteModule, assignCategoryHandlers, } from "../../controller/admin/subject.controller";
 import { getTopicsBySubject, createTopic, updateTopic, deleteTopic, } from "../../controller/admin/topic.controller.js";
 const router = Router();
@@ -21,6 +21,7 @@ router.get("/review/authors", authenticateToken, getPendingReviewAuthors);
 // Encoding Tracker Routes
 router.get("/encoding-tracker", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), getEncodingTrackerOverview);
 router.post("/encoding-tracker/quota", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), upsertQuotaAssignment);
+router.post("/encoding-tracker/quota-subject", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), upsertSubjectQuota);
 router.post("/encoding-tracker/nudge", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), sendTeacherNudge);
 router.post("/encoding-tracker/nudge-bulk", authenticateToken, requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]), sendBulkTeacherNudges);
 router.get("/encoding-tracker/my-progress", authenticateToken, getMyEncodingProgress);
@@ -62,6 +63,7 @@ router.delete("/category/modules/:moduleId", authenticateToken, requireRoles(mod
 router.delete("/subject/modules/:moduleId", authenticateToken, requireRoles(moduleRoles), deleteModule);
 // Topic CMS routes
 const topicRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
+router.get("/topics", authenticateToken, getTopicsBySubject);
 router.get("/category/:categoryId/topics", authenticateToken, getTopicsBySubject);
 router.get("/subject/:subjectId/topics", authenticateToken, getTopicsBySubject);
 router.post("/category/:categoryId/topics", authenticateToken, requireRoles(topicRoles), createTopic);

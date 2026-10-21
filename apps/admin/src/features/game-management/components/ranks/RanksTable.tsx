@@ -2,11 +2,14 @@ import { Crown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RankTier } from "../../types/types";
 import RankTableRow from "./RankTableRow";
+import { ColumnHeaderFilter } from "@/components/custom/table";
 
 interface RanksTableProps {
   ranks: RankTier[];
   isLoading: boolean;
   hasActiveFilters: boolean;
+  selectedStatus?: string;
+  onStatusChange?: (val: string) => void;
   onResetFilters: () => void;
   onAddRank: () => void;
   onEditRank: (rank: RankTier) => void;
@@ -20,6 +23,8 @@ export default function RanksTable({
   ranks,
   isLoading,
   hasActiveFilters,
+  selectedStatus = "ALL",
+  onStatusChange,
   onResetFilters,
   onAddRank,
   onEditRank,
@@ -39,7 +44,21 @@ export default function RanksTable({
               <th className="py-2.5 px-3 font-extrabold">Min Required XP</th>
               <th className="py-2.5 px-3 font-extrabold">Perks & Perks</th>
               <th className="py-2.5 px-3 font-extrabold">Enrolled Students</th>
-              <th className="py-2.5 px-3 font-extrabold">Status</th>
+              <th className="py-2.5 px-3 font-extrabold">
+                {onStatusChange ? (
+                  <ColumnHeaderFilter
+                    title="Status"
+                    selectedValue={selectedStatus}
+                    onSelect={onStatusChange}
+                    options={[
+                      { label: "Active", value: "active" },
+                      { label: "Disabled", value: "inactive" },
+                    ]}
+                  />
+                ) : (
+                  "Status"
+                )}
+              </th>
               <th className="py-2.5 px-4 font-extrabold text-right">Actions</th>
             </tr>
           </thead>

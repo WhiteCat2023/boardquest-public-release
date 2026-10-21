@@ -32,15 +32,24 @@ export function StudentProfileHeader({
         String(g.status).toUpperCase() === "IN_PROGRESS",
     );
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/student-management");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
-      {/* Back to directory button */}
+      {/* Back button */}
       <button
-        onClick={() => navigate("/student-management")}
-        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit"
+        type="button"
+        onClick={handleBack}
+        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors cursor-pointer w-fit group"
       >
-        <ArrowLeft size={14} />
-        <span>Back to Student Directory</span>
+        <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+        <span>Back</span>
       </button>
 
       {/* Main Header Row */}

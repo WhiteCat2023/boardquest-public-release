@@ -110,6 +110,17 @@ export default function ReviewCenterStudentsTab({
         searchTerm={searchTerm}
         companyName={reviewCenter?.companyName}
         onSelectCandidateForScores={setSelectedCandidateForScores}
+        selectedSchoolYear={selectedSchoolYear}
+        onSchoolYearChange={(sy) => {
+          setSelectedSchoolYear(sy);
+          setCurrentPage(1);
+        }}
+        schoolYears={schoolYears}
+        selectedGameStatus={selectedGameStatus}
+        onGameStatusChange={(status) => {
+          setSelectedGameStatus(status);
+          setCurrentPage(1);
+        }}
         pagination={
           !isLoading && (
             <DataTablePagination

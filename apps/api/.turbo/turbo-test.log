@@ -1,27 +1,28 @@
 $ jest
-PASS src/__tests__/questionParaphraser.test.ts (37.066 s)
-PASS src/__tests__/calendar.test.ts (37.104 s)
-PASS src/__tests__/upload.test.ts (37.681 s)
-PASS src/__tests__/game.test.ts (39.033 s)
-PASS src/__tests__/candidate.test.ts (39.4 s)
-PASS src/__tests__/encodingQuotaRestriction.test.ts
-PASS src/__tests__/user.test.ts (40.637 s)
-PASS src/__tests__/reviewCenterAuth.test.ts (40.836 s)
-PASS src/__tests__/reviewCenter.test.ts (40.849 s)
-PASS src/__tests__/questionCommentReview.test.ts
-PASS src/__tests__/statsCalculator.test.ts
-PASS src/__tests__/guidance.test.ts
-PASS src/__tests__/notification.test.ts
+PASS src/__tests__/calendar.test.ts (11.367 s)
+PASS src/__tests__/auth.test.ts
+PASS src/__tests__/game.test.ts (14.199 s)
+PASS src/__tests__/candidate.test.ts (14.272 s)
+PASS src/__tests__/reviewCenterAuth.test.ts
 PASS src/__tests__/analytics.test.ts
-PASS src/__tests__/auth.test.ts (42.388 s)
-PASS src/__tests__/assessment.test.ts
-PASS src/__tests__/student.test.ts (42.961 s)
-PASS src/__tests__/question.test.ts (43.022 s)
 PASS src/__tests__/logs.test.ts
+PASS src/__tests__/assessment.test.ts
+PASS src/__tests__/statsCalculator.test.ts
+PASS src/__tests__/questionParaphraser.test.ts (19.54 s)
+PASS src/__tests__/questionCommentReview.test.ts (20.4 s)
+PASS src/__tests__/notification.test.ts (6.855 s)
+PASS src/__tests__/encodingQuotaRestriction.test.ts (21.139 s)
+PASS src/__tests__/user.test.ts (21.556 s)
+PASS src/__tests__/upload.test.ts (21.648 s)
+PASS src/__tests__/guidance.test.ts (7.88 s)
+PASS src/__tests__/reviewCenter.test.ts (22.213 s)
+PASS src/__tests__/student.test.ts (23.034 s)
+PASS src/__tests__/question.test.ts (23.813 s)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
 
 Test Suites: 19 passed, 19 total
-Tests:       192 passed, 192 total
+Tests:       194 passed, 194 total
 Snapshots:   0 total
-Time:        46.92 s
+Time:        25.316 s, estimated 33 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

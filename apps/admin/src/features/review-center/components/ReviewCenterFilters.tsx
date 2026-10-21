@@ -1,20 +1,10 @@
 import { Search, RotateCcw, X, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ReviewCenterFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  selectedLocation: string;
-  onLocationChange: (value: string) => void;
-  uniqueLocations: string[];
   hasActiveFilters: boolean;
   onResetFilters: () => void;
   viewMode?: "grid" | "list";
@@ -24,9 +14,6 @@ interface ReviewCenterFiltersProps {
 export default function ReviewCenterFilters({
   searchTerm,
   onSearchChange,
-  selectedLocation,
-  onLocationChange,
-  uniqueLocations,
   hasActiveFilters,
   onResetFilters,
   viewMode = "list",
@@ -39,13 +26,14 @@ export default function ReviewCenterFilters({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
         <Input
           type="text"
-          placeholder="Search review center, representative, email, location..."
+          placeholder="Search review center, representative, email..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9 pr-8 h-8 bg-muted/30 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground"
         />
         {searchTerm && (
           <button
+            type="button"
             onClick={() => onSearchChange("")}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
           >
@@ -87,21 +75,6 @@ export default function ReviewCenterFilters({
             </button>
           </div>
         )}
-
-        {/* Location Filter */}
-        <Select value={selectedLocation} onValueChange={onLocationChange}>
-          <SelectTrigger className="h-8 w-[135px] bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="ALL">All Locations</SelectItem>
-            {uniqueLocations.map((loc) => (
-              <SelectItem key={loc} value={loc}>
-                {loc}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         {/* Reset Filters */}
         {hasActiveFilters && (

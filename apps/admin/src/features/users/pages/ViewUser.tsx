@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUsers } from "@/features/users/api/useUsers";
@@ -28,7 +27,21 @@ export default function ViewUser() {
   const users = userResponse?.users || userResponse?.faculties || [];
   const member = users.find((f) => f.id === targetId);
 
-  const [activeTab, setActiveTab] = useState<ViewUserTab>("details");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as ViewUserTab | null;
+  const activeTab: ViewUserTab =
+    tabParam === "subjects" || tabParam === "activity" ? tabParam : "details";
+
+  const handleTabChange = (newTab: ViewUserTab) => {
+    if (newTab === activeTab) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (newTab === "details") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", newTab);
+    }
+    setSearchParams(newParams);
+  };
 
   if (isLoading) {
     return (
@@ -82,7 +95,7 @@ export default function ViewUser() {
 
         <ViewUserNavTabs
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           isExternal={isExternal}
         />
 

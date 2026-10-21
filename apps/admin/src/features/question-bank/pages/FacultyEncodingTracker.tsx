@@ -4,9 +4,10 @@ import { useSubjectNavCategories } from "../api/useSubjectNavCategories";
 import {
   EncodingKPICards,
   EncodingTrackerFilters,
-  FacultyEncodingTable,
-  SetQuotaModal,
+  SubjectEncodingTable,
   NudgeTeacherModal,
+  SetSubjectQuotaModal,
+  NudgeSubjectModal,
 } from "../components/tracker";
 import { DataTablePagination } from "@/components/custom/pagination";
 import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
@@ -22,7 +23,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import type {
-  FacultyTrackItem,
+  SubjectTrackItem,
   EncodingTrackerKPIs,
 } from "../types/encodingTracker.types";
 
@@ -34,25 +35,24 @@ export default function FacultyEncodingTracker() {
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [isTabChanging, setIsTabChanging] = useState(false);
-  const [quotaModalItem, setQuotaModalItem] = useState<FacultyTrackItem | null>(null);
-  const [nudgeModalItem, setNudgeModalItem] = useState<FacultyTrackItem | null>(null);
+  const [subjectQuotaModalItem, setSubjectQuotaModalItem] =
+    useState<SubjectTrackItem | null>(null);
+  const [subjectNudgeModalItem, setSubjectNudgeModalItem] =
+    useState<SubjectTrackItem | null>(null);
   const [isBulkNudgeOpen, setIsBulkNudgeOpen] = useState(false);
 
   // Fetch tracker data
-  const {
-    data,
-    isLoading,
-    isRefetching,
-    isPlaceholderData,
-    refetch,
-  } = useEncodingTrackerOverview({
-    search,
-    subjectId: selectedSubject,
-    status: selectedStatus,
-  });
+  const { data, isLoading, isRefetching, isPlaceholderData, refetch } =
+    useEncodingTrackerOverview({
+      search,
+      subjectId: selectedSubject,
+      status: selectedStatus,
+    });
 
   // Preserve stable KPIs so top stat cards and tab badges never flash into skeletons when navigating tabs
-  const [stableKpis, setStableKpis] = useState<EncodingTrackerKPIs | undefined>(undefined);
+  const [stableKpis, setStableKpis] = useState<EncodingTrackerKPIs | undefined>(
+    undefined,
+  );
   useEffect(() => {
     if (data?.kpis) {
       setStableKpis(data.kpis);
@@ -120,56 +120,224 @@ export default function FacultyEncodingTracker() {
   const isInitialLoading = isLoading && !kpis;
   const isTableLoading = isInitialLoading || isPlaceholderData || isTabChanging;
 
-  // Pagination computations
-  const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedItems = useMemo(
-    () => items.slice(startIndex, startIndex + pageSize),
-    [items, startIndex, pageSize],
+  // Subject aggregation computations
+  const subjectAggregatedItems = useMemo<SubjectTrackItem[]>(() => {
+    const map = new Map<string, SubjectTrackItem>();
+
+    for (const item of items) {
+      // Strictly track faculty teachers (exclude external accounts like Review Center and admin staff)
+      if (
+        item.teacher?.role &&
+        String(item.teacher.role).toUpperCase() !== "TEACHER"
+      ) {
+        continue;
+      }
+      const subId = item.subject.id;
+      let existing = map.get(subId);
+      if (!existing) {
+        existing = {
+          id: subId,
+          subject: item.subject,
+          assignedTeachers: [],
+          teacherCount: 0,
+          targetCount: 0,
+          encodedCount: 0,
+          remainingCount: 0,
+          progressPercentage: 0,
+          breakdown: {
+            approved: 0,
+            pendingReview: 0,
+            pendingRevision: 0,
+          },
+          status: "NOT_STARTED",
+          earliestDeadline: null,
+          hasOverdueTeacher: false,
+          schoolYear: item.schoolYear,
+        };
+        map.set(subId, existing);
+      }
+
+      existing.assignedTeachers.push(item);
+      existing.targetCount += item.targetCount;
+      existing.encodedCount += item.encodedCount;
+      existing.breakdown.approved += item.breakdown.approved;
+      existing.breakdown.pendingReview += item.breakdown.pendingReview;
+      existing.breakdown.pendingRevision += item.breakdown.pendingRevision;
+
+      if (item.isPastDeadline || item.status === "OVERDUE") {
+        existing.hasOverdueTeacher = true;
+      }
+
+      if (item.deadline) {
+        if (!existing.earliestDeadline) {
+          existing.earliestDeadline = item.deadline;
+        } else if (
+          new Date(item.deadline) < new Date(existing.earliestDeadline)
+        ) {
+          existing.earliestDeadline = item.deadline;
+        }
+      }
+    }
+
+    // Include any subjects in categories that don't have active assignments if matching filter
+    for (const cat of categories) {
+      if (!map.has(cat.id)) {
+        if (selectedSubject !== "ALL" && selectedSubject !== cat.id) continue;
+        if (
+          search.trim() &&
+          !cat.name.toLowerCase().includes(search.trim().toLowerCase())
+        )
+          continue;
+
+        map.set(cat.id, {
+          id: cat.id,
+          subject: { id: cat.id, name: cat.name, icon: cat.icon },
+          assignedTeachers: [],
+          teacherCount: 0,
+          targetCount: 0,
+          encodedCount: 0,
+          remainingCount: 0,
+          progressPercentage: 0,
+          breakdown: { approved: 0, pendingReview: 0, pendingRevision: 0 },
+          status: "NOT_STARTED",
+          earliestDeadline: null,
+          hasOverdueTeacher: false,
+          schoolYear,
+        });
+      }
+    }
+
+    const result: SubjectTrackItem[] = [];
+    for (const sub of map.values()) {
+      sub.teacherCount = sub.assignedTeachers.length;
+      sub.remainingCount = Math.max(0, sub.targetCount - sub.encodedCount);
+      sub.progressPercentage = Math.min(
+        100,
+        Math.round((sub.encodedCount / Math.max(1, sub.targetCount)) * 100),
+      );
+
+      if (sub.encodedCount >= sub.targetCount && sub.targetCount > 0) {
+        sub.status = "COMPLETED";
+      } else if (sub.hasOverdueTeacher) {
+        sub.status = "OVERDUE";
+      } else if (sub.encodedCount === 0) {
+        sub.status = "NOT_STARTED";
+      } else {
+        sub.status = "IN_PROGRESS";
+      }
+
+      result.push(sub);
+    }
+
+    const sortPriority: Record<string, number> = {
+      OVERDUE: 1,
+      NOT_STARTED: 2,
+      IN_PROGRESS: 3,
+      COMPLETED: 4,
+    };
+    result.sort((a, b) => {
+      const pDiff =
+        (sortPriority[a.status] || 5) - (sortPriority[b.status] || 5);
+      if (pDiff !== 0) return pDiff;
+      return a.subject.name.localeCompare(b.subject.name);
+    });
+
+    return result;
+  }, [items, categories, selectedSubject, search, schoolYear]);
+
+  // Filter subjects based on selectedStatus
+  const filteredSubjectItems = useMemo(() => {
+    if (selectedStatus === "ALL") return subjectAggregatedItems;
+    if (selectedStatus === "INCOMPLETE") {
+      return subjectAggregatedItems.filter(
+        (s) =>
+          s.status === "NOT_STARTED" ||
+          s.status === "IN_PROGRESS" ||
+          s.status === "OVERDUE",
+      );
+    }
+    return subjectAggregatedItems.filter((s) => s.status === selectedStatus);
+  }, [subjectAggregatedItems, selectedStatus]);
+
+  // Subject pagination
+  const totalSubjectItems = filteredSubjectItems.length;
+  const totalSubjectPages = Math.max(
+    1,
+    Math.ceil(totalSubjectItems / pageSize),
+  );
+  const startSubjectIndex = (currentPage - 1) * pageSize;
+  const paginatedSubjectItems = useMemo(
+    () =>
+      filteredSubjectItems.slice(
+        startSubjectIndex,
+        startSubjectIndex + pageSize,
+      ),
+    [filteredSubjectItems, startSubjectIndex, pageSize],
   );
 
-  // Status Navigation Tabs (standardized from Student View)
+  // Subject status counts for status tab badges
+  const subjectStatusCounts = useMemo(() => {
+    let overdue = 0;
+    let notStarted = 0;
+    let inProgress = 0;
+    let completed = 0;
+    for (const s of subjectAggregatedItems) {
+      if (s.status === "OVERDUE") overdue++;
+      else if (s.status === "NOT_STARTED") notStarted++;
+      else if (s.status === "IN_PROGRESS") inProgress++;
+      else if (s.status === "COMPLETED") completed++;
+    }
+    return {
+      total: subjectAggregatedItems.length,
+      incomplete: overdue + notStarted + inProgress,
+      overdue,
+      notStarted,
+      inProgress,
+      completed,
+    };
+  }, [subjectAggregatedItems]);
+
+  // Status Navigation Tabs (badge counts for subject health statuses)
   const statusTabs: NavTabItem<string>[] = useMemo(
     () => [
       {
         id: "ALL",
         label: "All",
         icon: Users,
-        badgeCount: kpis ? kpis.totalAssignments : undefined,
+        badgeCount: subjectStatusCounts.total,
       },
       {
         id: "INCOMPLETE",
         label: "Incomplete Only",
         icon: AlertCircle,
-        badgeCount: kpis ? incompleteCount : undefined,
+        badgeCount: subjectStatusCounts.incomplete,
       },
       {
         id: "OVERDUE",
         label: "Overdue",
         icon: AlertTriangle,
-        badgeCount: kpis ? kpis.overdueCount : undefined,
+        badgeCount: subjectStatusCounts.overdue,
       },
       {
         id: "NOT_STARTED",
         label: "Not Started",
         icon: Clock,
-        badgeCount: kpis ? kpis.notStartedCount : undefined,
+        badgeCount: subjectStatusCounts.notStarted,
       },
       {
         id: "IN_PROGRESS",
         label: "In Progress",
         icon: PencilLine,
-        badgeCount: kpis ? kpis.inProgressCount : undefined,
+        badgeCount: subjectStatusCounts.inProgress,
       },
       {
         id: "COMPLETED",
         label: "Completed",
         icon: CheckCircle2,
-        badgeCount: kpis ? kpis.completedCount : undefined,
+        badgeCount: subjectStatusCounts.completed,
       },
     ],
-    [kpis, incompleteCount],
+    [subjectStatusCounts],
   );
 
   return (
@@ -217,11 +385,14 @@ export default function FacultyEncodingTracker() {
         onTabChange={handleStatusChange}
         showScrollButtons="auto"
         rightContent={
-          <div className="hidden sm:flex items-center gap-3 text-xs font-semibold text-muted-foreground">
-            <span className="hidden md:inline">
-              Allocations: <span className="text-foreground font-bold">{kpis?.totalAssignments ?? totalItems}</span>
+          <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-semibold text-muted-foreground">
+            <span className="hidden sm:inline text-muted-foreground">
+              Subjects:{" "}
+              <span className="text-foreground font-bold">
+                {subjectAggregatedItems.length}
+              </span>
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-muted text-[11px] font-bold text-foreground border border-border">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-muted text-[11px] font-bold text-foreground border border-border">
               {schoolYear}
             </span>
           </div>
@@ -241,49 +412,57 @@ export default function FacultyEncodingTracker() {
         incompleteCount={incompleteCount}
       />
 
-      {/* Faculty Encoding Roster Table: ONLY this table reloads when navigating tabs */}
-      <FacultyEncodingTable
-        items={paginatedItems}
+      {/* Aggregated Subject Health Table */}
+      <SubjectEncodingTable
+        items={paginatedSubjectItems}
         isLoading={isTableLoading}
-        onNudgeClick={(item) => setNudgeModalItem(item)}
-        onSetQuotaClick={(item) => setQuotaModalItem(item)}
+        selectedSubject={selectedSubject}
+        onSubjectChange={handleSubjectChange}
+        subjects={subjectOptions}
+        selectedStatus={selectedStatus}
+        onStatusChange={handleStatusChange}
+        onSetSubjectQuotaClick={(item) => setSubjectQuotaModalItem(item)}
+        onNudgeSubjectClick={(item) => setSubjectNudgeModalItem(item)}
         pagination={
-          !isTableLoading && totalItems > 0 && (
+          !isTableLoading &&
+          totalSubjectItems > 0 && (
             <DataTablePagination
               currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
+              totalPages={totalSubjectPages}
+              totalItems={totalSubjectItems}
               pageSize={pageSize}
-              pageSizeOptions={[10, 20, 30, 50]}
+              pageSizeOptions={[6, 12, 24, 48]}
               onPageSizeChange={handlePageSizeChange}
-              hasNextPage={currentPage < totalPages}
+              hasNextPage={currentPage < totalSubjectPages}
               hasPreviousPage={currentPage > 1}
-              onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onNext={() =>
+                setCurrentPage((p) => Math.min(totalSubjectPages, p + 1))
+              }
               onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
               onPageSelect={(page) => setCurrentPage(page)}
-              itemLabel="allocations"
+              itemLabel="subjects"
               variant="table-footer"
             />
           )
         }
       />
 
-      {/* Set Quota Modal */}
-      <SetQuotaModal
-        isOpen={Boolean(quotaModalItem)}
-        onClose={() => setQuotaModalItem(null)}
-        item={quotaModalItem}
+      {/* Set Subject Quota Modal (with handler division) */}
+      <SetSubjectQuotaModal
+        isOpen={Boolean(subjectQuotaModalItem)}
+        onClose={() => setSubjectQuotaModalItem(null)}
+        subject={subjectQuotaModalItem}
       />
 
-      {/* Single Nudge Modal */}
-      <NudgeTeacherModal
-        isOpen={Boolean(nudgeModalItem)}
-        onClose={() => setNudgeModalItem(null)}
-        item={nudgeModalItem}
-        isBulk={false}
+      {/* Subject Nudge Modal */}
+      <NudgeSubjectModal
+        isOpen={Boolean(subjectNudgeModalItem)}
+        onClose={() => setSubjectNudgeModalItem(null)}
+        subject={subjectNudgeModalItem}
+        schoolYear={schoolYear}
       />
 
-      {/* Bulk Nudge Modal */}
+      {/* Global Bulk Nudge Modal */}
       <NudgeTeacherModal
         isOpen={isBulkNudgeOpen}
         onClose={() => setIsBulkNudgeOpen(false)}

@@ -30,14 +30,15 @@ class TopicService {
    * Also merges any legacy/existing question topics so nothing is lost.
    */
   async getTopicsBySubject(subjectId: string): Promise<TopicItem[]> {
-    if (!subjectId) return [];
+    const cleanId = String(subjectId || "").trim();
+    const isAll = !cleanId || cleanId === "ALL";
 
     // 1. Fetch from Topic collection
     let existingTopics: any[] = [];
     try {
       const rawRes: any = await this.db.$runCommandRaw({
         find: "Topic",
-        filter: { subjectId },
+        filter: isAll ? {} : { subjectId: cleanId },
         sort: { name: 1 },
       });
       existingTopics = rawRes?.cursor?.firstBatch || [];
@@ -49,10 +50,10 @@ class TopicService {
     // 2. Fetch distinct topics from Question collection to ensure coverage
     const questionTopics = await this.db.question.findMany({
       where: {
-        subjectId,
+        ...(isAll ? {} : { subjectId: cleanId }),
         topic: { not: "" },
       },
-      select: { topic: true },
+      select: { topic: true, subjectId: true },
     });
 
     // Count questions per topic
@@ -62,6 +63,49 @@ class TopicService {
       if (!tName) continue;
       const lower = tName.toLowerCase();
       questionCountMap.set(lower, (questionCountMap.get(lower) || 0) + 1);
+    }
+
+    if (isAll) {
+      // Deduplicate by lower-case topic name across all subjects
+      const uniqueTopicMap = new Map<string, TopicItem>();
+      for (const t of existingTopics) {
+        const name = String(t.name || "").trim();
+        if (!name) continue;
+        const lower = name.toLowerCase();
+        if (!uniqueTopicMap.has(lower)) {
+          const id = t._id?.$oid || t._id?.toString?.() || String(t._id || "");
+          uniqueTopicMap.set(lower, {
+            id,
+            name,
+            description: t.description || "",
+            subjectId: t.subjectId || "",
+            questionCount: questionCountMap.get(lower) || 0,
+            createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
+            updatedAt: t.updatedAt ? new Date(t.updatedAt).toISOString() : new Date().toISOString(),
+          });
+        }
+      }
+
+      for (const q of questionTopics) {
+        const name = String(q.topic || "").trim();
+        if (!name) continue;
+        const lower = name.toLowerCase();
+        if (!uniqueTopicMap.has(lower)) {
+          uniqueTopicMap.set(lower, {
+            id: name,
+            name,
+            description: "",
+            subjectId: q.subjectId || "",
+            questionCount: questionCountMap.get(lower) || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      return Array.from(uniqueTopicMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
     }
 
     const existingNamesLower = new Set(
@@ -76,7 +120,7 @@ class TopicService {
       if (tName && !existingNamesLower.has(lower)) {
         existingNamesLower.add(lower);
         missingTopicsToInsert.push({
-          subjectId,
+          subjectId: cleanId,
           name: tName,
           description: "",
           createdAt: new Date(),
@@ -95,7 +139,7 @@ class TopicService {
         // Re-fetch after inserting
         const refreshedRes: any = await this.db.$runCommandRaw({
           find: "Topic",
-          filter: { subjectId },
+          filter: { subjectId: cleanId },
           sort: { name: 1 },
         });
         existingTopics = refreshedRes?.cursor?.firstBatch || existingTopics;
@@ -113,7 +157,7 @@ class TopicService {
         id,
         name,
         description: t.description || "",
-        subjectId,
+        subjectId: cleanId,
         questionCount: qCount,
         createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: t.updatedAt ? new Date(t.updatedAt).toISOString() : new Date().toISOString(),

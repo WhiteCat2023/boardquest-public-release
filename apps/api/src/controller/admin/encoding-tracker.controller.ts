@@ -65,6 +65,40 @@ export const upsertQuotaAssignment = asyncHandler(
 );
 
 /**
+ * POST /api/v1/questions/encoding-tracker/quota-subject
+ * SuperAdmin, Dean, TeamLead: Set authoring quota at the subject level and distribute evenly among handlers
+ */
+export const upsertSubjectQuota = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user;
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const { subjectId, totalTargetCount, deadline, notes, schoolYear } =
+      req.body;
+    if (!subjectId) {
+      throw new ApiError(400, "subjectId is required");
+    }
+
+    const result = await encodingTrackerService.upsertSubjectQuota({
+      subjectId,
+      totalTargetCount: Number(totalTargetCount),
+      deadline: deadline ? new Date(deadline) : null,
+      notes,
+      schoolYear,
+      assignedById: user.id,
+    });
+
+    return new ApiResponse(
+      200,
+      result,
+      `Subject quota of ${totalTargetCount} distributed among ${result.handlerCount} handlers`,
+    ).send(res);
+  },
+);
+
+/**
  * POST /api/v1/questions/encoding-tracker/nudge
  * SuperAdmin, Dean, TeamLead: Send in-app nudge reminder to a single teacher
  */
@@ -107,11 +141,12 @@ export const sendBulkTeacherNudges = asyncHandler(
       throw new ApiError(401, "Authentication required");
     }
 
-    const { subjectId, schoolYear } = req.body;
+    const { subjectId, schoolYear, customMessage } = req.body;
 
     const result = await encodingTrackerService.sendBulkTeacherNudges({
       subjectId,
       schoolYear,
+      customMessage,
       senderId: user.id,
       senderName: user.name,
     });

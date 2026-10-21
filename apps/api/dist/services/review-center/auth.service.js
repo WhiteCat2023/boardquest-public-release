@@ -115,7 +115,12 @@ export class ReviewCenterAuthService {
         }
         else {
             console.log(`\n[RCAuthService] Password reset requested for: ${email} (User: ${user.name})`);
-            const resetToken = signJWT({ id: user.id, email: user.email, type: "rc_password_reset" }, "1h");
+            const resetToken = signJWT({
+                id: user.id,
+                email: user.email,
+                type: "rc_password_reset",
+                sig: user.password ? user.password.slice(-12) : undefined,
+            }, "5m");
             const frontendUrl = process.env.REVIEW_CENTER_FRONTEND_URL ||
                 process.env.FRONTEND_URL ||
                 "http://localhost:5173";
@@ -132,6 +137,34 @@ export class ReviewCenterAuthService {
             message: "If an account with that email exists, password reset instructions have been sent.",
         };
     }
+    async verifyResetToken(token) {
+        if (!token) {
+            throw new ApiError(400, "Password reset token is required");
+        }
+        const { payload, expired } = verifyJWT(token);
+        if (expired || !payload) {
+            throw new ApiError(400, "This password reset link has expired (links are valid for 5 minutes). Please request a new one.");
+        }
+        const tokenPayload = payload;
+        if (tokenPayload.type !== "rc_password_reset" &&
+            tokenPayload.type !== "password_reset") {
+            throw new ApiError(400, "Invalid password reset token type");
+        }
+        const user = await this.db.reviewCenterRepresentativeUser.findUnique({
+            where: { id: tokenPayload.id },
+        });
+        if (!user) {
+            throw new ApiError(404, "Review center user account not found");
+        }
+        if (tokenPayload.sig && tokenPayload.sig !== user.password.slice(-12)) {
+            throw new ApiError(400, "This password reset link has already been used. Please request a new reset email.");
+        }
+        return {
+            valid: true,
+            email: user.email,
+            name: user.name,
+        };
+    }
     async resetPassword(data) {
         const parsed = reviewCenterResetPasswordSchema.safeParse(data);
         if (!parsed.success) {
@@ -144,7 +177,7 @@ export class ReviewCenterAuthService {
         }
         const { payload, expired } = verifyJWT(token);
         if (expired || !payload) {
-            throw new ApiError(400, "Invalid or expired password reset token");
+            throw new ApiError(400, "This password reset link has expired (links are valid for 5 minutes). Please request a new one.");
         }
         const tokenPayload = payload;
         if (tokenPayload.type !== "rc_password_reset" &&
@@ -156,6 +189,9 @@ export class ReviewCenterAuthService {
         });
         if (!user) {
             throw new ApiError(404, "Review center user account not found");
+        }
+        if (tokenPayload.sig && tokenPayload.sig !== user.password.slice(-12)) {
+            throw new ApiError(400, "This password reset link has already been used. Please request a new reset email.");
         }
         const hash = await hashedPassword(newPassword);
         await this.db.reviewCenterRepresentativeUser.update({

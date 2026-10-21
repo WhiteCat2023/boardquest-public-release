@@ -6,6 +6,7 @@ import {
   refreshToken,
   forgotPassword,
   resetPassword,
+  verifyResetToken,
   updateProfile,
   firstLoginSetup,
   acceptTerms,
@@ -23,6 +24,7 @@ router.post("/login", authLimiter, login);
 router.post("/logout", logout);
 router.post("/signup", authLimiter, signup);
 router.post("/forgot-password", passwordResetLimiter, forgotPassword);
+router.get("/verify-reset-token", passwordResetLimiter, verifyResetToken);
 router.post("/reset-password", passwordResetLimiter, resetPassword);
 router.post("/first-login-setup", authenticateToken, firstLoginSetup);
 router.post("/accept-terms", authenticateToken, acceptTerms);

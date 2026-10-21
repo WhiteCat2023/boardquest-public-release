@@ -23,10 +23,10 @@ export default function ViewQuestion() {
   const from = location.state?.from || null;
 
   const handleBackNav = () => {
-    if (from) {
-      navigate(from);
-    } else if (window.history.length > 1) {
+    if (window.history.length > 1) {
       navigate(-1);
+    } else if (from) {
+      navigate(from);
     } else {
       navigate("/question-bank");
     }

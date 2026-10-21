@@ -59,7 +59,7 @@ export default function SubjectOverviewTab({
   };
 
   const handlersList = Array.isArray(category?.handlers) && category.handlers.length > 0
-    ? category.handlers
+    ? category.handlers.filter((h: any) => String(h.role || "").toUpperCase() === "TEACHER")
     : [];
 
   const handlersCount = handlersList.length > 0
@@ -100,11 +100,11 @@ export default function SubjectOverviewTab({
           </div>
         </div>
 
-        {/* Curriculum Topics */}
+        {/* Topics */}
         <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-emerald-500/40 transition-all text-left group">
           <div className="space-y-1 min-w-0">
             <span className="text-xs font-semibold text-muted-foreground block truncate">
-              Curriculum Topics
+              Topics
             </span>
             <button
               type="button"
@@ -222,22 +222,27 @@ export default function SubjectOverviewTab({
 
         {/* Assigned Faculty Handlers Card (3 cols) */}
         <Card className="lg:col-span-3 p-4 bg-card border border-border/80 rounded-xl space-y-3 shadow-2xs h-full">
-          <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
-            <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-primary" /> Assigned Handlers
-            </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-2.5 gap-2">
+            <div>
+              <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-primary" /> Assigned Teacher Handlers
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Deans and Team Leads automatically oversee and handle all subjects.
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0">
-                {handlersCount} Member(s)
+                {handlersCount} Teacher(s)
               </Badge>
               {canAssignFaculty && (
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setIsAssignModalOpen(true)}
-                  className="h-7 text-xs font-semibold gap-1 px-2.5 border-primary/30 text-primary hover:bg-primary/10"
+                  className="h-7 text-xs font-semibold gap-1 px-2.5 border-primary/30 text-primary hover:bg-primary/10 cursor-pointer"
                 >
-                  <UserPlus size={13} /> Assign Users
+                  <UserPlus size={13} /> Assign Teachers
                 </Button>
               )}
             </div>
@@ -268,7 +273,7 @@ export default function SubjectOverviewTab({
                           {handler.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                          {handler.email || "User"}
+                          {handler.email || "Teacher"}
                         </p>
                       </div>
                     </div>
@@ -282,17 +287,17 @@ export default function SubjectOverviewTab({
           ) : (
             <div className="py-6 px-4 text-center border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-1.5 bg-muted/20">
               <Users size={26} className="text-muted-foreground/40 stroke-[1.5]" />
-              <p className="text-xs font-bold text-foreground">No Handlers Assigned</p>
+              <p className="text-xs font-bold text-foreground">No Teachers Assigned</p>
               <p className="text-[10px] text-muted-foreground max-w-xs">
-                No specific users are explicitly assigned to this subject category yet.
+                No specific teachers are explicitly assigned to this subject yet. Deans and Team Leads automatically oversee all subjects.
               </p>
               {canAssignFaculty && (
                 <Button
                   size="sm"
                   onClick={() => setIsAssignModalOpen(true)}
-                  className="mt-2 text-xs font-semibold gap-1.5 shadow-2xs"
+                  className="mt-2 text-xs font-semibold gap-1.5 shadow-2xs cursor-pointer"
                 >
-                  <UserPlus size={13} /> Assign Users to Subject
+                  <UserPlus size={13} /> Assign Teachers to Subject
                 </Button>
               )}
             </div>

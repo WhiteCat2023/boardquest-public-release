@@ -1,19 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Lock, Eye, EyeClosed, CheckCircle2, AlertTriangle, ArrowLeft } from "lucide-react";
+import {
+  Lock,
+  Eye,
+  EyeClosed,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 import boardQuestLogo from "@/assets/boardquest.png";
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import { AxiosInstance } from "@/utils/AxiosInstance";
 import { showFeedback } from "@/components/modal";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
-  const axiosPrivate = useAxiosPrivate();
 
+  const [isVerifyingToken, setIsVerifyingToken] = useState<boolean>(Boolean(token));
+  const [tokenError, setTokenError] = useState<string | null>(
+    !token
+      ? "This password reset link is invalid or missing a token. Please request a new reset email."
+      : null,
+  );
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [togglePassword, setTogglePassword] = useState(false);
@@ -21,11 +45,54 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Validate the reset token as soon as the page is accessed
+  useEffect(() => {
+    if (!token) {
+      setIsVerifyingToken(false);
+      setTokenError(
+        "This password reset link is invalid or missing a token. Please request a new reset email.",
+      );
+      return;
+    }
+
+    let isMounted = true;
+    setIsVerifyingToken(true);
+    setTokenError(null);
+
+    AxiosInstance.get("/auth/verify-reset-token", {
+      params: { token },
+    })
+      .then(() => {
+        if (isMounted) {
+          setIsVerifyingToken(false);
+          setTokenError(null);
+        }
+      })
+      .catch((err: any) => {
+        if (isMounted) {
+          const message =
+            err.response?.data?.message ||
+            "This password reset link is invalid, has expired (5-minute limit), or has already been used.";
+          setTokenError(message);
+          setIsVerifyingToken(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!token) {
       showFeedback.error("Invalid or missing password reset token.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showFeedback.error("Password must be at least 6 characters long.");
       return;
     }
 
@@ -36,7 +103,7 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await axiosPrivate.post("/auth/reset-password", {
+      await AxiosInstance.post("/auth/reset-password", {
         token,
         newPassword,
         confirmPassword,
@@ -44,7 +111,17 @@ export default function ResetPasswordPage() {
       setIsSuccess(true);
       showFeedback.success("Password reset successful!");
     } catch (err: any) {
-      showFeedback.error(err.response?.data?.message || "Failed to reset password. Link may be expired.");
+      const errorMsg =
+        err.response?.data?.message ||
+        "Failed to reset password. The link may have expired or was already used.";
+      showFeedback.error(errorMsg);
+      if (
+        errorMsg.toLowerCase().includes("expired") ||
+        errorMsg.toLowerCase().includes("already") ||
+        errorMsg.toLowerCase().includes("invalid")
+      ) {
+        setTokenError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -62,28 +139,52 @@ export default function ResetPasswordPage() {
           />
         </div>
 
-        {/* Missing / Invalid Token State */}
-        {!token ? (
-          <div className="flex flex-col items-center text-center space-y-4 w-full animate-in fade-in duration-300">
-            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20">
-              <AlertTriangle size={32} />
+        {/* 1. Verifying Token State */}
+        {isVerifyingToken ? (
+          <div className="flex flex-col items-center text-center space-y-4 py-8 animate-in fade-in duration-300">
+            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+              <Loader2 className="size-7 animate-spin" />
             </div>
-            <h2 className="text-lg font-extrabold text-foreground">
-              INVALID <span className="text-primary">RESET LINK</span>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-foreground">
+              Verifying <span className="text-primary">Reset Link</span>
             </h2>
-            <p className="text-xs font-bold text-muted-foreground max-w-[280px] leading-relaxed">
-              This password reset link is invalid or missing a token. Please request a new reset email.
+            <p className="text-xs font-medium text-muted-foreground max-w-[280px] leading-relaxed">
+              Validating your security link. Please wait a moment...
+            </p>
+          </div>
+        ) : tokenError ? (
+          /* 2. Token Error State (Missing, Expired > 5m, or Already Used) */
+          <div className="flex flex-col items-center text-center space-y-4 w-full animate-in fade-in duration-300">
+            <div className="w-14 h-14 bg-destructive/10 rounded-full flex items-center justify-center text-destructive border border-destructive/20">
+              <AlertTriangle size={30} />
+            </div>
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+              LINK EXPIRED OR <span className="text-destructive">INVALID</span>
+            </h2>
+            <p className="text-xs font-semibold text-muted-foreground max-w-[300px] leading-relaxed">
+              {tokenError}
             </p>
 
-            <Button
-              onClick={() => navigate("/forgot-password")}
-              className="w-full mt-4 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer shadow-xs"
-            >
-              REQUEST NEW LINK
-            </Button>
+            <div className="w-full space-y-2.5 pt-2">
+              <Button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="w-full bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer shadow-xs"
+              >
+                REQUEST NEW LINK
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/login")}
+                className="w-full rounded-xl font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer"
+              >
+                BACK TO LOG IN
+              </Button>
+            </div>
           </div>
         ) : isSuccess ? (
-          /* Success State */
+          /* 3. Password Successfully Reset State */
           <div className="flex flex-col items-center text-center space-y-4 w-full animate-in fade-in duration-300">
             <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20">
               <CheckCircle2 size={32} />
@@ -96,6 +197,7 @@ export default function ResetPasswordPage() {
             </p>
 
             <Button
+              type="button"
               onClick={() => navigate("/login")}
               className="w-full mt-4 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold uppercase tracking-wider text-xs py-3.5 cursor-pointer shadow-xs"
             >
@@ -103,7 +205,7 @@ export default function ResetPasswordPage() {
             </Button>
           </div>
         ) : (
-          /* Form Section */
+          /* 4. Active Reset Password Form */
           <form onSubmit={handleSubmit} className="w-full space-y-5">
             <FieldGroup>
               <FieldSet className="text-center mb-8">
@@ -209,3 +311,4 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+

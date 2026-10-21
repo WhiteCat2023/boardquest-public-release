@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type LoginRequest } from "@/types/types";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { Mail, Lock, EyeClosed, Eye, UserX, ShieldAlert } from "lucide-react";
 import boardQuestLogo from "@/assets/boardquest.png";
@@ -31,7 +31,19 @@ import {
 } from "@/components/ui/alert-dialog";
 
 function LoginPage() {
-  const { login, loginMutation } = useAuth();
+  const { auth, login, loginMutation } = useAuth();
+  const currentUser = auth?.data?.user || auth?.user;
+  const isAuthenticated = Boolean(
+    currentUser?.id ||
+      (currentUser as any)?._id ||
+      (auth as any)?.id ||
+      auth?.accessToken,
+  );
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
   const [loginInputs, setLoginInputs] = useState<LoginRequest>({
     email: "",
     password: "",

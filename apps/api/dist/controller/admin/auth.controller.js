@@ -194,6 +194,11 @@ export const resetPassword = asyncHandler(async (req, res) => {
     const result = await authService.resetPassword(req.body);
     return new ApiResponse(200, result, "Password has been successfully reset").send(res);
 });
+export const verifyResetToken = asyncHandler(async (req, res) => {
+    const token = req.query.token || req.body.token;
+    const result = await authService.verifyResetToken(token);
+    return new ApiResponse(200, result, "Reset token is valid").send(res);
+});
 export const updateProfile = asyncHandler(async (req, res) => {
     let token = req.cookies?.accessToken || req.cookies?.token;
     if (!token) {

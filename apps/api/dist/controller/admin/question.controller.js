@@ -70,7 +70,7 @@ export const getQuestions = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(401, "Authentication required");
     }
-    const { search, difficulty, category, type, status, cursor, limit, authorId, isPublished, } = req.query;
+    const { search, difficulty, category, type, status, cursor, limit, authorId, isPublished, topic, } = req.query;
     const limitNum = limit === "all" || limit === "0"
         ? undefined
         : limit
@@ -98,11 +98,12 @@ export const getQuestions = asyncHandler(async (req, res) => {
         category ||
         type ||
         status ||
+        topic ||
         isPublishedBool !== undefined ||
         authorIdFilter);
     let result;
     if (hasFilter) {
-        result = await QuestionService.getFilteredQuestions(search, difficulty, category, type, status, cursor, limitNum, authorIdFilter, isPublishedBool, undefined, user.handledCategoryIds, user.role);
+        result = await QuestionService.getFilteredQuestions(search, difficulty, category, type, status, cursor, limitNum, authorIdFilter, isPublishedBool, undefined, user.handledCategoryIds, user.role, topic);
     }
     else {
         result = await QuestionService.getAllQuestions(cursor, limitNum, authorIdFilter);

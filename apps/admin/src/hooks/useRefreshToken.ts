@@ -41,7 +41,7 @@ const useRefreshToken = () => {
         }));
 
         return accessToken || null;
-      } catch (err) {
+      } catch {
         setAuth({});
         try {
           localStorage.removeItem("bq_auth_session");

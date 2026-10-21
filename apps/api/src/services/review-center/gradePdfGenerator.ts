@@ -1,3 +1,27 @@
+import fs from "fs";
+import path from "path";
+
+function getBase64Asset(relativePath: string, mime: string): string {
+  try {
+    const candidates = [
+      path.resolve(__dirname, "../../assets", relativePath),
+      path.resolve(process.cwd(), "src/assets", relativePath),
+      path.resolve(process.cwd(), "apps/api/src/assets", relativePath),
+      path.resolve(process.cwd(), "../admin/src/assets", relativePath),
+      path.resolve(process.cwd(), "apps/admin/src/assets", relativePath),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const buf = fs.readFileSync(p);
+        return `data:${mime};base64,${buf.toString("base64")}`;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load asset for grade report:", relativePath, e);
+  }
+  return "";
+}
+
 /**
  * Grade Report & Certificate HTML/PDF generator for Review Center Students.
  */
@@ -53,6 +77,9 @@ export function generateStudentGradeReportHtml(data: StudentGradeReportData): st
     ? data.modeScore.join(", ")
     : "N/A (Uniform)";
 
+  const medtechLogo = getBase64Asset("medtech_logo.jpg", "image/jpeg");
+  const swuLogo = getBase64Asset("swu-logo.png", "image/png");
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,11 +125,17 @@ export function generateStudentGradeReportHtml(data: StudentGradeReportData): st
 <body>
   <div class="report-card">
     <div class="header">
-      <div>
-        <div class="brand-title">${escapeHtml(data.companyName)}</div>
-        <div class="brand-subtitle">Official Student Assessment & Performance Report</div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        ${medtechLogo ? `<img src="${medtechLogo}" alt="MedTech Logo" style="height: 52px; width: auto; max-width: 60px; object-fit: contain; border-radius: 6px; background: #ffffff; padding: 2px;" />` : ""}
+        <div>
+          <div class="brand-title">${escapeHtml(data.companyName)}</div>
+          <div class="brand-subtitle">Official Student Assessment & Performance Report</div>
+        </div>
       </div>
-      <div class="doc-badge">Official Grade Slip</div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div class="doc-badge">Official Grade Slip</div>
+        ${swuLogo ? `<img src="${swuLogo}" alt="SWU Logo" style="height: 52px; width: auto; max-width: 60px; object-fit: contain; border-radius: 4px;" />` : ""}
+      </div>
     </div>
 
     <div class="grid-2">

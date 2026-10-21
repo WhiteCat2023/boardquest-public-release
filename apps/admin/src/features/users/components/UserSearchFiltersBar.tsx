@@ -1,13 +1,6 @@
 import { Search, X, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { RoleType } from "@/features/users/types/types";
 import { getManagedRolesForFilter } from "@/features/users/utils/userUtils";
 
@@ -73,50 +66,18 @@ export default function UserSearchFiltersBar({
         )}
       </div>
 
-      {/* Filter Dropdowns */}
-      <div className="flex flex-wrap items-center gap-2 shrink-0">
-        {/* Role Filter */}
-        {showRoleFilter && (
-          <Select value={selectedRole} onValueChange={onRoleChange}>
-            <SelectTrigger className="h-8.5 w-full sm:w-[125px] flex-1 sm:flex-initial bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectItem value="ALL">All Roles</SelectItem>
-              {roleFilterOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {/* Status Filter */}
-        <Select value={selectedStatus} onValueChange={onStatusChange}>
-          <SelectTrigger className="h-8.5 w-full sm:w-[130px] flex-1 sm:flex-initial bg-muted/30 border-border rounded-lg text-[11px] font-semibold text-foreground">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="ALL">All Statuses</SelectItem>
-            <SelectItem value="ACTIVE">Active Accounts</SelectItem>
-            <SelectItem value="DEACTIVATED">Deactivated</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Reset Filters */}
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onResetFilters}
-            className="h-8.5 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer px-2.5"
-          >
-            <RotateCcw size={12} />
-            Reset
-          </Button>
-        )}
-      </div>
+      {/* Reset Filters */}
+      {hasActiveFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onResetFilters}
+          className="h-8.5 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer px-2.5 shrink-0"
+        >
+          <RotateCcw size={12} />
+          Reset Filters
+        </Button>
+      )}
     </div>
   );
 }

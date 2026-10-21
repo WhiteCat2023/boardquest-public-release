@@ -1,8 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
-import { RequireAuth } from "@/features/auth";
-import { PersistentSession } from "@/features/auth";
+import { RequireAuth, PersistentSession, RedirectIfAuthenticated } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
 import { GlobalModalContainer } from "@/components/modal";
 import { UserRole } from "@/types/question";
@@ -160,10 +159,12 @@ function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            {/* public routes */}
-            <Route path="login" element={<LoginPage />} />
-            <Route path="forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="reset-password" element={<ResetPasswordPage />} />
+            {/* public / guest routes */}
+            <Route element={<RedirectIfAuthenticated />}>
+              <Route path="login" element={<LoginPage />} />
+              <Route path="forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="reset-password" element={<ResetPasswordPage />} />
+            </Route>
 
             {/* private routes */}
             <Route element={<PersistentSession />}>

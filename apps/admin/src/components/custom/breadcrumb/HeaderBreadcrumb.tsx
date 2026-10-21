@@ -16,6 +16,9 @@ import useAuth from "@/hooks/useAuth";
 import { Home } from "lucide-react";
 
 const formatSegment = (segment: string) => {
+  if (segment.toLowerCase() === "question-bank") {
+    return "All Questions";
+  }
   if (segment.toLowerCase() === "analytics") {
     return "Performance";
   }
@@ -142,6 +145,26 @@ export default function HeaderBreadcrumb() {
         pathSegments[0] === "subject-management") &&
       seg === "view" &&
       index === 1
+    ) {
+      return false;
+    }
+    // Skip 'shared-library' or 'bank' when under 'question-bank' to avoid duplicate 'All Questions > All Questions'
+    if (
+      pathSegments[0] === "question-bank" &&
+      (seg === "shared-library" || seg === "bank") &&
+      index === 1
+    ) {
+      return false;
+    }
+    // Omit 'question-bank' prefix for peer top-level pages (review-questions, my-questions, encoding-tracker)
+    if (
+      pathSegments[0] === "question-bank" &&
+      index === 0 &&
+      (pathSegments[1] === "review-questions" ||
+        pathSegments[1] === "review" ||
+        pathSegments[1] === "encoding-tracker" ||
+        pathSegments[1] === "tracker" ||
+        pathSegments[1] === "my-questions")
     ) {
       return false;
     }

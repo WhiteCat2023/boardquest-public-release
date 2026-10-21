@@ -31,6 +31,7 @@ import {
 import {
   getEncodingTrackerOverview,
   upsertQuotaAssignment,
+  upsertSubjectQuota,
   sendTeacherNudge,
   sendBulkTeacherNudges,
   getMyEncodingProgress,
@@ -87,6 +88,12 @@ router.post(
   authenticateToken,
   requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
   upsertQuotaAssignment,
+);
+router.post(
+  "/encoding-tracker/quota-subject",
+  authenticateToken,
+  requireRoles(["SUPERADMIN", "DEAN", "TEAMLEAD"]),
+  upsertSubjectQuota,
 );
 router.post(
   "/encoding-tracker/nudge",
@@ -229,6 +236,7 @@ router.delete(
 // Topic CMS routes
 const topicRoles = ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"];
 
+router.get("/topics", authenticateToken, getTopicsBySubject);
 router.get("/category/:categoryId/topics", authenticateToken, getTopicsBySubject);
 router.get("/subject/:subjectId/topics", authenticateToken, getTopicsBySubject);
 

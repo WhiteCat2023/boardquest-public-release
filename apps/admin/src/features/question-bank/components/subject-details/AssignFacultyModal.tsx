@@ -37,11 +37,15 @@ export function AssignFacultyModal({
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
 
-  const { data: facultyData, isLoading } = useUsers({ search: searchTerm });
+  const { data: facultyData, isLoading } = useUsers({
+    role: "TEACHER",
+    search: searchTerm,
+    limit: 200,
+  });
   const rawFaculties = facultyData?.faculties || [];
   const faculties = rawFaculties.filter((f) => {
     const roleStr = String(f.role || "").toUpperCase();
-    return roleStr !== "REVIEWCENTER" && roleStr !== "EXTERNAL";
+    return roleStr === "TEACHER";
   });
 
   useEffect(() => {
@@ -157,6 +161,7 @@ export function AssignFacultyModal({
       queryClient.invalidateQueries({ queryKey: ["category", categoryId] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["faculties"] });
+      queryClient.invalidateQueries({ queryKey: ["encodingTrackerOverview"] });
     },
   });
 
@@ -175,8 +180,8 @@ export function AssignFacultyModal({
             Handlers
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Select users authorized to manage questions and modules for{" "}
-            <strong className="text-foreground">{categoryName}</strong>.
+            Select teacher faculty members authorized to handle questions and modules for{" "}
+            <strong className="text-foreground">{categoryName}</strong>. Deans and Team Leads automatically handle all subjects.
           </DialogDescription>
         </DialogHeader>
 
@@ -185,7 +190,7 @@ export function AssignFacultyModal({
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search users by name, email, or role..."
+              placeholder="Search teachers by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8 h-8 text-xs"
@@ -194,7 +199,7 @@ export function AssignFacultyModal({
 
           {/* Selected count info */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span>Users</span>
+            <span>Teachers</span>
             <span className="font-semibold text-primary">
               {selectedIds.length} Selected
             </span>
@@ -205,12 +210,12 @@ export function AssignFacultyModal({
             {isLoading ? (
               <div className="p-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />{" "}
-                Loading users roster...
+                Loading teachers roster...
               </div>
             ) : filteredFaculties.length === 0 ? (
               <div className="p-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-1">
                 <Users className="w-6 h-6 text-muted-foreground/40" />
-                <p>No users found matching your search.</p>
+                <p>No teachers found matching your search.</p>
               </div>
             ) : (
               filteredFaculties.map((faculty) => {

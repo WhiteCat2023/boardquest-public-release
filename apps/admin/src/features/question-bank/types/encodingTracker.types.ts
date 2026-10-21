@@ -1,6 +1,7 @@
 export type EncodingStatus =
   | "NOT_STARTED"
   | "IN_PROGRESS"
+  | "IN_REVIEW"
   | "COMPLETED"
   | "OVERDUE";
 
@@ -30,13 +31,22 @@ export interface EncodingQualityBreakdown {
 export interface FacultyTrackItem {
   id: string;
   assignmentId: string | null;
+  title?: string | null;
+  term?: string;
+  allowOverQuota?: boolean;
+  completedAt?: string | null;
   teacher: FacultyTeacherInfo;
   subject: FacultySubjectInfo;
   schoolYear: string;
   targetCount: number;
   encodedCount: number;
+  approvedCount?: number;
+  pendingReviewCount?: number;
+  pendingRevisionCount?: number;
+  pendingCount?: number;
   remainingCount: number;
   progressPercentage: number;
+  approvedPercentage?: number;
   breakdown: EncodingQualityBreakdown;
   deadline: string | null;
   isPastDeadline: boolean;
@@ -54,6 +64,7 @@ export interface EncodingTrackerKPIs {
   totalFaculty: number;
   totalAssignments: number;
   completedCount: number;
+  inReviewCount?: number;
   inProgressCount: number;
   notStartedCount: number;
   overdueCount: number;
@@ -61,6 +72,7 @@ export interface EncodingTrackerKPIs {
   totalEncodedQuestions: number;
   totalApprovedQuestions: number;
   overallCompletionRate: number;
+  overallSubmissionRate?: number;
 }
 
 export interface TrackerOverviewResponse {
@@ -71,10 +83,20 @@ export interface TrackerOverviewResponse {
 
 export interface TeacherGoalProgress {
   subject: FacultySubjectInfo;
+  assignmentId?: string | null;
+  title?: string | null;
+  term?: string;
+  allowOverQuota?: boolean;
+  completedAt?: string | null;
   targetCount: number;
   encodedCount: number;
+  approvedCount?: number;
+  pendingReviewCount?: number;
+  pendingRevisionCount?: number;
+  pendingCount?: number;
   remainingCount: number;
   progressPercentage: number;
+  approvedPercentage?: number;
   breakdown: EncodingQualityBreakdown;
   deadline: string | null;
   isPastDeadline: boolean;
@@ -89,6 +111,35 @@ export interface MyProgressResponse {
     totalApproved: number;
     remainingCount: number;
     progressPercentage: number;
+    approvedPercentage?: number;
   };
   goals: TeacherGoalProgress[];
+}
+
+export type TrackerViewMode = "teacher" | "subject";
+
+export interface TeacherQuotaAllocation {
+  teacherId: string;
+  targetCount: number;
+}
+
+export interface SubjectTrackItem {
+  id: string;
+  subject: FacultySubjectInfo;
+  assignedTeachers: FacultyTrackItem[];
+  teacherCount: number;
+  targetCount: number;
+  encodedCount: number;
+  approvedCount?: number;
+  remainingCount: number;
+  progressPercentage: number;
+  approvedPercentage?: number;
+  breakdown: EncodingQualityBreakdown;
+  status: EncodingStatus;
+  earliestDeadline: string | null;
+  hasOverdueTeacher: boolean;
+  schoolYear: string;
+  term?: string;
+  title?: string | null;
+  allowOverQuota?: boolean;
 }

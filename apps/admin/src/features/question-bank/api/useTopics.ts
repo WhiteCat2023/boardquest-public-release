@@ -23,20 +23,19 @@ export interface UpdateTopicInput {
   description?: string;
 }
 
-export function useTopics(categoryId: string | null | undefined) {
+export function useTopics(categoryId?: string | null | undefined) {
   const axiosPrivate = useAxiosPrivate();
+  const effectiveId = categoryId && categoryId !== "ALL" ? categoryId : "ALL";
 
   return useQuery({
-    queryKey: ["topics", categoryId],
+    queryKey: ["topics", effectiveId],
     queryFn: async () => {
-      if (!categoryId) return [];
       const response = await axiosPrivate.get(
-        `/questions/category/${categoryId}/topics`
+        `/questions/category/${effectiveId}/topics`
       );
       const data = response.data?.data?.topics ?? response.data?.topics ?? [];
       return data as Topic[];
     },
-    enabled: Boolean(categoryId),
     staleTime: 1000 * 60 * 3, // 3 minutes
   });
 }

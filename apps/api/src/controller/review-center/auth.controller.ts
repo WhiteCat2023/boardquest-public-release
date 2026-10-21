@@ -184,6 +184,18 @@ export const reviewCenterResetPassword = asyncHandler(
   },
 );
 
+export const reviewCenterVerifyResetToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const token = (req.query.token as string) || (req.body.token as string);
+    const result = await reviewCenterAuthService.verifyResetToken(token);
+    return new ApiResponse(
+      200,
+      result,
+      "Reset token is valid",
+    ).send(res);
+  },
+);
+
 export const updateReviewCenterProfile = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;

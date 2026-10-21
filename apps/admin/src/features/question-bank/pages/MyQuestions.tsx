@@ -6,12 +6,7 @@ import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
 import { useSubjectNavCategories } from "../api/useSubjectNavCategories";
 import { useQuestionBank } from "../api/useQuestionBank";
 import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
-import {
-  FileQuestion,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { FileQuestion, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import {
   SubjectNavSidebar,
   MobileSubjectSelector,
@@ -30,6 +25,7 @@ export default function MyQuestions() {
     search,
     selectedCategory,
     setSelectedCategory,
+    selectedTopic,
     selectedDifficulty,
     selectedType,
     selectedStatus,
@@ -116,6 +112,7 @@ export default function MyQuestions() {
   const filters: any = {
     search,
     category: categoryParam,
+    topic: selectedTopic && selectedTopic !== "ALL" ? selectedTopic : undefined,
     difficulty: selectedDifficulty,
     type: selectedType,
     status:

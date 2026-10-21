@@ -1,4 +1,4 @@
-import { IdCard, User, Mail, Phone, BookOpen, Check, Shield } from "lucide-react";
+import { IdCard, User, Mail, Phone, BookOpen, Check, Shield, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -167,7 +167,7 @@ export default function UserProfileForm({
               const roleVal = (Number(val) || val) as RoleType;
               onChange("role", roleVal);
               const roleStr = String(roleVal).toUpperCase();
-              if (roleStr === "REVIEWCENTER" || roleStr === "EXTERNAL") {
+              if (roleStr !== "TEACHER") {
                 onCategoryChange([]);
               }
             }}
@@ -189,11 +189,8 @@ export default function UserProfileForm({
           </Select>
         </div>
 
-        {/* Handled Subjects / Categories - Internal Faculty Only */}
-        {!(
-          String(formData.role).toUpperCase() === "REVIEWCENTER" ||
-          String(formData.role).toUpperCase() === "EXTERNAL"
-        ) && (
+        {/* Handled Subjects / Categories - Teacher Roles Only */}
+        {String(formData.role).toUpperCase() === "TEACHER" ? (
           <div className="flex flex-col gap-2 md:col-span-3 pt-3 border-t border-border/60">
             <div className="flex items-center justify-between">
               <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -201,7 +198,7 @@ export default function UserProfileForm({
                 Handled Subjects / Categories
               </Label>
               <span className="text-[11px] text-muted-foreground">
-                Select all subject domains managed by this user
+                Select all subject domains managed by this teacher
               </span>
             </div>
 
@@ -240,6 +237,23 @@ export default function UserProfileForm({
               </div>
             )}
           </div>
+        ) : (
+          (String(formData.role).toUpperCase() === "DEAN" ||
+            String(formData.role).toUpperCase() === "TEAMLEAD") && (
+            <div className="md:col-span-3 pt-3 border-t border-border/60">
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground">
+                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                <span>
+                  <strong className="text-foreground">
+                    {String(formData.role).toUpperCase() === "DEAN"
+                      ? "Dean"
+                      : "Team Lead"}
+                  </strong>{" "}
+                  accounts automatically oversee and handle all subjects across the system.
+                </span>
+              </div>
+            </div>
+          )
         )}
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AddUserHeader from "../components/AddUserHeader";
 import AddIndividualUserTab from "../components/AddIndividualUserTab";
@@ -12,26 +11,34 @@ export default function AddUser() {
   // Account Category: "internal" | "external"
   const typeParam = searchParams.get("type");
   const tabParam = searchParams.get("tab");
-  const initialCategory =
+  const accountCategory: "internal" | "external" =
     tabParam === "external" || typeParam === "external"
       ? "external"
       : "internal";
-  const [accountCategory, setAccountCategory] = useState<
-    "internal" | "external"
-  >(initialCategory);
 
   // Sub-tab: "individual" | "bulk"
-  const initialTab = tabParam === "bulk" ? "bulk" : "individual";
-  const [activeTab, setActiveTab] = useState<"individual" | "bulk">(initialTab);
+  const activeTab: "individual" | "bulk" = tabParam === "bulk" ? "bulk" : "individual";
 
   const handleCategoryChange = (cat: "internal" | "external") => {
-    setAccountCategory(cat);
-    setSearchParams({ type: cat, tab: activeTab });
+    if (cat === accountCategory) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (cat === "internal") {
+      newParams.delete("type");
+    } else {
+      newParams.set("type", cat);
+    }
+    setSearchParams(newParams);
   };
 
   const handleTabChange = (tab: "individual" | "bulk") => {
-    setActiveTab(tab);
-    setSearchParams({ type: accountCategory, tab });
+    if (tab === activeTab) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === "individual") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", tab);
+    }
+    setSearchParams(newParams);
   };
 
   const handleSuccess = () => {

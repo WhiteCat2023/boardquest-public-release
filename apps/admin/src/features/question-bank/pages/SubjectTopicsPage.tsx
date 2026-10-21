@@ -201,7 +201,7 @@ export default function SubjectTopicsPage() {
   const deleteTopicMutation = useDeleteTopic(categoryId);
 
   // Store for Question Bank redirection
-  const { setSelectedCategory, setSearch } = useQuestionBankFilterStore();
+  const { setSelectedCategory, setSelectedTopic, setSearch } = useQuestionBankFilterStore();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState("");
@@ -417,7 +417,8 @@ export default function SubjectTopicsPage() {
     if (categoryId) {
       setSelectedCategory(categoryId);
     }
-    setSearch(topicName);
+    setSelectedTopic(topicName);
+    setSearch("");
     navigate("/question-bank");
   };
 
@@ -455,7 +456,11 @@ export default function SubjectTopicsPage() {
         topicsCount={topics.length}
         onTabChange={handleTabChange}
         onOpenEditSubject={handleOpenEditSubject}
-        onBackNav={() => navigate("/subject-management")}
+        onBackNav={() =>
+          window.history.length > 1
+            ? navigate(-1)
+            : navigate(`/subject-management/${categoryId}`)
+        }
       />
 
       {/* Main Content Area */}
@@ -471,7 +476,7 @@ export default function SubjectTopicsPage() {
             <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-emerald-500/40 transition-all text-left">
               <div className="space-y-1 min-w-0">
                 <span className="text-xs font-semibold text-muted-foreground block truncate">
-                  Total Curriculum Topics
+                  Total Topics
                 </span>
                 <p className="text-2xl font-extrabold text-foreground tracking-tight">
                   {totalTopicsCount}

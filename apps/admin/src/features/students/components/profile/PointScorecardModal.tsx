@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Printer, GraduationCap, Award, FileText } from "lucide-react";
 import type { SubjectMetricItem } from "../../types/types";
+import swuLogoDefault from "@/assets/swu-logo.png";
+import medtechLogoDefault from "@/assets/medtech_logo.jpg";
 
 interface PointScorecardModalProps {
   open: boolean;
@@ -87,6 +89,16 @@ export function PointScorecardModal({
       year: "numeric",
     });
 
+    const resolveAssetUrl = (url?: string) => {
+      if (!url) return "";
+      if (typeof window !== "undefined" && url.startsWith("/")) {
+        return `${window.location.origin}${url}`;
+      }
+      return url;
+    };
+    const swuLogo = resolveAssetUrl(swuLogoDefault);
+    const medtechLogo = resolveAssetUrl(medtechLogoDefault);
+
     doc.write(`
       <!DOCTYPE html>
       <html>
@@ -115,9 +127,19 @@ export function PointScorecardModal({
       </head>
       <body>
         <div class="banner">
-          <div class="banner-sub">BoardQuest Academic Analytics & Licensure System</div>
-          <div class="banner-title">Official Candidate Performance Scorecard</div>
-          <div class="banner-desc">Comprehensive Medical Technology Licensure Examination evaluation record.</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px;">
+            <div style="flex-shrink: 0;">
+              <img src="${medtechLogo}" alt="Medical Technology Department" style="height: 54px; width: auto; max-width: 64px; object-fit: contain; border-radius: 6px; background: #ffffff; padding: 2px; display: block;" />
+            </div>
+            <div style="flex: 1; text-align: center;">
+              <div class="banner-sub">BoardQuest Academic Analytics & Licensure System</div>
+              <div class="banner-title">Official Candidate Performance Scorecard</div>
+              <div class="banner-desc">Comprehensive Medical Technology Licensure Examination evaluation record.</div>
+            </div>
+            <div style="flex-shrink: 0;">
+              <img src="${swuLogo}" alt="Southwestern University PHINMA" style="height: 54px; width: auto; max-width: 64px; object-fit: contain; border-radius: 4px; display: block;" />
+            </div>
+          </div>
           <div class="meta-grid">
             <div><span class="meta-label">Aspirant Name</span><span class="meta-val">${studentName}</span></div>
             <div><span class="meta-label">Student Email</span><span class="meta-val">${studentEmail || "Verified"}</span></div>

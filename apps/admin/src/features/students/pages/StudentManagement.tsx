@@ -12,13 +12,6 @@ import {
 import { showFeedback } from "@/components/modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useStudents } from "@/features/students";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import StudentHeader from "../components/StudentHeader";
@@ -27,7 +20,7 @@ import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
 import AssignGuidanceModal from "../components/AssignGuidanceModal";
 import EmailStudentModal from "../components/EmailStudentModal";
 import { DataTablePagination } from "@/components/custom/pagination";
-import { StandardNavTabs, SecondaryNavTabs } from "@/components/custom/tabs";
+import { StandardNavTabs } from "@/components/custom/tabs";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -35,9 +28,15 @@ export default function StudentManagement() {
   const { isTeacher, isAdminOrSuperAdmin, isTeamLead, currentUser } = useRoleFlags();
   const canAssignGuidance = isAdminOrSuperAdmin || isTeamLead;
 
-  const [activeTab, setActiveTab] = useState<"DIRECTORY" | "GUIDANCE">(
-    "DIRECTORY",
-  );
+  type StudentTab =
+    | "ALL"
+    | "MY_ADVISEES"
+    | "FAILING"
+    | "BEHIND"
+    | "DORMANT"
+    | "GUIDANCE";
+
+  const [activeTab, setActiveTab] = useState<StudentTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPaceStatus, setSelectedPaceStatus] = useState<string>("ALL");
   const [selectedEngagement, setSelectedEngagement] = useState<string>("ALL");
@@ -153,6 +152,7 @@ export default function StudentManagement() {
     setSelectedAcademicStanding("ALL");
     setFilterMyAdviseesOnly(false);
     setSelectedStudentIds([]);
+    setActiveTab("ALL");
     resetPagination();
   };
 
@@ -163,21 +163,64 @@ export default function StudentManagement() {
     selectedAcademicStanding !== "ALL" ||
     filterMyAdviseesOnly;
 
-  const activePill =
-    filterMyAdviseesOnly
-      ? "MY_ADVISEES"
-      : selectedAcademicStanding === "FAILING"
-        ? "FAILING"
-        : selectedPaceStatus === "BEHIND"
-          ? "BEHIND"
-          : selectedEngagement === "DORMANT"
-            ? "DORMANT"
-            : selectedAcademicStanding === "ALL" &&
-                selectedPaceStatus === "ALL" &&
-                selectedEngagement === "ALL" &&
-                searchTerm === ""
-              ? "ALL"
-              : "CUSTOM";
+  const handleTabChange = (tabId: string) => {
+    const tab = tabId as StudentTab;
+    setActiveTab(tab);
+    if (tab === "GUIDANCE") {
+      return;
+    }
+    if (tab === "ALL") {
+      setSelectedAcademicStanding("ALL");
+      setSelectedPaceStatus("ALL");
+      setSelectedEngagement("ALL");
+      setFilterMyAdviseesOnly(false);
+    } else if (tab === "MY_ADVISEES") {
+      setSelectedAcademicStanding("ALL");
+      setSelectedPaceStatus("ALL");
+      setSelectedEngagement("ALL");
+      setFilterMyAdviseesOnly(true);
+    } else if (tab === "FAILING") {
+      setSelectedAcademicStanding("FAILING");
+      setSelectedPaceStatus("ALL");
+      setSelectedEngagement("ALL");
+      setFilterMyAdviseesOnly(false);
+    } else if (tab === "BEHIND") {
+      setSelectedPaceStatus("BEHIND");
+      setSelectedAcademicStanding("ALL");
+      setSelectedEngagement("ALL");
+      setFilterMyAdviseesOnly(false);
+    } else if (tab === "DORMANT") {
+      setSelectedEngagement("DORMANT");
+      setSelectedAcademicStanding("ALL");
+      setSelectedPaceStatus("ALL");
+      setFilterMyAdviseesOnly(false);
+    }
+    resetPagination();
+  };
+
+  const activeTabId: string =
+    activeTab === "GUIDANCE"
+      ? "GUIDANCE"
+      : filterMyAdviseesOnly
+        ? "MY_ADVISEES"
+        : selectedAcademicStanding === "FAILING" &&
+            selectedPaceStatus === "ALL" &&
+            selectedEngagement === "ALL"
+          ? "FAILING"
+          : selectedPaceStatus === "BEHIND" &&
+              selectedAcademicStanding === "ALL" &&
+              selectedEngagement === "ALL"
+            ? "BEHIND"
+            : selectedEngagement === "DORMANT" &&
+                selectedAcademicStanding === "ALL" &&
+                selectedPaceStatus === "ALL"
+              ? "DORMANT"
+              : selectedAcademicStanding === "ALL" &&
+                  selectedPaceStatus === "ALL" &&
+                  selectedEngagement === "ALL" &&
+                  !filterMyAdviseesOnly
+                ? "ALL"
+                : activeTab;
 
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-6 pb-20 w-full font-sans bg-background text-foreground">
@@ -201,101 +244,65 @@ export default function StudentManagement() {
         currentEngagement={selectedEngagement}
       />
 
-      {/* 2. Top Tabs: Student Roster vs Academic Guidance Desk */}
+      {/* 2. Unified Primary Navigation Tabs */}
       <StandardNavTabs
         tabs={[
           {
-            id: "DIRECTORY",
-            label: filterMyAdviseesOnly ? "My Advisees" : "Student Roster",
-            icon: filterMyAdviseesOnly ? Users : GraduationCap,
-            badgeCount: total,
+            id: "ALL",
+            label: "All Students",
+            icon: GraduationCap,
+            badgeCount: activeTabId === "ALL" ? total : undefined,
+          },
+          ...(isTeacher
+            ? [
+                {
+                  id: "MY_ADVISEES",
+                  label: "My Advisees",
+                  icon: Users,
+                  tone: "primary" as const,
+                  badgeCount: activeTabId === "MY_ADVISEES" ? total : undefined,
+                },
+              ]
+            : []),
+          {
+            id: "FAILING",
+            label: "At-Risk & Failing",
+            icon: AlertTriangle,
+            tone: "danger" as const,
+            badgeCount: activeTabId === "FAILING" ? total : undefined,
+          },
+          {
+            id: "BEHIND",
+            label: "Behind Schedule",
+            icon: Clock,
+            tone: "warning" as const,
+            badgeCount: activeTabId === "BEHIND" ? total : undefined,
+          },
+          {
+            id: "DORMANT",
+            label: "Dormant",
+            tone: "neutral" as const,
+            badgeCount: activeTabId === "DORMANT" ? total : undefined,
           },
           {
             id: "GUIDANCE",
             label: "Academic Guidance Desk",
             icon: UserCheck,
+            tone: "primary" as const,
           },
         ]}
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab as "DIRECTORY" | "GUIDANCE");
-          if (tab === "DIRECTORY") {
-            resetPagination();
-          }
-        }}
+        activeTab={activeTabId}
+        onTabChange={handleTabChange}
         rightContent={
           <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <span>Total Registered:</span>
+            <span>{activeTabId === "ALL" ? "Total Registered:" : "Students Found:"}</span>
             <span className="text-foreground font-bold">{total}</span>
           </div>
         }
       />
 
-      {activeTab === "DIRECTORY" ? (
+      {activeTabId !== "GUIDANCE" ? (
         <>
-          {/* Triage Quick Filter Secondary Navigation Tabs */}
-          <SecondaryNavTabs
-            tabs={[
-              { id: "ALL", label: "All Students", tone: "default" },
-              ...(isTeacher
-                ? [
-                    {
-                      id: "MY_ADVISEES",
-                      label: "My Advisees",
-                      icon: UserCheck,
-                      tone: "primary" as const,
-                    },
-                  ]
-                : []),
-              {
-                id: "FAILING",
-                label: "At-Risk & Failing",
-                icon: AlertTriangle,
-                tone: "danger",
-              },
-              {
-                id: "BEHIND",
-                label: "Behind Schedule",
-                icon: Clock,
-                tone: "warning",
-              },
-              {
-                id: "DORMANT",
-                label: "Dormant",
-                tone: "neutral",
-              },
-            ]}
-            activeTab={activePill}
-            onTabChange={(tabId) => {
-              if (tabId === "ALL") {
-                setSelectedAcademicStanding("ALL");
-                setSelectedPaceStatus("ALL");
-                setSelectedEngagement("ALL");
-                setFilterMyAdviseesOnly(false);
-              } else if (tabId === "MY_ADVISEES") {
-                setSelectedAcademicStanding("ALL");
-                setSelectedPaceStatus("ALL");
-                setSelectedEngagement("ALL");
-                setFilterMyAdviseesOnly(true);
-              } else if (tabId === "FAILING") {
-                setSelectedAcademicStanding("FAILING");
-                setSelectedPaceStatus("ALL");
-                setSelectedEngagement("ALL");
-                setFilterMyAdviseesOnly(false);
-              } else if (tabId === "BEHIND") {
-                setSelectedPaceStatus("BEHIND");
-                setSelectedAcademicStanding("ALL");
-                setSelectedEngagement("ALL");
-                setFilterMyAdviseesOnly(false);
-              } else if (tabId === "DORMANT") {
-                setSelectedEngagement("DORMANT");
-                setSelectedAcademicStanding("ALL");
-                setSelectedPaceStatus("ALL");
-                setFilterMyAdviseesOnly(false);
-              }
-              resetPagination();
-            }}
-          />
 
           {/* Search & Filters Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border/80 p-2.5 px-3 rounded-2xl shadow-2xs w-full">
@@ -325,78 +332,18 @@ export default function StudentManagement() {
               )}
             </div>
 
-            {/* Filter Dropdowns */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {/* Academic Standing Filter */}
-              <Select
-                value={selectedAcademicStanding}
-                onValueChange={(v) => {
-                  setSelectedAcademicStanding(v);
-                  resetPagination();
-                }}
+            {/* Reset Filters */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-9 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1 cursor-pointer px-2.5 shrink-0"
               >
-                <SelectTrigger className="h-9 w-[155px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-                  <SelectValue placeholder="Academic Standing" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ALL">All Standings</SelectItem>
-                  <SelectItem value="FAILING">🚨 Failing (&lt;75%)</SelectItem>
-                  <SelectItem value="PASSING">Passing (≥75%)</SelectItem>
-                  <SelectItem value="UNTESTED">Untested</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Calendar Pace Filter */}
-              <Select
-                value={selectedPaceStatus}
-                onValueChange={(v) => {
-                  setSelectedPaceStatus(v);
-                  resetPagination();
-                }}
-              >
-                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-                  <SelectValue placeholder="Calendar Pace" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ALL">All Paces</SelectItem>
-                  <SelectItem value="ON_TRACK">On Track</SelectItem>
-                  <SelectItem value="BEHIND">Behind Schedule</SelectItem>
-                  <SelectItem value="CRITICAL">Critical Lag</SelectItem>
-                  <SelectItem value="NOT_SCHEDULED">Unscheduled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Engagement Filter */}
-              <Select
-                value={selectedEngagement}
-                onValueChange={(v) => {
-                  setSelectedEngagement(v);
-                  resetPagination();
-                }}
-              >
-                <SelectTrigger className="h-9 w-[135px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-                  <SelectValue placeholder="Engagement" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ALL">All Activity</SelectItem>
-                  <SelectItem value="ACTIVE">Active (≤2d)</SelectItem>
-                  <SelectItem value="LOW_CADENCE">Low Cadence</SelectItem>
-                  <SelectItem value="DORMANT">Dormant (5d+)</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetFilters}
-                  className="h-9 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1 cursor-pointer px-2.5"
-                >
-                  <RotateCcw size={12} />
-                  Reset
-                </Button>
-              )}
-            </div>
+                <RotateCcw size={12} />
+                Reset Filters
+              </Button>
+            )}
           </div>
 
           {/* Bulk Selection Action Bar */}
@@ -438,6 +385,21 @@ export default function StudentManagement() {
             onToggleSelectAll={handleToggleSelectAll}
             isAllSelected={isAllSelected}
             canSelect={canAssignGuidance}
+            selectedAcademicStanding={selectedAcademicStanding}
+            onAcademicStandingChange={(v) => {
+              setSelectedAcademicStanding(v);
+              resetPagination();
+            }}
+            selectedPaceStatus={selectedPaceStatus}
+            onPaceStatusChange={(v) => {
+              setSelectedPaceStatus(v);
+              resetPagination();
+            }}
+            selectedEngagement={selectedEngagement}
+            onEngagementChange={(v) => {
+              setSelectedEngagement(v);
+              resetPagination();
+            }}
             emptyTitle={
               filterMyAdviseesOnly
                 ? "No Assigned Advisees"

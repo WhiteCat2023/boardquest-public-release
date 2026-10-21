@@ -20,7 +20,9 @@ export default function ReviewQuestions() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "workspace">("table");
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
+    null,
+  );
 
   const { data: authors = [], isLoading: isAuthorsLoading } =
     usePendingReviewAuthors({
@@ -30,7 +32,10 @@ export default function ReviewQuestions() {
   // Auto-select first author when data is loaded
   useEffect(() => {
     if (authors.length > 0) {
-      if (!selectedAuthorId || !authors.some((a) => a.id === selectedAuthorId)) {
+      if (
+        !selectedAuthorId ||
+        !authors.some((a) => a.id === selectedAuthorId)
+      ) {
         setSelectedAuthorId(authors[0].id);
       }
     } else {
@@ -58,7 +63,13 @@ export default function ReviewQuestions() {
       authorId: selectedAuthorId || undefined,
       limit: 50,
     }),
-    [selectedStatus, searchTerm, selectedDifficulty, selectedType, selectedAuthorId],
+    [
+      selectedStatus,
+      searchTerm,
+      selectedDifficulty,
+      selectedType,
+      selectedAuthorId,
+    ],
   );
 
   const {

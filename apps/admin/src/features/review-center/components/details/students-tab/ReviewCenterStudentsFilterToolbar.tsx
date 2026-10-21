@@ -1,13 +1,6 @@
 import { Search, RotateCcw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ReviewCenterStudentsFilterToolbarProps {
   searchTerm: string;
@@ -54,47 +47,18 @@ export default function ReviewCenterStudentsFilterToolbar({
         )}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-        {/* School Year Filter */}
-        <Select value={selectedSchoolYear} onValueChange={onSchoolYearChange}>
-          <SelectTrigger className="h-9 w-[140px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-            <SelectValue placeholder="All School Years" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="ALL">All School Years</SelectItem>
-            {schoolYears.map((sy) => (
-              <SelectItem key={sy} value={sy} className="text-xs">
-                S.Y. {sy}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Game Status Filter */}
-        <Select value={selectedGameStatus} onValueChange={onGameStatusChange}>
-          <SelectTrigger className="h-9 w-[145px] bg-muted/30 border-border/80 rounded-xl text-xs font-semibold text-foreground">
-            <SelectValue placeholder="Game Status" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="ALL">All Game Status</SelectItem>
-            <SelectItem value="REGISTERED">Playing Game</SelectItem>
-            <SelectItem value="UNREGISTERED">Not in Game Yet</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onResetFilters}
-            className="h-9 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1 cursor-pointer px-2.5"
-          >
-            <RotateCcw size={12} />
-            Reset
-          </Button>
-        )}
-      </div>
+      {/* Reset Filters */}
+      {hasActiveFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onResetFilters}
+          className="h-9 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl gap-1 cursor-pointer px-2.5 shrink-0"
+        >
+          <RotateCcw size={12} />
+          Reset Filters
+        </Button>
+      )}
     </div>
   );
 }

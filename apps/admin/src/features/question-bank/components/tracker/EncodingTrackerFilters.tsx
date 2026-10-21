@@ -41,25 +41,13 @@ export function EncodingTrackerFilters({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search faculty name, email, employee ID..."
+            placeholder="Search subject or assigned teacher..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-8 h-9 text-xs bg-background"
           />
         </div>
 
-        <select
-          value={selectedSubject}
-          onChange={(e) => onSubjectChange(e.target.value)}
-          className="h-9 px-3 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring shrink-0"
-        >
-          <option value="ALL">All Subjects</option>
-          {subjects.map((sub) => (
-            <option key={sub.id} value={sub.id}>
-              {sub.name}
-            </option>
-          ))}
-        </select>
 
         {hasActiveFilters && (
           <Button

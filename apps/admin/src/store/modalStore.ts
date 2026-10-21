@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import React, { isValidElement } from "react";
+import React from "react";
 
 export type ModalVariant = "default" | "destructive" | "warning" | "info";
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";

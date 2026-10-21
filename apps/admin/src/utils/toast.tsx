@@ -93,7 +93,7 @@ export const createProgressToast = ({
     const progress = Math.min(100, Math.max(0, (currentCount / validTotal) * 100));
 
     showFeedback.custom(
-      (t) => (
+      () => (
         <div className="w-full flex flex-col gap-3 font-sans text-foreground">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">

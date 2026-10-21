@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Eye,
   Edit3,
@@ -94,9 +93,6 @@ export default function ReviewCenterTable({
                 Contact
               </TableHead>
               <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Location
-              </TableHead>
-              <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Status & Registered
               </TableHead>
               <TableHead className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">
@@ -127,9 +123,6 @@ export default function ReviewCenterTable({
                     <Skeleton className="h-3 w-32 bg-muted" />
                     <Skeleton className="h-2.5 w-24 bg-muted" />
                   </div>
-                </TableCell>
-                <TableCell className="py-3 px-3">
-                  <Skeleton className="h-3 w-24 bg-muted" />
                 </TableCell>
                 <TableCell className="py-3 px-3">
                   <div className="space-y-1.5">
@@ -174,9 +167,6 @@ export default function ReviewCenterTable({
               </TableHead>
               <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                 Contact Details
-              </TableHead>
-              <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                Location
               </TableHead>
               <TableHead className="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                 Partnership
@@ -268,22 +258,6 @@ export default function ReviewCenterTable({
                         <span>{item.phonenumber}</span>
                       </div>
                     )}
-                  </div>
-                </TableCell>
-
-                {/* Location */}
-                <TableCell className="py-2.5 px-3">
-                  <div className="flex items-center gap-1 text-[11.5px] font-medium text-foreground/90">
-                    <MapPin
-                      size={11}
-                      className="text-muted-foreground/70 shrink-0"
-                    />
-                    <span
-                      className="truncate max-w-[140px]"
-                      title={item.location || "Philippines"}
-                    >
-                      {item.location || "Philippines"}
-                    </span>
                   </div>
                 </TableCell>
 

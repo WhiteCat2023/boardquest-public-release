@@ -56,7 +56,7 @@ export function useQuestionListActions(filters?: QuestionFilters) {
     // Reset pagination and row selection when search filters change
     useEffect(() => {
         resetPagination();
-    }, [filters?.search, filters?.category, filters?.difficulty, filters?.type, filters?.status, resetPagination]);
+    }, [filters?.search, filters?.category, filters?.topic, filters?.difficulty, filters?.type, filters?.status, resetPagination]);
 
     const currentCursor = cursorsStack[currentPageIndex];
 

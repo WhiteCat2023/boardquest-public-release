@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
   Clock,
@@ -66,8 +66,34 @@ type StudentProfileTab =
 export default function ViewStudent() {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<StudentProfileTab>("overview");
+  const validTabs: StudentProfileTab[] = [
+    "overview",
+    "timeline",
+    "graphs",
+    "readiness",
+    "topic-mastery",
+    "achievements",
+    "exam-results",
+    "review-center",
+    "advising-outreach",
+  ];
+  const tabParam = searchParams.get("tab") as StudentProfileTab | null;
+  const activeTab: StudentProfileTab =
+    tabParam && validTabs.includes(tabParam) ? tabParam : "overview";
+
+  const handleTabChange = (newTab: StudentProfileTab) => {
+    if (newTab === activeTab) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (newTab === "overview") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", newTab);
+    }
+    setSearchParams(newParams);
+  };
+
   const [isScorecardOpen, setIsScorecardOpen] = useState(false);
   const [isFormulaOpen, setIsFormulaOpen] = useState(false);
   const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
@@ -221,7 +247,7 @@ export default function ViewStudent() {
       <StandardNavTabs
         tabs={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         showScrollButtons="auto"
       />
 

@@ -205,6 +205,40 @@ export class SubjectService {
         if (!subject) {
             throw new ApiError(404, "Subject not found");
         }
+        // Auto-heal / sync: ensure any active TEACHER whose handledSubjectIds includes this subject
+        // is reflected in subject.handlers and subject.handlerIds
+        try {
+            const teachersWithSubject = await this.db.adminUser.findMany({
+                where: {
+                    role: "TEACHER",
+                    accountStatus: "ACTIVE",
+                    handledSubjectIds: { has: subjectId },
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                },
+            });
+            const currentHandlerIds = new Set((subject.handlerIds || []).map((id) => String(id)));
+            const missingTeachers = teachersWithSubject.filter((t) => !currentHandlerIds.has(String(t.id)));
+            if (missingTeachers.length > 0) {
+                const mergedHandlerIds = [
+                    ...(subject.handlerIds || []),
+                    ...missingTeachers.map((t) => t.id),
+                ];
+                await this.subjectModel.update({
+                    where: { id: subjectId },
+                    data: { handlerIds: mergedHandlerIds },
+                });
+                subject.handlerIds = mergedHandlerIds;
+                subject.handlers = [...(subject.handlers || []), ...missingTeachers];
+            }
+        }
+        catch {
+            // Fallback silently if auto-heal encounters any issue
+        }
         return subject;
     }
     async getCategoryById(subjectId) {
@@ -379,7 +413,7 @@ export class SubjectService {
         if (!existing) {
             throw new ApiError(404, "Subject not found");
         }
-        // External accounts (Review Center) cannot be assigned to handle subjects
+        // Only teachers can be assigned as subject handlers. Deans and Team Leads automatically handle all subjects.
         if (handlerIds.length > 0) {
             const externalReps = await this.db.reviewCenterRepresentativeUser.findMany({
                 where: { id: { in: handlerIds } },
@@ -392,9 +426,9 @@ export class SubjectService {
                 where: { id: { in: handlerIds } },
                 select: { id: true, role: true },
             });
-            const invalidExternalUser = users.find((u) => u.role === "REVIEWCENTER" || u.role === "EXTERNAL");
-            if (invalidExternalUser) {
-                throw new ApiError(400, "External accounts (Review Center) cannot be assigned to handle subjects.");
+            const nonTeacherUser = users.find((u) => String(u.role).toUpperCase() !== "TEACHER");
+            if (nonTeacherUser) {
+                throw new ApiError(400, "Only teachers can be assigned as subject handlers. Deans and Team Leads automatically handle all subjects.");
             }
         }
         const previousHandlerIds = existing.handlerIds || [];

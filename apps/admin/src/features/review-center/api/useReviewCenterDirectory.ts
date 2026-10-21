@@ -75,7 +75,6 @@ export function useReviewCenterDirectory() {
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
-    selectedLocation !== "ALL" ||
     selectedCompany !== "ALL";
 
   return {

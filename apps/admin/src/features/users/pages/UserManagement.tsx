@@ -130,6 +130,17 @@ export default function UserManagement() {
         currentUserId={currentUserId || ""}
         onToggleStatus={handleOpenToggleConfirm}
         activeTab={activeTab}
+        selectedRole={selectedRole}
+        onRoleChange={(val) => {
+          setSelectedRole(val);
+          resetPaginationOnFilterChange();
+        }}
+        selectedStatus={selectedStatus}
+        onStatusChange={(val) => {
+          setSelectedStatus(val);
+          resetPaginationOnFilterChange();
+        }}
+        showRoleFilter={showRoleFilter}
         pagination={
           !isUsersLoading && (
             <DataTablePagination

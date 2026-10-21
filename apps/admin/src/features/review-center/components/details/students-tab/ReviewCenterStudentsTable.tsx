@@ -7,6 +7,7 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
+import { ColumnHeaderFilter } from "@/components/custom/table";
 import type { ReviewCenterCandidateItem } from "../../../api/useReviewCenter";
 import ReviewCenterStudentRow from "./ReviewCenterStudentRow";
 
@@ -17,6 +18,11 @@ interface ReviewCenterStudentsTableProps {
   companyName?: string;
   onSelectCandidateForScores: (candidate: ReviewCenterCandidateItem) => void;
   pagination?: React.ReactNode;
+  selectedSchoolYear?: string;
+  onSchoolYearChange?: (sy: string) => void;
+  schoolYears?: string[];
+  selectedGameStatus?: string;
+  onGameStatusChange?: (status: string) => void;
 }
 
 export default function ReviewCenterStudentsTable({
@@ -26,6 +32,11 @@ export default function ReviewCenterStudentsTable({
   companyName,
   onSelectCandidateForScores,
   pagination,
+  selectedSchoolYear,
+  onSchoolYearChange,
+  schoolYears,
+  selectedGameStatus,
+  onGameStatusChange,
 }: ReviewCenterStudentsTableProps) {
   return (
     <Card className="bg-card border border-border/80 rounded-2xl shadow-xs overflow-hidden w-full p-0">
@@ -54,10 +65,36 @@ export default function ReviewCenterStudentsTable({
                   Student Candidate
                 </TableHead>
                 <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                  School Year
+                  {onSchoolYearChange && selectedSchoolYear !== undefined && schoolYears && schoolYears.length > 0 ? (
+                    <ColumnHeaderFilter
+                      title="School Year"
+                      selectedValue={selectedSchoolYear}
+                      onSelect={onSchoolYearChange}
+                      options={schoolYears.map((sy) => ({
+                        label: `S.Y. ${sy}`,
+                        value: sy,
+                      }))}
+                      allOptionLabel="All School Years"
+                    />
+                  ) : (
+                    "School Year"
+                  )}
                 </TableHead>
                 <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
-                  BoardQuest Game Status
+                  {onGameStatusChange && selectedGameStatus !== undefined ? (
+                    <ColumnHeaderFilter
+                      title="BoardQuest Game Status"
+                      selectedValue={selectedGameStatus}
+                      onSelect={onGameStatusChange}
+                      options={[
+                        { label: "Playing Game", value: "REGISTERED" },
+                        { label: "Not in Game Yet", value: "UNREGISTERED" },
+                      ]}
+                      allOptionLabel="All Game Status"
+                    />
+                  ) : (
+                    "BoardQuest Game Status"
+                  )}
                 </TableHead>
                 <TableHead className="hidden sm:table-cell py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-auto">
                   Enrollment Status

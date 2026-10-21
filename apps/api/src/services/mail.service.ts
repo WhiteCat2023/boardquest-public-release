@@ -86,7 +86,7 @@ export async function sendPasswordResetEmail({
 
              
               <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; line-height: 1.5;">
-                <strong style="color: #4b5563;">Important:</strong> This link will expire in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email.
+                <strong style="color: #4b5563;">Important:</strong> This link will expire in <strong>5 minutes</strong> and can only be used once. If you did not request a password reset, you can safely ignore this email.
               </div>
             </td>
           </tr>

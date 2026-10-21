@@ -57,7 +57,7 @@ export function useRoleFlags() {
 
   const isSubjectAssigned = (categoryId?: string): boolean => {
     if (!categoryId) return false;
-    if (flags.isAdminOrSuperAdmin) return true;
+    if (flags.isAdminOrSuperAdmin || flags.isTeamLead) return true;
     return handledCategoryIds.includes(categoryId);
   };
 

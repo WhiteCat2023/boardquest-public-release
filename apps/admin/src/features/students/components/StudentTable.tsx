@@ -4,6 +4,7 @@ import type { Student } from "@/features/students";
 import StudentTableRow from "./StudentTableRow";
 import { Button } from "@/components/ui/button";
 import useRoleFlags from "@/hooks/useRoleFlags";
+import { ColumnHeaderFilter } from "@/components/custom/table";
 
 interface StudentTableProps {
   students: Student[];
@@ -18,6 +19,12 @@ interface StudentTableProps {
   emptyTitle?: string;
   emptyDescription?: string;
   pagination?: React.ReactNode;
+  selectedAcademicStanding?: string;
+  onAcademicStandingChange?: (val: string) => void;
+  selectedPaceStatus?: string;
+  onPaceStatusChange?: (val: string) => void;
+  selectedEngagement?: string;
+  onEngagementChange?: (val: string) => void;
 }
 
 export default function StudentTable({
@@ -33,6 +40,12 @@ export default function StudentTable({
   emptyTitle = "No Enrolled Students Registered",
   emptyDescription = "No students match the selected filter criteria.",
   pagination,
+  selectedAcademicStanding,
+  onAcademicStandingChange,
+  selectedPaceStatus,
+  onPaceStatusChange,
+  selectedEngagement,
+  onEngagementChange,
 }: StudentTableProps) {
   const { isTeacher } = useRoleFlags();
   const displayStudents = students;
@@ -97,9 +110,58 @@ export default function StudentTable({
                   </th>
                 )}
                 <th className="py-2.5 px-4 font-extrabold">Student Profile</th>
-                <th className="py-2.5 px-3 font-extrabold">Academic Standing</th>
-                <th className="py-2.5 px-3 font-extrabold">Calendar Pace</th>
-                <th className="py-2.5 px-3 font-extrabold">Engagement</th>
+                <th className="py-2.5 px-3 font-extrabold">
+                  {onAcademicStandingChange && selectedAcademicStanding !== undefined ? (
+                    <ColumnHeaderFilter
+                      title="Academic Standing"
+                      selectedValue={selectedAcademicStanding}
+                      onSelect={onAcademicStandingChange}
+                      options={[
+                        { label: "🚨 Failing (<75%)", value: "FAILING" },
+                        { label: "Passing (≥75%)", value: "PASSING" },
+                        { label: "Untested", value: "UNTESTED" },
+                      ]}
+                      allOptionLabel="All Standings"
+                    />
+                  ) : (
+                    "Academic Standing"
+                  )}
+                </th>
+                <th className="py-2.5 px-3 font-extrabold">
+                  {onPaceStatusChange && selectedPaceStatus !== undefined ? (
+                    <ColumnHeaderFilter
+                      title="Calendar Pace"
+                      selectedValue={selectedPaceStatus}
+                      onSelect={onPaceStatusChange}
+                      options={[
+                        { label: "On Track", value: "ON_TRACK" },
+                        { label: "Behind Schedule", value: "BEHIND" },
+                        { label: "Critical Lag", value: "CRITICAL" },
+                        { label: "Unscheduled", value: "NOT_SCHEDULED" },
+                      ]}
+                      allOptionLabel="All Paces"
+                    />
+                  ) : (
+                    "Calendar Pace"
+                  )}
+                </th>
+                <th className="py-2.5 px-3 font-extrabold">
+                  {onEngagementChange && selectedEngagement !== undefined ? (
+                    <ColumnHeaderFilter
+                      title="Engagement"
+                      selectedValue={selectedEngagement}
+                      onSelect={onEngagementChange}
+                      options={[
+                        { label: "Active (≤2d)", value: "ACTIVE" },
+                        { label: "Low Cadence", value: "LOW_CADENCE" },
+                        { label: "Dormant (5d+)", value: "DORMANT" },
+                      ]}
+                      allOptionLabel="All Activity"
+                    />
+                  ) : (
+                    "Engagement"
+                  )}
+                </th>
                 <th className="py-2.5 px-4 font-extrabold text-right">Actions</th>
                 </tr>
               </thead>

@@ -1,6 +1,8 @@
 import type { AxiosInstance } from "axios";
 import { showFeedback } from "@/components/modal";
 import type { Question } from "@/types/question";
+import swuLogoDefault from "@/assets/swu-logo.png";
+import medtechLogoDefault from "@/assets/medtech_logo.jpg";
 
 type PDFMode = "comprehensive" | "exam_only" | "exam_with_key";
 
@@ -16,6 +18,8 @@ export interface GenerateQuestionsPdfOptions {
   categoryName?: string;
   generatedBy?: string;
   selectedTypes?: string[];
+  swuLogoUrl?: string;
+  medtechLogoUrl?: string;
 }
 
 export interface ExportApprovedQuestionsParams {
@@ -116,6 +120,17 @@ function getChoicePrefix(index: number): string {
 }
 
 /**
+ * Resolve asset URL to absolute URL if needed so it works seamlessly inside print iframes
+ */
+function resolveAssetUrl(url?: string): string {
+  if (!url) return "";
+  if (typeof window !== "undefined" && url.startsWith("/")) {
+    return `${window.location.origin}${url}`;
+  }
+  return url;
+}
+
+/**
  * Generate a beautifully styled, print-ready HTML document for the questions.
  * Optimized for crisp vector PDF output via browser Print-to-PDF.
  */
@@ -131,7 +146,12 @@ export function generateQuestionsPdfHtml(options: GenerateQuestionsPdfOptions): 
     mode = "comprehensive",
     categoryName = "All Subjects",
     generatedBy = "System Administrator",
+    swuLogoUrl,
+    medtechLogoUrl,
   } = options;
+
+  const swuLogo = resolveAssetUrl(swuLogoUrl || swuLogoDefault);
+  const medtechLogo = resolveAssetUrl(medtechLogoUrl || medtechLogoDefault);
 
   const totalCount = questions.length;
   const generatedAt = new Date().toLocaleString("en-US", {
@@ -207,16 +227,42 @@ export function generateQuestionsPdfHtml(options: GenerateQuestionsPdfOptions): 
     /* ── Document Header ── */
     .doc-header {
       border-bottom: 2px solid #a70202;
-      padding-bottom: 12px;
+      padding-bottom: 14px;
       margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 16px;
+    }
+
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      height: 58px;
+      width: auto;
+      max-width: 68px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .header-logo-swu {
+      border-radius: 4px;
+    }
+
+    .header-logo-medtech {
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 1px;
     }
 
     .brand-block {
       flex: 1;
+      min-width: 0;
     }
 
     .institution-tag {
@@ -229,38 +275,53 @@ export function generateQuestionsPdfHtml(options: GenerateQuestionsPdfOptions): 
     }
 
     .doc-title {
-      font-size: 16pt;
+      font-size: 15pt;
       font-weight: 800;
       color: #0f172a;
       margin: 0 0 3px 0;
       letter-spacing: -0.02em;
+      line-height: 1.25;
     }
 
     .doc-subtitle {
       font-size: 8.5pt;
       color: #475569;
       margin: 0;
+      line-height: 1.35;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
     }
 
     .header-badge-box {
       text-align: right;
       font-size: 8pt;
       color: #64748b;
-      min-width: 140px;
+      white-space: nowrap;
+    }
+
+    .header-total-items {
+      font-size: 8pt;
+      color: #334155;
+      margin-top: 2px;
     }
 
     .status-badge {
       display: inline-block;
-      padding: 3px 10px;
+      padding: 2.5px 9px;
       border-radius: 9999px;
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       background: #dcfce7;
       color: #15803d;
       border: 1px solid #86efac;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     /* ── Overview Information Grid ── */
@@ -713,6 +774,9 @@ export function generateQuestionsPdfHtml(options: GenerateQuestionsPdfOptions): 
       .question-card {
         box-shadow: none !important;
       }
+      .header-logo {
+        height: 52px !important;
+      }
     }
   </style>
 </head>
@@ -720,14 +784,32 @@ export function generateQuestionsPdfHtml(options: GenerateQuestionsPdfOptions): 
 
   <!-- Document Header -->
   <div class="doc-header">
+    <div class="header-logo-container header-logo-left">
+      <img
+        src="${escapeHtml(medtechLogo)}"
+        alt="Medical Technology Department"
+        class="header-logo header-logo-medtech"
+      />
+    </div>
+
     <div class="brand-block">
       <div class="institution-tag">${escapeHtml(institutionName)}</div>
       <h1 class="doc-title">${escapeHtml(title)}</h1>
       <p class="doc-subtitle">${escapeHtml(subtitle)} &bull; ${escapeHtml(categoryName)}</p>
     </div>
-    <div class="header-badge-box">
-      <div class="status-badge">&bull; APPROVED BANK</div>
-      <div><strong>Total Items:</strong> ${totalCount} Items</div>
+
+    <div class="header-right">
+      <div class="header-badge-box">
+        <div class="status-badge">&bull; APPROVED BANK</div>
+        <div class="header-total-items"><strong>Total Items:</strong> ${totalCount} Items</div>
+      </div>
+      <div class="header-logo-container header-logo-right">
+        <img
+          src="${escapeHtml(swuLogo)}"
+          alt="Southwestern University PHINMA"
+          class="header-logo header-logo-swu"
+        />
+      </div>
     </div>
   </div>
 

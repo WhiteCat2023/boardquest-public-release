@@ -11,8 +11,7 @@ import { AuthenticatedRequest } from "../../middleware/auth.middleware";
 import { ApiError } from "../../utils/apiError";
 import { extractQuestionsFromCSV } from "../../extraction/extractQuestionFromCSV";
 import { extractQuestionsFromExcel } from "../../extraction/extractQuestionFromExcel";
-import { agenda } from "../../services/queue.service";
-import { logInfo, logWarn } from "../../services/admin/logger.service";
+import { logInfo } from "../../services/admin/logger.service";
 import { isSuperAdmin, superAdminCredentials } from "../../config/credentials";
 
 export const createQuestion = asyncHandler(
@@ -137,6 +136,7 @@ export const getQuestions = asyncHandler(
       limit,
       authorId,
       isPublished,
+      topic,
     } = req.query;
 
     const limitNum =
@@ -173,6 +173,7 @@ export const getQuestions = asyncHandler(
       category ||
       type ||
       status ||
+      topic ||
       isPublishedBool !== undefined ||
       authorIdFilter
     );
@@ -192,6 +193,7 @@ export const getQuestions = asyncHandler(
         undefined,
         user.handledCategoryIds,
         user.role,
+        topic as string,
       );
     } else {
       result = await QuestionService.getAllQuestions(

@@ -175,6 +175,21 @@ export function BadgesManagementTab({
         badges={paginatedBadges}
         isLoading={isLoading}
         hasActiveFilters={hasActiveFilters}
+        selectedTier={selectedTier}
+        onTierChange={(val) => {
+          setSelectedTier(val);
+          setCurrentPage(1);
+        }}
+        selectedCategory={selectedCategory}
+        onCategoryChange={(val) => {
+          setSelectedCategory(val);
+          setCurrentPage(1);
+        }}
+        selectedStatus={selectedStatus}
+        onStatusChange={(val) => {
+          setSelectedStatus(val);
+          setCurrentPage(1);
+        }}
         imageErrorUrls={imageErrorUrls}
         onImageError={handleImageError}
         onResetFilters={handleResetFilters}

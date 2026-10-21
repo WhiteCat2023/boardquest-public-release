@@ -22,9 +22,6 @@ export default function ReviewCenterManagement() {
   const {
     searchTerm,
     handleSearchChange,
-    selectedLocation,
-    handleLocationChange,
-    uniqueLocations,
     currentPage,
     totalPages,
     totalItems,
@@ -96,9 +93,6 @@ export default function ReviewCenterManagement() {
       <ReviewCenterFilters
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
-        selectedLocation={selectedLocation}
-        onLocationChange={handleLocationChange}
-        uniqueLocations={uniqueLocations}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         viewMode={viewMode}

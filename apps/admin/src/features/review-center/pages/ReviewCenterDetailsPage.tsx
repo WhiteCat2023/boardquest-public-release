@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import useRoleFlags from "@/hooks/useRoleFlags";
 import { useReviewCenter, useReviewCenterCandidates } from "../api/useReviewCenter";
 import { useCalendar } from "../api/useCalendar";
@@ -12,10 +12,25 @@ import {
 export function ReviewCenterDetailsPage() {
   const { reviewCenterId } = useParams<{ reviewCenterId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdminOrSuperAdmin, isTeamLead } = useRoleFlags();
   const canManage = isAdminOrSuperAdmin || isTeamLead;
 
-  const [activeTab, setActiveTab] = useState<"overview" | "students" | "schedules">("overview");
+  const tabParam = searchParams.get("tab");
+  const activeTab: "overview" | "students" | "schedules" =
+    tabParam === "students" || tabParam === "schedules" ? tabParam : "overview";
+
+  const handleTabChange = (newTab: "overview" | "students" | "schedules") => {
+    if (newTab === activeTab) return;
+    const newParams = new URLSearchParams(searchParams);
+    if (newTab === "overview") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", newTab);
+    }
+    setSearchParams(newParams);
+  };
+
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   // Direct queries
@@ -51,9 +66,11 @@ export function ReviewCenterDetailsPage() {
         activeTab={activeTab}
         studentsCount={studentsCount}
         schedulesCount={schedulesCount}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         onOpenEdit={() => setIsEditOpen(true)}
-        onBackNav={() => navigate("/review-center")}
+        onBackNav={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/review-center")
+        }
       />
 
       {/* Main Tab Content Area */}
@@ -64,8 +81,8 @@ export function ReviewCenterDetailsPage() {
         studentsCount={studentsCount}
         schedulesCount={schedulesCount}
         formatDate={formatDate}
-        onNavigateStudentsTab={() => setActiveTab("students")}
-        onNavigateSchedulesTab={() => setActiveTab("schedules")}
+        onNavigateStudentsTab={() => handleTabChange("students")}
+        onNavigateSchedulesTab={() => handleTabChange("schedules")}
       />
 
       {/* Edit Review Center Modal */}

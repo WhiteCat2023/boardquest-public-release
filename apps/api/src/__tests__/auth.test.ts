@@ -272,4 +272,39 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(400);
     });
   });
+
+  describe("GET /api/auth/verify-reset-token", () => {
+    it("should verify valid reset token successfully", async () => {
+      (authService.verifyResetToken as jest.Mock).mockResolvedValue({
+        valid: true,
+        email: "user@example.com",
+        name: "Admin User",
+      });
+
+      const response = await request(app)
+        .get("/api/auth/verify-reset-token")
+        .query({ token: "valid_token" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.valid).toBe(true);
+      expect(response.body.message).toContain("valid");
+    });
+
+    it("should reject expired or already-used reset token", async () => {
+      (authService.verifyResetToken as jest.Mock).mockRejectedValue(
+        new ApiError(
+          400,
+          "This password reset link has already been used. Please request a new reset email.",
+        ),
+      );
+
+      const response = await request(app)
+        .get("/api/auth/verify-reset-token")
+        .query({ token: "used_token" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("already been used");
+    });
+  });
 });
+

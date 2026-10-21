@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { usePendingReviewCount, useMyPendingRevisionCount } from "@/features/question-bank";
 import { NavUser } from "./nav-user";
 
 type LucideIconName = keyof typeof LucideIcons;
@@ -46,9 +47,13 @@ interface SidebarContentProps {
 function SidebarItem({
   content,
   location,
+  badge,
+  badgeTooltip,
 }: {
   content: NavContentProps;
   location: any;
+  badge?: number | string;
+  badgeTooltip?: string;
 }) {
   const { isMobile, setOpenMobile } = useSidebar();
   const hasSubItems = !!content.subItems && content.subItems.length > 0;
@@ -75,18 +80,32 @@ function SidebarItem({
     }
   }, [location.pathname, location.search, isAnySubActive]);
 
+  const itemBadge = badge ?? content.badge;
+  const hasBadge =
+    itemBadge !== undefined &&
+    itemBadge !== null &&
+    itemBadge !== 0 &&
+    itemBadge !== "0";
+
   if (!hasSubItems) {
     const isActive =
       location.pathname === content.path ||
       (content.path === "/question-bank/shared-library" &&
         (location.pathname === "/question-bank" ||
           location.pathname === "/question-bank/"));
+
+    const tooltipText =
+      badgeTooltip ||
+      (hasBadge && typeof itemBadge === "number"
+        ? `${content.title} (${itemBadge} pending)`
+        : content.title);
+
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
           asChild
           isActive={isActive}
-          tooltip={content.title}
+          tooltip={tooltipText}
           className={`
             flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold z-10
             transition-all duration-150 w-full h-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2
@@ -97,11 +116,44 @@ function SidebarItem({
             }
           `}
         >
-          <Link to={content.path} onClick={handleLinkClick}>
-            <DynamicIcon name={content.icon} size={15} className="shrink-0" />
-            <span className="group-data-[collapsible=icon]:hidden truncate">
-              {content.title}
-            </span>
+          <Link
+            to={content.path}
+            onClick={handleLinkClick}
+            className="flex items-center w-full min-w-0"
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="relative shrink-0 flex items-center justify-center">
+                <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+                {hasBadge && (
+                  <span
+                    className="hidden group-data-[collapsible=icon]:block absolute -top-1 -right-1 size-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse"
+                    aria-label={tooltipText || `${itemBadge} pending`}
+                  />
+                )}
+              </div>
+              <span className="group-data-[collapsible=icon]:hidden truncate">
+                {content.title}
+              </span>
+            </div>
+
+            {hasBadge && (
+              <div className="shrink-0 ml-auto pl-1.5 group-data-[collapsible=icon]:hidden">
+                <span
+                  className={`
+                    inline-flex items-center justify-center h-4.5 min-w-4.5 px-1.5 rounded-full text-[10px] font-extrabold leading-none tracking-tight select-none
+                    ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/25 dark:text-rose-400 border border-rose-500/30"
+                    }
+                  `}
+                >
+                  {typeof itemBadge === "number" && itemBadge > 999
+                    ? "999+"
+                    : itemBadge}
+                </span>
+              </div>
+            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -125,14 +177,40 @@ function SidebarItem({
           }
         `}
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="relative shrink-0 flex items-center justify-center">
+            <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+            {hasBadge && (
+              <span
+                className="hidden group-data-[collapsible=icon]:block absolute -top-1 -right-1 size-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse"
+                aria-label={badgeTooltip || `${itemBadge} pending`}
+              />
+            )}
+          </div>
           <span className="group-data-[collapsible=icon]:hidden truncate">
             {content.title}
           </span>
         </div>
-        <div className="group-data-[collapsible=icon]:hidden text-muted-foreground/60 hover:text-foreground transition-colors shrink-0">
-          {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        <div className="flex items-center gap-1.5 shrink-0 group-data-[collapsible=icon]:hidden">
+          {hasBadge && (
+            <span
+              className={`
+                inline-flex items-center justify-center h-4.5 min-w-4.5 px-1.5 rounded-full text-[10px] font-extrabold leading-none tracking-tight select-none
+                ${
+                  isParentActive
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/25 dark:text-rose-400 border border-rose-500/30"
+                }
+              `}
+            >
+              {typeof itemBadge === "number" && itemBadge > 999
+                ? "999+"
+                : itemBadge}
+            </span>
+          )}
+          <div className="text-muted-foreground/60 hover:text-foreground transition-colors shrink-0">
+            {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          </div>
         </div>
       </SidebarMenuButton>
 
@@ -172,9 +250,20 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
   const logout = logoutProp || authLogout;
 
   const user = auth?.data?.user || auth?.user;
+  const currentUserId = user?.id || (auth as any)?.data?.id;
   const userName = user?.name || "Admin User";
   const userEmail = user?.email || "admin@boardquest.edu.ph";
   const currentUserRole = user?.role;
+
+  const isReviewerRole = ["superadmin", "dean", "teamlead"].includes(
+    (currentUserRole || "").toLowerCase(),
+  );
+
+  const { totalQuestions, authorsCount } = usePendingReviewCount({
+    enabled: isReviewerRole,
+  });
+
+  const { pendingRevisionCount } = useMyPendingRevisionCount(currentUserId);
 
   const getPortalTitle = (role?: string) => {
     switch (role?.toUpperCase()) {
@@ -231,13 +320,49 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
                   {item.content.map(
-                    (content: NavContentProps, contentIndex: number) => (
-                      <SidebarItem
-                        key={contentIndex}
-                        content={content}
-                        location={location}
-                      />
-                    ),
+                    (content: NavContentProps, contentIndex: number) => {
+                      const isReviewItem =
+                        content.path === "/question-bank/review-questions" ||
+                        content.path === "/question-bank/review" ||
+                        (content.subItems &&
+                          content.subItems.some(
+                            (s) =>
+                              s.path === "/question-bank/review-questions" ||
+                              s.path === "/question-bank/review",
+                          ));
+
+                      const isMyQuestionsItem =
+                        content.path === "/question-bank/my-questions" ||
+                        (content.subItems &&
+                          content.subItems.some(
+                            (s) => s.path === "/question-bank/my-questions",
+                          ));
+
+                      let itemBadge = content.badge;
+                      let itemTooltip: string | undefined = undefined;
+
+                      if (isReviewItem) {
+                        itemBadge = authorsCount;
+                        if (authorsCount > 0) {
+                          itemTooltip = `Review Questions (${authorsCount} ${authorsCount === 1 ? "author" : "authors"} • ${totalQuestions} ${totalQuestions === 1 ? "question" : "questions"} pending)`;
+                        }
+                      } else if (isMyQuestionsItem) {
+                        itemBadge = pendingRevisionCount;
+                        if (pendingRevisionCount > 0) {
+                          itemTooltip = `My Questions (${pendingRevisionCount} ${pendingRevisionCount === 1 ? "question" : "questions"} pending revision)`;
+                        }
+                      }
+
+                      return (
+                        <SidebarItem
+                          key={contentIndex}
+                          content={content}
+                          location={location}
+                          badge={itemBadge}
+                          badgeTooltip={itemTooltip}
+                        />
+                      );
+                    },
                   )}
                 </SidebarMenu>
               </SidebarGroupContent>

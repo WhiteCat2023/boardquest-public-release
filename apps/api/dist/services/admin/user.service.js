@@ -557,13 +557,34 @@ export class UserService {
                 accountStatus: "ACTIVE",
                 isActive: true,
                 mustChangePassword: String(role).toUpperCase() !== "SUPERADMIN",
-                handledSubjectIds: String(role).toUpperCase() === "REVIEWCENTER" ||
-                    String(role).toUpperCase() === "EXTERNAL"
-                    ? []
-                    : handledSubjectIds || handledCategoryIds || [],
+                handledSubjectIds: String(role).toUpperCase() === "TEACHER"
+                    ? handledSubjectIds || handledCategoryIds || []
+                    : [],
             },
             select: userSelect,
         });
+        // Synchronize Subject.handlerIds for newly assigned teacher handlers
+        const newUserId = String(newUser.id);
+        const assignedSubIds = Array.isArray(newUser.handledSubjectIds)
+            ? newUser.handledSubjectIds
+            : [];
+        if (String(role).toUpperCase() === "TEACHER" && assignedSubIds.length > 0) {
+            for (const rawSubId of assignedSubIds) {
+                const subId = typeof rawSubId === "string" ? rawSubId : rawSubId?.id;
+                if (!subId)
+                    continue;
+                const sub = await this.db.subject.findUnique({
+                    where: { id: subId },
+                    select: { handlerIds: true },
+                });
+                if (sub && !(sub.handlerIds || []).includes(newUserId)) {
+                    await this.db.subject.update({
+                        where: { id: subId },
+                        data: { handlerIds: [...(sub.handlerIds || []), newUserId] },
+                    });
+                }
+            }
+        }
         // Send welcome credentials email containing the temporary password
         sendFacultyCredentialsEmail({
             toEmail: email,
@@ -715,9 +736,8 @@ export class UserService {
             }
             throw new ApiError(404, "User not found");
         }
-        if (userToUpdate.role === "REVIEWCENTER" ||
-            userToUpdate.role === "EXTERNAL") {
-            throw new ApiError(400, "External accounts (Review Center) cannot be assigned to handle subjects.");
+        if (String(userToUpdate.role).toUpperCase() !== "TEACHER") {
+            throw new ApiError(400, "Only teachers can be assigned to handle specific subjects. Deans and Team Leads handle all subjects automatically.");
         }
         const subjectModel = this.db.subject || this.db.category;
         const previousCategoryIds = userToUpdate.handledSubjectIds ||

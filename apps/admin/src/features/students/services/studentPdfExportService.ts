@@ -1,5 +1,7 @@
 import type { AxiosInstance } from "axios";
 import type { Student } from "../types/types";
+import swuLogoDefault from "@/assets/swu-logo.png";
+import medtechLogoDefault from "@/assets/medtech_logo.jpg";
 
 export interface GenerateStudentsPdfOptions {
   title?: string;
@@ -11,6 +13,8 @@ export interface GenerateStudentsPdfOptions {
   includeContactInfo?: boolean;
   generatedBy?: string;
   filterLabels?: string[];
+  swuLogoUrl?: string;
+  medtechLogoUrl?: string;
 }
 
 /**
@@ -55,6 +59,17 @@ function escapeHtml(str?: string | null): string {
 }
 
 /**
+ * Resolve asset URL to absolute URL if needed so it works seamlessly inside print iframes
+ */
+function resolveAssetUrl(url?: string): string {
+  if (!url) return "";
+  if (typeof window !== "undefined" && url.startsWith("/")) {
+    return `${window.location.origin}${url}`;
+  }
+  return url;
+}
+
+/**
  * Generate a beautifully styled, print-ready HTML document for the students roster.
  * Optimized for crisp vector PDF output via browser Print-to-PDF in A4 Landscape.
  */
@@ -69,7 +84,12 @@ export function generateStudentsPdfHtml(options: GenerateStudentsPdfOptions): st
     includeContactInfo = true,
     generatedBy = "Academic Administrator",
     filterLabels = [],
+    swuLogoUrl,
+    medtechLogoUrl,
   } = options;
+
+  const swuLogo = resolveAssetUrl(swuLogoUrl || swuLogoDefault);
+  const medtechLogo = resolveAssetUrl(medtechLogoUrl || medtechLogoDefault);
 
   const totalCount = students.length;
   const generatedAt = new Date().toLocaleString("en-US", {
@@ -187,16 +207,49 @@ export function generateStudentsPdfHtml(options: GenerateStudentsPdfOptions): st
     /* ── Document Header ── */
     .doc-header {
       border-bottom: 2px solid #a70202;
-      padding-bottom: 10px;
+      padding-bottom: 12px;
       margin-bottom: 14px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 16px;
+    }
+
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      height: 56px;
+      width: auto;
+      max-width: 68px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .header-logo-swu {
+      border-radius: 4px;
+    }
+
+    .header-logo-medtech {
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 1px;
     }
 
     .brand-block {
       flex: 1;
+      min-width: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
     }
 
     .institution-tag {
@@ -443,6 +496,9 @@ export function generateStudentsPdfHtml(options: GenerateStudentsPdfOptions): st
       .roster-table td {
         padding: 4px 6px;
       }
+      .header-logo {
+        height: 50px !important;
+      }
     }
   </style>
 </head>
@@ -450,15 +506,33 @@ export function generateStudentsPdfHtml(options: GenerateStudentsPdfOptions): st
 
   <!-- Document Header -->
   <div class="doc-header">
+    <div class="header-logo-container header-logo-left">
+      <img
+        src="${escapeHtml(medtechLogo)}"
+        alt="Medical Technology Department"
+        class="header-logo header-logo-medtech"
+      />
+    </div>
+
     <div class="brand-block">
       <div class="institution-tag">${escapeHtml(institutionName)}</div>
       <h1 class="doc-title">${escapeHtml(title)}</h1>
       <p class="doc-subtitle">${escapeHtml(subtitle)}${filterDescriptor}</p>
     </div>
-    <div class="header-badge-box">
-      <div class="status-badge">&bull; OFFICIAL ROSTER</div>
-      <div><strong>Total Enrolled:</strong> ${totalCount} Students</div>
-      <div><strong>Generated:</strong> ${escapeHtml(generatedAt)}</div>
+
+    <div class="header-right">
+      <div class="header-badge-box">
+        <div class="status-badge">&bull; OFFICIAL ROSTER</div>
+        <div><strong>Total Enrolled:</strong> ${totalCount} Students</div>
+        <div><strong>Generated:</strong> ${escapeHtml(generatedAt)}</div>
+      </div>
+      <div class="header-logo-container header-logo-right">
+        <img
+          src="${escapeHtml(swuLogo)}"
+          alt="Southwestern University PHINMA"
+          class="header-logo header-logo-swu"
+        />
+      </div>
     </div>
   </div>
 

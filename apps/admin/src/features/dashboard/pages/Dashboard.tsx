@@ -3,8 +3,6 @@ import useRoleFlags from "@/hooks/useRoleFlags";
 import { DashboardBanner } from "../components/DashboardBanner";
 import { DashboardKpiCards } from "../components/KPICards/DashboardKpiCards";
 import { SubjectOverviewSection } from "../components/SubjectOverviewSection";
-import { RecentQuestionsCard } from "../components/RecentQuestionsCard";
-import { StudentRosterCard } from "../components/StudentRosterCard";
 import { FacultyRosterCard } from "../components/FacultyRosterCard";
 import { SystemAuditLogsCard } from "../components/SystemAuditLogsCard";
 import { FacultyEncodingWatchCard } from "../components/FacultyEncodingWatchCard";

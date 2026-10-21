@@ -27,7 +27,7 @@ export function AddQuestionHeader({
             size={13}
             className="group-hover:-translate-x-0.5 transition-transform"
           />
-          Back to Question Bank
+          Back
         </button>
       </div>
 

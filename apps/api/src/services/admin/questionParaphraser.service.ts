@@ -1,5 +1,4 @@
 import z from "zod";
-import { ApiError } from "../../utils/apiError";
 
 export const ParaphraseItemInputSchema = z.object({
   id: z.string().min(1, "Question ID is required"),

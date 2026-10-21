@@ -33,6 +33,7 @@ export interface BulkNudgeInput {
   schoolYear?: string;
   senderId?: string;
   senderName?: string;
+  customMessage?: string;
 }
 
 export class EncodingTrackerService {
@@ -65,10 +66,10 @@ export class EncodingTrackerService {
   async getEncodingTrackerOverview(filters: TrackerFilters = {}) {
     const schoolYear = await this.getActiveSchoolYear(filters.schoolYear);
 
-    // 1. Fetch all teachers and handled subjects
+    // 1. Fetch only genuine active faculty teachers (strictly TEACHER role, excluding review center/external and admin roles)
     const teachers = await this.db.adminUser.findMany({
       where: {
-        role: { in: ["TEACHER", "TEAMLEAD"] },
+        role: "TEACHER",
         accountStatus: "ACTIVE",
       },
       select: {
@@ -80,30 +81,28 @@ export class EncodingTrackerService {
         employeeId: true,
         avatarUrl: true,
         role: true,
-        handledSubjectIds: true,
-        handledSubjects: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-          },
-        },
       },
     });
+    const teacherMap = new Map<string, any>(
+      teachers.map((t: any) => [t.id, t]),
+    );
 
-    // 2. Fetch all subjects
+    // 2. Fetch all subjects with their assigned handlerIds
     const allSubjects = await this.db.subject.findMany({
       select: {
         id: true,
         name: true,
         icon: true,
+        handlerIds: true,
       },
     });
-    const subjectMap = new Map<string, any>(allSubjects.map((s: any) => [s.id, s]));
 
-    // 3. Fetch all explicit quota assignments for this school year
+    // 3. Fetch all explicit quota assignments for this school year for genuine teachers
     const assignments = await this.db.questionQuotaAssignment.findMany({
-      where: { schoolYear },
+      where: {
+        schoolYear,
+        teacherId: { in: teachers.map((t: any) => t.id) },
+      },
       include: {
         assignedBy: {
           select: { id: true, name: true, role: true },
@@ -162,42 +161,51 @@ export class EncodingTrackerService {
       else if (q.status === "PENDING_REVISION") stat.pendingRevision += 1;
 
       const qDate = q.updatedAt || q.createdAt;
-      if (qDate && (!stat.lastEncodedAt || new Date(qDate) > new Date(stat.lastEncodedAt))) {
+      if (
+        qDate &&
+        (!stat.lastEncodedAt || new Date(qDate) > new Date(stat.lastEncodedAt))
+      ) {
         stat.lastEncodedAt = new Date(qDate);
       }
     }
 
     // 5. Combine into individual faculty-subject encoding track items
+    // Strict alignment with subject.handlerIds (internal TEACHERs only)
     const rawItems: any[] = [];
     const now = new Date();
 
-    for (const teacher of teachers) {
-      // Subjects handled by teacher, or explicitly assigned via QuotaAssignment
-      const teacherSubjectIds = new Set<string>([
-        ...(teacher.handledSubjectIds || []),
-        ...(teacher.handledSubjects || []).map((s: any) => s.id),
-      ]);
+    for (const subject of allSubjects) {
+      if (
+        filters.subjectId &&
+        filters.subjectId !== "ALL" &&
+        filters.subjectId !== subject.id
+      ) {
+        continue;
+      }
 
-      // Also check if teacher has an assignment for a subject not in handledSubjectIds
-      for (const a of assignments) {
-        if (a.teacherId === teacher.id) {
-          teacherSubjectIds.add(a.subjectId);
+      // Collect eligible teacher IDs for this subject:
+      // 1) Teachers assigned in subject.handlerIds (who are active TEACHERs)
+      // 2) Teachers who have a quota assignment for this subject (and are active TEACHERs)
+      const subjectTeacherIds = new Set<string>();
+
+      for (const handlerId of subject.handlerIds || []) {
+        const teacher = teacherMap.get(handlerId);
+        if (teacher && teacher.role === "TEACHER") {
+          subjectTeacherIds.add(handlerId);
         }
       }
 
-      // If user is filtered by subjectId, ignore other subjects
-      const effectiveSubjectIds = Array.from(teacherSubjectIds).filter((subId) => {
-        if (filters.subjectId && filters.subjectId !== "ALL") {
-          return subId === filters.subjectId;
+      for (const a of assignments) {
+        if (a.subjectId === subject.id && teacherMap.has(a.teacherId)) {
+          subjectTeacherIds.add(a.teacherId);
         }
-        return true;
-      });
+      }
 
-      for (const subjectId of effectiveSubjectIds) {
-        const subject = subjectMap.get(subjectId);
-        if (!subject) continue;
+      for (const teacherId of subjectTeacherIds) {
+        const teacher = teacherMap.get(teacherId);
+        if (!teacher) continue;
 
-        const key = `${teacher.id}_${subjectId}`;
+        const key = `${teacher.id}_${subject.id}`;
         const assignment = assignmentMap.get(key);
         const stats = questionStatsMap.get(key) || {
           total: 0,
@@ -209,7 +217,9 @@ export class EncodingTrackerService {
 
         const targetCount = assignment?.targetCount ?? 50; // default quota baseline is 50
         const encodedCount = stats.total;
-        const deadline = assignment?.deadline ? new Date(assignment.deadline) : null;
+        const deadline = assignment?.deadline
+          ? new Date(assignment.deadline)
+          : null;
         const isPastDeadline = deadline ? now > deadline : false;
 
         let status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE";
@@ -230,7 +240,7 @@ export class EncodingTrackerService {
         );
 
         rawItems.push({
-          id: assignment?.id || `virtual_${teacher.id}_${subjectId}`,
+          id: assignment?.id || `virtual_${teacher.id}_${subject.id}`,
           assignmentId: assignment?.id || null,
           teacher: {
             id: teacher.id,
@@ -262,7 +272,9 @@ export class EncodingTrackerService {
           notes: assignment?.notes || null,
           assignedBy: assignment?.assignedBy || null,
           status,
-          lastEncodedAt: stats.lastEncodedAt ? stats.lastEncodedAt.toISOString() : null,
+          lastEncodedAt: stats.lastEncodedAt
+            ? stats.lastEncodedAt.toISOString()
+            : null,
         });
       }
     }
@@ -301,7 +313,10 @@ export class EncodingTrackerService {
       totalApprovedQuestions,
       overallCompletionRate:
         totalTargetQuestions > 0
-          ? Math.min(100, Math.round((totalEncodedQuestions / totalTargetQuestions) * 100))
+          ? Math.min(
+              100,
+              Math.round((totalEncodedQuestions / totalTargetQuestions) * 100),
+            )
           : 0,
     };
 
@@ -311,10 +326,15 @@ export class EncodingTrackerService {
     if (filters.status && filters.status !== "ALL") {
       if (filters.status === "INCOMPLETE") {
         filteredItems = filteredItems.filter(
-          (item) => item.status === "NOT_STARTED" || item.status === "IN_PROGRESS" || item.status === "OVERDUE",
+          (item) =>
+            item.status === "NOT_STARTED" ||
+            item.status === "IN_PROGRESS" ||
+            item.status === "OVERDUE",
         );
       } else {
-        filteredItems = filteredItems.filter((item) => item.status === filters.status);
+        filteredItems = filteredItems.filter(
+          (item) => item.status === filters.status,
+        );
       }
     }
 
@@ -337,7 +357,8 @@ export class EncodingTrackerService {
       COMPLETED: 4,
     };
     filteredItems.sort((a, b) => {
-      const priorityDiff = (sortPriority[a.status] || 5) - (sortPriority[b.status] || 5);
+      const priorityDiff =
+        (sortPriority[a.status] || 5) - (sortPriority[b.status] || 5);
       if (priorityDiff !== 0) return priorityDiff;
       return a.teacher.name.localeCompare(b.teacher.name);
     });
@@ -353,7 +374,8 @@ export class EncodingTrackerService {
    * Sets or modifies quota targets & deadlines for a teacher on a subject
    */
   async upsertQuotaAssignment(input: QuotaAssignmentInput) {
-    const { teacherId, subjectId, targetCount, deadline, notes, assignedById } = input;
+    const { teacherId, subjectId, targetCount, deadline, notes, assignedById } =
+      input;
     const schoolYear = await this.getActiveSchoolYear(input.schoolYear);
 
     if (!teacherId || !subjectId) {
@@ -366,10 +388,13 @@ export class EncodingTrackerService {
 
     const teacher = await this.db.adminUser.findUnique({
       where: { id: teacherId },
-      select: { id: true, name: true, handledSubjectIds: true },
+      select: { id: true, name: true, role: true, handledSubjectIds: true },
     });
-    if (!teacher) {
-      throw new ApiError(404, "Teacher not found");
+    if (!teacher || teacher.role !== "TEACHER") {
+      throw new ApiError(
+        400,
+        "Only internal faculty teachers can have authoring quotas assigned. External accounts like review centers are excluded.",
+      );
     }
 
     // Ensure subject is in teacher's handledSubjectIds
@@ -424,6 +449,115 @@ export class EncodingTrackerService {
   }
 
   /**
+   * Sets or modifies quota targets for an entire subject, dividing among handlers
+   */
+  async upsertSubjectQuota(input: {
+    subjectId: string;
+    totalTargetCount: number;
+    deadline?: string | Date | null;
+    notes?: string;
+    schoolYear?: string;
+    assignedById?: string;
+  }) {
+    const { subjectId, totalTargetCount, deadline, notes, assignedById } =
+      input;
+    const schoolYear = await this.getActiveSchoolYear(input.schoolYear);
+
+    if (!subjectId) {
+      throw new ApiError(400, "subjectId is required");
+    }
+
+    const subject = await this.db.subject.findUnique({
+      where: { id: subjectId },
+      select: { id: true, name: true, handlerIds: true },
+    });
+    if (!subject) {
+      throw new ApiError(404, "Subject not found");
+    }
+
+    // Fetch active teacher handlers for this subject (strictly internal TEACHER accounts, excluding review centers)
+    const teachers = await this.db.adminUser.findMany({
+      where: {
+        id: { in: subject.handlerIds || [] },
+        role: "TEACHER",
+        accountStatus: "ACTIVE",
+      },
+      select: { id: true, name: true, email: true },
+    });
+
+    if (teachers.length === 0) {
+      throw new ApiError(
+        400,
+        "No teacher handlers are currently assigned to this subject",
+      );
+    }
+
+    if (totalTargetCount < teachers.length) {
+      throw new ApiError(
+        400,
+        `Total question quota must be at least ${teachers.length} (minimum 1 per handler)`,
+      );
+    }
+
+    const n = teachers.length;
+    const baseQuota = Math.floor(totalTargetCount / n);
+    const remainder = totalTargetCount % n;
+    const parsedDeadline = deadline ? new Date(deadline) : null;
+
+    const results = [];
+    for (let i = 0; i < n; i++) {
+      const teacher = teachers[i];
+      const targetCount = baseQuota + (i < remainder ? 1 : 0);
+
+      const assignment = await this.db.questionQuotaAssignment.upsert({
+        where: {
+          teacherId_subjectId_schoolYear: {
+            teacherId: teacher.id,
+            subjectId,
+            schoolYear,
+          },
+        },
+        create: {
+          teacherId: teacher.id,
+          subjectId,
+          schoolYear,
+          targetCount,
+          deadline: parsedDeadline,
+          notes: notes || null,
+          assignedById: assignedById || null,
+        },
+        update: {
+          targetCount,
+          deadline: parsedDeadline,
+          notes: notes || null,
+          assignedById: assignedById || null,
+        },
+      });
+      results.push({
+        teacherId: teacher.id,
+        teacherName: teacher.name,
+        targetCount,
+        assignment,
+      });
+    }
+
+    await logInfo(
+      "UPSERT_SUBJECT_QUOTA",
+      `Distributed subject quota of ${totalTargetCount} questions across ${n} handlers for ${subject.name}`,
+      "EncodingTrackerService",
+    );
+
+    return {
+      success: true,
+      subjectId,
+      subjectName: subject.name,
+      totalTargetCount,
+      handlerCount: n,
+      distribution: results,
+    };
+  }
+
+  /**
    * Send one-click nudge reminder to a single teacher
    */
   async sendTeacherNudge(input: NudgeInput) {
@@ -431,10 +565,13 @@ export class EncodingTrackerService {
 
     const teacher = await this.db.adminUser.findUnique({
       where: { id: teacherId },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, role: true },
     });
-    if (!teacher) {
-      throw new ApiError(404, "Teacher not found");
+    if (!teacher || teacher.role !== "TEACHER") {
+      throw new ApiError(
+        404,
+        "Teacher not found or not eligible for authoring nudges",
+      );
     }
 
     let subjectName = "assigned subjects";
@@ -511,12 +648,16 @@ export class EncodingTrackerService {
         const res = await this.sendTeacherNudge({
           teacherId: item.teacher.id,
           subjectId: item.subject.id,
+          customMessage: input.customMessage,
           senderId: input.senderId,
           senderName: input.senderName,
         });
         results.push(res);
       } catch (err: any) {
-        console.error(`Failed to nudge teacher ${item.teacher.id}:`, err?.message);
+        console.error(
+          `Failed to nudge teacher ${item.teacher.id}:`,
+          err?.message,
+        );
       }
     }
 
@@ -538,6 +679,7 @@ export class EncodingTrackerService {
       select: {
         id: true,
         name: true,
+        role: true,
         handledSubjectIds: true,
         handledSubjects: {
           select: { id: true, name: true, icon: true },
@@ -545,8 +687,11 @@ export class EncodingTrackerService {
       },
     });
 
-    if (!teacher) {
-      throw new ApiError(404, "Teacher not found");
+    if (!teacher || teacher.role !== "TEACHER") {
+      throw new ApiError(
+        403,
+        "Personal encoding tracker is only available for faculty teachers",
+      );
     }
 
     const assignments = await this.db.questionQuotaAssignment.findMany({
@@ -555,11 +700,19 @@ export class EncodingTrackerService {
         subject: { select: { id: true, name: true, icon: true } },
       },
     });
-    const assignmentMap = new Map<string, any>(assignments.map((a: any) => [a.subjectId, a]));
+    const assignmentMap = new Map<string, any>(
+      assignments.map((a: any) => [a.subjectId, a]),
+    );
 
     const questions = await this.db.question.findMany({
       where: { authorId: teacherId, schoolYear },
-      select: { id: true, subjectId: true, status: true, updatedAt: true, createdAt: true },
+      select: {
+        id: true,
+        subjectId: true,
+        status: true,
+        updatedAt: true,
+        createdAt: true,
+      },
     });
 
     const subjectIds = new Set<string>([
@@ -584,15 +737,23 @@ export class EncodingTrackerService {
 
       const targetCount = assignment?.targetCount ?? 50;
       const encodedCount = subQuestions.length;
-      const approvedCount = subQuestions.filter((q: any) => q.status === "APPROVED").length;
-      const pendingReviewCount = subQuestions.filter((q: any) => q.status === "PENDING_REVIEW").length;
-      const pendingRevisionCount = subQuestions.filter((q: any) => q.status === "PENDING_REVISION").length;
+      const approvedCount = subQuestions.filter(
+        (q: any) => q.status === "APPROVED",
+      ).length;
+      const pendingReviewCount = subQuestions.filter(
+        (q: any) => q.status === "PENDING_REVIEW",
+      ).length;
+      const pendingRevisionCount = subQuestions.filter(
+        (q: any) => q.status === "PENDING_REVISION",
+      ).length;
 
       totalTarget += targetCount;
       totalEncoded += encodedCount;
       totalApproved += approvedCount;
 
-      const deadline = assignment?.deadline ? new Date(assignment.deadline) : null;
+      const deadline = assignment?.deadline
+        ? new Date(assignment.deadline)
+        : null;
       const isPastDeadline = deadline ? now > deadline : false;
 
       let status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE";
@@ -606,7 +767,10 @@ export class EncodingTrackerService {
         targetCount,
         encodedCount,
         remainingCount: Math.max(0, targetCount - encodedCount),
-        progressPercentage: Math.min(100, Math.round((encodedCount / Math.max(1, targetCount)) * 100)),
+        progressPercentage: Math.min(
+          100,
+          Math.round((encodedCount / Math.max(1, targetCount)) * 100),
+        ),
         breakdown: {
           approved: approvedCount,
           pendingReview: pendingReviewCount,
@@ -626,7 +790,9 @@ export class EncodingTrackerService {
         totalApproved,
         remainingCount: Math.max(0, totalTarget - totalEncoded),
         progressPercentage:
-          totalTarget > 0 ? Math.min(100, Math.round((totalEncoded / totalTarget) * 100)) : 0,
+          totalTarget > 0
+            ? Math.min(100, Math.round((totalEncoded / totalTarget) * 100))
+            : 0,
       },
       goals: subjectGoals,
     };
@@ -635,7 +801,11 @@ export class EncodingTrackerService {
   /**
    * Checks whether a teacher has reached their authoring quota for a specific subject in the active school year.
    */
-  async checkTeacherQuota(teacherId: string, subjectId: string, requestedYear?: string) {
+  async checkTeacherQuota(
+    teacherId: string,
+    subjectId: string,
+    requestedYear?: string,
+  ) {
     const schoolYear = await this.getActiveSchoolYear(requestedYear);
 
     // 1. Find quota assignment or use default baseline (50)
@@ -677,7 +847,10 @@ export class EncodingTrackerService {
    * Checks whether a teacher has reached their overall authoring quota across all subjects.
    */
   async checkTeacherOverallQuota(teacherId: string, requestedYear?: string) {
-    const progress = await this.getTeacherPersonalProgress(teacherId, requestedYear);
+    const progress = await this.getTeacherPersonalProgress(
+      teacherId,
+      requestedYear,
+    );
     const isOverallQuotaMet =
       progress.overall.totalTarget > 0 && progress.overall.remainingCount === 0;
 

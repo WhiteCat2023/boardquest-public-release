@@ -39,8 +39,8 @@ export default function SubjectDetailsPage() {
   const canManageModules =
     canManageSubject || currentUserRole === "TEACHER";
 
-  const initialTab = searchParams.get("tab") === "modules" ? "modules" : "overview";
-  const [activeTab, setActiveTab] = useState<"overview" | "modules">(initialTab);
+  const tabParam = searchParams.get("tab");
+  const activeTab: "overview" | "modules" = tabParam === "modules" ? "modules" : "overview";
 
   // Category Hooks
   const { data: category, isLoading: isCategoryLoading } = useCategoryDetail(categoryId);
@@ -61,11 +61,13 @@ export default function SubjectDetailsPage() {
       navigate(`/subject-management/${categoryId}/topics`);
       return;
     }
-    setActiveTab(tab);
+    if (tab === activeTab) return;
     if (tab === "modules") {
       setSearchParams({ tab: "modules" });
     } else {
-      setSearchParams({});
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("tab");
+      setSearchParams(newParams);
     }
   };
 
@@ -169,7 +171,11 @@ export default function SubjectDetailsPage() {
         topicsCount={topics.length}
         onTabChange={handleTabChange}
         onOpenEditSubject={handleOpenEditSubject}
-        onBackNav={() => navigate("/subject-management")}
+        onBackNav={() =>
+          window.history.length > 1
+            ? navigate(-1)
+            : navigate("/subject-management")
+        }
       />
 
       {/* Main Content Area */}

@@ -5,9 +5,6 @@ import {
   ChevronUp,
   CheckCircle2,
   Calendar,
-  AlertTriangle,
-  Hourglass,
-  Layers,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useMyEncodingProgress } from "../../api/useEncodingTracker";
@@ -20,7 +17,7 @@ export function TeacherQuotaProgressBanner() {
     return null;
   }
 
-  const { overall, goals, schoolYear } = data;
+  const { overall, goals } = data;
   const isGoalMet = overall.remainingCount === 0;
 
   return (
@@ -123,8 +120,8 @@ export function TeacherQuotaProgressBanner() {
                       g.status === "COMPLETED"
                         ? "[&>div]:bg-emerald-500"
                         : g.status === "OVERDUE"
-                        ? "[&>div]:bg-rose-500"
-                        : "[&>div]:bg-amber-500"
+                          ? "[&>div]:bg-rose-500"
+                          : "[&>div]:bg-amber-500"
                     }`}
                   />
 
@@ -137,7 +134,11 @@ export function TeacherQuotaProgressBanner() {
                     {deadline && (
                       <span className="flex items-center gap-1 text-[10px]">
                         <Calendar className="w-2.5 h-2.5" />
-                        Due {deadline.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        Due{" "}
+                        {deadline.toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                     )}
                   </div>

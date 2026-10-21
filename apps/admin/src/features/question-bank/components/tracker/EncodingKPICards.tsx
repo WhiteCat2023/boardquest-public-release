@@ -1,5 +1,4 @@
 import {
-  Users,
   CheckCircle2,
   Hourglass,
   AlertCircle,
@@ -17,8 +16,8 @@ export function EncodingKPICards({ kpis, isLoading }: EncodingKPICardsProps) {
   // Only display pulsing skeletons during initial load when no KPI data is available
   if (!kpis || (isLoading && !kpis)) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
             className="h-24 bg-card border border-border/60 rounded-xl animate-pulse"
@@ -29,15 +28,6 @@ export function EncodingKPICards({ kpis, isLoading }: EncodingKPICardsProps) {
   }
 
   const cards = [
-    {
-      title: "Active Faculty",
-      value: kpis.totalFaculty,
-      subtitle: `${kpis.totalAssignments} subject tracking slots`,
-      icon: Users,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-      borderColor: "border-blue-500/20",
-    },
     {
       title: "Quotas Met",
       value: kpis.completedCount,
@@ -88,7 +78,7 @@ export function EncodingKPICards({ kpis, isLoading }: EncodingKPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {cards.map((card, i) => {
         const Icon = card.icon;
         return (
