@@ -13,12 +13,17 @@ import {
 
 export default function CategoriesView() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const ITEMS_PER_PAGE = 6;
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const { data: categories = [], isLoading } = useCategories({
     search: searchTerm,
@@ -26,12 +31,12 @@ export default function CategoriesView() {
   const { isTeacher, isStaff: canManage } = useRoleFlags();
 
   const total = categories.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedCategories = categories.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE,
+    startIndex + pageSize,
   );
 
   const handleNext = () => {
@@ -86,7 +91,9 @@ export default function CategoriesView() {
               onPageSelect={handlePageSelect}
               totalPages={totalPages}
               totalItems={categories.length}
-              pageSize={ITEMS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[6, 12, 24, 48]}
+              onPageSizeChange={handlePageSizeChange}
               itemLabel="subjects"
               variant="card"
             />
@@ -109,7 +116,9 @@ export default function CategoriesView() {
                 onPageSelect={handlePageSelect}
                 totalPages={totalPages}
                 totalItems={categories.length}
-                pageSize={ITEMS_PER_PAGE}
+                pageSize={pageSize}
+                pageSizeOptions={[6, 12, 24, 48]}
+                onPageSizeChange={handlePageSizeChange}
                 itemLabel="subjects"
                 variant="table-footer"
               />

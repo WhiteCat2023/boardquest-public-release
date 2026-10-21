@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   BookOpen,
+  Bookmark,
   Calendar,
   Clock,
   HelpCircle,
@@ -16,13 +18,16 @@ import {
 } from "lucide-react";
 import { AssignFacultyModal } from "./AssignFacultyModal";
 import useRoleFlags from "@/hooks/useRoleFlags";
+import { useTopics } from "../../api/useTopics";
 
 interface SubjectOverviewTabProps {
   category: any;
   totalQuestions: number;
   modulesCount: number;
+  topicsCount?: number;
   formatDate: (dateString?: string) => string;
   onNavigateQuestionBank: () => void;
+  onNavigateTopics?: () => void;
   onNavigateModulesTab: () => void;
 }
 
@@ -30,12 +35,28 @@ export default function SubjectOverviewTab({
   category,
   totalQuestions,
   modulesCount,
+  topicsCount,
   formatDate,
   onNavigateQuestionBank,
+  onNavigateTopics,
   onNavigateModulesTab,
 }: SubjectOverviewTabProps) {
+  const navigate = useNavigate();
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const { isStaff: canAssignFaculty } = useRoleFlags();
+
+  const categoryId = category?.id || category?._id;
+  const { data: topics = [] } = useTopics(categoryId);
+  const resolvedTopicsCount =
+    typeof topicsCount === "number" ? topicsCount : topics.length;
+
+  const handleNavigateTopics = () => {
+    if (onNavigateTopics) {
+      onNavigateTopics();
+    } else if (categoryId) {
+      navigate(`/subject-management/${categoryId}/topics`);
+    }
+  };
 
   const handlersList = Array.isArray(category?.handlers) && category.handlers.length > 0
     ? category.handlers
@@ -56,7 +77,8 @@ export default function SubjectOverviewTab({
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Key Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Evaluation Questions */}
         <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
           <div className="space-y-1 min-w-0">
             <span className="text-xs font-semibold text-muted-foreground block truncate">
@@ -78,7 +100,39 @@ export default function SubjectOverviewTab({
           </div>
         </div>
 
-        <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
+        {/* Curriculum Topics */}
+        <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-emerald-500/40 transition-all text-left group">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-muted-foreground block truncate">
+              Curriculum Topics
+            </span>
+            <button
+              type="button"
+              onClick={handleNavigateTopics}
+              className="text-2xl font-extrabold text-foreground tracking-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer block text-left"
+              title="View subject topics"
+            >
+              {resolvedTopicsCount}
+            </button>
+            <button
+              type="button"
+              onClick={handleNavigateTopics}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer pt-0.5"
+            >
+              Subject topics <ArrowRight size={11} />
+            </button>
+          </div>
+          <div
+            onClick={handleNavigateTopics}
+            className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl shrink-0 cursor-pointer group-hover:scale-105 transition-transform"
+            title="View subject topics"
+          >
+            <Bookmark size={20} />
+          </div>
+        </div>
+
+        {/* Learning Modules */}
+        <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-blue-500/30 transition-all text-left">
           <div className="space-y-1 min-w-0">
             <span className="text-xs font-semibold text-muted-foreground block truncate">
               Learning Modules
@@ -99,7 +153,8 @@ export default function SubjectOverviewTab({
           </div>
         </div>
 
-        <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-primary/30 transition-all text-left">
+        {/* Faculty Handlers */}
+        <div className="p-4 bg-card border border-border/80 rounded-xl flex items-center justify-between shadow-2xs hover:border-purple-500/30 transition-all text-left">
           <div className="space-y-1 min-w-0">
             <span className="text-xs font-semibold text-muted-foreground block truncate">
               Faculty Handlers

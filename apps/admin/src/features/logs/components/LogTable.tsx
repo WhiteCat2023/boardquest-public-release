@@ -33,6 +33,8 @@ interface LogTableProps {
   isLoading: boolean;
   selectedLevel: string;
   searchTerm: string;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
 }
 
 export default function LogTable({
@@ -47,6 +49,8 @@ export default function LogTable({
   isLoading,
   selectedLevel,
   searchTerm,
+  pageSize = 20,
+  onPageSizeChange,
 }: LogTableProps) {
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -299,7 +303,9 @@ export default function LogTable({
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={totalLogs}
-          pageSize={20}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 20, 50, 100]}
+          onPageSizeChange={onPageSizeChange}
           hasNextPage={hasNextPage}
           hasPreviousPage={currentPage > 1}
           onNext={onNext}

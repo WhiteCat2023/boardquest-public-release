@@ -2,8 +2,9 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, BookOpen, CheckCircle2, Layers, Pencil } from "lucide-react";
+import { ArrowLeft, BookOpen, Bookmark, CheckCircle2, Layers, Pencil } from "lucide-react";
 import { getCategoryIcon } from "@/features/question-bank/components/IconPicker";
+import { StandardNavTabs } from "@/components/custom/tabs";
 
 function SubjectCategoryIcon({
   icon,
@@ -25,9 +26,10 @@ interface SubjectHeaderProps {
   categoryId?: string;
   isCategoryLoading: boolean;
   canManage: boolean;
-  activeTab: "overview" | "modules";
+  activeTab: "overview" | "modules" | "topics";
   modulesCount: number;
-  onTabChange: (tab: "overview" | "modules") => void;
+  topicsCount?: number;
+  onTabChange: (tab: "overview" | "modules" | "topics") => void;
   onOpenEditSubject: () => void;
   onBackNav: () => void;
 }
@@ -39,12 +41,13 @@ export default function SubjectHeader({
   canManage,
   activeTab,
   modulesCount,
+  topicsCount,
   onTabChange,
   onOpenEditSubject,
   onBackNav,
 }: SubjectHeaderProps) {
   return (
-    <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-2.5 pt-1 -mt-1 z-10 border-b border-border/80">
+    <div className="flex flex-col gap-2.5 sticky top-0 bg-background/95 backdrop-blur-md pb-0 pt-1 -mt-1 z-10 font-sans">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -85,8 +88,8 @@ export default function SubjectHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {canManage && category && (
+        {canManage && category && (
+          <div className="flex items-center gap-2.5">
             <Button
               onClick={onOpenEditSubject}
               variant="outline"
@@ -94,38 +97,31 @@ export default function SubjectHeader({
             >
               <Pencil size={13} /> Edit Subject
             </Button>
-          )}
-
-          {/* Segmented Pill Tabs */}
-          <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
-            <button
-              type="button"
-              onClick={() => onTabChange("overview")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "overview"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <BookOpen size={13} />
-              Overview
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onTabChange("modules")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "modules"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Layers size={13} />
-              Learning Modules ({modulesCount})
-            </button>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Standard Horizontal Underline Navigation Tabs Bar */}
+      <StandardNavTabs
+        tabs={[
+          { id: "overview", label: "Overview", icon: BookOpen },
+          {
+            id: "modules",
+            label: "Learning Modules",
+            icon: Layers,
+            badgeCount: modulesCount,
+          },
+          {
+            id: "topics",
+            label: "Topics",
+            icon: Bookmark,
+            badgeCount: topicsCount,
+          },
+        ]}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        showScrollButtons="auto"
+      />
     </div>
   );
 }

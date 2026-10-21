@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   UserX,
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudents } from "@/features/students/api/useStudent";
 import type { Student } from "@/features/students/types/types";
+import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
 
 interface InactiveStudentsWatchCardProps {
   onInterveneClick?: (student: Student) => void;
@@ -25,7 +26,7 @@ export function InactiveStudentsWatchCard({
   onInterveneClick,
   limit = 4,
 }: InactiveStudentsWatchCardProps) {
-  const [minDaysFilter, setMinDaysFilter] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<string>("0");
 
   const { data, isLoading } = useStudents({
     engagement: "DORMANT",
@@ -33,21 +34,68 @@ export function InactiveStudentsWatchCard({
   });
 
   const students = data?.students || [];
+  const dormantCount = students.length;
+
+  const count7Days = useMemo(
+    () =>
+      students.filter(
+        (s) => (s.engagement?.daysSinceLastActive ?? 0) >= 7,
+      ).length,
+    [students],
+  );
+
+  const count14Days = useMemo(
+    () =>
+      students.filter(
+        (s) => (s.engagement?.daysSinceLastActive ?? 0) >= 14,
+      ).length,
+    [students],
+  );
+
+  const minDaysFilter = Number(activeTab) || 0;
 
   // Filter by minDays if selected, then sort descending by daysSinceLastActive
-  const filteredStudents = students
-    .filter((s) => {
-      const days = s.engagement?.daysSinceLastActive ?? 0;
-      return days >= minDaysFilter;
-    })
-    .sort((a, b) => {
-      const daysA = a.engagement?.daysSinceLastActive ?? 0;
-      const daysB = b.engagement?.daysSinceLastActive ?? 0;
-      return daysB - daysA;
-    });
+  const filteredStudents = useMemo(() => {
+    return students
+      .filter((s) => {
+        const days = s.engagement?.daysSinceLastActive ?? 0;
+        return days >= minDaysFilter;
+      })
+      .sort((a, b) => {
+        const daysA = a.engagement?.daysSinceLastActive ?? 0;
+        const daysB = b.engagement?.daysSinceLastActive ?? 0;
+        return daysB - daysA;
+      });
+  }, [students, minDaysFilter]);
 
-  const displayStudents = filteredStudents.slice(0, limit);
-  const dormantCount = students.length;
+  const displayStudents = useMemo(
+    () => filteredStudents.slice(0, limit),
+    [filteredStudents, limit],
+  );
+
+  const navTabs: NavTabItem<string>[] = useMemo(
+    () => [
+      {
+        id: "0",
+        label: "All (>3d)",
+        icon: UserX,
+        badgeCount: dormantCount,
+      },
+      {
+        id: "7",
+        label: "7+ Days",
+        icon: Clock,
+        badgeCount: count7Days,
+      },
+      {
+        id: "14",
+        label: "14+ Days",
+        icon: Flame,
+        badgeCount: count14Days,
+      },
+    ],
+    [dormantCount, count7Days, count14Days],
+  );
 
   return (
     <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans hover:border-primary/30 transition-all">
@@ -83,28 +131,15 @@ export function InactiveStudentsWatchCard({
         </Link>
       </div>
 
-      {/* Filter Tabs / Quick Chips */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-muted-foreground font-medium">Inactive:</span>
-        {[
-          { label: "All (>3d)", value: 0 },
-          { label: "7+ Days", value: 7 },
-          { label: "14+ Days", value: 14 },
-        ].map((chip) => (
-          <button
-            key={chip.value}
-            type="button"
-            onClick={() => setMinDaysFilter(chip.value)}
-            className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer ${
-              minDaysFilter === chip.value
-                ? "bg-primary text-primary-foreground font-bold shadow-2xs"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
-      </div>
+      {/* Standardized Navigation Tabs */}
+      <StandardNavTabs
+        size="sm"
+        tabs={navTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        showScrollButtons="auto"
+        className="-mt-1"
+      />
 
       {/* Loading Skeleton */}
       {isLoading ? (

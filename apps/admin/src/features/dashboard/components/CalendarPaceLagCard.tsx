@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   CalendarClock,
@@ -8,6 +8,7 @@ import {
   TrendingDown,
   UserCheck,
   Target,
+  Clock,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,43 +17,119 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudents } from "@/features/students/api/useStudent";
 import type { Student } from "@/features/students/types/types";
+import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
 
 interface CalendarPaceLagCardProps {
   onInterveneClick?: (student: Student) => void;
   limit?: number;
 }
 
+type PaceTabKey = "ON_TRACK" | "BEHIND" | "UNSCHEDULED";
+
 export function CalendarPaceLagCard({
   onInterveneClick,
   limit = 4,
 }: CalendarPaceLagCardProps) {
-  const [criticalOnly, setCriticalOnly] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<PaceTabKey>("ON_TRACK");
 
   const { data, isLoading } = useStudents({
-    paceStatus: "BEHIND",
-    take: 20,
+    take: 50,
   });
 
   const students = data?.students || [];
 
-  // Filter and sort by severity of lag (CRITICAL first, then largest negative lagPercent)
-  const filteredStudents = students
-    .filter((s) => {
-      if (!criticalOnly) return true;
-      return s.calendarPace?.status === "CRITICAL" || (s.calendarPace?.lagPercent ?? 0) <= -30;
-    })
-    .sort((a, b) => {
-      const paceA = a.calendarPace;
-      const paceB = b.calendarPace;
-      if (paceA?.status === "CRITICAL" && paceB?.status !== "CRITICAL") return -1;
-      if (paceB?.status === "CRITICAL" && paceA?.status !== "CRITICAL") return 1;
-      return (paceA?.lagPercent ?? 0) - (paceB?.lagPercent ?? 0);
-    });
+  const onTrackCount = useMemo(
+    () => students.filter((s) => s.calendarPace?.status === "ON_TRACK").length,
+    [students],
+  );
 
-  const displayStudents = filteredStudents.slice(0, limit);
-  const criticalCount = students.filter(
-    (s) => s.calendarPace?.status === "CRITICAL" || (s.calendarPace?.lagPercent ?? 0) <= -30
-  ).length;
+  const criticalCount = useMemo(
+    () =>
+      students.filter(
+        (s) =>
+          s.calendarPace?.status === "CRITICAL" ||
+          (s.calendarPace?.lagPercent ?? 0) <= -30,
+      ).length,
+    [students],
+  );
+
+  const behindCount = useMemo(
+    () =>
+      students.filter(
+        (s) =>
+          s.calendarPace?.status === "BEHIND" ||
+          s.calendarPace?.status === "CRITICAL",
+      ).length,
+    [students],
+  );
+
+  const unscheduledCount = useMemo(
+    () =>
+      students.filter(
+        (s) => !s.calendarPace || s.calendarPace.status === "NOT_SCHEDULED",
+      ).length,
+    [students],
+  );
+
+  // Filter and sort students based on active tab
+  const filteredStudents = useMemo(() => {
+    return students
+      .filter((s) => {
+        const status = s.calendarPace?.status;
+        if (activeTab === "ON_TRACK") {
+          return status === "ON_TRACK";
+        }
+        if (activeTab === "BEHIND") {
+          return status === "BEHIND" || status === "CRITICAL";
+        }
+        if (activeTab === "UNSCHEDULED") {
+          return !status || status === "NOT_SCHEDULED";
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (activeTab === "BEHIND") {
+          const paceA = a.calendarPace;
+          const paceB = b.calendarPace;
+          if (paceA?.status === "CRITICAL" && paceB?.status !== "CRITICAL") return -1;
+          if (paceB?.status === "CRITICAL" && paceA?.status !== "CRITICAL") return 1;
+          return (paceA?.lagPercent ?? 0) - (paceB?.lagPercent ?? 0);
+        }
+        if (activeTab === "ON_TRACK") {
+          return (b.calendarPace?.actualPercent ?? 0) - (a.calendarPace?.actualPercent ?? 0);
+        }
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      });
+  }, [students, activeTab]);
+
+  const displayStudents = useMemo(
+    () => filteredStudents.slice(0, limit),
+    [filteredStudents, limit],
+  );
+
+  const navTabs: NavTabItem<PaceTabKey>[] = useMemo(
+    () => [
+      {
+        id: "ON_TRACK",
+        label: "On Track",
+        icon: CheckCircle2,
+        badgeCount: onTrackCount,
+      },
+      {
+        id: "BEHIND",
+        label: "Behind",
+        icon: CalendarClock,
+        badgeCount: behindCount,
+      },
+      {
+        id: "UNSCHEDULED",
+        label: "Unscheduled",
+        icon: Clock,
+        badgeCount: unscheduledCount,
+      },
+    ],
+    [onTrackCount, behindCount, unscheduledCount],
+  );
 
   return (
     <Card className="bg-card border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 font-sans hover:border-primary/30 transition-all">
@@ -65,7 +142,7 @@ export function CalendarPaceLagCard({
           <div>
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               Milestone Pacing Alerts
-              {students.length > 0 ? (
+              {behindCount > 0 ? (
                 <Badge
                   variant="outline"
                   className={
@@ -74,12 +151,19 @@ export function CalendarPaceLagCard({
                       : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 text-[10px] font-bold px-1.5 py-0"
                   }
                 >
-                  {criticalCount > 0 ? `${criticalCount} Critical` : `${students.length} Behind`}
+                  {criticalCount > 0 ? `${criticalCount} Critical` : `${behindCount} Behind`}
+                </Badge>
+              ) : onTrackCount > 0 ? (
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-1.5 py-0"
+                >
+                  {onTrackCount} On Track
                 </Badge>
               ) : null}
             </h2>
             <p className="text-[10px] text-muted-foreground">
-              Students falling behind review calendar pace & syllabus targets
+              Monitor student pacing against review calendar & syllabus targets
             </p>
           </div>
         </div>
@@ -92,32 +176,15 @@ export function CalendarPaceLagCard({
         </Link>
       </div>
 
-      {/* Filter Chips */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-muted-foreground font-medium">Filter:</span>
-        <button
-          type="button"
-          onClick={() => setCriticalOnly(false)}
-          className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer ${
-            !criticalOnly
-              ? "bg-primary text-primary-foreground font-bold shadow-2xs"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          All Behind ({students.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setCriticalOnly(true)}
-          className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer ${
-            criticalOnly
-              ? "bg-primary text-primary-foreground font-bold shadow-2xs"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          Critical Only ({criticalCount})
-        </button>
-      </div>
+      {/* Standardized Navigation Tabs */}
+      <StandardNavTabs
+        size="sm"
+        tabs={navTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        showScrollButtons="auto"
+        className="-mt-1"
+      />
 
       {/* Loading Skeleton */}
       {isLoading ? (
@@ -144,20 +211,38 @@ export function CalendarPaceLagCard({
       ) : displayStudents.length === 0 ? (
         /* Empty State */
         <div className="py-7 text-center flex flex-col items-center justify-center gap-1.5">
-          <div className="p-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 size={24} />
+          <div
+            className={`p-2 rounded-full ${
+              activeTab === "BEHIND"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "bg-muted/60 text-muted-foreground"
+            }`}
+          >
+            {activeTab === "BEHIND" ? (
+              <CheckCircle2 size={24} />
+            ) : activeTab === "ON_TRACK" ? (
+              <Target size={24} />
+            ) : (
+              <Clock size={24} />
+            )}
           </div>
           <p className="text-xs font-bold text-foreground">
-            All Students on Track!
+            {activeTab === "BEHIND"
+              ? "All Students on Track!"
+              : activeTab === "ON_TRACK"
+              ? "No Students on Track"
+              : "All Students Scheduled"}
           </p>
           <p className="text-[11px] text-muted-foreground max-w-[240px]">
-            {criticalOnly
-              ? "No students have critical pacing lags at this time."
-              : "Every enrolled student is on pace with their syllabus target dates."}
+            {activeTab === "BEHIND"
+              ? "Every enrolled student is on pace with their syllabus target dates."
+              : activeTab === "ON_TRACK"
+              ? "No students have met on-pace milestone metrics at this time."
+              : "Every student has an active syllabus timeline configured."}
           </p>
         </div>
       ) : (
-        /* List of Lagging Students */
+        /* List of Students */
         <div className="flex flex-col gap-2">
           {displayStudents.map((student) => {
             const pace = student.calendarPace;
@@ -165,8 +250,10 @@ export function CalendarPaceLagCard({
             const actual = pace?.actualPercent ?? 0;
             const expected = pace?.expectedPercent ?? 0;
             const isCritical = pace?.status === "CRITICAL" || lag <= -30;
+            const isOnTrack = pace?.status === "ON_TRACK";
+            const isUnscheduled = !pace || pace.status === "NOT_SCHEDULED";
             const targetSubject =
-              pace?.activeSubject || student.userSettings?.focusSubject || "Study Plan";
+              pace?.activeSubject || student.userSettings?.focusSubject || (isUnscheduled ? "No Active Study Plan" : "Study Plan");
             const initials = (student.name || "S")
               .split(" ")
               .slice(0, 2)
@@ -182,7 +269,17 @@ export function CalendarPaceLagCard({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <Avatar className="h-7 w-7 border border-border shrink-0">
-                      <AvatarFallback className="text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                      <AvatarFallback
+                        className={`text-[10px] font-bold ${
+                          isOnTrack
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : isCritical
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            : isUnscheduled
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                        }`}
+                      >
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -198,19 +295,41 @@ export function CalendarPaceLagCard({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge
-                      variant="outline"
-                      className={`text-[9.5px] font-bold px-1.5 py-0 rounded-md ${
-                        isCritical
-                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                          : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
-                      }`}
-                    >
-                      <span className="flex items-center gap-0.5">
-                        {isCritical ? <AlertOctagon size={9} /> : <TrendingDown size={9} />}
-                        {lag !== 0 ? `${lag}% Lag` : "Behind"}
-                      </span>
-                    </Badge>
+                    {isOnTrack ? (
+                      <Badge
+                        variant="outline"
+                        className="text-[9.5px] font-bold px-1.5 py-0 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                      >
+                        <span className="flex items-center gap-0.5">
+                          <CheckCircle2 size={9} />
+                          {actual >= 100 ? "Completed" : "On Track"}
+                        </span>
+                      </Badge>
+                    ) : isUnscheduled ? (
+                      <Badge
+                        variant="outline"
+                        className="text-[9.5px] font-bold px-1.5 py-0 rounded-md bg-muted text-muted-foreground border-border"
+                      >
+                        <span className="flex items-center gap-0.5">
+                          <Clock size={9} />
+                          Unscheduled
+                        </span>
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={`text-[9.5px] font-bold px-1.5 py-0 rounded-md ${
+                          isCritical
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                        }`}
+                      >
+                        <span className="flex items-center gap-0.5">
+                          {isCritical ? <AlertOctagon size={9} /> : <TrendingDown size={9} />}
+                          {lag !== 0 ? `${lag}% Lag` : "Behind"}
+                        </span>
+                      </Badge>
+                    )}
 
                     {(() => {
                       const hasGuidance =
@@ -238,7 +357,7 @@ export function CalendarPaceLagCard({
                             variant="ghost"
                             onClick={() => onInterveneClick(student)}
                             className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg cursor-pointer"
-                            title={`Assign pacing guidance & catch-up plan to ${student.name}`}
+                            title={`Assign guidance & pacing plan to ${student.name}`}
                           >
                             <UserCheck size={12} />
                           </Button>
@@ -250,32 +369,50 @@ export function CalendarPaceLagCard({
                 </div>
 
                 {/* Progress Comparison */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono">
-                    <span className="text-muted-foreground">
-                      Actual: <strong className="text-foreground">{actual}%</strong>
+                {isUnscheduled ? (
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
+                    <span className="italic flex items-center gap-1">
+                      <Clock size={10} /> No syllabus timeline configured
                     </span>
-                    <span className="text-muted-foreground">
-                      Expected: <strong className="text-primary font-bold">{expected}%</strong>
-                    </span>
+                    <Link
+                      to="/student-management"
+                      className="text-primary hover:underline font-semibold"
+                    >
+                      Assign Plan
+                    </Link>
                   </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-muted-foreground">
+                        Actual: <strong className="text-foreground">{actual}%</strong>
+                      </span>
+                      <span className="text-muted-foreground">
+                        Expected: <strong className="text-primary font-bold">{expected}%</strong>
+                      </span>
+                    </div>
 
-                  {/* Dual Bar: Outer track shows expected marker, inner bar shows actual */}
-                  <div className="relative w-full h-2 rounded-full bg-muted overflow-hidden">
-                    {/* Expected ghost indicator */}
-                    <div
-                      className="absolute top-0 bottom-0 left-0 bg-primary/20 transition-all rounded-full"
-                      style={{ width: `${Math.min(100, Math.max(0, expected))}%` }}
-                    />
-                    {/* Actual progress */}
-                    <div
-                      className={`absolute top-0 bottom-0 left-0 transition-all rounded-full ${
-                        isCritical ? "bg-rose-500" : "bg-orange-500"
-                      }`}
-                      style={{ width: `${Math.min(100, Math.max(0, actual))}%` }}
-                    />
+                    {/* Dual Bar: Outer track shows expected marker, inner bar shows actual */}
+                    <div className="relative w-full h-2 rounded-full bg-muted overflow-hidden">
+                      {/* Expected ghost indicator */}
+                      <div
+                        className="absolute top-0 bottom-0 left-0 bg-primary/20 transition-all rounded-full"
+                        style={{ width: `${Math.min(100, Math.max(0, expected))}%` }}
+                      />
+                      {/* Actual progress */}
+                      <div
+                        className={`absolute top-0 bottom-0 left-0 transition-all rounded-full ${
+                          isOnTrack
+                            ? "bg-emerald-500"
+                            : isCritical
+                            ? "bg-rose-500"
+                            : "bg-orange-500"
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(0, actual))}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}

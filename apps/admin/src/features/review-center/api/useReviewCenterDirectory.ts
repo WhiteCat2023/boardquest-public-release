@@ -6,7 +6,7 @@ export function useReviewCenterDirectory() {
   const [selectedLocation, setSelectedLocation] = useState<string>("ALL");
   const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: rawReviewCenters = [], isLoading: isCentersLoading } =
     useReviewCenters({
@@ -17,12 +17,12 @@ export function useReviewCenterDirectory() {
 
   const reviewCenters = Array.isArray(rawReviewCenters) ? rawReviewCenters : [];
   const total = reviewCenters.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedReviewCenters = reviewCenters.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE,
+    startIndex + pageSize,
   );
 
   const uniqueLocations = Array.from(
@@ -68,6 +68,11 @@ export function useReviewCenterDirectory() {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
     selectedLocation !== "ALL" ||
@@ -84,7 +89,8 @@ export function useReviewCenterDirectory() {
     setCurrentPage,
     totalPages,
     totalItems: total,
-    pageSize: ITEMS_PER_PAGE,
+    pageSize,
+    handlePageSizeChange,
     hasNextPage,
     handleNextPage,
     handlePreviousPage,

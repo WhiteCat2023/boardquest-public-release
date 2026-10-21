@@ -4,6 +4,7 @@ import { BadgesManagementTab } from "../components/BadgesManagementTab";
 import { RanksManagementTab } from "../components/RanksManagementTab";
 import GameManagementHeader from "../components/GameManagementHeader";
 import { Award, Crown } from "lucide-react";
+import { StandardNavTabs } from "@/components/custom/tabs";
 
 export function GameManagementPage() {
   const location = useLocation();
@@ -41,36 +42,14 @@ export function GameManagementPage() {
       <GameManagementHeader />
 
       {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-border/80 pb-3 pt-0.5 overflow-x-auto scrollbar-none shrink-0">
-        <button
-          type="button"
-          onClick={() => handleTabChange("badges")}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-            activeTab === "badges"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
-          }`}
-        >
-          <Award className="w-4 h-4" /> Badges Catalog
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("ranks")}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-            activeTab === "ranks"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent"
-          }`}
-        >
-          <Crown
-            className={`w-4 h-4 ${
-              activeTab === "ranks" ? "text-amber-300" : "text-amber-500"
-            }`}
-          />{" "}
-          Aspirant Ranks
-        </button>
-      </div>
+      <StandardNavTabs
+        tabs={[
+          { id: "badges", label: "Badges Catalog", icon: Award },
+          { id: "ranks", label: "Aspirant Ranks", icon: Crown },
+        ]}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
       {/* Tab Contents - Independent Colocated Widgets */}
       <div className="flex-1 min-h-0 w-full">

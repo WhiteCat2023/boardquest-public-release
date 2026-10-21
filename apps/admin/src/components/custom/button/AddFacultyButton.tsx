@@ -1,15 +1,28 @@
-import { UserPlus } from "lucide-react";
+import { UserPlus, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MarronButton from "./MarronButton";
 
-export default function AddFacultyButton() {
+interface AddFacultyButtonProps {
+  activeTab?: "internal" | "external";
+}
+
+export default function AddFacultyButton({
+  activeTab = "internal",
+}: AddFacultyButtonProps) {
   const navigate = useNavigate();
+  const isExternal = activeTab === "external";
 
   return (
     <MarronButton
-      icon={<UserPlus size={18} />}
-      label="Add User"
-      onClick={() => navigate("/faculty-management/create")}
+      icon={isExternal ? <Building2 size={18} /> : <UserPlus size={18} />}
+      label={isExternal ? "Add External User" : "Add User"}
+      onClick={() =>
+        navigate(
+          isExternal
+            ? "/faculty-management/create?type=external"
+            : "/faculty-management/create?type=internal",
+        )
+      }
     />
   );
 }

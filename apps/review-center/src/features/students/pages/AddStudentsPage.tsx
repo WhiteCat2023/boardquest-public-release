@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StandardNavTabs } from "@/components/custom/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
@@ -370,33 +371,14 @@ export function AddStudentsPage() {
       </div>
 
       {/* ── Two-Tab Navigation Bar ── */}
-      <div className="flex items-center gap-2 border-b border-border pb-1">
-        <button
-          type="button"
-          onClick={() => handleTabChange("individual")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-            activeTab === "individual"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <User className="size-4" />
-          <span>Individual Student</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("bulk")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-            activeTab === "bulk"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <FileSpreadsheet className="size-4" />
-          <span>Bulk Import</span>
-        </button>
-      </div>
+      <StandardNavTabs
+        tabs={[
+          { id: "individual", label: "Individual Student", icon: User },
+          { id: "bulk", label: "Bulk Import", icon: FileSpreadsheet },
+        ]}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           TAB 1: INDIVIDUAL STUDENT FORM

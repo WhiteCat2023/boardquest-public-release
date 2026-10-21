@@ -17,7 +17,7 @@ interface CategoriesHeaderProps {
 export function CategoriesHeader({
   searchTerm,
   onSearchChange,
-  viewMode,
+  viewMode = "list",
   onViewModeChange,
   totalCount,
   isTeacher = false,
@@ -53,19 +53,6 @@ export function CategoriesHeader({
         <div className="flex items-center border border-border rounded-lg p-0.5 bg-muted/40 shadow-2xs">
           <button
             type="button"
-            onClick={() => onViewModeChange("grid")}
-            className={`p-1.5 rounded-md transition-all cursor-pointer ${
-              viewMode === "grid"
-                ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            title="Cards View"
-            aria-label="Cards View"
-          >
-            <LayoutGrid size={14} />
-          </button>
-          <button
-            type="button"
             onClick={() => onViewModeChange("list")}
             className={`p-1.5 rounded-md transition-all cursor-pointer ${
               viewMode === "list"
@@ -77,11 +64,20 @@ export function CategoriesHeader({
           >
             <List size={14} />
           </button>
+          <button
+            type="button"
+            onClick={() => onViewModeChange("grid")}
+            className={`p-1.5 rounded-md transition-all cursor-pointer ${
+              viewMode === "grid"
+                ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="Cards View"
+            aria-label="Cards View"
+          >
+            <LayoutGrid size={14} />
+          </button>
         </div>
-
-        <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-lg border border-border">
-          {isTeacher ? "Handled Subjects" : "Total Subjects"}: {totalCount}
-        </span>
 
         {canManage && onOpenAddModal && (
           <Button

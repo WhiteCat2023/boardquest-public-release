@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import QuestionList from "../components/list/QuestionList";
 import { QuestionFilter } from "../components/QuestionFilter";
 import useAuth from "@/hooks/useAuth";
 import { useQuestionBankFilterStore } from "@/store/QuestionBankStore";
 import { useSubjectNavCategories } from "../api/useSubjectNavCategories";
+import { useQuestionBank } from "../api/useQuestionBank";
+import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
+import {
+  FileQuestion,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import {
   SubjectNavSidebar,
   MobileSubjectSelector,
@@ -25,6 +33,7 @@ export default function MyQuestions() {
     selectedDifficulty,
     selectedType,
     selectedStatus,
+    setSelectedStatus,
   } = useQuestionBankFilterStore();
 
   const {
@@ -36,12 +45,77 @@ export default function MyQuestions() {
     badgeLabel,
   } = useSubjectNavCategories({ authorId: currentUserId });
 
+  // Status breakdown queries for live badge counts
+  const categoryParam =
+    selectedCategory === "ALL" || !selectedCategory
+      ? undefined
+      : selectedCategory;
+
+  const { data: allQuestionsData } = useQuestionBank({
+    authorId: currentUserId,
+    category: categoryParam,
+    limit: 1,
+  });
+
+  const { data: pendingReviewData } = useQuestionBank({
+    authorId: currentUserId,
+    category: categoryParam,
+    status: "PENDING_REVIEW",
+    limit: 1,
+  });
+
+  const { data: pendingRevisionData } = useQuestionBank({
+    authorId: currentUserId,
+    category: categoryParam,
+    status: "PENDING_REVISION",
+    limit: 1,
+  });
+
+  const { data: approvedData } = useQuestionBank({
+    authorId: currentUserId,
+    category: categoryParam,
+    status: "APPROVED",
+    limit: 1,
+  });
+
+  const statusTabs: NavTabItem<string>[] = useMemo(
+    () => [
+      {
+        id: "ALL",
+        label: "All Questions",
+        icon: FileQuestion,
+        badgeCount: allQuestionsData?.total,
+      },
+      {
+        id: "PENDING_REVIEW",
+        label: "Pending Review",
+        icon: Clock,
+        badgeCount: pendingReviewData?.total,
+      },
+      {
+        id: "PENDING_REVISION",
+        label: "Pending Revision",
+        icon: AlertCircle,
+        badgeCount: pendingRevisionData?.total,
+      },
+      {
+        id: "APPROVED",
+        label: "Approved",
+        icon: CheckCircle2,
+        badgeCount: approvedData?.total,
+      },
+    ],
+    [
+      allQuestionsData?.total,
+      pendingReviewData?.total,
+      pendingRevisionData?.total,
+      approvedData?.total,
+    ],
+  );
+
   const filters: any = {
     search,
-    category:
-      selectedCategory === "ALL" || !selectedCategory
-        ? undefined
-        : selectedCategory,
+    category: categoryParam,
     difficulty: selectedDifficulty,
     type: selectedType,
     status:
@@ -82,6 +156,24 @@ export default function MyQuestions() {
           badgeLabel={badgeLabel}
           isSidebarOpen={isSubjectSidebarOpen}
           onOpenSidebar={() => setIsSubjectSidebarOpen(true)}
+        />
+
+        {/* Standardized Status Navigation Tabs */}
+        <StandardNavTabs
+          tabs={statusTabs}
+          activeTab={selectedStatus || "ALL"}
+          onTabChange={(tab) => setSelectedStatus(tab)}
+          showScrollButtons="auto"
+          rightContent={
+            (allQuestionsData?.total ?? totalAllQuestionsCount) > 0 ? (
+              <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <span>Total Questions:</span>
+                <span className="text-foreground font-bold">
+                  {allQuestionsData?.total ?? totalAllQuestionsCount}
+                </span>
+              </div>
+            ) : null
+          }
         />
 
         {/* Question Filter & Question List */}

@@ -3,9 +3,13 @@ import AddFacultyButton from "@/components/custom/button/AddFacultyButton";
 
 interface UserHeaderProps {
   canAddUser: boolean;
+  activeTab?: "internal" | "external";
 }
 
-export default function UserHeader({ canAddUser }: UserHeaderProps) {
+export default function UserHeader({
+  canAddUser,
+  activeTab = "internal",
+}: UserHeaderProps) {
   return (
     <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-3.5 -mt-4 -mx-4 md:-mt-6 md:-mx-6 px-4 md:px-6 border-b border-border z-10 font-sans">
       <div>
@@ -14,13 +18,15 @@ export default function UserHeader({ canAddUser }: UserHeaderProps) {
           Users
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Manage academic staff, course leads, and administrator accounts.
+          {activeTab === "external"
+            ? "Manage external partner accounts and review center representatives."
+            : "Manage academic staff, course leads, and administrator accounts."}
         </p>
       </div>
 
       {canAddUser && (
         <div className="flex items-center gap-2">
-          <AddFacultyButton />
+          <AddFacultyButton activeTab={activeTab} />
         </div>
       )}
     </div>

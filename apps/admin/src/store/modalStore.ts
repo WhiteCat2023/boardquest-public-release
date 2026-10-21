@@ -259,7 +259,10 @@ export const showFeedback = Object.assign(baseFeedback, {
     useModalStore.getState().openCustom({
       id,
       content,
-      showCloseButton: true,
+      showCloseButton:
+        options?.showCloseButton !== undefined ? options.showCloseButton : true,
+      size: options?.size,
+      className: options?.className,
       onClose: () => {
         if (options?.onDismiss) options.onDismiss({ id });
         if (options?.onClose) options.onClose();

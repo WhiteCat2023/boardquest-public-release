@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowLeft, PlusCircle, FileSpreadsheet } from "lucide-react";
+import { StandardNavTabs } from "@/components/custom/tabs";
 
 interface AddQuestionHeaderProps {
   activeTab: "individual" | "bulk";
@@ -15,7 +16,7 @@ export function AddQuestionHeader({
   onBack,
 }: AddQuestionHeaderProps) {
   return (
-    <div className="flex flex-col gap-2 sticky top-0 bg-background/95 backdrop-blur-md pb-2 pt-1 -mt-1 z-10 border-b border-border/80">
+    <div className="flex flex-col gap-2 sticky top-0 bg-background/95 backdrop-blur-md pb-2 pt-1 -mt-1 z-10 border-b border-border/80 w-full">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -30,8 +31,8 @@ export function AddQuestionHeader({
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+        <div className="min-w-0">
           <h1 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 text-primary rounded-lg border border-primary/20">
               {activeTab === "individual" ? (
@@ -55,32 +56,16 @@ export function AddQuestionHeader({
 
         {/* Segmented Pill Tabs */}
         {!isEditMode && (
-          <div className="flex items-center p-0.5 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
-            <button
-              type="button"
-              onClick={() => onTabChange("individual")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "individual"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <PlusCircle size={13} />
-              Individual
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onTabChange("bulk")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "bulk"
-                  ? "bg-card text-foreground shadow-2xs border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <FileSpreadsheet size={13} />
-              Bulk
-            </button>
+          <div className="shrink-0 sm:ml-auto">
+            <StandardNavTabs
+              variant="pills"
+              tabs={[
+                { id: "individual", label: "Individual", icon: PlusCircle },
+                { id: "bulk", label: "Bulk", icon: FileSpreadsheet },
+              ]}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+            />
           </div>
         )}
       </div>

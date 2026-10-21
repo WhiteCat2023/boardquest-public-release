@@ -1,6 +1,7 @@
 export { default as ReviewCenterHeader } from "./ReviewCenterHeader";
 export { default as ReviewCenterFilters } from "./ReviewCenterFilters";
 export { default as ReviewCenterGrid } from "./ReviewCenterGrid";
+export { default as ReviewCenterTable } from "./ReviewCenterTable";
 export { default as ReviewCenterCard } from "./ReviewCenterCard";
 export { default as ReviewCenterCardSkeleton } from "./ReviewCenterCardSkeleton";
 export { default as ReviewCenterEmptyState } from "./ReviewCenterEmptyState";

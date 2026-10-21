@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, Trash2, ExternalLink, Inbox } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StandardNavTabs } from "@/components/custom/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,30 +104,20 @@ export default function NotificationDropdown() {
 
         {/* Filter Tabs & Bulk Actions Bar */}
         <div className="p-2 px-3 border-b border-border bg-card flex items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border">
-            <button
-              type="button"
-              onClick={() => setFilterTab("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                filterTab === "ALL"
-                  ? "bg-background text-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterTab("UNREAD")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                filterTab === "UNREAD"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Unread ({unreadCount})
-            </button>
-          </div>
+          <StandardNavTabs
+            variant="pills"
+            size="sm"
+            tabs={[
+              { id: "ALL", label: "All" },
+              {
+                id: "UNREAD",
+                label: "Unread",
+                badgeCount: unreadCount,
+              },
+            ]}
+            activeTab={filterTab}
+            onTabChange={(tab) => setFilterTab(tab as "ALL" | "UNREAD")}
+          />
 
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (

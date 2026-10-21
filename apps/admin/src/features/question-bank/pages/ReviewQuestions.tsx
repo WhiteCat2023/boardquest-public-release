@@ -143,6 +143,7 @@ export default function ReviewQuestions() {
               isLoading={isQuestionsLoading}
               onSelectQuestion={handleSelectQuestion}
               selectedAuthor={selectedAuthor}
+              onRefresh={refetchQuestions}
             />
           ) : (
             <FastReviewWorkspace

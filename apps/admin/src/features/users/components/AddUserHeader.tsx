@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building2, Shield, UserPlus, Users } from "lucide-react";
+import { StandardNavTabs } from "@/components/custom/tabs";
 
 interface AddUserHeaderProps {
   accountCategory: "internal" | "external";
@@ -18,7 +19,7 @@ export default function AddUserHeader({
   const isIndividual = activeTab === "individual";
 
   return (
-    <div className="flex flex-col gap-3 sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-2 -mt-2 z-10 border-b border-border/80">
+    <div className="flex flex-col gap-3 sticky top-0 bg-background/95 backdrop-blur-md pb-3 pt-2 -mt-2 z-10 border-b border-border/80 w-full">
       <div className="flex items-center gap-2">
         <Link
           to="/faculty-management"
@@ -32,8 +33,8 @@ export default function AddUserHeader({
         </Link>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <div
               className={`p-1.5 rounded-xl border ${
@@ -74,67 +75,32 @@ export default function AddUserHeader({
         </div>
 
         {/* Sub-tabs: Individual vs Bulk */}
-        <div className="flex items-center p-1 bg-muted/60 border border-border/80 rounded-xl w-fit shrink-0">
-          <button
-            type="button"
-            onClick={() => onTabChange("individual")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              isIndividual
-                ? "bg-card text-foreground shadow-2xs border border-border/80"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {isExternal ? (
-              <Building2 size={13} />
-            ) : (
-              <UserPlus size={13} />
-            )}
-            Individual
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onTabChange("bulk")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              !isIndividual
-                ? "bg-card text-foreground shadow-2xs border border-border/80"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users size={13} />
-            Bulk
-          </button>
+        <div className="shrink-0 sm:ml-auto">
+          <StandardNavTabs
+            variant="pills"
+            tabs={[
+              {
+                id: "individual",
+                label: "Individual",
+                icon: isExternal ? Building2 : UserPlus,
+              },
+              { id: "bulk", label: "Bulk", icon: Users },
+            ]}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
         </div>
       </div>
 
       {/* Top-Level Account Type Category Switcher */}
-      <div className="flex items-center gap-2 border-b border-border/60 pb-1 mt-1">
-        <button
-          type="button"
-          onClick={() => onCategoryChange("internal")}
-          className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            !isExternal
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <Shield size={14} />
-          Internal Account
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onCategoryChange("external")}
-          className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            isExternal
-              ? "bg-purple-600 text-white shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <Building2 size={14} />
-          External Account
-        </button>
-      </div>
+      <StandardNavTabs
+        tabs={[
+          { id: "internal", label: "Internal Account", icon: Shield },
+          { id: "external", label: "External Account", icon: Building2 },
+        ]}
+        activeTab={accountCategory}
+        onTabChange={onCategoryChange}
+      />
     </div>
   );
 }

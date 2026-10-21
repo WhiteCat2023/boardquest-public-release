@@ -14,7 +14,8 @@ interface EncodingKPICardsProps {
 }
 
 export function EncodingKPICards({ kpis, isLoading }: EncodingKPICardsProps) {
-  if (isLoading || !kpis) {
+  // Only display pulsing skeletons during initial load when no KPI data is available
+  if (!kpis || (isLoading && !kpis)) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (

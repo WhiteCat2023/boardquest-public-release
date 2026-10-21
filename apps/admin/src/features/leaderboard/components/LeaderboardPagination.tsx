@@ -17,6 +17,8 @@ export default function LeaderboardPagination({
   pageSize,
   totalItems,
   onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [10, 20, 30, 50],
 }: LeaderboardPaginationProps) {
   return (
     <DataTablePagination
@@ -24,6 +26,8 @@ export default function LeaderboardPagination({
       totalPages={totalPages}
       totalItems={totalItems}
       pageSize={pageSize}
+      pageSizeOptions={pageSizeOptions}
+      onPageSizeChange={onPageSizeChange}
       hasNextPage={currentPage < totalPages}
       hasPreviousPage={currentPage > 1}
       onNext={() => onPageChange(currentPage + 1)}

@@ -8,6 +8,7 @@ export function useUsers(params?: {
   status?: string;
   cursor?: string;
   limit?: number;
+  excludeExternal?: boolean;
   enabled?: boolean;
 }) {
   const axiosPrivate = useAxiosPrivate();

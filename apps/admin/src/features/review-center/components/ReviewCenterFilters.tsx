@@ -1,4 +1,4 @@
-import { Search, RotateCcw, X } from "lucide-react";
+import { Search, RotateCcw, X, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,8 @@ interface ReviewCenterFiltersProps {
   uniqueLocations: string[];
   hasActiveFilters: boolean;
   onResetFilters: () => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (mode: "grid" | "list") => void;
 }
 
 export default function ReviewCenterFilters({
@@ -27,6 +29,8 @@ export default function ReviewCenterFilters({
   uniqueLocations,
   hasActiveFilters,
   onResetFilters,
+  viewMode = "list",
+  onViewModeChange,
 }: ReviewCenterFiltersProps) {
   return (
     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-card border border-border p-2.5 px-3.5 rounded-xl shadow-2xs font-sans">
@@ -50,8 +54,39 @@ export default function ReviewCenterFilters({
         )}
       </div>
 
-      {/* Filter Dropdowns */}
+      {/* Filter Controls & View Mode */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* View Mode Toggle */}
+        {onViewModeChange && (
+          <div className="flex items-center border border-border rounded-lg p-0.5 bg-muted/40 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => onViewModeChange("list")}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Table List View"
+              aria-label="Table List View"
+            >
+              <List size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange("grid")}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === "grid"
+                  ? "bg-card text-primary shadow-2xs font-bold border border-border/60"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Cards Grid View"
+              aria-label="Cards Grid View"
+            >
+              <LayoutGrid size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Location Filter */}
         <Select value={selectedLocation} onValueChange={onLocationChange}>

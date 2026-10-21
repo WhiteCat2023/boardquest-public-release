@@ -45,13 +45,14 @@ export default function ReviewCenterStudentsTab({
     });
   }, [candidatesList, selectedGameStatus]);
 
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
   const total = filteredCandidates.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedCandidates = filteredCandidates.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE,
+    startIndex + pageSize,
   );
 
   const handleNext = () => {
@@ -120,7 +121,12 @@ export default function ReviewCenterStudentsTab({
               onPageSelect={handlePageSelect}
               totalPages={totalPages}
               totalItems={total}
-              pageSize={ITEMS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50]}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
               itemLabel="candidates"
               variant="table-footer"
             />

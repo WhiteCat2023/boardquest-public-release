@@ -94,12 +94,12 @@ export const createProgressToast = ({
 
     showFeedback.custom(
       (t) => (
-        <div className="w-[356px] sm:w-[390px] bg-card border border-border shadow-2xl rounded-2xl p-4 flex flex-col gap-2.5 font-sans text-foreground transition-all duration-300">
+        <div className="w-full flex flex-col gap-3 font-sans text-foreground">
           {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div
-                className={`p-2 rounded-xl border shrink-0 transition-colors ${
+                className={`p-2.5 rounded-xl border shrink-0 transition-colors ${
                   status === "success"
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                     : status === "warning"
@@ -110,20 +110,20 @@ export const createProgressToast = ({
                 }`}
               >
                 {status === "success" ? (
-                  <CheckCircle2 size={18} className="stroke-[2.5]" />
+                  <CheckCircle2 size={20} className="stroke-[2.5]" />
                 ) : status === "warning" ? (
-                  <AlertTriangle size={18} className="stroke-[2.5]" />
+                  <AlertTriangle size={20} className="stroke-[2.5]" />
                 ) : status === "error" ? (
-                  <AlertCircle size={18} className="stroke-[2.5]" />
+                  <AlertCircle size={20} className="stroke-[2.5]" />
                 ) : (
-                  <UploadCloud size={18} className="animate-pulse stroke-[2.2]" />
+                  <UploadCloud size={20} className="animate-pulse stroke-[2.2]" />
                 )}
               </div>
               <div className="flex flex-col min-w-0 leading-tight">
-                <span className="text-xs font-bold text-foreground truncate">
+                <span className="text-sm font-bold text-foreground truncate">
                   {customTitle}
                 </span>
-                <span className="text-[11px] text-muted-foreground truncate mt-0.5">
+                <span className="text-xs text-muted-foreground truncate mt-0.5">
                   {message}
                 </span>
               </div>
@@ -131,7 +131,7 @@ export const createProgressToast = ({
 
             {/* Percentage indicator */}
             <span
-              className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded-lg border shrink-0 ${
+              className={`text-xs font-mono font-extrabold px-2.5 py-1 rounded-lg border shrink-0 ${
                 status === "success"
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                   : status === "warning"
@@ -146,7 +146,7 @@ export const createProgressToast = ({
           </div>
 
           {/* Progress Bar Track */}
-          <div className="w-full bg-muted/70 h-2 rounded-full overflow-hidden border border-border/60">
+          <div className="w-full bg-muted/80 h-2.5 rounded-full overflow-hidden border border-border/60">
             <div
               className={`h-full transition-all duration-300 ease-out rounded-full ${
                 status === "success"
@@ -162,22 +162,49 @@ export const createProgressToast = ({
           </div>
 
           {/* Subtitle / Question Counter */}
-          {status === "uploading" && (
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium pt-0.5">
-              <span>
-                Queued{" "}
-                <strong className="text-foreground">{currentCount}</strong> of{" "}
-                <strong className="text-foreground">{validTotal}</strong> questions
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium pt-0.5">
+            <span>
+              {status === "uploading" ? (
+                <>
+                  Queued{" "}
+                  <strong className="text-foreground font-bold">{currentCount}</strong> of{" "}
+                  <strong className="text-foreground font-bold">{validTotal}</strong> questions
+                </>
+              ) : status === "success" ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  All {validTotal} questions queued successfully
+                </span>
+              ) : status === "warning" ? (
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                  Upload completed with warnings
+                </span>
+              ) : (
+                <span className="text-destructive font-semibold">
+                  Queueing failed
+                </span>
+              )}
+            </span>
+            {status === "uploading" ? (
+              <span className="flex items-center gap-1.5 text-primary font-semibold text-xs">
+                <Loader2 size={12} className="animate-spin" /> In Progress
               </span>
-              <span className="flex items-center gap-1 text-primary font-semibold">
-                <Loader2 size={10} className="animate-spin" /> In Progress
-              </span>
-            </div>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={() => showFeedback.dismiss(toastId)}
+                className="text-xs text-muted-foreground hover:text-foreground font-semibold px-2 py-0.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
+            )}
+          </div>
         </div>
       ),
       {
         id: toastId,
+        size: "sm",
+        showCloseButton: status !== "uploading",
+        className: "sm:max-w-md p-5 sm:p-6",
         duration: status === "uploading" ? Infinity : 4500,
       },
     );

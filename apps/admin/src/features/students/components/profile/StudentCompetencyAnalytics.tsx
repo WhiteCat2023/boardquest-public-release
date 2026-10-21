@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Activity, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { StandardNavTabs } from "@/components/custom/tabs";
 import type { SubjectMetricItem, SubjectAccuracyHistoryItem } from "../../types/types";
 
 interface StudentCompetencyAnalyticsProps {
@@ -100,30 +101,16 @@ export function StudentCompetencyAnalytics({
         </div>
 
         {/* Tab Selection Buttons */}
-        <div className="bg-muted/70 p-0.5 rounded-lg flex items-center gap-1 border border-border/50">
-          <button
-            type="button"
-            onClick={() => setActiveTab("radar")}
-            className={`text-[11px] font-bold rounded-md px-2.5 py-0.5 transition-all cursor-pointer ${
-              activeTab === "radar"
-                ? "bg-background text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Radar
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={`text-[11px] font-bold rounded-md px-2.5 py-0.5 transition-all cursor-pointer ${
-              activeTab === "history"
-                ? "bg-background text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            History
-          </button>
-        </div>
+        <StandardNavTabs
+          variant="pills"
+          size="sm"
+          tabs={[
+            { id: "radar", label: "Radar" },
+            { id: "history", label: "History" },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
       </div>
 
       {/* Tab 1: Proficiency Radar Chart (Pure SVG) */}

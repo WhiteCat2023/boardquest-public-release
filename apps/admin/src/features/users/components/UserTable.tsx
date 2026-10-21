@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Users, Building2 } from "lucide-react";
 import type { UserMember, RoleType } from "@/features/users";
 import UserTableRow from "./UserTableRow";
 import { Card } from "@/components/ui/card";
@@ -24,6 +24,7 @@ interface UserTableProps {
     email?: string,
   ) => void;
   pagination?: React.ReactNode;
+  activeTab?: "internal" | "external";
 }
 
 export default function UserTable({
@@ -33,7 +34,9 @@ export default function UserTable({
   currentUserId,
   onToggleStatus,
   pagination,
+  activeTab = "internal",
 }: UserTableProps) {
+  const isExternal = activeTab === "external";
   const displayUsers =
     isLoading && users.length === 0
       ? (Array(5).fill({
@@ -52,15 +55,24 @@ export default function UserTable({
       <phantom-ui loading={isLoading}>
         {!isLoading && users.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-2.5">
-            <Users
-              size={38}
-              className="text-muted-foreground/40 stroke-[1.5]"
-            />
+            {isExternal ? (
+              <Building2
+                size={38}
+                className="text-muted-foreground/40 stroke-[1.5]"
+              />
+            ) : (
+              <Users
+                size={38}
+                className="text-muted-foreground/40 stroke-[1.5]"
+              />
+            )}
             <p className="font-bold text-foreground text-sm">
-              No Users Registered
+              {isExternal ? "No External Users Found" : "No Internal Users Found"}
             </p>
             <p className="text-xs max-w-xs text-muted-foreground">
-              No users match the filter criteria.
+              {isExternal
+                ? "No review center partner accounts match the filter criteria."
+                : "No internal user accounts match the filter criteria."}
             </p>
           </div>
         ) : (

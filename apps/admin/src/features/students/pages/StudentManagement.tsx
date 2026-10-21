@@ -27,6 +27,7 @@ import GuidanceAssignmentsDesk from "../components/GuidanceAssignmentsDesk";
 import AssignGuidanceModal from "../components/AssignGuidanceModal";
 import EmailStudentModal from "../components/EmailStudentModal";
 import { DataTablePagination } from "@/components/custom/pagination";
+import { StandardNavTabs, SecondaryNavTabs } from "@/components/custom/tabs";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -52,7 +53,8 @@ export default function StudentManagement() {
 
   // Pagination State (offset-based, mirrors FacultyManagement cursor-stack pattern)
   const [currentPage, setCurrentPage] = useState(1);
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+  const skip = (currentPage - 1) * pageSize;
 
   const { data, isLoading } = useStudents({
     search: searchTerm,
@@ -61,12 +63,12 @@ export default function StudentManagement() {
     academicStanding: selectedAcademicStanding,
     advisorId: filterMyAdviseesOnly && currentUser?.id ? currentUser.id : undefined,
     skip,
-    take: ITEMS_PER_PAGE,
+    take: pageSize,
   });
 
   const studentsList = data?.students || [];
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
 
   const resetPagination = () => {
@@ -200,146 +202,100 @@ export default function StudentManagement() {
       />
 
       {/* 2. Top Tabs: Student Roster vs Academic Guidance Desk */}
-      <div className="flex items-center justify-between border-b border-border/80 pb-1">
-        <div className="flex items-center gap-2 bg-muted/50 p-1 border border-border/80 rounded-xl">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("DIRECTORY");
-              resetPagination();
-            }}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "DIRECTORY"
-                ? "bg-card text-foreground shadow-2xs border border-border/80"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {filterMyAdviseesOnly ? <Users size={14} /> : <GraduationCap size={14} />}
-            <span>{filterMyAdviseesOnly ? "My Advisees" : "Student Roster"}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-bold border border-primary/20">
-              {total}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("GUIDANCE")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "GUIDANCE"
-                ? "bg-card text-foreground shadow-2xs border border-border/80"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <UserCheck size={14} />
-            <span>Academic Guidance Desk</span>
-          </button>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-          <span>Total Registered:</span>
-          <span className="text-foreground font-bold">{total}</span>
-        </div>
-      </div>
+      <StandardNavTabs
+        tabs={[
+          {
+            id: "DIRECTORY",
+            label: filterMyAdviseesOnly ? "My Advisees" : "Student Roster",
+            icon: filterMyAdviseesOnly ? Users : GraduationCap,
+            badgeCount: total,
+          },
+          {
+            id: "GUIDANCE",
+            label: "Academic Guidance Desk",
+            icon: UserCheck,
+          },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab as "DIRECTORY" | "GUIDANCE");
+          if (tab === "DIRECTORY") {
+            resetPagination();
+          }
+        }}
+        rightContent={
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <span>Total Registered:</span>
+            <span className="text-foreground font-bold">{total}</span>
+          </div>
+        }
+      />
 
       {activeTab === "DIRECTORY" ? (
         <>
-          {/* Triage Quick Filter Navigation Pills */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
+          {/* Triage Quick Filter Secondary Navigation Tabs */}
+          <SecondaryNavTabs
+            tabs={[
+              { id: "ALL", label: "All Students", tone: "default" },
+              ...(isTeacher
+                ? [
+                    {
+                      id: "MY_ADVISEES",
+                      label: "My Advisees",
+                      icon: UserCheck,
+                      tone: "primary" as const,
+                    },
+                  ]
+                : []),
+              {
+                id: "FAILING",
+                label: "At-Risk & Failing",
+                icon: AlertTriangle,
+                tone: "danger",
+              },
+              {
+                id: "BEHIND",
+                label: "Behind Schedule",
+                icon: Clock,
+                tone: "warning",
+              },
+              {
+                id: "DORMANT",
+                label: "Dormant",
+                tone: "neutral",
+              },
+            ]}
+            activeTab={activePill}
+            onTabChange={(tabId) => {
+              if (tabId === "ALL") {
                 setSelectedAcademicStanding("ALL");
                 setSelectedPaceStatus("ALL");
                 setSelectedEngagement("ALL");
                 setFilterMyAdviseesOnly(false);
-                resetPagination();
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                activePill === "ALL"
-                  ? "bg-foreground text-background border-foreground shadow-2xs font-bold"
-                  : "bg-card text-muted-foreground hover:text-foreground border-border/80 hover:bg-muted/50"
-              }`}
-            >
-              <span>All Students</span>
-            </button>
-
-            {isTeacher && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedAcademicStanding("ALL");
-                  setSelectedPaceStatus("ALL");
-                  setSelectedEngagement("ALL");
-                  setFilterMyAdviseesOnly(true);
-                  resetPagination();
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                  activePill === "MY_ADVISEES"
-                    ? "bg-primary text-primary-foreground border-primary shadow-2xs font-bold"
-                    : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                }`}
-              >
-                <UserCheck size={13} className="shrink-0" />
-                <span>My Advisees</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
+              } else if (tabId === "MY_ADVISEES") {
+                setSelectedAcademicStanding("ALL");
+                setSelectedPaceStatus("ALL");
+                setSelectedEngagement("ALL");
+                setFilterMyAdviseesOnly(true);
+              } else if (tabId === "FAILING") {
                 setSelectedAcademicStanding("FAILING");
                 setSelectedPaceStatus("ALL");
                 setSelectedEngagement("ALL");
                 setFilterMyAdviseesOnly(false);
-                resetPagination();
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                activePill === "FAILING"
-                  ? "bg-rose-500 text-white border-rose-600 shadow-2xs font-bold"
-                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
-              }`}
-            >
-              <AlertTriangle size={13} className="shrink-0" />
-              <span>At-Risk & Failing</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
+              } else if (tabId === "BEHIND") {
                 setSelectedPaceStatus("BEHIND");
                 setSelectedAcademicStanding("ALL");
                 setSelectedEngagement("ALL");
                 setFilterMyAdviseesOnly(false);
-                resetPagination();
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                activePill === "BEHIND"
-                  ? "bg-amber-500 text-white border-amber-600 shadow-2xs font-bold"
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-              }`}
-            >
-              <Clock size={13} className="shrink-0" />
-              <span>Behind Schedule</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
+              } else if (tabId === "DORMANT") {
                 setSelectedEngagement("DORMANT");
                 setSelectedAcademicStanding("ALL");
                 setSelectedPaceStatus("ALL");
                 setFilterMyAdviseesOnly(false);
-                resetPagination();
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                activePill === "DORMANT"
-                  ? "bg-slate-700 text-white border-slate-800 shadow-2xs font-bold dark:bg-slate-300 dark:text-slate-900"
-                  : "bg-muted text-muted-foreground border-border/80 hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              <span>Dormant</span>
-            </button>
-          </div>
+              }
+              resetPagination();
+            }}
+          />
 
           {/* Search & Filters Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card border border-border/80 p-2.5 px-3 rounded-2xl shadow-2xs w-full">
@@ -503,7 +459,12 @@ export default function StudentManagement() {
                   onPageSelect={handlePageSelect}
                   totalPages={totalPages}
                   totalItems={total}
-                  pageSize={ITEMS_PER_PAGE}
+                  pageSize={pageSize}
+                  pageSizeOptions={[10, 20, 30, 50]}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setCurrentPage(1);
+                  }}
                   itemLabel="students"
                   variant="table-footer"
                 />

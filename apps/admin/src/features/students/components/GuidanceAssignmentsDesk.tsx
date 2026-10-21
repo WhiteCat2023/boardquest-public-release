@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, Search, Mail } from "lucide-react";
 import { showFeedback } from "@/components/modal";
 import { DataTablePagination } from "@/components/custom/pagination";
+import { SecondaryNavTabs } from "@/components/custom/tabs";
 import EmailStudentModal from "./EmailStudentModal";
 
 const ITEMS_PER_PAGE = 10;
@@ -69,15 +70,16 @@ export function GuidanceAssignmentsDesk() {
     },
   });
 
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
   const totalItems = assignments.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const hasNextPage = currentPage < totalPages;
   const hasPreviousPage = currentPage > 1;
 
   const paginatedAssignments = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return assignments.slice(start, start + ITEMS_PER_PAGE);
-  }, [assignments, currentPage]);
+    const start = (currentPage - 1) * pageSize;
+    return assignments.slice(start, start + pageSize);
+  }, [assignments, currentPage, pageSize]);
 
   const handleNext = () => {
     if (hasNextPage) setCurrentPage((prev) => prev + 1);
@@ -105,24 +107,16 @@ export function GuidanceAssignmentsDesk() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full sm:w-auto">
-          {["ALL", "PENDING", "IN_PROGRESS", "RESOLVED"].map((st) => (
-            <Button
-              key={st}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setFilterStatus(st)}
-              className={`h-7 px-3 text-xs rounded-xl cursor-pointer ${
-                filterStatus === st
-                  ? "bg-primary text-primary-foreground border-primary font-bold"
-                  : "bg-card text-muted-foreground hover:bg-muted/40"
-              }`}
-            >
-              {st}
-            </Button>
-          ))}
-        </div>
+        <SecondaryNavTabs
+          tabs={[
+            { id: "ALL", label: "All" },
+            { id: "PENDING", label: "Pending", tone: "warning" },
+            { id: "IN_PROGRESS", label: "In Progress", tone: "primary" },
+            { id: "RESOLVED", label: "Resolved", tone: "success" },
+          ]}
+          activeTab={filterStatus}
+          onTabChange={setFilterStatus}
+        />
       </div>
 
       {/* Table */}
@@ -292,7 +286,12 @@ export function GuidanceAssignmentsDesk() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={totalItems}
-            pageSize={ITEMS_PER_PAGE}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 50]}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
             hasNextPage={hasNextPage}
             hasPreviousPage={hasPreviousPage}
             onNext={handleNext}

@@ -125,6 +125,8 @@ export default function QuestionList({
                   onPrevious={handlePrevious}
                   onPageSelect={handlePageSelect}
                   pageSize={itemsPerPage}
+                  pageSizeOptions={[10, 20, 30, 40, 50]}
+                  onPageSizeChange={handleItemsPerPageChange}
                   itemLabel="questions"
                   variant="table-footer"
                 />

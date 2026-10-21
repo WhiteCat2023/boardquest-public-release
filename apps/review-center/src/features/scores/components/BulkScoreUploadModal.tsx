@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { StandardNavTabs } from "@/components/custom/tabs";
 import {
   Upload,
   Download,
@@ -316,32 +317,14 @@ export function BulkScoreUploadModal({
         </DialogHeader>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-border gap-4 mt-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("file")}
-            className={`pb-2 text-xs font-bold flex items-center gap-1.5 transition-all border-b-2 cursor-pointer ${
-              activeTab === "file"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Upload className="size-3.5" />
-            <span>Option 1: Upload CSV / Excel File</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("paste")}
-            className={`pb-2 text-xs font-bold flex items-center gap-1.5 transition-all border-b-2 cursor-pointer ${
-              activeTab === "paste"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Clipboard className="size-3.5" />
-            <span>Option 2: Copy-Paste from Sheets</span>
-          </button>
-        </div>
+        <StandardNavTabs
+          tabs={[
+            { id: "file", label: "Option 1: Upload CSV / Excel File", icon: Upload },
+            { id: "paste", label: "Option 2: Copy-Paste from Sheets", icon: Clipboard },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Option 1: File Upload Tab */}
         {activeTab === "file" && (

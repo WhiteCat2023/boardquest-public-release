@@ -8,14 +8,16 @@ import {
   ReviewCenterHeader,
   ReviewCenterFilters,
   ReviewCenterGrid,
+  ReviewCenterTable,
   AddEditReviewCenterModal,
 } from "../components";
-import QuestionListPagination from "@/components/custom/pagination/QuestionListPagination";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
 
 export default function ReviewCenterManagement() {
   const navigate = useNavigate();
   const { confirm } = useConfirm();
   const deleteCenterMutation = useDeleteReviewCenter();
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
   const {
     searchTerm,
@@ -27,6 +29,7 @@ export default function ReviewCenterManagement() {
     totalPages,
     totalItems,
     pageSize,
+    handlePageSizeChange,
     hasNextPage,
     handleNextPage,
     handlePreviousPage,
@@ -89,7 +92,7 @@ export default function ReviewCenterManagement() {
       {/* Header */}
       <ReviewCenterHeader />
 
-      {/* Search & Filters Bar Component */}
+      {/* Search & Filters Bar Component with View Mode Toggle */}
       <ReviewCenterFilters
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
@@ -98,33 +101,71 @@ export default function ReviewCenterManagement() {
         uniqueLocations={uniqueLocations}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      {/* Cards Grid Component */}
-      <ReviewCenterGrid
-        items={paginatedReviewCenters}
-        isLoading={isCentersLoading}
-        hasActiveFilters={hasActiveFilters}
-        onResetFilters={resetFilters}
-        onView={handleOpenView}
-        onEdit={handleOpenEdit}
-        onDelete={handleDelete}
-      />
-
-      {/* Pagination Bar */}
-      {!isCentersLoading && (
-        <QuestionListPagination
-          currentPage={currentPage}
-          hasNextPage={hasNextPage}
-          onNext={handleNextPage}
-          onPrevious={handlePreviousPage}
-          onPageSelect={handlePageSelect}
-          maxPageReached={totalPages}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          itemLabel="review centers"
+      {/* Main Content: Table List View (Default) or Cards Grid View */}
+      {viewMode === "list" ? (
+        <ReviewCenterTable
+          items={paginatedReviewCenters}
+          isLoading={isCentersLoading}
+          hasActiveFilters={hasActiveFilters}
+          onResetFilters={resetFilters}
+          onView={handleOpenView}
+          onEdit={handleOpenEdit}
+          onDelete={handleDelete}
+          pagination={
+            !isCentersLoading && totalItems > 0 ? (
+              <DataTablePagination
+                currentPage={currentPage}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={currentPage > 1}
+                onNext={handleNextPage}
+                onPrevious={handlePreviousPage}
+                onPageSelect={handlePageSelect}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                pageSizeOptions={[6, 8, 10, 20, 50]}
+                onPageSizeChange={handlePageSizeChange}
+                itemLabel="review centers"
+                variant="table-footer"
+              />
+            ) : null
+          }
         />
+      ) : (
+        <>
+          <ReviewCenterGrid
+            items={paginatedReviewCenters}
+            isLoading={isCentersLoading}
+            hasActiveFilters={hasActiveFilters}
+            onResetFilters={resetFilters}
+            onView={handleOpenView}
+            onEdit={handleOpenEdit}
+            onDelete={handleDelete}
+          />
+
+          {/* Grid View Pagination Bar */}
+          {!isCentersLoading && totalItems > 0 && (
+            <DataTablePagination
+              currentPage={currentPage}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={currentPage > 1}
+              onNext={handleNextPage}
+              onPrevious={handlePreviousPage}
+              onPageSelect={handlePageSelect}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              pageSizeOptions={[6, 8, 10, 20, 50]}
+              onPageSizeChange={handlePageSizeChange}
+              itemLabel="review centers"
+              variant="card"
+            />
+          )}
+        </>
       )}
 
       {/* Modals & Dialogs */}

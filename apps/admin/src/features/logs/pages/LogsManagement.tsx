@@ -34,14 +34,16 @@ export default function LogsManagement() {
   const { data: stats, isLoading: isStatsLoading } = useLogStats();
   const clearLogsMutation = useClearLogs();
 
+  const [pageSize, setPageSize] = useState(LOGS_PER_PAGE);
+
   const logs = Array.isArray(rawLogs) ? rawLogs : [];
   const totalLogs = logs.length;
-  const totalPages = Math.max(1, Math.ceil(totalLogs / LOGS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
   const hasNextPage = currentPage < totalPages;
 
   const paginatedLogs = logs.slice(
-    (currentPage - 1) * LOGS_PER_PAGE,
-    currentPage * LOGS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   const handleNext = () => {
@@ -148,6 +150,11 @@ export default function LogsManagement() {
         isLoading={isLogsLoading}
         selectedLevel={selectedLevel}
         searchTerm={searchTerm}
+        pageSize={pageSize}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setCurrentPage(1);
+        }}
       />
     </div>
   );

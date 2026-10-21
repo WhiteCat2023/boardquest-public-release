@@ -14,7 +14,13 @@ import {
   CircleDashed,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -40,7 +46,11 @@ const PASSING_THRESHOLD = 75; // Standard 75% PRC Licensure passing benchmark
 function formatShortSubjectName(name: string): string {
   if (!name) return "";
   const lower = name.toLowerCase().trim();
-  if (lower.includes("immunology") || lower.includes("serology") || lower.includes("immunohematology")) {
+  if (
+    lower.includes("immunology") ||
+    lower.includes("serology") ||
+    lower.includes("immunohematology")
+  ) {
     return "Immuno & Serology";
   }
   if (lower.includes("microscopy") || lower.includes("parasitology")) {
@@ -66,7 +76,10 @@ function formatShortSubjectName(name: string): string {
 
 function normalizeSubjectKey(raw?: string | null): string {
   if (!raw) return "";
-  return raw.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function isSubjectMatch(examSubject?: string | null, dbSubject?: any): boolean {
@@ -82,17 +95,23 @@ function isSubjectMatch(examSubject?: string | null, dbSubject?: any): boolean {
 
   const normE = normalizeSubjectKey(examSubject);
   const normDb = normalizeSubjectKey(dbSubject.name);
-  if (normE && normDb && (normE === normDb || normDb.includes(normE) || normE.includes(normDb))) {
+  if (
+    normE &&
+    normDb &&
+    (normE === normDb || normDb.includes(normE) || normE.includes(normDb))
+  ) {
     return true;
   }
   return false;
 }
 
-export default function StudentExamResultsTab({ student }: StudentExamResultsTabProps) {
+export default function StudentExamResultsTab({
+  student,
+}: StudentExamResultsTabProps) {
   // 1. Fetch live exam results (with fallback to student preloaded data)
   const { data: rawExams = [] } = useStudentExamResults(
     student?.id,
-    student?.examResults
+    student?.examResults,
   );
 
   // 2. Fetch all registered subjects dynamically from the database
@@ -125,7 +144,8 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
 
   const exams: ExamResult[] = useMemo(() => {
     if (Array.isArray(rawExams) && rawExams.length > 0) return rawExams;
-    if (Array.isArray(student?.examResults) && student.examResults.length > 0) return student.examResults;
+    if (Array.isArray(student?.examResults) && student.examResults.length > 0)
+      return student.examResults;
     return [];
   }, [rawExams, student?.examResults]);
 
@@ -136,7 +156,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "accuracy_desc" | "accuracy_asc" | "score_desc">("newest");
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "accuracy_desc" | "accuracy_asc" | "score_desc"
+  >("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(5);
 
@@ -160,7 +182,11 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
   };
 
   // Normalize accuracy value to 0-100 range
-  const normalizeAccuracy = (acc?: number, score?: number, total?: number): number => {
+  const normalizeAccuracy = (
+    acc?: number,
+    score?: number,
+    total?: number,
+  ): number => {
     if (typeof acc === "number" && !isNaN(acc)) {
       if (acc > 0 && acc <= 1) return Math.round(acc * 100);
       return Math.round(acc);
@@ -269,7 +295,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
           highestScore = e.score || 0;
           highestTotal = e.total || 0;
         }
-        if (e.timestamp && (!lastDate || new Date(e.timestamp) > new Date(lastDate))) {
+        if (
+          e.timestamp &&
+          (!lastDate || new Date(e.timestamp) > new Date(lastDate))
+        ) {
           lastDate = e.timestamp;
         }
       });
@@ -293,7 +322,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
     });
 
     // 2. Append any exam results that didn't match registered DB subjects (e.g. legacy/custom subjects)
-    const unmatchedExams = exams.filter((e) => !e.id || !matchedExamIds.has(e.id));
+    const unmatchedExams = exams.filter(
+      (e) => !e.id || !matchedExamIds.has(e.id),
+    );
     const extraMap = new Map<string, ExamResult[]>();
     unmatchedExams.forEach((e) => {
       const subjName = (e.subject || "General Practice").trim();
@@ -315,7 +346,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
           highestScore = e.score || 0;
           highestTotal = e.total || 0;
         }
-        if (e.timestamp && (!lastDate || new Date(e.timestamp) > new Date(lastDate))) {
+        if (
+          e.timestamp &&
+          (!lastDate || new Date(e.timestamp) > new Date(lastDate))
+        ) {
           lastDate = e.timestamp;
         }
       });
@@ -358,8 +392,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
         let matchesSubject = true;
         if (selectedSubject !== "ALL") {
           matchesSubject =
-            (e.subject || "").toLowerCase().trim() === selectedSubject.toLowerCase().trim() ||
-            normalizeSubjectKey(e.subject) === normalizeSubjectKey(selectedSubject);
+            (e.subject || "").toLowerCase().trim() ===
+              selectedSubject.toLowerCase().trim() ||
+            normalizeSubjectKey(e.subject) ===
+              normalizeSubjectKey(selectedSubject);
         }
 
         const acc = normalizeAccuracy(e.accuracy, e.score, e.total);
@@ -418,7 +454,6 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-200 font-sans">
-
       {/* ── 2. Performance KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Card 1: Total Exam Attempts */}
@@ -475,14 +510,23 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 {stats.averageAccuracy}%
               </span>
               <Badge
-                variant={stats.averageAccuracy >= PASSING_THRESHOLD ? "default" : "destructive"}
+                variant={
+                  stats.averageAccuracy >= PASSING_THRESHOLD
+                    ? "default"
+                    : "destructive"
+                }
                 className="text-[9.5px] font-black uppercase tracking-wider px-1.5 py-0 rounded-full"
               >
-                {stats.averageAccuracy >= PASSING_THRESHOLD ? "Passing Standing" : "Needs Remediation"}
+                {stats.averageAccuracy >= PASSING_THRESHOLD
+                  ? "Passing Standing"
+                  : "Needs Remediation"}
               </Badge>
             </div>
             <div className="w-full mt-2">
-              <Progress value={stats.averageAccuracy} className="h-1.5 bg-muted" />
+              <Progress
+                value={stats.averageAccuracy}
+                className="h-1.5 bg-muted"
+              />
             </div>
           </CardContent>
         </Card>
@@ -507,7 +551,8 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {stats.failedCount} attempt{stats.failedCount === 1 ? "" : "s"} scored below 75%
+              {stats.failedCount} attempt{stats.failedCount === 1 ? "" : "s"}{" "}
+              scored below 75%
             </p>
           </CardContent>
         </Card>
@@ -533,7 +578,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1 truncate" title={stats.peakSubject}>
+            <p
+              className="text-[11px] text-muted-foreground mt-1 truncate"
+              title={stats.peakSubject}
+            >
               In {stats.peakSubject}
             </p>
           </CardContent>
@@ -550,12 +598,17 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 <CardTitle className="text-sm font-bold text-foreground">
                   Student Accuracy
                 </CardTitle>
-                <Badge variant="outline" className="text-[10px] font-extrabold px-2 py-0.5 rounded-full border-border">
-                  {attemptedDisciplinesCount} of {disciplineBreakdowns.length} Disciplines Evaluated
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-extrabold px-2 py-0.5 rounded-full border-border"
+                >
+                  {attemptedDisciplinesCount} of {disciplineBreakdowns.length}{" "}
+                  Disciplines Evaluated
                 </Badge>
               </div>
               <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                Average mock assessment accuracy across all Medical Technology licensure board disciplines.
+                Average mock assessment accuracy across all Medical Technology
+                licensure board disciplines.
               </CardDescription>
             </div>
           </div>
@@ -564,7 +617,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
         <CardContent className="p-0">
           {/* ──── Modern Interactive SVG Bar Graph ──── */}
           <div className="flex flex-col gap-3">
-            <div ref={containerRef} className="w-full overflow-x-auto scrollbar-none pb-2">
+            <div
+              ref={containerRef}
+              className="w-full overflow-x-auto scrollbar-none pb-2"
+            >
               <div className="w-full" style={{ minWidth: 600 }}>
                 <svg
                   viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -573,19 +629,37 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 >
                   <defs>
                     {/* Gradient for Passing Bars (>= 75%) */}
-                    <linearGradient id="emeraldBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="emeraldBarGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="0%" stopColor="#10b981" />
                       <stop offset="100%" stopColor="#059669" />
                     </linearGradient>
 
                     {/* Gradient for Moderate Bars (60% - 74%) */}
-                    <linearGradient id="amberBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="amberBarGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="0%" stopColor="#f59e0b" />
                       <stop offset="100%" stopColor="#d97706" />
                     </linearGradient>
 
                     {/* Gradient for Needs Review Bars (< 60%) */}
-                    <linearGradient id="roseBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="roseBarGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="0%" stopColor="#f43f5e" />
                       <stop offset="100%" stopColor="#e11d48" />
                     </linearGradient>
@@ -625,7 +699,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                   })}
 
                   {/* 75% PRC Licensure Target Line Label */}
-                  <g transform={`translate(${svgWidth - rightMargin - 104}, ${benchmarkY - 9})`}>
+                  <g
+                    transform={`translate(${svgWidth - rightMargin - 104}, ${benchmarkY - 9})`}
+                  >
                     <rect
                       width={104}
                       height={18}
@@ -645,7 +721,8 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
 
                   {/* Vertical Bars for Each Discipline */}
                   {disciplineBreakdowns.map((disc, idx) => {
-                    const barX = leftMargin + idx * colWidth + (colWidth - barWidth) / 2;
+                    const barX =
+                      leftMargin + idx * colWidth + (colWidth - barWidth) / 2;
                     const isHovered = hoveredBarIndex === idx;
 
                     if (!disc.hasAttempts) {
@@ -701,7 +778,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                     }
 
                     // Attempted Bar Dimensions
-                    const barH = Math.max(8, (disc.avgAccuracy / 100) * plotHeight);
+                    const barH = Math.max(
+                      8,
+                      (disc.avgAccuracy / 100) * plotHeight,
+                    );
                     const barY = chartBottom - barH;
                     const isPassing = disc.avgAccuracy >= PASSING_THRESHOLD;
                     const isNearPassing = disc.avgAccuracy >= 60 && !isPassing;
@@ -709,14 +789,14 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                     const fillGradient = isPassing
                       ? "url(#emeraldBarGrad)"
                       : isNearPassing
-                      ? "url(#amberBarGrad)"
-                      : "url(#roseBarGrad)";
+                        ? "url(#amberBarGrad)"
+                        : "url(#roseBarGrad)";
 
                     const textValueColor = isPassing
                       ? "fill-emerald-600 dark:fill-emerald-400"
                       : isNearPassing
-                      ? "fill-amber-600 dark:fill-amber-400"
-                      : "fill-rose-600 dark:fill-rose-400";
+                        ? "fill-amber-600 dark:fill-amber-400"
+                        : "fill-rose-600 dark:fill-rose-400";
 
                     return (
                       <g
@@ -749,7 +829,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                           rx={6}
                           fill={fillGradient}
                           className={`transition-transform origin-bottom duration-200 filter drop-shadow-xs ${
-                            isHovered ? "opacity-95" : "opacity-90 hover:opacity-100"
+                            isHovered
+                              ? "opacity-95"
+                              : "opacity-90 hover:opacity-100"
                           }`}
                         />
 
@@ -769,7 +851,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                           y={chartBottom + 16}
                           textAnchor="middle"
                           className={`text-[10.5px] font-bold ${
-                            isHovered ? "fill-primary font-black" : "fill-foreground"
+                            isHovered
+                              ? "fill-primary font-black"
+                              : "fill-foreground"
                           }`}
                         >
                           {disc.shortName}
@@ -815,7 +899,8 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
 
               {/* Dynamic Detail Callout for Hovered Item */}
               <div className="text-[11px] font-semibold text-muted-foreground">
-                {hoveredBarIndex !== null && disciplineBreakdowns[hoveredBarIndex] ? (
+                {hoveredBarIndex !== null &&
+                disciplineBreakdowns[hoveredBarIndex] ? (
                   <div className="flex items-center gap-2 bg-muted/50 px-2.5 py-1 rounded-lg border border-border">
                     <strong className="text-foreground">
                       {disciplineBreakdowns[hoveredBarIndex].name}:
@@ -829,18 +914,24 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                               : "text-rose-600 dark:text-rose-400 font-black"
                           }
                         >
-                          {disciplineBreakdowns[hoveredBarIndex].avgAccuracy}% accuracy
+                          {disciplineBreakdowns[hoveredBarIndex].avgAccuracy}%
+                          accuracy
                         </span>
                         <span>&bull;</span>
-                        <span>{disciplineBreakdowns[hoveredBarIndex].count} attempts</span>
+                        <span>
+                          {disciplineBreakdowns[hoveredBarIndex].count} attempts
+                        </span>
                         <span>&bull;</span>
                         <span>
-                          Peak: {disciplineBreakdowns[hoveredBarIndex].highestScore}/
+                          Peak:{" "}
+                          {disciplineBreakdowns[hoveredBarIndex].highestScore}/
                           {disciplineBreakdowns[hoveredBarIndex].highestTotal}
                         </span>
                       </>
                     ) : (
-                      <span className="text-muted-foreground italic">No mock exams taken yet</span>
+                      <span className="text-muted-foreground italic">
+                        No mock exams taken yet
+                      </span>
                     )}
                   </div>
                 ) : (
@@ -893,7 +984,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                   }}
                   className="h-8 text-xs bg-background text-foreground border border-border rounded-xl px-2.5 py-1 pr-6 font-semibold cursor-pointer outline-none focus:ring-1 focus:ring-primary max-w-[170px] truncate"
                 >
-                  <option value="ALL">All Subjects ({disciplineBreakdowns.length})</option>
+                  <option value="ALL">
+                    All Subjects ({disciplineBreakdowns.length})
+                  </option>
                   {disciplineBreakdowns.map((disc) => (
                     <option key={disc.key} value={disc.name}>
                       {disc.name}
@@ -975,7 +1068,9 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 <TableHeader>
                   <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border text-[11px] font-black uppercase text-muted-foreground">
                     <TableHead className="w-12 text-center">#</TableHead>
-                    <TableHead className="min-w-[200px]">Discipline / Assessment Subject</TableHead>
+                    <TableHead className="min-w-[200px]">
+                      Discipline / Assessment Subject
+                    </TableHead>
                     <TableHead className="w-28 text-center">Score</TableHead>
                     <TableHead className="w-28 text-center">Accuracy</TableHead>
                     <TableHead className="w-32 text-center">Standing</TableHead>
@@ -985,11 +1080,18 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                 <TableBody>
                   {paginatedExams.map((exam, index) => {
                     const rowNumber = (currentPage - 1) * pageSize + index + 1;
-                    const acc = normalizeAccuracy(exam.accuracy, exam.score, exam.total);
+                    const acc = normalizeAccuracy(
+                      exam.accuracy,
+                      exam.score,
+                      exam.total,
+                    );
                     const isPassing = acc >= PASSING_THRESHOLD;
 
                     return (
-                      <TableRow key={exam.id || index} className="hover:bg-muted/30 transition-colors">
+                      <TableRow
+                        key={exam.id || index}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
                         {/* Index */}
                         <TableCell className="text-center font-mono text-xs text-muted-foreground">
                           {rowNumber}
@@ -1002,7 +1104,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                               {exam.subject || "General Licensure Examination"}
                             </span>
                             <span className="text-[10px] text-muted-foreground">
-                              Assessment Session ID: {exam.id ? exam.id.slice(-6) : `session-${rowNumber}`}
+                              Assessment Session ID:{" "}
+                              {exam.id
+                                ? exam.id.slice(-6)
+                                : `session-${rowNumber}`}
                             </span>
                           </div>
                         </TableCell>
@@ -1010,7 +1115,10 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
                         {/* Raw Score */}
                         <TableCell className="text-center">
                           <span className="font-mono text-xs font-bold text-foreground">
-                            {exam.score ?? 0} <span className="text-muted-foreground font-normal">/ {exam.total ?? 0}</span>
+                            {exam.score ?? 0}{" "}
+                            <span className="text-muted-foreground font-normal">
+                              / {exam.total ?? 0}
+                            </span>
                           </span>
                         </TableCell>
 
@@ -1066,44 +1174,26 @@ export default function StudentExamResultsTab({ student }: StudentExamResultsTab
             </div>
           )}
 
-          {/* ── 5. Always Visible Pagination Footer with Page Size Selector ── */}
+          {/* ── 5. Standardized Pagination Footer ── */}
           {filteredExams.length > 0 && (
-            <div className="p-3.5 px-5 border-t border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3 font-sans shrink-0">
-              {/* Rows Per Page Selector */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground order-2 sm:order-1">
-                <span>Rows per page:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="h-7 text-xs bg-background text-foreground border border-border rounded-lg px-2 py-0.5 font-bold cursor-pointer outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="order-1 sm:order-2 w-full sm:w-auto">
-                <DataTablePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredExams.length}
-                  pageSize={pageSize}
-                  hasNextPage={currentPage < totalPages}
-                  hasPreviousPage={currentPage > 1}
-                  onNext={() => handlePageChange(currentPage + 1)}
-                  onPrevious={() => handlePageChange(currentPage - 1)}
-                  onPageSelect={handlePageChange}
-                  itemLabel="exam attempts"
-                  variant="standalone"
-                />
-              </div>
-            </div>
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredExams.length}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+              hasNextPage={currentPage < totalPages}
+              hasPreviousPage={currentPage > 1}
+              onNext={() => handlePageChange(currentPage + 1)}
+              onPrevious={() => handlePageChange(currentPage - 1)}
+              onPageSelect={handlePageChange}
+              itemLabel="exam attempts"
+              variant="table-footer"
+            />
           )}
         </CardContent>
       </Card>

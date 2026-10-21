@@ -502,7 +502,7 @@ export async function sendReviewCenterCredentialsEmail({ toEmail, name, password
     }
 }
 export async function sendQuestionStatusNotificationEmail({ toEmail, userName, status, questionTitle, subjectName, message, feedback, linkUrl: customLinkUrl, }) {
-    const adminUrl = process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+    const adminUrl = process.env.FRONTEND_URL;
     const targetUrl = customLinkUrl || `${adminUrl}/question-bank`;
     const isApproved = status === "APPROVED";
     const isRevision = status === "PENDING_REVISION";
@@ -661,7 +661,7 @@ export async function sendQuestionStatusNotificationEmail({ toEmail, userName, s
     }
 }
 export async function sendSecurityAlertEmail({ toEmail, userName, loginTime, ipAddress, userAgent, location, }) {
-    const adminUrl = process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+    const adminUrl = process.env.FRONTEND_URL;
     const resetUrl = `${adminUrl}/forgot-password`;
     const formattedTime = loginTime
         ? new Date(loginTime).toUTCString()

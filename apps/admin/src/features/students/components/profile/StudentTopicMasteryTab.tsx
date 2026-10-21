@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import DataTablePagination from "@/components/custom/pagination/DataTablePagination";
 import {
   Select,
   SelectContent,
@@ -40,13 +41,19 @@ import { StudentTopicMasteryModal } from "./topic-mastery/StudentTopicMasteryMod
 
 export interface StudentTopicMasteryTabProps {
   student: Student;
-  onPrescribeGuidance?: (initialData?: { subject?: string; reason?: string }) => void;
+  onPrescribeGuidance?: (initialData?: {
+    subject?: string;
+    reason?: string;
+  }) => void;
 }
 
-const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const SUBJECT_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   "Clinical Chemistry": FlaskConical,
-  "Microbiology": Microscope,
-  "Hematology": Droplet,
+  Microbiology: Microscope,
+  Hematology: Droplet,
   "Immunology & Serology and Immunohematology": Dna,
   "Clinical Microscopy & Parasitology": Eye,
   "Histopathology & MT Laws": FileText,
@@ -62,7 +69,12 @@ const OFFICIAL_SUBJECTS = [
   "Histopathology and Medtech Laws",
 ];
 
-type InPageStatusFilter = "ALL" | "NEEDS_REVIEW" | "PROFICIENT" | "MASTERED" | "UNATTEMPTED";
+type InPageStatusFilter =
+  | "ALL"
+  | "NEEDS_REVIEW"
+  | "PROFICIENT"
+  | "MASTERED"
+  | "UNATTEMPTED";
 type InPageSort = "PRIORITY" | "ACCURACY_DESC" | "ACCURACY_ASC" | "NAME_ASC";
 
 export function StudentTopicMasteryTab({
@@ -73,7 +85,9 @@ export function StudentTopicMasteryTab({
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalInitialSubject, setModalInitialSubject] = useState<string | null>(null);
+  const [modalInitialSubject, setModalInitialSubject] = useState<string | null>(
+    null,
+  );
 
   // In-Page Matrix Controls State
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>("ALL");
@@ -128,7 +142,7 @@ export function StudentTopicMasteryTab({
         (t) =>
           t.name.toLowerCase().includes(q) ||
           t.subject.toLowerCase().includes(q) ||
-          (t.diagnosticNote && t.diagnosticNote.toLowerCase().includes(q))
+          (t.diagnosticNote && t.diagnosticNote.toLowerCase().includes(q)),
       );
     }
 
@@ -146,9 +160,9 @@ export function StudentTopicMasteryTab({
       if (sortBy === "PRIORITY") {
         const order: Record<string, number> = {
           "Needs Review": 1,
-          "Unattempted": 2,
-          "Proficient": 3,
-          "Mastered": 4,
+          Unattempted: 2,
+          Proficient: 3,
+          Mastered: 4,
         };
         const pDiff = (order[a.status] || 5) - (order[b.status] || 5);
         if (pDiff !== 0) return pDiff;
@@ -185,7 +199,6 @@ export function StudentTopicMasteryTab({
 
   return (
     <div className="flex flex-col gap-5 animate-in fade-in duration-200 font-sans text-foreground pb-8">
-      
       {/* 1. HERO SECTION: Topic Mastery via AI Analytics (Matching Image 1) */}
       <TopicMasteryAiHeroCard
         summary={topicData?.summary}
@@ -211,7 +224,8 @@ export function StudentTopicMasteryTab({
               Full Subtopic Performance Explorer
             </h3>
             <p className="text-[11.5px] text-muted-foreground">
-              Review accuracy scores and assign targeted remedial drills directly to {student.name}.
+              Review accuracy scores and assign targeted remedial drills
+              directly to {student.name}.
             </p>
           </div>
 
@@ -230,16 +244,26 @@ export function StudentTopicMasteryTab({
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
           {/* Discipline Selector */}
           <div className="w-full md:w-56 shrink-0">
-            <Select value={selectedDiscipline} onValueChange={(val) => setSelectedDiscipline(val)}>
+            <Select
+              value={selectedDiscipline}
+              onValueChange={(val) => setSelectedDiscipline(val)}
+            >
               <SelectTrigger className="h-9 text-xs font-semibold rounded-xl bg-background border border-border">
                 <SelectValue placeholder="All Disciplines" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border bg-card">
-                <SelectItem value="ALL" className="text-xs font-semibold cursor-pointer">
+                <SelectItem
+                  value="ALL"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   All Disciplines
                 </SelectItem>
                 {OFFICIAL_SUBJECTS.map((sub) => (
-                  <SelectItem key={sub} value={sub} className="text-xs font-semibold cursor-pointer">
+                  <SelectItem
+                    key={sub}
+                    value={sub}
+                    className="text-xs font-semibold cursor-pointer"
+                  >
                     {sub}
                   </SelectItem>
                 ))}
@@ -269,22 +293,37 @@ export function StudentTopicMasteryTab({
 
           {/* Sort Selector */}
           <div className="w-full md:w-48 shrink-0">
-            <Select value={sortBy} onValueChange={(val) => setSortBy(val as InPageSort)}>
+            <Select
+              value={sortBy}
+              onValueChange={(val) => setSortBy(val as InPageSort)}
+            >
               <SelectTrigger className="h-9 text-xs font-semibold rounded-xl bg-background border border-border gap-1.5">
                 <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="Sort..." />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border bg-card">
-                <SelectItem value="PRIORITY" className="text-xs font-semibold cursor-pointer">
+                <SelectItem
+                  value="PRIORITY"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   Priority (Weakest First)
                 </SelectItem>
-                <SelectItem value="ACCURACY_DESC" className="text-xs font-semibold cursor-pointer">
+                <SelectItem
+                  value="ACCURACY_DESC"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   Highest Accuracy
                 </SelectItem>
-                <SelectItem value="ACCURACY_ASC" className="text-xs font-semibold cursor-pointer">
+                <SelectItem
+                  value="ACCURACY_ASC"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   Lowest Accuracy
                 </SelectItem>
-                <SelectItem value="NAME_ASC" className="text-xs font-semibold cursor-pointer">
+                <SelectItem
+                  value="NAME_ASC"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   Topic Name (A-Z)
                 </SelectItem>
               </SelectContent>
@@ -318,7 +357,8 @@ export function StudentTopicMasteryTab({
             }`}
           >
             <AlertTriangle className="w-3 h-3 text-rose-500" />
-            Needs Review ({allTopics.filter((t) => t.status === "Needs Review").length})
+            Needs Review (
+            {allTopics.filter((t) => t.status === "Needs Review").length})
           </Button>
 
           <Button
@@ -331,7 +371,8 @@ export function StudentTopicMasteryTab({
                 : "border border-blue-500/30 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
             }`}
           >
-            Proficient ({allTopics.filter((t) => t.status === "Proficient").length})
+            Proficient (
+            {allTopics.filter((t) => t.status === "Proficient").length})
           </Button>
 
           <Button
@@ -358,7 +399,8 @@ export function StudentTopicMasteryTab({
                 : "border border-border/80 bg-background text-muted-foreground hover:bg-muted"
             }`}
           >
-            Unattempted ({allTopics.filter((t) => t.status === "Unattempted").length})
+            Unattempted (
+            {allTopics.filter((t) => t.status === "Unattempted").length})
           </Button>
         </div>
 
@@ -366,17 +408,19 @@ export function StudentTopicMasteryTab({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
           {paginatedTopics.length > 0 ? (
             paginatedTopics.map((topicItem) => {
-              const isUnattempted = topicItem.totalAttempts === 0 || topicItem.status === "Unattempted";
+              const isUnattempted =
+                topicItem.totalAttempts === 0 ||
+                topicItem.status === "Unattempted";
               const isMastered = topicItem.status === "Mastered";
               const isNeedsReview = topicItem.status === "Needs Review";
 
               const badgeStyle = isMastered
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                 : isNeedsReview
-                ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
-                : isUnattempted
-                ? "bg-muted text-muted-foreground border-border"
-                : "bg-blue-500/10 text-blue-500 border-blue-500/30";
+                  ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
+                  : isUnattempted
+                    ? "bg-muted text-muted-foreground border-border"
+                    : "bg-blue-500/10 text-blue-500 border-blue-500/30";
 
               return (
                 <div
@@ -394,13 +438,19 @@ export function StudentTopicMasteryTab({
                         </span>
                       </div>
 
-                      <Badge variant="outline" className={`text-[10px] font-mono font-bold px-1.5 py-0.5 shrink-0 ${badgeStyle}`}>
-                        {isUnattempted ? "Unattempted" : `${topicItem.accuracy}% Acc`}
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 shrink-0 ${badgeStyle}`}
+                      >
+                        {isUnattempted
+                          ? "Unattempted"
+                          : `${topicItem.accuracy}% Acc`}
                       </Badge>
                     </div>
 
                     <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                      {topicItem.diagnosticNote || "Licensure syllabus high-yield domain."}
+                      {topicItem.diagnosticNote ||
+                        "Licensure syllabus high-yield domain."}
                     </p>
                   </div>
 
@@ -413,7 +463,12 @@ export function StudentTopicMasteryTab({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handlePrescribeTopicName(topicItem.name, topicItem.subject)}
+                      onClick={() =>
+                        handlePrescribeTopicName(
+                          topicItem.name,
+                          topicItem.subject,
+                        )
+                      }
                       className="h-6 px-2 text-[10.5px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                     >
                       <Sword className="w-3 h-3 text-primary" />
@@ -426,86 +481,36 @@ export function StudentTopicMasteryTab({
             })
           ) : (
             <div className="col-span-full p-8 text-center border border-dashed border-border rounded-xl text-muted-foreground space-y-1.5">
-              <p className="text-xs font-bold text-foreground">No topics match your current filter.</p>
-              <p className="text-[11px]">Clear search or select another discipline.</p>
+              <p className="text-xs font-bold text-foreground">
+                No topics match your current filter.
+              </p>
+              <p className="text-[11px]">
+                Clear search or select another discipline.
+              </p>
             </div>
           )}
         </div>
 
-        {/* Pagination Footer */}
+        {/* Standardized Pagination Footer */}
         {totalItems > 0 && (
-          <div className="pt-3 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3">
-            {/* Left: Range and Page Size Selector */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-              <span>
-                Showing <strong className="text-foreground font-bold">{startIndex + 1}</strong> to{" "}
-                <strong className="text-foreground font-bold">{Math.min(startIndex + pageSize, totalItems)}</strong> of{" "}
-                <strong className="text-foreground font-bold">{totalItems}</strong> topics
-              </span>
-
-              <span className="text-border hidden sm:inline">•</span>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Show:</span>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(val) => {
-                    setPageSize(Number(val));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-[94px] text-xs font-semibold rounded-lg bg-background border border-border shadow-2xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border bg-card">
-                    <SelectItem value="10" className="text-xs font-semibold cursor-pointer">
-                      10
-                    </SelectItem>
-                    <SelectItem value="20" className="text-xs font-semibold cursor-pointer">
-                      20
-                    </SelectItem>
-                    <SelectItem value="30" className="text-xs font-semibold cursor-pointer">
-                      30
-                    </SelectItem>
-                    <SelectItem value="40" className="text-xs font-semibold cursor-pointer">
-                      40
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Right: Previous / Page / Next Controls */}
-            <div className="flex items-center gap-1.5 self-center sm:self-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="h-8 text-xs gap-1 rounded-lg px-3 cursor-pointer font-semibold border-border/80 hover:bg-accent text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft size={14} />
-                <span>Previous</span>
-              </Button>
-
-              <div className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 bg-muted/50 rounded-lg border border-border/60 select-none">
-                <span className="text-foreground">{currentPage}</span>
-                <span className="text-muted-foreground font-normal">/</span>
-                <span className="text-muted-foreground">{totalPages}</span>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="h-8 text-xs gap-1 rounded-lg px-3 cursor-pointer font-semibold border-border/80 hover:bg-accent text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                <span>Next</span>
-                <ChevronRight size={14} />
-              </Button>
-            </div>
-          </div>
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 40]}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
+            hasNextPage={currentPage < totalPages}
+            hasPreviousPage={currentPage > 1}
+            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onPageSelect={(page) => setCurrentPage(page)}
+            itemLabel="topics"
+            variant="table-footer"
+          />
         )}
       </Card>
 

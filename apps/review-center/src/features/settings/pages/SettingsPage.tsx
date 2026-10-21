@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { User, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useReviewCenterAuth } from "@/hooks/useReviewCenterAuth";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { StandardNavTabs } from "@/components/custom/tabs";
 import {
   SettingsHeader,
   PersonalDetailsView,
@@ -132,36 +133,21 @@ export function SettingsPage() {
         location={user?.location || user?.reviewCenter?.location || location}
       />
 
-      {/* 2. Navigation Tabs & Content */}
+      {/* 2. Standardized Navigation Tabs & Content */}
+      <StandardNavTabs
+        tabs={[
+          { id: "details", label: "Personal Details", icon: User },
+          { id: "security", label: "Security & Password", icon: Lock },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as ProfileTab)}
+      />
+
       <Tabs
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as ProfileTab)}
         className="gap-4"
       >
-        <div className="border-b border-border flex items-center overflow-x-auto scrollbar-none pt-1">
-          <TabsList className="bg-transparent h-auto p-0 gap-1 sm:gap-2 rounded-none border-b-0">
-            <TabsTrigger
-              value="details"
-              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold rounded-none border-b-2 -mb-[1px] border-transparent text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all cursor-pointer shrink-0"
-            >
-              <User
-                size={14}
-                className={activeTab === "details" ? "text-primary" : "text-muted-foreground"}
-              />
-              <span>Personal Details</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="security"
-              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold rounded-none border-b-2 -mb-[1px] border-transparent text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all cursor-pointer shrink-0"
-            >
-              <Lock
-                size={14}
-                className={activeTab === "security" ? "text-primary" : "text-muted-foreground"}
-              />
-              <span>Security &amp; Password</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
 
         {/* Tab 1: Personal Details */}
         <TabsContent value="details" className="mt-0 outline-hidden">

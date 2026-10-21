@@ -64,15 +64,17 @@ export function ScheduledPeriodsList({
     });
   }, [sortedSchedules, searchQuery]);
 
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredSchedules.length / ITEMS_PER_PAGE),
+    Math.ceil(filteredSchedules.length / pageSize),
   );
 
   const paginatedSchedules = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredSchedules.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredSchedules, currentPage]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredSchedules.slice(start, start + pageSize);
+  }, [filteredSchedules, currentPage, pageSize]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -193,7 +195,12 @@ export function ScheduledPeriodsList({
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={filteredSchedules.length}
-          pageSize={ITEMS_PER_PAGE}
+          pageSize={pageSize}
+          pageSizeOptions={[5, 10, 20, 50]}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
           hasNextPage={currentPage < totalPages}
           hasPreviousPage={currentPage > 1}
           onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}

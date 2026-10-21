@@ -37,7 +37,7 @@ export function RanksManagementTab({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Modals state
   const [inspectingRank, setInspectingRank] = useState<RankTier | null>(null);
@@ -130,12 +130,12 @@ export function RanksManagementTab({
   });
 
   const total = filteredRanks.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedRanks = filteredRanks.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE,
+    startIndex + pageSize,
   );
 
   const hasActiveFilters = Boolean(searchTerm) || selectedStatus !== "ALL";
@@ -182,7 +182,12 @@ export function RanksManagementTab({
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={filteredRanks.length}
-              pageSize={ITEMS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
               hasNextPage={hasNextPage}
               hasPreviousPage={currentPage > 1}
               onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}

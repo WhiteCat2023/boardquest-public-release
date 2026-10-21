@@ -83,6 +83,11 @@ const SubjectDetailsPage = lazy(() =>
     default: m.SubjectDetailsPage,
   })),
 );
+const SubjectTopicsPage = lazy(() =>
+  import("@/features/question-bank").then((m) => ({
+    default: m.SubjectTopicsPage,
+  })),
+);
 
 const MyQuestions = lazy(() =>
   import("@/features/question-bank").then((m) => ({ default: m.MyQuestions })),
@@ -359,6 +364,14 @@ function App() {
                   <Route
                     path="subject-management/view/:categoryId"
                     element={<SubjectDetailsPage />}
+                  />
+                  <Route
+                    path="subject-management/:categoryId/topics"
+                    element={<SubjectTopicsPage />}
+                  />
+                  <Route
+                    path="subject-management/view/:categoryId/topics"
+                    element={<SubjectTopicsPage />}
                   />
                   <Route path="question-bank" element={<SharedLibrary />} />
                   <Route

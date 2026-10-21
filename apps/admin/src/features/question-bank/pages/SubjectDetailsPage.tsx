@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import useAuth from "@/hooks/useAuth";
 import {
@@ -9,6 +9,7 @@ import {
   useCreateLearningModule,
   useUpdateLearningModule,
   useDeleteLearningModule,
+  useTopics,
   type LearningModule,
 } from "@/features/question-bank";
 
@@ -25,6 +26,7 @@ import {
 export default function SubjectDetailsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { auth } = useAuth();
 
   const currentUserRole =
@@ -37,11 +39,15 @@ export default function SubjectDetailsPage() {
   const canManageModules =
     canManageSubject || currentUserRole === "TEACHER";
 
-  const [activeTab, setActiveTab] = useState<"overview" | "modules">("overview");
+  const initialTab = searchParams.get("tab") === "modules" ? "modules" : "overview";
+  const [activeTab, setActiveTab] = useState<"overview" | "modules">(initialTab);
 
   // Category Hooks
   const { data: category, isLoading: isCategoryLoading } = useCategoryDetail(categoryId);
   const updateCategoryMutation = useUpdateCategory();
+
+  // Topics Hook
+  const { data: topics = [] } = useTopics(categoryId || null);
 
   // Learning Modules Hooks
   const { data: modules = [], isLoading: isModulesLoading } =
@@ -49,6 +55,19 @@ export default function SubjectDetailsPage() {
   const createModuleMutation = useCreateLearningModule(categoryId || null);
   const updateModuleMutation = useUpdateLearningModule(categoryId || null);
   const deleteModuleMutation = useDeleteLearningModule(categoryId || null);
+
+  const handleTabChange = (tab: "overview" | "modules" | "topics") => {
+    if (tab === "topics") {
+      navigate(`/subject-management/${categoryId}/topics`);
+      return;
+    }
+    setActiveTab(tab);
+    if (tab === "modules") {
+      setSearchParams({ tab: "modules" });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // Module Modal States
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
@@ -147,7 +166,8 @@ export default function SubjectDetailsPage() {
         canManage={canManageSubject}
         activeTab={activeTab}
         modulesCount={modules.length}
-        onTabChange={setActiveTab}
+        topicsCount={topics.length}
+        onTabChange={handleTabChange}
         onOpenEditSubject={handleOpenEditSubject}
         onBackNav={() => navigate("/subject-management")}
       />
@@ -162,10 +182,12 @@ export default function SubjectDetailsPage() {
         <SubjectOverviewTab
           category={category}
           totalQuestions={totalQuestions}
+          topicsCount={topics.length}
           modulesCount={modules.length}
           formatDate={formatDate}
           onNavigateQuestionBank={() => navigate("/question-bank")}
-          onNavigateModulesTab={() => setActiveTab("modules")}
+          onNavigateTopics={() => navigate(`/subject-management/${categoryId}/topics`)}
+          onNavigateModulesTab={() => handleTabChange("modules")}
         />
       ) : (
         <SubjectModulesTab

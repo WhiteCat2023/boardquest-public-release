@@ -130,7 +130,9 @@ export function DataTable<TData, TValue>({
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={table.getFilteredRowModel().rows.length}
-          pageSize={pageSize}
+          pageSize={table.getState().pagination.pageSize}
+          pageSizeOptions={[10, 20, 30, 50]}
+          onPageSizeChange={(newSize) => table.setPageSize(newSize)}
           hasNextPage={table.getCanNextPage()}
           hasPreviousPage={table.getCanPreviousPage()}
           onNext={() => table.nextPage()}

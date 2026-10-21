@@ -116,23 +116,7 @@ export function QuestionFilter({
           </SelectContent>
         </Select>
 
-        {/* Status Filter */}
-        {view === "my-questions" && (
-          <Select
-            value={selectedStatus || "ALL"}
-            onValueChange={(val) => setSelectedStatus(val)}
-          >
-            <SelectTrigger className="h-8.5 w-[135px] sm:w-[140px] bg-muted/30 border-border rounded-lg text-xs font-semibold text-foreground">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
-              <SelectItem value="PENDING_REVISION">Pending Revision</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+
 
         {/* Reset Filters */}
         {hasActiveFilters && (

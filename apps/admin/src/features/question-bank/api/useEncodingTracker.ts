@@ -1,5 +1,10 @@
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import type {
   TrackerOverviewResponse,
   MyProgressResponse,
@@ -51,6 +56,7 @@ export function useEncodingTrackerOverview(filters?: TrackerFilters) {
       });
       return response.data?.data as TrackerOverviewResponse;
     },
+    placeholderData: keepPreviousData,
   });
 }
 

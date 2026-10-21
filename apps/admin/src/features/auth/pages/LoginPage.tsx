@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { Mail, Lock, EyeClosed, Eye, UserX, ShieldAlert } from "lucide-react";
 import boardQuestLogo from "@/assets/boardquest.png";
+import swuLogo from "@/assets/swu-logo.png";
+import medtechLogo from "@/assets/medtech_logo.jpg";
 import {
   Field,
   FieldDescription,
@@ -58,7 +60,7 @@ function LoginPage() {
   const isLoginInvalid = loginMutation.isError && !isDeactivatedDialogOpen;
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-background text-foreground font-sans p-4 sm:p-6">
+    <div className="min-h-screen w-full flex flex-col justify-between items-center bg-background text-foreground font-sans p-4 sm:p-6 relative">
       <div className="w-full flex-1 flex items-center justify-center py-6 sm:py-8">
         <div className="w-full max-w-[420px] bg-card border border-border rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col items-center">
           {/* Logo Section */}
@@ -190,8 +192,25 @@ function LoginPage() {
       </div>
     </div>
 
+      {/* Bottom Left Institutional Logos */}
+      <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 flex items-center gap-2.5 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-card/85 backdrop-blur-md border border-border/80 shadow-md">
+        <img
+          src={swuLogo}
+          alt="Southwestern University PHINMA"
+          title="Southwestern University PHINMA"
+          className="h-8 w-8 sm:h-10 sm:w-10 object-contain rounded-full shadow-2xs"
+        />
+        <div className="h-5 sm:h-6 w-px bg-border/80" />
+        <img
+          src={medtechLogo}
+          alt="Medical Technology Department"
+          title="Medical Technology Department"
+          className="h-8 w-8 sm:h-10 sm:w-10 object-contain rounded-xl bg-white p-0.5 shadow-2xs"
+        />
+      </div>
+
       {/* Footer */}
-      <footer className="w-full py-4 text-center text-xs text-muted-foreground select-none shrink-0">
+      <footer className="w-full py-4 text-center text-xs text-muted-foreground select-none shrink-0 pl-28 pr-4 sm:px-0">
         <p className="tracking-wide">
           &copy; {new Date().getFullYear()} <span className="font-semibold text-foreground/80">BoardQuest</span>. All rights reserved.
         </p>

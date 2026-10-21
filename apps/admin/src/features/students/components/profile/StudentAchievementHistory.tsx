@@ -16,15 +16,15 @@ export function StudentAchievementHistory({
   formatDate,
 }: StudentAchievementHistoryProps) {
   const [achievementPage, setAchievementPage] = useState(1);
-  const ACHIEVEMENTS_PER_PAGE = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const totalAchievements = achievements.length;
   const totalAchievementPages =
-    Math.ceil(totalAchievements / ACHIEVEMENTS_PER_PAGE) || 1;
+    Math.ceil(totalAchievements / pageSize) || 1;
 
   const paginatedAchievements = achievements.slice(
-    (achievementPage - 1) * ACHIEVEMENTS_PER_PAGE,
-    achievementPage * ACHIEVEMENTS_PER_PAGE,
+    (achievementPage - 1) * pageSize,
+    achievementPage * pageSize,
   );
 
   return (
@@ -114,7 +114,12 @@ export function StudentAchievementHistory({
               currentPage={achievementPage}
               totalPages={totalAchievementPages}
               totalItems={totalAchievements}
-              pageSize={ACHIEVEMENTS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setAchievementPage(1);
+              }}
               hasNextPage={achievementPage < totalAchievementPages}
               hasPreviousPage={achievementPage > 1}
               onNext={() =>

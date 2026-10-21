@@ -20,6 +20,8 @@ interface UserSearchFiltersBarProps {
   selectedStatus: string;
   onStatusChange: (val: string) => void;
   onResetFilters: () => void;
+  showRoleFilter?: boolean;
+  isExternalTab?: boolean;
 }
 
 export default function UserSearchFiltersBar({
@@ -31,9 +33,14 @@ export default function UserSearchFiltersBar({
   selectedStatus,
   onStatusChange,
   onResetFilters,
+  showRoleFilter: propShowRoleFilter,
+  isExternalTab = false,
 }: UserSearchFiltersBarProps) {
   const roleFilterOptions = getManagedRolesForFilter(currentUserRole);
-  const showRoleFilter = roleFilterOptions.length > 0;
+  const showRoleFilter =
+    propShowRoleFilter !== undefined
+      ? propShowRoleFilter
+      : !isExternalTab && roleFilterOptions.length > 0;
 
   const hasActiveFilters =
     searchTerm.trim() !== "" ||
@@ -47,7 +54,11 @@ export default function UserSearchFiltersBar({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
         <Input
           type="text"
-          placeholder="Search by name, email, employee ID..."
+          placeholder={
+            isExternalTab
+              ? "Search by name, email, employee ID, company..."
+              : "Search by name, email, employee ID..."
+          }
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9 pr-8 h-8.5 bg-muted/30 hover:bg-muted/50 border border-border rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary text-foreground placeholder:text-muted-foreground transition-colors w-full"

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useEncodingTrackerOverview } from "../api/useEncodingTracker";
 import { useSubjectNavCategories } from "../api/useSubjectNavCategories";
 import {
@@ -9,9 +9,22 @@ import {
   NudgeTeacherModal,
 } from "../components/tracker";
 import { DataTablePagination } from "@/components/custom/pagination";
+import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, ClipboardCheck } from "lucide-react";
-import type { FacultyTrackItem } from "../types/encodingTracker.types";
+import {
+  RefreshCw,
+  ClipboardCheck,
+  Users,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
+  PencilLine,
+  CheckCircle2,
+} from "lucide-react";
+import type {
+  FacultyTrackItem,
+  EncodingTrackerKPIs,
+} from "../types/encodingTracker.types";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -20,6 +33,7 @@ export default function FacultyEncodingTracker() {
   const [selectedSubject, setSelectedSubject] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isTabChanging, setIsTabChanging] = useState(false);
   const [quotaModalItem, setQuotaModalItem] = useState<FacultyTrackItem | null>(null);
   const [nudgeModalItem, setNudgeModalItem] = useState<FacultyTrackItem | null>(null);
   const [isBulkNudgeOpen, setIsBulkNudgeOpen] = useState(false);
@@ -29,12 +43,25 @@ export default function FacultyEncodingTracker() {
     data,
     isLoading,
     isRefetching,
+    isPlaceholderData,
     refetch,
   } = useEncodingTrackerOverview({
     search,
     subjectId: selectedSubject,
     status: selectedStatus,
   });
+
+  // Preserve stable KPIs so top stat cards and tab badges never flash into skeletons when navigating tabs
+  const [stableKpis, setStableKpis] = useState<EncodingTrackerKPIs | undefined>(undefined);
+  useEffect(() => {
+    if (data?.kpis) {
+      setStableKpis(data.kpis);
+    }
+  }, [data?.kpis]);
+
+  const kpis = data?.kpis || stableKpis;
+  const items = data?.items || [];
+  const schoolYear = data?.schoolYear || "S.Y. 2025-2026";
 
   // Fetch subjects for dropdown
   const { categories } = useSubjectNavCategories();
@@ -44,10 +71,6 @@ export default function FacultyEncodingTracker() {
       name: c.name,
     }));
   }, [categories]);
-
-  const kpis = data?.kpis;
-  const items = data?.items || [];
-  const schoolYear = data?.schoolYear || "S.Y. 2025-2026";
 
   const incompleteCount = useMemo(() => {
     if (!kpis) return 0;
@@ -70,8 +93,13 @@ export default function FacultyEncodingTracker() {
   };
 
   const handleStatusChange = (val: string) => {
+    if (val === selectedStatus) return;
+    setIsTabChanging(true);
     setSelectedStatus(val);
     setCurrentPage(1);
+    setTimeout(() => {
+      setIsTabChanging(false);
+    }, 200);
   };
 
   const handleResetFilters = () => {
@@ -81,13 +109,67 @@ export default function FacultyEncodingTracker() {
     setCurrentPage(1);
   };
 
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
+  // Dedicated loading flags: top cards stay stable, ONLY table under tabs reloads
+  const isInitialLoading = isLoading && !kpis;
+  const isTableLoading = isInitialLoading || isPlaceholderData || isTabChanging;
+
   // Pagination computations
   const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedItems = useMemo(
-    () => items.slice(startIndex, startIndex + ITEMS_PER_PAGE),
-    [items, startIndex],
+    () => items.slice(startIndex, startIndex + pageSize),
+    [items, startIndex, pageSize],
+  );
+
+  // Status Navigation Tabs (standardized from Student View)
+  const statusTabs: NavTabItem<string>[] = useMemo(
+    () => [
+      {
+        id: "ALL",
+        label: "All",
+        icon: Users,
+        badgeCount: kpis ? kpis.totalAssignments : undefined,
+      },
+      {
+        id: "INCOMPLETE",
+        label: "Incomplete Only",
+        icon: AlertCircle,
+        badgeCount: kpis ? incompleteCount : undefined,
+      },
+      {
+        id: "OVERDUE",
+        label: "Overdue",
+        icon: AlertTriangle,
+        badgeCount: kpis ? kpis.overdueCount : undefined,
+      },
+      {
+        id: "NOT_STARTED",
+        label: "Not Started",
+        icon: Clock,
+        badgeCount: kpis ? kpis.notStartedCount : undefined,
+      },
+      {
+        id: "IN_PROGRESS",
+        label: "In Progress",
+        icon: PencilLine,
+        badgeCount: kpis ? kpis.inProgressCount : undefined,
+      },
+      {
+        id: "COMPLETED",
+        label: "Completed",
+        icon: CheckCircle2,
+        badgeCount: kpis ? kpis.completedCount : undefined,
+      },
+    ],
+    [kpis, incompleteCount],
   );
 
   return (
@@ -114,8 +196,8 @@ export default function FacultyEncodingTracker() {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            disabled={isLoading || isRefetching}
-            className="h-9 text-xs gap-1.5"
+            disabled={isInitialLoading || isRefetching}
+            className="h-9 text-xs gap-1.5 cursor-pointer"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`}
@@ -125,8 +207,26 @@ export default function FacultyEncodingTracker() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <EncodingKPICards kpis={kpis} isLoading={isLoading} />
+      {/* KPI Cards: Only reload/skeleton on initial page load, NEVER when navigating tabs */}
+      <EncodingKPICards kpis={kpis} isLoading={isInitialLoading} />
+
+      {/* Standardized Navigation Tabs (matching Student View) */}
+      <StandardNavTabs
+        tabs={statusTabs}
+        activeTab={selectedStatus}
+        onTabChange={handleStatusChange}
+        showScrollButtons="auto"
+        rightContent={
+          <div className="hidden sm:flex items-center gap-3 text-xs font-semibold text-muted-foreground">
+            <span className="hidden md:inline">
+              Allocations: <span className="text-foreground font-bold">{kpis?.totalAssignments ?? totalItems}</span>
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-muted text-[11px] font-bold text-foreground border border-border">
+              {schoolYear}
+            </span>
+          </div>
+        }
+      />
 
       {/* Filters Toolbar */}
       <EncodingTrackerFilters
@@ -134,8 +234,6 @@ export default function FacultyEncodingTracker() {
         onSearchChange={handleSearchChange}
         selectedSubject={selectedSubject}
         onSubjectChange={handleSubjectChange}
-        selectedStatus={selectedStatus}
-        onStatusChange={handleStatusChange}
         subjects={subjectOptions}
         onNudgeAllClick={() => setIsBulkNudgeOpen(true)}
         onResetFilters={handleResetFilters}
@@ -143,19 +241,21 @@ export default function FacultyEncodingTracker() {
         incompleteCount={incompleteCount}
       />
 
-      {/* Faculty Encoding Roster Table */}
+      {/* Faculty Encoding Roster Table: ONLY this table reloads when navigating tabs */}
       <FacultyEncodingTable
         items={paginatedItems}
-        isLoading={isLoading}
+        isLoading={isTableLoading}
         onNudgeClick={(item) => setNudgeModalItem(item)}
         onSetQuotaClick={(item) => setQuotaModalItem(item)}
         pagination={
-          !isLoading && totalItems > 0 && (
+          !isTableLoading && totalItems > 0 && (
             <DataTablePagination
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
-              pageSize={ITEMS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50]}
+              onPageSizeChange={handlePageSizeChange}
               hasNextPage={currentPage < totalPages}
               hasPreviousPage={currentPage > 1}
               onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}

@@ -1,5 +1,6 @@
 import { Search, Flame, AlertCircle, AlertTriangle, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SecondaryNavTabs } from "@/components/custom/tabs";
 
 interface LogFiltersProps {
   selectedLevel: string;
@@ -17,33 +18,17 @@ export default function LogFilters({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-card p-2.5 px-3.5 border border-border rounded-xl shadow-2xs font-sans">
       {/* Log Level Filter Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
-        {(["ALL", "INFO", "WARN", "ERROR", "FATAL"] as const).map((lvl) => (
-          <button
-            key={lvl}
-            onClick={() => onSelectLevel(lvl)}
-            className={`px-3 h-8 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-              selectedLevel === lvl
-                ? lvl === "FATAL"
-                  ? "bg-destructive text-destructive-foreground shadow-xs"
-                  : lvl === "ERROR"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : lvl === "WARN"
-                  ? "bg-amber-500 text-white shadow-xs"
-                  : lvl === "INFO"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "bg-primary text-primary-foreground shadow-xs"
-                : "bg-muted/50 text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {lvl === "FATAL" && <Flame size={11} className={selectedLevel === "FATAL" ? "text-destructive-foreground" : "text-destructive"} />}
-            {lvl === "ERROR" && <AlertCircle size={11} />}
-            {lvl === "WARN" && <AlertTriangle size={11} />}
-            {lvl === "INFO" && <Info size={11} />}
-            {lvl}
-          </button>
-        ))}
-      </div>
+      <SecondaryNavTabs
+        tabs={[
+          { id: "ALL", label: "ALL" },
+          { id: "INFO", label: "INFO", icon: Info, tone: "info" },
+          { id: "WARN", label: "WARN", icon: AlertTriangle, tone: "warning" },
+          { id: "ERROR", label: "ERROR", icon: AlertCircle, tone: "danger" },
+          { id: "FATAL", label: "FATAL", icon: Flame, tone: "danger" },
+        ]}
+        activeTab={selectedLevel}
+        onTabChange={onSelectLevel}
+      />
 
       {/* Search Keyword Input */}
       <div className="relative flex-1 w-full sm:max-w-md">

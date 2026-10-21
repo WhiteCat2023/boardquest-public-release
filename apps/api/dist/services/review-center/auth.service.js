@@ -41,52 +41,8 @@ export class ReviewCenterAuthService {
                 },
             },
         });
-        // If no representative user exists in DB, check demo credentials or bootstrap one
         if (!repUser) {
-            if ((normalizedIdent === "rep@reviewcenter.edu.ph" ||
-                normalizedIdent === "rc-001") &&
-                password === "password123") {
-                // Try creating default demo review center and rep user
-                const hash = await hashedPassword("password123");
-                let defaultCenter = await this.db.reviewCenter.findFirst();
-                if (!defaultCenter) {
-                    defaultCenter = await this.db.reviewCenter.create({
-                        data: {
-                            name: "St. Jude Review Center HQ",
-                            code: "RC-STJUDE",
-                            location: "Manila, Philippines",
-                            contactEmail: "contact@stjude.edu.ph",
-                            contactPhone: "+63-2-8888-1234",
-                        },
-                    });
-                }
-                repUser = await this.db.reviewCenterRepresentativeUser.create({
-                    data: {
-                        employeeId: "RC-001",
-                        name: "Dr. Roberto Cruz",
-                        email: "rep@reviewcenter.edu.ph",
-                        companyName: defaultCenter.name,
-                        phonenumber: "+63-917-555-1234",
-                        password: hash,
-                        location: defaultCenter.location,
-                        accountStatus: "ACTIVE",
-                        isActive: true,
-                        reviewCenterId: defaultCenter.id,
-                    },
-                    include: {
-                        reviewCenter: {
-                            select: {
-                                id: true,
-                                name: true,
-                                location: true,
-                            },
-                        },
-                    },
-                });
-            }
-            else {
-                throw new ApiError(401, "Invalid Review Center credentials");
-            }
+            throw new ApiError(401, "Invalid Review Center credentials");
         }
         const accountStatus = repUser.accountStatus;
         if (accountStatus === "DEACTIVATED") {

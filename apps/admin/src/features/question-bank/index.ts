@@ -7,6 +7,7 @@ export { default as ViewQuestion } from './pages/ViewQuestion';
 export { default as AddedQuestionUsingCSV } from './pages/AddedQuestionUsingCSV';
 export { default as SubjectManagement } from './pages/SubjectManagement';
 export { default as SubjectDetailsPage } from './pages/SubjectDetailsPage';
+export { default as SubjectTopicsPage } from './pages/SubjectTopicsPage';
 export { default as FastReviewWorkspace } from './components/review/FastReviewWorkspace';
 export { default as FastReviewShortcutsModal } from './components/review/FastReviewShortcutsModal';
 export { default as ReviewQuestionsTable } from './components/review/ReviewQuestionsTable';

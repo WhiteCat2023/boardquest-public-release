@@ -122,8 +122,6 @@ export function useBulkParaphrase({
           };
         })
       );
-
-      showFeedback.success(`Paraphrased ${results.length} question(s) successfully!`);
     } catch (err: any) {
       showFeedback.error(
         err.response?.data?.message ||
@@ -193,7 +191,6 @@ export function useBulkParaphrase({
               : it
           )
         );
-        showFeedback.success("New question variant generated!");
       } else {
         throw new Error("No variant returned");
       }
@@ -226,7 +223,6 @@ export function useBulkParaphrase({
         return it;
       })
     );
-    showFeedback.info("Reverted back to original wording.");
   };
 
   // Revert all questions back to original
@@ -239,7 +235,6 @@ export function useBulkParaphrase({
         isReverted: true,
       }))
     );
-    showFeedback.info("Reverted all questions to original wording.");
   };
 
   // Apply an alternative variant directly

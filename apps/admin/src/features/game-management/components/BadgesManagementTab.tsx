@@ -34,11 +34,10 @@ export function BadgesManagementTab({
   const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [imageErrorUrls, setImageErrorUrls] = useState<Record<string, boolean>>(
     {},
   );
-
-  const ITEMS_PER_PAGE = 10;
 
   // Self-contained query & mutations
   const { data: serverBadges, isLoading: isBadgesLoading } = useGameBadges({
@@ -115,12 +114,12 @@ export function BadgesManagementTab({
   const isLoading = propIsLoading ?? isBadgesLoading;
   const filteredBadges = serverBadges || propBadges || [];
   const total = filteredBadges.length;
-  const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasNextPage = currentPage < totalPages;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedBadges = filteredBadges.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE,
+    startIndex + pageSize,
   );
 
   const handleImageError = (url?: string | null) => {
@@ -196,7 +195,12 @@ export function BadgesManagementTab({
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={filteredBadges.length}
-              pageSize={ITEMS_PER_PAGE}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
               hasNextPage={hasNextPage}
               hasPreviousPage={currentPage > 1}
               onNext={() => hasNextPage && setCurrentPage((p) => p + 1)}
