@@ -112,6 +112,7 @@ export function ReviewCenterAuthProvider({
     <ReviewCenterAuthContext.Provider
       value={{
         user,
+        setUser,
         isLoading,
         login,
         logout,

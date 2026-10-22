@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
 import type { NavItemProps, NavContentProps } from "@/types/sidebarMenuItems";
 import useAuth from "@/hooks/useAuth";
 import boardQuestIcon from "@/assets/baordquest-no-title.png";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar as UISidebar,
   SidebarContent,
@@ -19,6 +20,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePendingReviewCount, useMyPendingRevisionCount } from "@/features/question-bank";
+import {
+  useCalendarStore,
+  CalendarSidebar,
+} from "@/features/review-center/components/calendar";
 import { NavUser } from "./nav-user";
 
 type LucideIconName = keyof typeof LucideIcons;
@@ -88,6 +93,9 @@ function SidebarItem({
     itemBadge !== "0";
 
   if (!hasSubItems) {
+    const isCalendarItem = content.path === "/calendar-management";
+    const { setShowCalendarSubSidebar } = useCalendarStore();
+
     const isActive =
       location.pathname === content.path ||
       (content.path === "/question-bank/shared-library" &&
@@ -118,7 +126,12 @@ function SidebarItem({
         >
           <Link
             to={content.path}
-            onClick={handleLinkClick}
+            onClick={() => {
+              handleLinkClick();
+              if (isCalendarItem) {
+                setShowCalendarSubSidebar(true);
+              }
+            }}
             className="flex items-center w-full min-w-0"
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -135,6 +148,13 @@ function SidebarItem({
                 {content.title}
               </span>
             </div>
+
+            {isCalendarItem && (
+              <ChevronRight
+                size={14}
+                className="ml-auto text-muted-foreground/60 shrink-0 group-data-[collapsible=icon]:hidden transition-transform group-hover:translate-x-0.5"
+              />
+            )}
 
             {hasBadge && (
               <div className="shrink-0 ml-auto pl-1.5 group-data-[collapsible=icon]:hidden">
@@ -259,6 +279,13 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
     (currentUserRole || "").toLowerCase(),
   );
 
+  const canManageCalendar = [
+    "superadmin",
+    "dean",
+    "teamlead",
+    "teacher",
+  ].includes((currentUserRole || "").toLowerCase());
+
   const { totalQuestions, authorsCount } = usePendingReviewCount({
     enabled: isReviewerRole,
   });
@@ -281,12 +308,19 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
 
   const portalTitle = getPortalTitle(currentUserRole);
 
+  const isCalendarRoute =
+    location.pathname === "/calendar-management" ||
+    location.pathname.startsWith("/calendar");
+
+  const { showCalendarSubSidebar, setShowCalendarSubSidebar } = useCalendarStore();
+  const isShowingCalendarSubSidebar = isCalendarRoute && showCalendarSubSidebar;
+
   return (
     <UISidebar
       collapsible="icon"
       className="font-sans bg-card text-foreground border-none"
     >
-      <SidebarHeader className="p-2.5 pb-0.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:pt-2.5">
+      <SidebarHeader className="p-2.5 pb-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:pt-2.5">
         <Link
           to="/"
           className="flex items-center gap-2 px-1 py-1 rounded-lg hover:opacity-90 transition-opacity group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
@@ -307,68 +341,89 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">
-        {navItem
-          .filter(
-            (item: NavItemProps) => item.content && item.content.length > 0,
-          )
-          .map((item: NavItemProps, index: number) => (
-            <SidebarGroup key={index} className="p-0">
-              <SidebarGroupLabel className="text-[9.5px] font-bold text-muted-foreground/60 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
-                {item.sideBarCategoryName}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
-                  {item.content.map(
-                    (content: NavContentProps, contentIndex: number) => {
-                      const isReviewItem =
-                        content.path === "/question-bank/review-questions" ||
-                        content.path === "/question-bank/review" ||
-                        (content.subItems &&
-                          content.subItems.some(
-                            (s) =>
-                              s.path === "/question-bank/review-questions" ||
-                              s.path === "/question-bank/review",
-                          ));
+      {isShowingCalendarSubSidebar ? (
+        <>
+          <SidebarContent className="px-2.5 py-2 overflow-y-auto group-data-[collapsible=icon]:hidden">
+            <CalendarSidebar
+              onBack={() => setShowCalendarSubSidebar(false)}
+              canManage={canManageCalendar}
+            />
+          </SidebarContent>
+          <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCalendarSubSidebar(true)}
+              className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 cursor-pointer"
+              title="Academic Calendar"
+            >
+              <LucideIcons.Calendar size={16} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">
+          {navItem
+            .filter(
+              (item: NavItemProps) => item.content && item.content.length > 0,
+            )
+            .map((item: NavItemProps, index: number) => (
+              <SidebarGroup key={index} className="p-0">
+                <SidebarGroupLabel className="text-[9.5px] font-bold text-muted-foreground/60 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
+                  {item.sideBarCategoryName}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
+                    {item.content.map(
+                      (content: NavContentProps, contentIndex: number) => {
+                        const isReviewItem =
+                          content.path === "/question-bank/review-questions" ||
+                          content.path === "/question-bank/review" ||
+                          (content.subItems &&
+                            content.subItems.some(
+                              (s) =>
+                                s.path === "/question-bank/review-questions" ||
+                                s.path === "/question-bank/review",
+                            ));
 
-                      const isMyQuestionsItem =
-                        content.path === "/question-bank/my-questions" ||
-                        (content.subItems &&
-                          content.subItems.some(
-                            (s) => s.path === "/question-bank/my-questions",
-                          ));
+                        const isMyQuestionsItem =
+                          content.path === "/question-bank/my-questions" ||
+                          (content.subItems &&
+                            content.subItems.some(
+                              (s) => s.path === "/question-bank/my-questions",
+                            ));
 
-                      let itemBadge = content.badge;
-                      let itemTooltip: string | undefined = undefined;
+                        let itemBadge = content.badge;
+                        let itemTooltip: string | undefined = undefined;
 
-                      if (isReviewItem) {
-                        itemBadge = authorsCount;
-                        if (authorsCount > 0) {
-                          itemTooltip = `Review Questions (${authorsCount} ${authorsCount === 1 ? "author" : "authors"} • ${totalQuestions} ${totalQuestions === 1 ? "question" : "questions"} pending)`;
+                        if (isReviewItem) {
+                          itemBadge = authorsCount;
+                          if (authorsCount > 0) {
+                            itemTooltip = `Review Questions (${authorsCount} ${authorsCount === 1 ? "author" : "authors"} • ${totalQuestions} ${totalQuestions === 1 ? "question" : "questions"} pending)`;
+                          }
+                        } else if (isMyQuestionsItem) {
+                          itemBadge = pendingRevisionCount;
+                          if (pendingRevisionCount > 0) {
+                            itemTooltip = `My Questions (${pendingRevisionCount} ${pendingRevisionCount === 1 ? "question" : "questions"} pending revision)`;
+                          }
                         }
-                      } else if (isMyQuestionsItem) {
-                        itemBadge = pendingRevisionCount;
-                        if (pendingRevisionCount > 0) {
-                          itemTooltip = `My Questions (${pendingRevisionCount} ${pendingRevisionCount === 1 ? "question" : "questions"} pending revision)`;
-                        }
-                      }
 
-                      return (
-                        <SidebarItem
-                          key={contentIndex}
-                          content={content}
-                          location={location}
-                          badge={itemBadge}
-                          badgeTooltip={itemTooltip}
-                        />
-                      );
-                    },
-                  )}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-      </SidebarContent>
+                        return (
+                          <SidebarItem
+                            key={contentIndex}
+                            content={content}
+                            location={location}
+                            badge={itemBadge}
+                            badgeTooltip={itemTooltip}
+                          />
+                        );
+                      },
+                    )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+        </SidebarContent>
+      )}
 
       <SidebarFooter>
         <NavUser
@@ -384,7 +439,7 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
             ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
               (currentUserRole || "").toUpperCase(),
             )
-              ? "/settings"
+              ? "/system-settings"
               : undefined
           }
         />

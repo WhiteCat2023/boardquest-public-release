@@ -184,7 +184,7 @@ export function SubjectScoresPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl w-full mx-auto font-sans pb-12 animate-in fade-in duration-200">
+    <div className="w-full flex-1 flex flex-col space-y-6 font-sans pb-12 animate-in fade-in duration-200">
       {/* ── 1. Page Header & Top Actions ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
         {/* Left: Subject Info */}
@@ -258,7 +258,7 @@ export function SubjectScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Assessments
             </span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <BookOpen className="size-4" />
             </div>
           </div>
@@ -278,7 +278,7 @@ export function SubjectScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Subject Mean (Avg)
             </span>
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <BarChart3 className="size-4" />
             </div>
           </div>
@@ -303,7 +303,7 @@ export function SubjectScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Subject Median
             </span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <TrendingUp className="size-4" />
             </div>
           </div>
@@ -324,7 +324,6 @@ export function SubjectScoresPage() {
 
         {/* Card 4: Passing Rate */}
         {(() => {
-          const isHighPass = aggregateStats.passRate !== null && aggregateStats.passRate >= 75;
           const totalPassed = aggregateStats.totalPassed || 0;
           const totalFailed = aggregateStats.totalFailed || 0;
           const totalScored = totalPassed + totalFailed;
@@ -335,34 +334,12 @@ export function SubjectScoresPage() {
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Passing Rate (&ge; 75%)
                 </span>
-                <div
-                  className={`p-2 rounded-xl border ${
-                    aggregateStats.passRate === null
-                      ? "bg-muted text-muted-foreground border-border"
-                      : isHighPass
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                  }`}
-                >
-                  {isHighPass ? (
-                    <CheckCircle2 className="size-4" />
-                  ) : aggregateStats.passRate !== null ? (
-                    <XCircle className="size-4" />
-                  ) : (
-                    <CheckCircle2 className="size-4" />
-                  )}
+                <div className="p-2 rounded-xl border bg-muted text-foreground border-border">
+                  <CheckCircle2 className="size-4" />
                 </div>
               </div>
               <div>
-                <h3
-                  className={`text-2xl sm:text-3xl font-black tracking-tight ${
-                    aggregateStats.passRate === null
-                      ? "text-foreground"
-                      : isHighPass
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-rose-600 dark:text-rose-400"
-                  }`}
-                >
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                   {aggregateStats.passRate !== null ? `${aggregateStats.passRate}%` : "—"}
                 </h3>
                 <p className="text-[11px] text-muted-foreground font-medium mt-1">

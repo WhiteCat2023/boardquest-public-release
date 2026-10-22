@@ -308,17 +308,11 @@ export class UserService {
     } else if (normReq === "DEAN") {
       if (normRole && [Role.TEAMLEAD, Role.TEACHER].includes(normRole)) {
         where.role = normRole;
-      } else if (excludeExternal) {
-        where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
       } else {
         where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
       }
     } else if (normReq === "TEAMLEAD") {
-      if (excludeExternal) {
-        where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
-      } else {
-        where.role = Role.TEACHER;
-      }
+      where.role = Role.TEACHER;
     } else if (
       normRole &&
       normRole !== Role.REVIEWCENTER &&
@@ -366,6 +360,14 @@ export class UserService {
           !r.includes("REVIEW") &&
           !r.includes("EXTERNAL")
         );
+      });
+    }
+
+    // Safety scoping: Deans should not see other deans or superadmins
+    if (normReq === "DEAN") {
+      combinedList = combinedList.filter((u: any) => {
+        const r = String(u.role || "").toUpperCase().trim();
+        return r !== "DEAN" && r !== "SUPERADMIN";
       });
     }
 
@@ -606,8 +608,9 @@ export class UserService {
           location: location?.trim() || "Philippines",
           accountStatus: "ACTIVE",
           isActive: true,
+          mustChangePassword: true,
           reviewCenterId: reviewCenter?.id || undefined,
-        },
+        } as any,
       });
 
       // Send welcome credentials email tailored to Review Center partners
@@ -1137,8 +1140,9 @@ export class UserService {
               location: item.location?.trim() || "Philippines",
               accountStatus: "ACTIVE",
               isActive: true,
+              mustChangePassword: true,
               reviewCenterId: reviewCenter?.id || undefined,
-            },
+            } as any,
           });
 
           sendReviewCenterCredentialsEmail({

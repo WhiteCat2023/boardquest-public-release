@@ -151,7 +151,9 @@ export const FirstLoginDialog: React.FC = () => {
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         className={`w-[95vw] p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card transition-all duration-300 ${
-          step === "terms" ? "max-w-3xl max-h-[90vh]" : "max-w-xl max-h-[88vh]"
+          step === "terms"
+            ? "sm:max-w-3xl md:max-w-4xl max-w-4xl max-h-[90vh]"
+            : "sm:max-w-xl md:max-w-2xl max-w-2xl max-h-[88vh]"
         } flex flex-col`}
       >
         <StepIndicatorHeader userRole={userRole} step={step} />

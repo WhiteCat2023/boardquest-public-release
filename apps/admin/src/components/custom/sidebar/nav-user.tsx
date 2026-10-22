@@ -128,7 +128,7 @@ export function NavUser({
                   className="cursor-pointer"
                 >
                   <SettingsIcon className="size-4" />
-                  Settings
+                  System Settings
                 </DropdownMenuItem>
               )}
             </DropdownMenuGroup>

@@ -1,13 +1,14 @@
 import React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Send, Info } from "lucide-react";
 
 export interface ConfirmDialogProps {
@@ -36,9 +37,9 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6 font-sans">
-        <DialogHeader className="flex flex-col items-center text-center gap-3">
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="max-w-md p-6 font-sans">
+        <AlertDialogHeader className="flex flex-col items-center text-center gap-3">
           <div
             className={`p-3.5 rounded-full ${
               variant === "destructive"
@@ -56,39 +57,39 @@ export function ConfirmDialog({
               <Info className="size-6" />
             )}
           </div>
-          <DialogTitle className="text-lg font-black text-foreground tracking-tight">
+          <AlertDialogTitle className="text-lg font-black text-foreground tracking-tight">
             {title}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed max-w-sm">
             {description}
-          </DialogDescription>
-        </DialogHeader>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-4 sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
+        <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-4 sm:justify-end">
+          <AlertDialogCancel
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
             className="text-xs font-bold cursor-pointer"
           >
             {cancelLabel}
-          </Button>
-          <Button
-            type="button"
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant={variant === "destructive" ? "destructive" : "default"}
             size="sm"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               onConfirm();
             }}
             disabled={isLoading}
             className="text-xs font-bold gap-1.5 cursor-pointer"
           >
             {isLoading ? "Processing..." : confirmLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
+
+export default ConfirmDialog;

@@ -176,7 +176,7 @@ export function QuestionFilter({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
           <Input
             type="text"
-            placeholder="Search questions by wording, topic, or ID..."
+            placeholder="Search by question, topic, difficulty, or question type..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 pr-8 h-8.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:ring-1 focus:ring-ring/20 focus:border-primary placeholder:text-muted-foreground w-full"

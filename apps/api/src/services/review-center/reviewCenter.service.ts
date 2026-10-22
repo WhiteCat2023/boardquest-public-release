@@ -108,7 +108,8 @@ export async function createReviewCenter(data: CreateReviewCenterInput) {
       phonenumber: data.phonenumber,
       password: hashedPass,
       location: data.location || "Philippines",
-    },
+      mustChangePassword: true,
+    } as any,
   });
 
   // Dispatch welcome email with portal credentials to the representative

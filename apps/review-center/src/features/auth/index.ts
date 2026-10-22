@@ -4,3 +4,4 @@ export { default as ForgotPasswordPage } from "./pages/ReviewCenterForgotPasswor
 export { default as ResetPasswordPage } from "./pages/ReviewCenterResetPasswordPage";
 export { default as RequireAuth } from "./components/RequireAuth";
 export { default as PersistentSession } from "./components/PersistSession";
+export { default as FirstLoginDialog } from "./components/FirstLoginDialog";

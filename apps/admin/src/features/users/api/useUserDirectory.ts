@@ -79,7 +79,17 @@ export function useUserDirectory() {
   const internalCount = internalCountData?.total ?? 0;
   const externalCount = externalCountData?.total ?? 0;
 
-  const users = userResponse?.users || userResponse?.faculties || [];
+  const isDean =
+    currentUserRole === "DEAN" ||
+    String(currentUserRole).toUpperCase().trim() === "DEAN";
+
+  const rawUsers = userResponse?.users || userResponse?.faculties || [];
+  const users = isDean
+    ? rawUsers.filter((u) => {
+        const r = String(u.role || "").toUpperCase().trim();
+        return r === "TEACHER" || r === "TEAMLEAD" || isExternalTab;
+      })
+    : rawUsers;
   const nextCursor = userResponse?.nextCursor || null;
   const hasNextPage = userResponse?.hasNextPage || false;
 

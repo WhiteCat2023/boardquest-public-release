@@ -5,6 +5,7 @@ import { RequireAuth } from "@/features/auth";
 import { PersistentSession } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Lazy-loaded page components for optimal bundle splitting
 const LoginPage = lazy(
@@ -77,7 +78,7 @@ function PageFallback() {
 
 function App() {
   return (
-    <>
+    <TooltipProvider delayDuration={0}>
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<MainLayout />}>
@@ -145,6 +146,7 @@ function App() {
                     path="scores/:schoolYear/subject/:subjectSlug/assessment/:assessmentId"
                     element={<AssessmentScoresPage />}
                   />
+                  <Route path="calendar" element={<SchedulesPage />} />
                   <Route path="schedules" element={<SchedulesPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
@@ -159,7 +161,7 @@ function App() {
         </Routes>
       </Suspense>
       <Toaster />
-    </>
+    </TooltipProvider>
   );
 }
 

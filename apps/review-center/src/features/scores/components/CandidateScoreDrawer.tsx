@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import {
   User,
@@ -75,14 +76,16 @@ export function CandidateScoreDrawer({
       <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-base">
-              {candidate?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")
-                .toUpperCase() || "ST"}
-            </div>
+            <Avatar className="size-11 rounded-full border border-border">
+              <AvatarFallback className="bg-primary/10 text-primary font-black text-base">
+                {candidate?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase() || "ST"}
+              </AvatarFallback>
+            </Avatar>
             <div>
               <DialogTitle className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
                 <span>{candidate?.name || "Student Transcript"}</span>

@@ -124,7 +124,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-7xl mx-auto animate-in fade-in duration-300 font-sans bg-background text-foreground pb-12">
+    <div className="flex flex-col gap-4 w-full flex-1 animate-in fade-in duration-300 font-sans bg-background text-foreground pb-12">
       {/* 1. Profile Header */}
       <SettingsHeader
         name={user?.name || name}

@@ -57,7 +57,12 @@ function SidebarItem({
   const { isMobile, setOpenMobile } = useSidebar();
   const hasSubItems = !!content.subItems && content.subItems.length > 0;
 
+  const { setShowCalendarSubSidebar } = useCalendarStore();
+
   const handleLinkClick = () => {
+    if (content.path === "/calendar" || content.path === "/schedules") {
+      setShowCalendarSubSidebar(true);
+    }
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -78,6 +83,9 @@ function SidebarItem({
   }, [location.pathname, location.search, isAnySubActive]);
 
   if (!hasSubItems) {
+    const isCalendarItem =
+      content.path === "/calendar" || content.path === "/schedules";
+
     const isActive =
       location.pathname === content.path ||
       (content.path !== "/dashboard" &&
@@ -100,11 +108,23 @@ function SidebarItem({
             }
           `}
         >
-          <Link to={content.path} onClick={handleLinkClick}>
-            <DynamicIcon name={content.icon} size={15} className="shrink-0" />
-            <span className="group-data-[collapsible=icon]:hidden truncate">
-              {content.title}
-            </span>
+          <Link
+            to={content.path}
+            onClick={handleLinkClick}
+            className="flex items-center w-full min-w-0"
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <DynamicIcon name={content.icon} size={15} className="shrink-0" />
+              <span className="group-data-[collapsible=icon]:hidden truncate">
+                {content.title}
+              </span>
+            </div>
+            {isCalendarItem && (
+              <ChevronRight
+                size={14}
+                className="ml-auto text-muted-foreground/60 shrink-0 group-data-[collapsible=icon]:hidden transition-transform group-hover:translate-x-0.5"
+              />
+            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -168,6 +188,9 @@ function SidebarItem({
   );
 }
 
+import { CalendarSidebar } from "@/features/schedules/components/calendar/CalendarSidebar";
+import { useCalendarStore } from "@/features/schedules/components/calendar/calendarStore";
+
 export function Sidebar({
   navItems = reviewCenterNavItem,
   navItem,
@@ -175,6 +198,16 @@ export function Sidebar({
   const items = navItem || navItems;
   const location = useLocation();
   const { user, logout } = useReviewCenterAuth();
+
+  const isCalendarRoute =
+    location.pathname === "/calendar" ||
+    location.pathname === "/schedules" ||
+    location.pathname.startsWith("/calendar") ||
+    location.pathname.startsWith("/schedules");
+
+  const { showCalendarSubSidebar, setShowCalendarSubSidebar } =
+    useCalendarStore();
+  const isShowingCalendarSubSidebar = isCalendarRoute && showCalendarSubSidebar;
 
   return (
     <UISidebar
@@ -204,35 +237,56 @@ export function Sidebar({
       </SidebarHeader>
 
       {/* ── School Year Context Switcher (Dropdown with CMS) ── */}
-      <SidebarSchoolYearDropdown />
+      {!isShowingCalendarSubSidebar && <SidebarSchoolYearDropdown />}
 
-      {/* ── 2. Navigation Content ── */}
-      <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">
-        {items
-          .filter(
-            (item: NavItemProps) => item.content && item.content.length > 0,
-          )
-          .map((item: NavItemProps, index: number) => (
-            <SidebarGroup key={index} className="p-0">
-              <SidebarGroupLabel className="text-[9.5px] font-bold text-muted-foreground/60 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
-                {item.sideBarCategoryName}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
-                  {item.content.map(
-                    (content: NavContentProps, contentIndex: number) => (
-                      <SidebarItem
-                        key={contentIndex}
-                        content={content}
-                        location={location}
-                      />
-                    ),
-                  )}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-      </SidebarContent>
+      {/* ── 2. Navigation Content / Dynamic Calendar Sub-Sidebar ── */}
+      {isShowingCalendarSubSidebar ? (
+        <>
+          <SidebarContent className="px-2.5 py-2 overflow-y-auto group-data-[collapsible=icon]:hidden">
+            <CalendarSidebar
+              onBack={() => setShowCalendarSubSidebar(false)}
+              canManage={true}
+            />
+          </SidebarContent>
+          <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCalendarSubSidebar(true)}
+              className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 cursor-pointer"
+              title="Academic Calendar"
+            >
+              <LucideIcons.Calendar size={16} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <SidebarContent className="px-2.5 gap-1.5 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:gap-1">
+          {items
+            .filter(
+              (item: NavItemProps) => item.content && item.content.length > 0,
+            )
+            .map((item: NavItemProps, index: number) => (
+              <SidebarGroup key={index} className="p-0">
+                <SidebarGroupLabel className="text-[9.5px] font-bold text-muted-foreground/60 tracking-wider uppercase px-2 py-0.5 bg-transparent group-data-[collapsible=icon]:hidden">
+                  {item.sideBarCategoryName}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:gap-1">
+                    {item.content.map(
+                      (content: NavContentProps, contentIndex: number) => (
+                        <SidebarItem
+                          key={contentIndex}
+                          content={content}
+                          location={location}
+                        />
+                      ),
+                    )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+        </SidebarContent>
+      )}
 
       {/* ── 3. Bottom User Profile (NavUser) ── */}
       <SidebarFooter>

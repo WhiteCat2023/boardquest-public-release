@@ -79,6 +79,29 @@ describe("User & Faculty Management Routes", () => {
             expect(response.status).toBe(403);
             expect(response.body.error).toBe("INSUFFICIENT_PRIVILEGES");
         });
+        it("should pass DEAN requesterRole to getAllUsers when requester is DEAN", async () => {
+            authenticateToken.mockImplementation((req, res, next) => {
+                req.user = {
+                    id: "dean-1",
+                    email: "dean@example.com",
+                    role: "DEAN",
+                    name: "Dean User",
+                };
+                next();
+            });
+            userService.getAllUsers.mockResolvedValue([
+                { id: "tl-1", name: "Team Lead", role: "TEAMLEAD" },
+                { id: "t-1", name: "Teacher", role: "TEACHER" },
+            ]);
+            const response = await request(app).get("/api/users?excludeExternal=true");
+            expect(response.status).toBe(200);
+            expect(userService.getAllUsers).toHaveBeenCalledWith(expect.objectContaining({
+                requesterRole: "DEAN",
+                excludeExternal: true,
+            }));
+            expect(response.body.data.users).toHaveLength(2);
+            expect(response.body.data.users.every((u) => u.role !== "DEAN")).toBe(true);
+        });
     });
     describe("POST /api/users (and /api/faculty)", () => {
         const createPayload = {

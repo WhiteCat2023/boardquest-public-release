@@ -216,3 +216,36 @@ export const updateReviewCenterProfile = asyncHandler(
   },
 );
 
+export const reviewCenterAcceptTerms = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(401, "Not authenticated");
+    }
+
+    const user = await reviewCenterAuthService.acceptTerms(userId);
+    return new ApiResponse(
+      200,
+      { user },
+      "Terms & Conditions accepted successfully",
+    ).send(res);
+  },
+);
+
+export const reviewCenterFirstLoginSetup = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(401, "Not authenticated");
+    }
+
+    const user = await reviewCenterAuthService.firstLoginSetup(userId, req.body);
+    return new ApiResponse(
+      200,
+      { user },
+      "First-login password setup completed successfully",
+    ).send(res);
+  },
+);
+
+

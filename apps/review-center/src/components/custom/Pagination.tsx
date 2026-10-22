@@ -1,5 +1,13 @@
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Pagination as UIPagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -125,65 +133,70 @@ export function Pagination({
         )}
 
         {/* Page Buttons Pill Container */}
-        <div className="inline-flex items-center gap-1 bg-card border border-border px-2 py-1 rounded-xl shadow-xs">
-          {/* Previous Page */}
-          <button
-            type="button"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:text-muted-foreground/30 disabled:cursor-not-allowed transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-muted"
-            title="Previous Page"
-          >
-            <ChevronLeft className="size-3.5 stroke-[2.5]" />
-            <span className="hidden md:inline">Prev</span>
-          </button>
+        <UIPagination className="w-auto mx-0">
+          <PaginationContent className="gap-1 bg-card border border-border px-2 py-1 rounded-xl shadow-xs">
+            {/* Previous Page */}
+            <PaginationItem>
+              <PaginationPrevious
+                text="Prev"
+                className={`text-xs font-semibold cursor-pointer h-7 px-2 ${
+                  currentPage <= 1 ? "pointer-events-none opacity-40 cursor-not-allowed" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage > 1) {
+                    onPageChange(currentPage - 1);
+                  }
+                }}
+              />
+            </PaginationItem>
 
-          {/* Page Numbers */}
-          <div className="flex items-center gap-0.5">
+            {/* Page Numbers */}
             {pages.map((p, idx) => {
               if (typeof p === "string") {
                 return (
-                  <span
-                    key={`ellipsis-${idx}`}
-                    className="px-1.5 py-0.5 text-muted-foreground text-xs font-semibold"
-                  >
-                    {p}
-                  </span>
+                  <PaginationItem key={`ellipsis-${idx}`}>
+                    <PaginationEllipsis className="size-7" />
+                  </PaginationItem>
                 );
               }
 
               const isActive = p === currentPage;
 
               return (
-                <button
-                  key={`page-${p}`}
-                  type="button"
-                  onClick={() => onPageChange(p)}
-                  className={`text-xs font-bold transition-all px-2.5 py-1 rounded-lg cursor-pointer ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-xs font-black"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {p}
-                </button>
+                <PaginationItem key={`page-${p}`}>
+                  <PaginationLink
+                    isActive={isActive}
+                    size="sm"
+                    className="size-7 text-xs font-bold cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onPageChange(p);
+                    }}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
               );
             })}
-          </div>
 
-          {/* Next Page */}
-          <button
-            type="button"
-            disabled={currentPage >= safeTotalPages}
-            onClick={() => onPageChange(Math.min(safeTotalPages, currentPage + 1))}
-            className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:text-muted-foreground/30 disabled:cursor-not-allowed transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-muted"
-            title="Next Page"
-          >
-            <span className="hidden md:inline">Next</span>
-            <ChevronRight className="size-3.5 stroke-[2.5]" />
-          </button>
-        </div>
+            {/* Next Page */}
+            <PaginationItem>
+              <PaginationNext
+                text="Next"
+                className={`text-xs font-semibold cursor-pointer h-7 px-2 ${
+                  currentPage >= safeTotalPages ? "pointer-events-none opacity-40 cursor-not-allowed" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage < safeTotalPages) {
+                    onPageChange(currentPage + 1);
+                  }
+                }}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </UIPagination>
       </div>
     </div>
   );

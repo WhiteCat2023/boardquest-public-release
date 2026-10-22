@@ -40,3 +40,79 @@ export const deleteReviewSchedule = asyncHandler(async (req, res) => {
     await calendarService.deleteReviewSchedule(id);
     return new ApiResponse(200, {}, "Review schedule deleted successfully").send(res);
 });
+// ==========================================
+// CALENDAR EVENTS (MONGODB DATABASE)
+// ==========================================
+export const getCalendarEvents = asyncHandler(async (req, res) => {
+    const events = await calendarService.getAllCalendarEvents(req.user);
+    return new ApiResponse(200, { events }, "Calendar events retrieved successfully").send(res);
+});
+export const getCalendarEventById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const event = await calendarService.getCalendarEventById(id);
+    if (!event) {
+        throw new ApiError(404, "Calendar event not found");
+    }
+    if (!calendarService.isUserEventAttendeeOrAuthor(event, req.user)) {
+        throw new ApiError(403, "Access Denied: You are not an attendee of this calendar event.");
+    }
+    return new ApiResponse(200, { event }, "Calendar event retrieved successfully").send(res);
+});
+export const createCalendarEvent = asyncHandler(async (req, res) => {
+    const { title, startDate } = req.body;
+    if (!title || !startDate) {
+        throw new ApiError(400, "Title and start date are required.");
+    }
+    const user = req.user;
+    const authorName = user?.name ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+        "Admin User";
+    const event = await calendarService.createCalendarEvent({
+        ...req.body,
+        authorId: user?.id,
+        authorName: req.body.authorName || authorName,
+        authorEmail: req.body.authorEmail || user?.email,
+        createdBy: user?.id,
+    });
+    return new ApiResponse(201, { event }, "Calendar event created successfully").send(res);
+});
+export const updateCalendarEvent = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const event = await calendarService.getCalendarEventById(id);
+    if (!event) {
+        throw new ApiError(404, "Calendar event not found");
+    }
+    const role = String(req.user?.role || "").toUpperCase();
+    const userId = String(req.user?.id || "");
+    const userEmail = String(req.user?.email || "").toLowerCase();
+    const userName = String(req.user?.name || "").toLowerCase();
+    const isAuthor = (event.authorId && String(event.authorId) === userId) ||
+        (event.authorEmail && String(event.authorEmail).toLowerCase() === userEmail) ||
+        (event.authorName && String(event.authorName).toLowerCase() === userName) ||
+        (event.createdBy && String(event.createdBy) === userId);
+    if (!isAuthor && role !== "SUPERADMIN") {
+        throw new ApiError(403, "Access Denied: Only the author of this calendar event can modify it.");
+    }
+    const updated = await calendarService.updateCalendarEvent(id, req.body);
+    return new ApiResponse(200, { event: updated }, "Calendar event updated successfully").send(res);
+});
+export const deleteCalendarEvent = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const event = await calendarService.getCalendarEventById(id);
+    if (!event) {
+        throw new ApiError(404, "Calendar event not found");
+    }
+    const role = String(req.user?.role || "").toUpperCase();
+    const userId = String(req.user?.id || "");
+    const userEmail = String(req.user?.email || "").toLowerCase();
+    const userName = String(req.user?.name || "").toLowerCase();
+    const isAuthor = (event.authorId && String(event.authorId) === userId) ||
+        (event.authorEmail && String(event.authorEmail).toLowerCase() === userEmail) ||
+        (event.authorName && String(event.authorName).toLowerCase() === userName) ||
+        (event.createdBy && String(event.createdBy) === userId);
+    if (!isAuthor && role !== "SUPERADMIN") {
+        throw new ApiError(403, "Access Denied: Only the author of this calendar event can delete it.");
+    }
+    await calendarService.deleteCalendarEvent(id);
+    return new ApiResponse(200, {}, "Calendar event deleted successfully").send(res);
+});

@@ -86,7 +86,7 @@ export const teamLeadNavItem: NavItemProps[] = [
     content: [
       {
         title: "System Settings",
-        path: "/settings",
+        path: "/system-settings",
         icon: "Settings",
       },
     ],

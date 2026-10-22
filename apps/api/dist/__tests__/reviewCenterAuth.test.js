@@ -60,4 +60,23 @@ describe("Review Center Auth Routes", () => {
             expect(response.status).toBe(401);
         });
     });
+    describe("POST /api/review-center-app/auth/accept-terms", () => {
+        it("should return 401 if token is missing", async () => {
+            const response = await request(app).post("/api/review-center-app/auth/accept-terms");
+            expect(response.status).toBe(401);
+        });
+    });
+    describe("POST /api/review-center-app/auth/first-login-setup", () => {
+        it("should return 401 if token is missing", async () => {
+            const response = await request(app)
+                .post("/api/review-center-app/auth/first-login-setup")
+                .send({
+                password: "NewPassword123!",
+                confirmPassword: "NewPassword123!",
+                acceptedTerms: true,
+                acceptedPrivacyPolicy: true,
+            });
+            expect(response.status).toBe(401);
+        });
+    });
 });

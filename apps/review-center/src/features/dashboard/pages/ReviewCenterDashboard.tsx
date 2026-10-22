@@ -32,7 +32,7 @@ export function ReviewCenterDashboard() {
   }, [assessmentsData]);
 
   return (
-    <div className="space-y-6 max-w-7xl w-full mx-auto font-sans pb-12">
+    <div className="w-full flex-1 flex flex-col space-y-6 font-sans pb-12 animate-in fade-in duration-200">
       {/* Header Profile Greeting */}
       <DashboardHeader />
 

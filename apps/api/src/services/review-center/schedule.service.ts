@@ -71,46 +71,194 @@ function mapToSchedule(item: any) {
   };
 }
 
+const CALENDAR_EVENTS_COLLECTION = "CalendarEvents";
+
+function mapCalendarEventToSchedule(doc: any) {
+  let id = doc.id;
+  if (!id && doc._id) {
+    id = typeof doc._id === "object" && doc._id.$oid ? doc._id.$oid : String(doc._id);
+  }
+
+  let startStr = "2026-10-23";
+  if (doc.startDate) {
+    if (typeof doc.startDate === "string") {
+      startStr = doc.startDate.split("T")[0];
+    } else if (doc.startDate.$date) {
+      startStr = new Date(doc.startDate.$date).toISOString().split("T")[0];
+    } else {
+      startStr = new Date(doc.startDate).toISOString().split("T")[0];
+    }
+  }
+
+  let endStr = startStr;
+  if (doc.endDate) {
+    if (typeof doc.endDate === "string") {
+      endStr = doc.endDate.split("T")[0];
+    } else if (doc.endDate.$date) {
+      endStr = new Date(doc.endDate.$date).toISOString().split("T")[0];
+    } else {
+      endStr = new Date(doc.endDate).toISOString().split("T")[0];
+    }
+  }
+
+  return {
+    id,
+    title: doc.title || "Academic Schedule",
+    companyName: doc.companyName || "SWU Institutional",
+    category: doc.category || "Events",
+    startDate: startStr,
+    endDate: endStr,
+    startTime: doc.startTime || "09:00 AM",
+    endTime: doc.endTime || "10:00 AM",
+    status: evaluateScheduleStatus(startStr, endStr),
+    description: doc.description || "",
+    schoolYear: extractSchoolYearFromSchedule(doc),
+    reviewCenterId: doc.reviewCenterId || null,
+    location: doc.location || "",
+    conferenceType: doc.conferenceType || "In-Person",
+    link: doc.link || "",
+    colorKey: doc.colorKey || "purple",
+    labels: Array.isArray(doc.labels) ? doc.labels : [],
+    attendees: Array.isArray(doc.attendees) ? doc.attendees : [],
+    attachments: Array.isArray(doc.attachments) ? doc.attachments : [],
+    authorName: doc.authorName || "",
+    authorEmail: doc.authorEmail || "",
+    authorId: doc.authorId || "",
+    createdBy: doc.createdBy || "",
+    isCalendarEvent: true,
+    createdAt: doc.createdAt?.$date || doc.createdAt,
+    updatedAt: doc.updatedAt?.$date || doc.updatedAt,
+  };
+}
+
+export async function getAttendeeCalendarEventsForReviewCenter(user?: {
+  id?: string;
+  email?: string;
+  name?: string;
+  companyName?: string;
+  reviewCenterId?: string;
+} | null) {
+  if (!user) return [];
+  const userEmail = String(user.email || "").trim().toLowerCase();
+  const userName = String(user.name || "").trim().toLowerCase();
+  const userId = String(user.id || "").trim();
+  const companyName = String(user.companyName || "").trim().toLowerCase();
+  const reviewCenterId = String(user.reviewCenterId || "").trim();
+
+  try {
+    const res: any = await (prisma as any).$runCommandRaw({
+      find: CALENDAR_EVENTS_COLLECTION,
+      filter: {},
+      sort: { startDate: 1, createdAt: -1 },
+    });
+    const list = res?.cursor?.firstBatch || [];
+
+    return list.filter((event: any) => {
+      // 1. Is user the author / creator?
+      const isAuthor =
+        (event.authorId && String(event.authorId).trim() === userId) ||
+        (event.authorEmail && String(event.authorEmail).trim().toLowerCase() === userEmail) ||
+        (event.authorName && String(event.authorName).trim().toLowerCase() === userName) ||
+        (event.createdBy && String(event.createdBy).trim() === userId);
+
+      if (isAuthor) return true;
+
+      // 2. Is review center representative or their company in attendees?
+      if (Array.isArray(event.attendees)) {
+        const isAttendee = event.attendees.some((a: any) => {
+          if (!a) return false;
+          if (typeof a === "string") {
+            const str = a.trim().toLowerCase();
+            return (
+              (userEmail && str === userEmail) ||
+              (userName && str === userName) ||
+              (companyName && str === companyName)
+            );
+          }
+          const aEmail = String(a.email || "").trim().toLowerCase();
+          const aName = String(a.name || "").trim().toLowerCase();
+          const aId = String(a.id || a._id || a.userId || "").trim();
+          const aRole = String(a.role || "").trim().toLowerCase();
+          const aOrg = String(a.organization || a.companyName || "").trim().toLowerCase();
+
+          return (
+            (userEmail && (aEmail === userEmail || aName === userEmail)) ||
+            (userName && aName === userName) ||
+            (userId && aId && aId === userId) ||
+            (companyName && (aRole === companyName || aOrg === companyName || aName === companyName)) ||
+            (reviewCenterId && (aId === reviewCenterId || a.reviewCenterId === reviewCenterId))
+          );
+        });
+
+        if (isAttendee) return true;
+      }
+
+      return false;
+    }).map(mapCalendarEventToSchedule);
+  } catch (err) {
+    console.error("Error fetching CalendarEvents for review center:", err);
+    return [];
+  }
+}
+
 /**
- * Get review schedules scoped STRICTLY to the current review center representative
+ * Get review schedules scoped STRICTLY to the current review center representative,
+ * including academic calendar schedules where they are an attendee.
  */
 export async function getReviewCenterSchedules(
   companyName?: string,
   reviewCenterId?: string,
   schoolYear?: string,
+  user?: {
+    id?: string;
+    email?: string;
+    name?: string;
+    companyName?: string;
+    reviewCenterId?: string;
+  } | null,
 ) {
+  const effectiveCompanyName = companyName || user?.companyName;
+  const effectiveReviewCenterId = reviewCenterId || user?.reviewCenterId;
+
   const whereConditions: any[] = [];
   
-  if (reviewCenterId) {
-    whereConditions.push({ reviewCenterId });
+  if (effectiveReviewCenterId) {
+    whereConditions.push({ reviewCenterId: effectiveReviewCenterId });
   }
   
-  if (companyName && companyName.trim()) {
+  if (effectiveCompanyName && effectiveCompanyName.trim()) {
     whereConditions.push({
-      companyName: { equals: companyName.trim(), mode: "insensitive" },
+      companyName: { equals: effectiveCompanyName.trim(), mode: "insensitive" },
     });
   }
 
-  // If no review center identification exists, strictly return empty list
-  if (whereConditions.length === 0) {
-    return [];
+  let list: any[] = [];
+  if (whereConditions.length > 0) {
+    list = await prisma.reviewCenterProgram.findMany({
+      where: {
+        OR: whereConditions,
+      },
+      orderBy: { createdAt: "desc" },
+    });
   }
-
-  const list = await prisma.reviewCenterProgram.findMany({
-    where: {
-      OR: whereConditions,
-    },
-    orderBy: { createdAt: "desc" },
-  });
 
   const mapped = list.map(mapToSchedule);
 
+  // Fetch academic calendar events where this review center representative or organization is an attendee
+  const targetUser = user || (effectiveCompanyName || effectiveReviewCenterId ? {
+    companyName: effectiveCompanyName,
+    reviewCenterId: effectiveReviewCenterId,
+  } : null);
+  const attendeeEvents = await getAttendeeCalendarEventsForReviewCenter(targetUser);
+
+  const combined = [...mapped, ...attendeeEvents];
+
   if (schoolYear && schoolYear.trim() && schoolYear.toUpperCase() !== "ALL") {
     const targetSy = schoolYear.trim();
-    return mapped.filter((s) => s.schoolYear === targetSy);
+    return combined.filter((s) => !s.schoolYear || s.schoolYear === targetSy);
   }
 
-  return mapped;
+  return combined;
 }
 
 /**

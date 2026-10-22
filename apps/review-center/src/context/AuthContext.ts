@@ -11,6 +11,8 @@ export interface ReviewCenterUser {
   phonenumber?: string;
   location?: string;
   role: "REVIEW_CENTER_REPRESENTATIVE";
+  mustChangePassword?: boolean;
+  termsAcceptedAt?: string | Date | null;
   reviewCenterId?: string;
   reviewCenter?: {
     id: string;
@@ -33,6 +35,7 @@ export interface UpdateProfilePayload {
 
 export interface ReviewCenterAuthContextType {
   user: ReviewCenterUser | null;
+  setUser: React.Dispatch<React.SetStateAction<ReviewCenterUser | null>>;
   isLoading: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;

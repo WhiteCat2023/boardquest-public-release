@@ -155,7 +155,7 @@ export function SubjectPassRateAnalytics() {
   }, [subjectStats]);
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="w-full space-y-6 font-sans">
       {/* ── 1. Section Header & Filter Controls ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-card border border-border shadow-2xs">
         <div className="space-y-1">

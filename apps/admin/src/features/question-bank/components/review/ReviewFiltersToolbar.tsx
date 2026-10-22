@@ -48,7 +48,7 @@ export function ReviewFiltersToolbar({
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
         <Input
           type="text"
-          placeholder="Search pending questions wording..."
+          placeholder="Search by question, topic, difficulty, or question type..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
           className="pl-8 pr-3 h-8 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:border-primary placeholder:text-muted-foreground w-full"

@@ -1,4 +1,11 @@
 import { Inbox } from "lucide-react";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 interface NotificationsEmptyStateProps {
   title?: string;
@@ -10,15 +17,22 @@ export function NotificationsEmptyState({
   description = "There are no notification entries matching your current filters or search keywords.",
 }: NotificationsEmptyStateProps) {
   return (
-    <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2 font-sans">
-      <div className="p-3 rounded-2xl bg-muted/60 text-muted-foreground border border-border">
-        <Inbox size={26} />
-      </div>
-      <h3 className="text-xs font-bold text-foreground">{title}</h3>
-      <p className="text-[11px] text-muted-foreground max-w-xs">
-        {description}
-      </p>
-    </div>
+    <Empty className="py-12 px-4 font-sans border-0">
+      <EmptyMedia
+        variant="icon"
+        className="size-12 rounded-2xl bg-muted/60 text-muted-foreground border border-border"
+      >
+        <Inbox size={22} />
+      </EmptyMedia>
+      <EmptyHeader className="gap-1">
+        <EmptyTitle className="text-xs font-bold text-foreground">
+          {title}
+        </EmptyTitle>
+        <EmptyDescription className="text-[11px] text-muted-foreground max-w-xs">
+          {description}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
 

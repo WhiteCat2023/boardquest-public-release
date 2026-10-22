@@ -158,6 +158,13 @@ agenda.define("send-weekly-digest", async () => {
   await dispatchWeeklyDigest();
 });
 
+import { checkCalendarEventReminders } from "./admin/calendar.service";
+
+agenda.define("check-calendar-event-reminders", async () => {
+  console.log("[Queue] Executing scheduled 24-hour calendar event reminder check...");
+  await checkCalendarEventReminders();
+});
+
 // Helper to start the queue
 export async function startQueue() {
   console.log("[Queue] Initializing background job processor...");
@@ -170,6 +177,21 @@ export async function startQueue() {
   } catch (err) {
     console.warn("[Queue] Notice scheduling weekly digest:", err);
   }
+
+  try {
+    // Schedule calendar event 24h reminders every hour
+    await agenda.every("0 * * * *", "check-calendar-event-reminders");
+  } catch (err) {
+    console.warn("[Queue] Notice scheduling calendar reminders:", err);
+  }
+
+  // Initial check on queue start
+  checkCalendarEventReminders().catch((err: any) => {
+    console.warn(
+      "[Queue] Initial calendar reminder check notice:",
+      err?.message,
+    );
+  });
 }
 
 // Helper to stop the queue gracefully

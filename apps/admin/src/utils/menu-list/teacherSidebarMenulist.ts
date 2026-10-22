@@ -56,7 +56,7 @@ export const teacherNavItem: NavItemProps[] = [
     content: [
       {
         title: "System Settings",
-        path: "/settings",
+        path: "/system-settings",
         icon: "Settings",
       },
     ],

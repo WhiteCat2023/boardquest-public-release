@@ -20,6 +20,24 @@ export const reviewCenterResetPasswordSchema = z.object({
   confirmPassword: z.string().optional(),
 });
 
+export const reviewCenterFirstLoginSetupSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z.string(),
+    acceptedTerms: z.boolean().optional(),
+    acceptedPrivacyPolicy: z.boolean().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export type ReviewCenterLoginInput = z.infer<typeof reviewCenterLoginSchema>;
 
 export class ReviewCenterAuthService {
@@ -80,8 +98,12 @@ export class ReviewCenterAuthService {
     });
 
     const { password: _pw, ...sanitizedUser } = repUser;
+    const mustChangePassword = (repUser as any).mustChangePassword !== false;
+    const termsAcceptedAt = (repUser as any).termsAcceptedAt || null;
     return {
       ...sanitizedUser,
+      mustChangePassword,
+      termsAcceptedAt,
       lastActiveAt: new Date(),
       role: "REVIEW_CENTER_REPRESENTATIVE" as const,
     };
@@ -108,8 +130,94 @@ export class ReviewCenterAuthService {
     }
 
     const { password: _pw, ...sanitizedUser } = repUser;
+    const mustChangePassword = (repUser as any).mustChangePassword !== false;
+    const termsAcceptedAt = (repUser as any).termsAcceptedAt || null;
     return {
       ...sanitizedUser,
+      mustChangePassword,
+      termsAcceptedAt,
+      role: "REVIEW_CENTER_REPRESENTATIVE" as const,
+    };
+  }
+
+  async acceptTerms(userId: string) {
+    const user = await (this.db as any).reviewCenterRepresentativeUser.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new ApiError(404, "Review center user account not found");
+    }
+
+    const now = new Date();
+    const updated = await (this.db as any).reviewCenterRepresentativeUser.update({
+      where: { id: userId },
+      data: {
+        termsAcceptedAt: now,
+        lastActiveAt: now,
+      },
+    });
+
+    const { password: _pw, ...sanitizedUser } = updated;
+    return {
+      ...sanitizedUser,
+      mustChangePassword: (updated as any).mustChangePassword !== false,
+      termsAcceptedAt: now,
+      role: "REVIEW_CENTER_REPRESENTATIVE" as const,
+    };
+  }
+
+  async firstLoginSetup(userId: string, data: any) {
+    const parsed = reviewCenterFirstLoginSetupSchema.safeParse(data);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      const firstErrorMessage =
+        Object.values(errors).flat()[0] || "Validation failed";
+      throw new ApiError(400, firstErrorMessage, [JSON.stringify(errors)]);
+    }
+
+    const user = await (this.db as any).reviewCenterRepresentativeUser.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User account not found");
+    }
+
+    const isSameAsCurrent = await verifyPassword(user.password, parsed.data.password);
+    if (isSameAsCurrent || user.password === parsed.data.password) {
+      throw new ApiError(
+        400,
+        "New password must be different from your current temporary password"
+      );
+    }
+
+    const hash = await hashedPassword(parsed.data.password);
+    const now = new Date();
+
+    const updatedUser = await (this.db as any).reviewCenterRepresentativeUser.update({
+      where: { id: userId },
+      data: {
+        password: hash,
+        mustChangePassword: false,
+        termsAcceptedAt: now,
+        lastActiveAt: now,
+      },
+      include: {
+        reviewCenter: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+          },
+        },
+      },
+    });
+
+    const { password: _pw, ...sanitizedUser } = updatedUser;
+    return {
+      ...sanitizedUser,
+      mustChangePassword: false,
+      termsAcceptedAt: now,
       role: "REVIEW_CENTER_REPRESENTATIVE" as const,
     };
   }

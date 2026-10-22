@@ -96,7 +96,7 @@ export const adminNavItem: NavItemProps[] = [
       },
       {
         title: "System Settings",
-        path: "/settings",
+        path: "/system-settings",
         icon: "Settings",
       },
     ],

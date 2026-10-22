@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/custom/sidebar/Sidebar";
 import useAuth from "../hooks/useAuth";
 import { adminNavItem } from "../utils/menu-list/adminSiderbarMenuList";
@@ -11,6 +11,7 @@ import { NotificationDropdown } from "@/features/notifications";
 import { SystemSearchBar } from "../components/custom/search/SystemSearchBar";
 import usePusherNotifications from "../hooks/usePusherNotifications";
 import { FirstLoginDialog } from "@/features/auth";
+import { useCalendarStore } from "@/features/review-center/components/calendar";
 
 const sidebarMenuMap: Record<string, any[]> = {
   superadmin: superAdminNavItem,
@@ -21,14 +22,23 @@ const sidebarMenuMap: Record<string, any[]> = {
 
 function DashboardLayout() {
   usePusherNotifications();
+  const location = useLocation();
   const { auth, logout } = useAuth();
   const currentUser = auth?.data?.user || auth?.user;
   const userRole = currentUser?.role?.toLowerCase();
   const currentNavItems = sidebarMenuMap[userRole as string] || [];
 
+  const isCalendarRoute =
+    location.pathname === "/calendar-management" ||
+    location.pathname.startsWith("/calendar");
+  const { showCalendarSubSidebar } = useCalendarStore();
+  const isShowingCalendarSubSidebar = isCalendarRoute && showCalendarSubSidebar;
+
+  const sidebarWidth = "250px";
+
   return (
     <SidebarProvider
-      style={{ "--sidebar-width": "250px" } as React.CSSProperties}
+      style={{ "--sidebar-width": sidebarWidth } as React.CSSProperties}
     >
       <Sidebar navItem={currentNavItems} logout={logout} />
 

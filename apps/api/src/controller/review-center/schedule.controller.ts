@@ -17,6 +17,7 @@ export const getMyReviewSchedules = asyncHandler(
       companyName,
       reviewCenterId,
       schoolYear,
+      user,
     );
     return new ApiResponse(
       200,

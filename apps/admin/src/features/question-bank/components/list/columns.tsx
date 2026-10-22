@@ -46,7 +46,16 @@ export const getQuestionColumns = ({
     ),
   },
   {
-    accessorKey: "question",
+    id: "question",
+    accessorFn: (row) => {
+      const q = (row as any).question || row.text || "";
+      const topic = row.topic || "";
+      const subject = row.category?.name || (row as any).subject?.name || "";
+      const diff = row.difficulty || "";
+      const type = row.type || "";
+      const status = row.status || "";
+      return `${q} ${topic} ${subject} ${diff} ${type} ${status}`;
+    },
     header: "Question",
     meta: {
       className: "w-full min-w-0 max-w-0 px-3 overflow-hidden",

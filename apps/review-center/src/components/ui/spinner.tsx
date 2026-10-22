@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2Icon } from "lucide-react";
+import { cn } from "cn";
 
 export type SpinnerVariant =
   | "default"
@@ -13,18 +13,17 @@ export type SpinnerVariant =
 
 export type SpinnerSize = "xs" | "sm" | "md" | "lg" | "xl" | number;
 
-export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SpinnerProps extends React.ComponentProps<"svg"> {
   variant?: SpinnerVariant;
   size?: SpinnerSize;
-  loading?: boolean;
 }
 
-const sizeMap: Record<string, number> = {
-  xs: 12,
-  sm: 16,
-  md: 24,
-  lg: 36,
-  xl: 48,
+const sizeClassMap: Record<string, string> = {
+  xs: "size-3",
+  sm: "size-4",
+  md: "size-6",
+  lg: "size-8",
+  xl: "size-10",
 };
 
 const variantClassMap: Record<SpinnerVariant, string> = {
@@ -37,41 +36,32 @@ const variantClassMap: Record<SpinnerVariant, string> = {
   current: "text-current",
 };
 
-export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
-  (
-    {
-      variant = "default",
-      size = "sm",
-      loading = true,
-      className,
-      ...props
-    },
-    ref
-  ) => {
-    if (!loading) return null;
-    const numericSize = typeof size === "number" ? size : sizeMap[size] ?? 16;
+function Spinner({
+  className,
+  size = "sm",
+  variant = "default",
+  style,
+  ...props
+}: SpinnerProps) {
+  const isCustomSize = typeof size === "number";
+  const sizeClass = typeof size === "string" ? sizeClassMap[size] ?? "size-4" : undefined;
 
-    return (
-      <div
-        ref={ref}
-        role="status"
-        aria-label="Loading..."
-        className={cn(
-          "inline-flex items-center justify-center shrink-0",
-          variantClassMap[variant],
-          className
-        )}
-        {...props}
-      >
-        <Loader2
-          className="animate-spin"
-          style={{ width: numericSize, height: numericSize }}
-        />
-      </div>
-    );
-  }
-);
+  return (
+    <Loader2Icon
+      data-slot="spinner"
+      role="status"
+      aria-label="Loading"
+      className={cn(
+        "animate-spin shrink-0",
+        sizeClass,
+        variantClassMap[variant],
+        className
+      )}
+      style={isCustomSize ? { width: size, height: size, ...style } : style}
+      {...props}
+    />
+  );
+}
 
-Spinner.displayName = "Spinner";
-
+export { Spinner };
 export default Spinner;

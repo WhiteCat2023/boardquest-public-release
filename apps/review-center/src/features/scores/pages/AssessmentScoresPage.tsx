@@ -225,7 +225,7 @@ export function AssessmentScoresPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl w-full mx-auto font-sans pb-12 animate-in fade-in duration-200">
+    <div className="w-full flex-1 flex flex-col space-y-6 font-sans pb-12 animate-in fade-in duration-200">
       {/* ── 1. Page Header & Top Actions ── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-border">
         {/* Left: Info Cluster */}
@@ -344,7 +344,7 @@ export function AssessmentScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Enrolled / Scored
             </span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <Users className="size-4" />
             </div>
           </div>
@@ -371,7 +371,7 @@ export function AssessmentScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Assessment Mean (&mu;)
             </span>
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <BarChart3 className="size-4" />
             </div>
           </div>
@@ -400,7 +400,7 @@ export function AssessmentScoresPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Median Score
             </span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-muted text-foreground border border-border">
               <TrendingUp className="size-4" />
             </div>
           </div>
@@ -427,7 +427,6 @@ export function AssessmentScoresPage() {
         {(() => {
           const total = (assessment.passCount || 0) + (assessment.failCount || 0);
           const rate = total > 0 ? ((assessment.passCount || 0) / total) * 100 : null;
-          const isHighPass = rate !== null && rate >= (assessment.passingRate || 75);
 
           return (
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between space-y-3">
@@ -435,34 +434,12 @@ export function AssessmentScoresPage() {
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Passing Rate (&ge; {assessment.passingRate}%)
                 </span>
-                <div
-                  className={`p-2 rounded-xl border ${
-                    rate === null
-                      ? "bg-muted text-muted-foreground border-border"
-                      : isHighPass
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                  }`}
-                >
-                  {isHighPass ? (
-                    <CheckCircle2 className="size-4" />
-                  ) : rate !== null ? (
-                    <XCircle className="size-4" />
-                  ) : (
-                    <CheckCircle2 className="size-4" />
-                  )}
+                <div className="p-2 rounded-xl border bg-muted text-foreground border-border">
+                  <CheckCircle2 className="size-4" />
                 </div>
               </div>
               <div>
-                <h3
-                  className={`text-2xl sm:text-3xl font-black tracking-tight ${
-                    rate === null
-                      ? "text-foreground"
-                      : isHighPass
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-rose-600 dark:text-rose-400"
-                  }`}
-                >
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                   {rate !== null ? `${rate.toFixed(1)}%` : "—"}
                 </h3>
                 <p className="text-[11px] text-muted-foreground font-medium mt-1">

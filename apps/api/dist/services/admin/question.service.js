@@ -343,19 +343,159 @@ export class QuestionService {
             categoryFilter = { in: handledCategoryIds };
         }
         const cleanTopic = typeof topic === "string" ? topic.trim() : undefined;
-        const whereClause = {
-            question: search ? { contains: search } : undefined,
-            difficulty,
-            subjectId: categoryFilter,
-            type,
-            topic: cleanTopic && cleanTopic !== "ALL"
-                ? { equals: cleanTopic, mode: "insensitive" }
-                : undefined,
-            status: statusFilter,
-            authorId: authorId === "unassigned" ? null : authorId,
-            isPublished,
-            ...(schoolYear && schoolYear !== "ALL" && { schoolYear }),
+        const cleanSearch = typeof search === "string" ? search.trim() : "";
+        const buildTermOrConditions = (term, matchingSubjectIds = []) => {
+            const trimmed = term.trim();
+            if (!trimmed)
+                return [];
+            const upper = trimmed.toUpperCase();
+            const normalized = upper.replace(/[\s\/\-]+/g, "_");
+            const orConditions = [
+                { question: { contains: trimmed, mode: "insensitive" } },
+                { topic: { contains: trimmed, mode: "insensitive" } },
+            ];
+            if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+                orConditions.push({ id: trimmed });
+            }
+            // 1. Difficulty matching (EASY, MEDIUM, HARD)
+            const difficulties = [];
+            if (upper === "EASY" || (upper.length >= 3 && "EASY".startsWith(upper))) {
+                difficulties.push(QuestionDifficulty.EASY);
+            }
+            if (upper === "MEDIUM" ||
+                upper === "MED" ||
+                (upper.length >= 3 && "MEDIUM".startsWith(upper))) {
+                difficulties.push(QuestionDifficulty.MEDIUM);
+            }
+            if (upper === "HARD" || (upper.length >= 3 && "HARD".startsWith(upper))) {
+                difficulties.push(QuestionDifficulty.HARD);
+            }
+            if (difficulties.length > 0) {
+                orConditions.push({ difficulty: { in: difficulties } });
+            }
+            // 2. Cognitive Level matching (LOTS, HOTS)
+            const cognitiveLevels = [];
+            if (upper === "LOTS" || (upper.length >= 3 && "LOTS".startsWith(upper))) {
+                cognitiveLevels.push(CognitiveLevel.LOTS);
+            }
+            if (upper === "HOTS" || (upper.length >= 3 && "HOTS".startsWith(upper))) {
+                cognitiveLevels.push(CognitiveLevel.HOTS);
+            }
+            if (cognitiveLevels.length > 0) {
+                orConditions.push({ cognitiveLevel: { in: cognitiveLevels } });
+            }
+            // 3. Question Type matching (MCQ, TRUE_FALSE, SHORT_ANSWER)
+            const types = [];
+            if (upper === "MCQ" ||
+                upper.includes("MCQ") ||
+                upper.includes("MULTIPLE") ||
+                upper.includes("CHOICE")) {
+                types.push(QuestionType.MCQ);
+            }
+            if (upper.includes("TRUE") ||
+                upper.includes("FALSE") ||
+                upper === "TF" ||
+                upper === "T_F" ||
+                normalized === "TRUE_FALSE" ||
+                "TRUE_FALSE".includes(normalized)) {
+                types.push(QuestionType.TRUE_FALSE);
+            }
+            if (upper.includes("SHORT") ||
+                upper.includes("ANSWER") ||
+                normalized === "SHORT_ANSWER" ||
+                "SHORT_ANSWER".includes(normalized)) {
+                types.push(QuestionType.SHORT_ANSWER);
+            }
+            if (types.length > 0) {
+                orConditions.push({ type: { in: types } });
+            }
+            // 4. Status matching
+            const statuses = [];
+            if (upper === "APPROVED" ||
+                (upper.length >= 4 && "APPROVED".startsWith(upper))) {
+                statuses.push(QuestionStatus.APPROVED);
+            }
+            if (upper === "REVIEW" || upper === "PENDING_REVIEW") {
+                statuses.push(QuestionStatus.PENDING_REVIEW);
+            }
+            if (upper === "REVISION" || upper === "PENDING_REVISION") {
+                statuses.push(QuestionStatus.PENDING_REVISION);
+            }
+            if (upper === "PENDING") {
+                statuses.push(QuestionStatus.PENDING_REVIEW, QuestionStatus.PENDING_REVISION);
+            }
+            if (statuses.length > 0) {
+                orConditions.push({ status: { in: statuses } });
+            }
+            // 5. Subject matching
+            if (matchingSubjectIds.length > 0) {
+                orConditions.push({ subjectId: { in: matchingSubjectIds } });
+            }
+            return orConditions;
         };
+        const andConditions = [];
+        if (difficulty) {
+            andConditions.push({ difficulty });
+        }
+        if (categoryFilter) {
+            andConditions.push({ subjectId: categoryFilter });
+        }
+        if (type) {
+            andConditions.push({ type });
+        }
+        if (cleanTopic && cleanTopic !== "ALL") {
+            andConditions.push({ topic: { equals: cleanTopic, mode: "insensitive" } });
+        }
+        if (statusFilter) {
+            andConditions.push({ status: statusFilter });
+        }
+        if (authorId) {
+            andConditions.push({
+                authorId: authorId === "unassigned" ? null : authorId,
+            });
+        }
+        if (isPublished !== undefined) {
+            andConditions.push({ isPublished });
+        }
+        if (schoolYear && schoolYear !== "ALL") {
+            andConditions.push({ schoolYear });
+        }
+        if (cleanSearch) {
+            // Find matching subjects for search term
+            const matchingSubjects = await this.db.subject.findMany({
+                where: { name: { contains: cleanSearch, mode: "insensitive" } },
+                select: { id: true },
+            });
+            const matchingSubjectIds = matchingSubjects.map((s) => s.id);
+            const words = cleanSearch.split(/\s+/).filter(Boolean);
+            if (words.length <= 1) {
+                const termConditions = buildTermOrConditions(cleanSearch, matchingSubjectIds);
+                if (termConditions.length > 0) {
+                    andConditions.push({ OR: termConditions });
+                }
+            }
+            else {
+                const wordConditions = await Promise.all(words.map(async (word) => {
+                    const wordSubjects = await this.db.subject.findMany({
+                        where: { name: { contains: word, mode: "insensitive" } },
+                        select: { id: true },
+                    });
+                    const conditions = buildTermOrConditions(word, wordSubjects.map((s) => s.id));
+                    return { OR: conditions };
+                }));
+                andConditions.push({
+                    OR: [
+                        { question: { contains: cleanSearch, mode: "insensitive" } },
+                        { topic: { contains: cleanSearch, mode: "insensitive" } },
+                        ...(matchingSubjectIds.length > 0
+                            ? [{ subjectId: { in: matchingSubjectIds } }]
+                            : []),
+                        { AND: wordConditions },
+                    ],
+                });
+            }
+        }
+        const whereClause = andConditions.length > 0 ? { AND: andConditions } : {};
         const limitNum = limit || 20;
         try {
             const [total, rawQuestions] = await Promise.all([

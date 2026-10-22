@@ -8,6 +8,8 @@ import {
   reviewCenterResetPassword,
   reviewCenterVerifyResetToken,
   updateReviewCenterProfile,
+  reviewCenterAcceptTerms,
+  reviewCenterFirstLoginSetup,
 } from "../../controller/review-center/auth.controller";
 import {
   authLimiter,
@@ -26,5 +28,7 @@ router.post("/reset-password", passwordResetLimiter, reviewCenterResetPassword);
 router.get("/refresh", reviewCenterRefreshToken);
 router.get("/me", authenticateReviewCenterToken, getReviewCenterMe);
 router.put("/profile", authenticateReviewCenterToken, updateReviewCenterProfile);
+router.post("/accept-terms", authenticateReviewCenterToken, reviewCenterAcceptTerms);
+router.post("/first-login-setup", authenticateReviewCenterToken, reviewCenterFirstLoginSetup);
 
 export default router;

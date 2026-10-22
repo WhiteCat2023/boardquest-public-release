@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
 
 interface DeleteAssessmentModalProps {
@@ -65,22 +68,20 @@ export function DeleteAssessmentModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          {/* Warning Box */}
-          <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-xs text-destructive flex items-start gap-2.5">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold">Permanent Data Loss Warning</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Deleting this assessment will permanently remove all associated student score records, percentiles, pass/fail results, and historical grade slips.
-              </p>
-            </div>
-          </div>
+          {/* Warning Alert */}
+          <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 text-destructive py-2.5 px-3">
+            <AlertTriangle className="size-4 text-destructive" />
+            <AlertTitle className="text-xs font-bold text-destructive">Permanent Data Loss Warning</AlertTitle>
+            <AlertDescription className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+              Deleting this assessment will permanently remove all associated student score records, percentiles, pass/fail results, and historical grade slips.
+            </AlertDescription>
+          </Alert>
 
           {/* Type to Confirm */}
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">
+            <Label className="text-xs text-muted-foreground">
               To confirm, type <strong className="text-foreground bg-muted px-1.5 py-0.5 rounded border border-border font-bold select-all">{assessmentTitle}</strong> below:
-            </label>
+            </Label>
             <Input
               type="text"
               placeholder="Type assessment title to confirm..."
@@ -93,11 +94,10 @@ export function DeleteAssessmentModal({
 
           {/* Acknowledgment Checkbox */}
           <label className="flex items-start gap-2.5 p-2.5 rounded-xl border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isAcknowledged}
-              onChange={(e) => setIsAcknowledged(e.target.checked)}
-              className="mt-0.5 rounded border-border text-destructive focus:ring-destructive size-4 cursor-pointer accent-destructive"
+              onCheckedChange={(checked) => setIsAcknowledged(Boolean(checked))}
+              className="mt-0.5 border-border data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
             />
             <span className="text-[11px] font-semibold text-muted-foreground select-none leading-snug">
               I acknowledge that all scores, grades, and analytics for this assessment will be permanently deleted.

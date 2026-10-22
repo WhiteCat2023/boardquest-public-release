@@ -214,4 +214,152 @@ describe("Calendar Routes", () => {
       expect(response.status).toBe(403);
     });
   });
+
+  describe("Calendar Events (MongoDB)", () => {
+    describe("GET /api/calendar/events", () => {
+      it("should return calendar events successfully", async () => {
+        const mockEvents = [
+          {
+            id: "evt_1",
+            title: "Faculty Board Sync",
+            category: "Events",
+            startDate: "2026-10-25",
+            endDate: "2026-10-25",
+            authorName: "Dean User",
+          },
+        ];
+        (calendarService.getAllCalendarEvents as jest.Mock).mockResolvedValue(mockEvents);
+
+        const response = await request(app).get("/api/calendar/events");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.events).toBeDefined();
+        expect(response.body.data.events.length).toBe(1);
+        expect(response.body.data.events[0].title).toBe("Faculty Board Sync");
+      });
+
+      it("should pass req.user to getAllCalendarEvents for attendee filtering", async () => {
+        (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+          req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER", name: "Teacher User" };
+          next();
+        });
+        (calendarService.getAllCalendarEvents as jest.Mock).mockResolvedValue([]);
+
+        const response = await request(app).get("/api/calendar/events");
+        expect(response.status).toBe(200);
+        expect(calendarService.getAllCalendarEvents).toHaveBeenCalledWith(
+          expect.objectContaining({ email: "teacher@example.com" })
+        );
+      });
+    });
+
+    describe("POST /api/calendar/events", () => {
+      it("should create a new calendar event", async () => {
+        const createdEvent = {
+          id: "evt_2",
+          title: "Curriculum Brainstorming",
+          startDate: "2026-10-26",
+          category: "Events",
+          authorName: "Dean User",
+        };
+        (calendarService.createCalendarEvent as jest.Mock).mockResolvedValue(createdEvent);
+
+        const response = await request(app)
+          .post("/api/calendar/events")
+          .send({
+            title: "Curriculum Brainstorming",
+            startDate: "2026-10-26",
+            category: "Events",
+          });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.event.title).toBe("Curriculum Brainstorming");
+      });
+
+      it("should reject creation if title or startDate is missing with 400", async () => {
+        const response = await request(app)
+          .post("/api/calendar/events")
+          .send({ title: "No Date Event" });
+
+        expect(response.status).toBe(400);
+      });
+
+      it("should allow TEACHER to create calendar events", async () => {
+        (authenticateToken as jest.Mock).mockImplementation((req, res, next) => {
+          req.user = { id: "teach_1", email: "teacher@example.com", role: "TEACHER", name: "Teacher User" };
+          next();
+        });
+        (calendarService.createCalendarEvent as jest.Mock).mockResolvedValue({
+          id: "evt_teach",
+          title: "Teacher Class Prep",
+          authorName: "Teacher User",
+        });
+
+        const response = await request(app)
+          .post("/api/calendar/events")
+          .send({
+            title: "Teacher Class Prep",
+            startDate: "2026-10-26",
+            category: "Events",
+          });
+
+        expect(response.status).toBe(201);
+      });
+    });
+
+    describe("PUT /api/calendar/events/:id", () => {
+      it("should update an event if user is the author", async () => {
+        const existingEvent = {
+          id: "evt_1",
+          title: "Old Title",
+          authorId: "1",
+          authorName: "Dean User",
+        };
+        const updatedEvent = {
+          ...existingEvent,
+          title: "New Title",
+        };
+        (calendarService.getCalendarEventById as jest.Mock).mockResolvedValue(existingEvent);
+        (calendarService.updateCalendarEvent as jest.Mock).mockResolvedValue(updatedEvent);
+
+        const response = await request(app)
+          .put("/api/calendar/events/evt_1")
+          .send({ title: "New Title" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.event.title).toBe("New Title");
+      });
+
+      it("should reject update if user is not the author or superadmin", async () => {
+        const existingEvent = {
+          id: "evt_1",
+          title: "Someone Else Event",
+          authorId: "user_other",
+          authorName: "Other Person",
+        };
+        (calendarService.getCalendarEventById as jest.Mock).mockResolvedValue(existingEvent);
+
+        const response = await request(app)
+          .put("/api/calendar/events/evt_1")
+          .send({ title: "Unauthorized Attempt" });
+
+        expect(response.status).toBe(403);
+      });
+    });
+
+    describe("DELETE /api/calendar/events/:id", () => {
+      it("should delete an event if user is the author", async () => {
+        const existingEvent = {
+          id: "evt_1",
+          authorId: "1",
+        };
+        (calendarService.getCalendarEventById as jest.Mock).mockResolvedValue(existingEvent);
+        (calendarService.deleteCalendarEvent as jest.Mock).mockResolvedValue(true);
+
+        const response = await request(app).delete("/api/calendar/events/evt_1");
+
+        expect(response.status).toBe(200);
+      });
+    });
+  });
 });

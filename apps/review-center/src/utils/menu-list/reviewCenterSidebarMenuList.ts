@@ -30,8 +30,8 @@ export const reviewCenterNavItem: NavItemProps[] = [
     sideBarCategoryName: "SCHEDULE & TIMELINE",
     content: [
       {
-        title: "Evaluation Schedules",
-        path: "/schedules",
+        title: "Calendar",
+        path: "/calendar",
         icon: "Calendar",
       },
     ],

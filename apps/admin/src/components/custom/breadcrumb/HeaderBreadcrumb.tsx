@@ -40,6 +40,12 @@ const formatSegment = (segment: string) => {
   if (segment.toLowerCase() === "student-management") {
     return "Students";
   }
+  if (
+    segment.toLowerCase() === "settings" ||
+    segment.toLowerCase() === "system-settings"
+  ) {
+    return "System Settings";
+  }
   return segment
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

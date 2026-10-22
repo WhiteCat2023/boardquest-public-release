@@ -8,7 +8,7 @@ export function DashboardHeader() {
   const { activeSchoolYear } = useActiveSchoolYear();
 
   return (
-    <div className="p-6 rounded-3xl bg-card border border-border shadow-2xs relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="w-full p-6 rounded-3xl bg-card border border-border shadow-2xs relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
       <div className="space-y-2 z-10">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-primary bg-primary/10 border-primary/20 gap-1.5 py-0.5">

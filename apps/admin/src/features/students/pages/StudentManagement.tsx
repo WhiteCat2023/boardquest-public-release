@@ -21,6 +21,7 @@ import AssignGuidanceModal from "../components/AssignGuidanceModal";
 import EmailStudentModal from "../components/EmailStudentModal";
 import { DataTablePagination } from "@/components/custom/pagination";
 import { StandardNavTabs } from "@/components/custom/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -296,7 +297,11 @@ export default function StudentManagement() {
         rightContent={
           <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
             <span>{activeTabId === "ALL" ? "Total Registered:" : "Students Found:"}</span>
-            <span className="text-foreground font-bold">{total}</span>
+            {isLoading ? (
+              <Skeleton className="h-4 w-6 rounded inline-block" />
+            ) : (
+              <span className="text-foreground font-bold">{total}</span>
+            )}
           </div>
         }
       />
@@ -411,25 +416,36 @@ export default function StudentManagement() {
                 : "No students match the selected filter criteria."
             }
             pagination={
-              !isLoading && (
-                <DataTablePagination
-                  currentPage={currentPage}
-                  hasNextPage={hasNextPage}
-                  hasPreviousPage={currentPage > 1}
-                  onNext={handleNext}
-                  onPrevious={handlePrevious}
-                  onPageSelect={handlePageSelect}
-                  totalPages={totalPages}
-                  totalItems={total}
-                  pageSize={pageSize}
-                  pageSizeOptions={[10, 20, 30, 50]}
-                  onPageSizeChange={(newSize) => {
-                    setPageSize(newSize);
-                    setCurrentPage(1);
-                  }}
-                  itemLabel="students"
-                  variant="table-footer"
-                />
+              isLoading ? (
+                <div className="border-t border-border/60 p-2.5 px-4 bg-muted/20 flex items-center justify-between">
+                  <Skeleton className="h-4 w-32 rounded" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-7 w-20 rounded-lg" />
+                    <Skeleton className="size-7 rounded-lg" />
+                    <Skeleton className="size-7 rounded-lg" />
+                  </div>
+                </div>
+              ) : (
+                total > 0 && (
+                  <DataTablePagination
+                    currentPage={currentPage}
+                    hasNextPage={hasNextPage}
+                    hasPreviousPage={currentPage > 1}
+                    onNext={handleNext}
+                    onPrevious={handlePrevious}
+                    onPageSelect={handlePageSelect}
+                    totalPages={totalPages}
+                    totalItems={total}
+                    pageSize={pageSize}
+                    pageSizeOptions={[10, 20, 30, 50]}
+                    onPageSizeChange={(newSize) => {
+                      setPageSize(newSize);
+                      setCurrentPage(1);
+                    }}
+                    itemLabel="students"
+                    variant="table-footer"
+                  />
+                )
               )
             }
           />

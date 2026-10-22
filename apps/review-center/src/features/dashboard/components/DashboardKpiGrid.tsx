@@ -31,7 +31,7 @@ export function DashboardKpiGrid({
       iconBg: "bg-primary/10",
     },
     {
-      title: "Evaluation Schedules",
+      title: "Calendar",
       value: schedulesCount,
       subtitle:
         schedulesCount === 0
@@ -63,7 +63,7 @@ export function DashboardKpiGrid({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
+    <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
       {kpis.map((kpi, index) => {
         const Icon = kpi.icon;
         return (

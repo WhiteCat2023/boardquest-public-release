@@ -248,20 +248,12 @@ export class UserService {
             if (normRole && [Role.TEAMLEAD, Role.TEACHER].includes(normRole)) {
                 where.role = normRole;
             }
-            else if (excludeExternal) {
-                where.role = { in: [Role.DEAN, Role.TEAMLEAD, Role.TEACHER] };
-            }
             else {
                 where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
             }
         }
         else if (normReq === "TEAMLEAD") {
-            if (excludeExternal) {
-                where.role = { in: [Role.TEAMLEAD, Role.TEACHER] };
-            }
-            else {
-                where.role = Role.TEACHER;
-            }
+            where.role = Role.TEACHER;
         }
         else if (normRole &&
             normRole !== Role.REVIEWCENTER &&
@@ -303,6 +295,13 @@ export class UserService {
                     r !== "EXTERNAL" &&
                     !r.includes("REVIEW") &&
                     !r.includes("EXTERNAL"));
+            });
+        }
+        // Safety scoping: Deans should not see other deans or superadmins
+        if (normReq === "DEAN") {
+            combinedList = combinedList.filter((u) => {
+                const r = String(u.role || "").toUpperCase().trim();
+                return r !== "DEAN" && r !== "SUPERADMIN";
             });
         }
         // If role is "ALL" or REVIEWCENTER/EXTERNAL and requester is SUPERADMIN or DEAN, also fetch from ReviewCenterRepresentativeUser
@@ -483,6 +482,7 @@ export class UserService {
                     location: location?.trim() || "Philippines",
                     accountStatus: "ACTIVE",
                     isActive: true,
+                    mustChangePassword: true,
                     reviewCenterId: reviewCenter?.id || undefined,
                 },
             });
@@ -885,6 +885,7 @@ export class UserService {
                             location: item.location?.trim() || "Philippines",
                             accountStatus: "ACTIVE",
                             isActive: true,
+                            mustChangePassword: true,
                             reviewCenterId: reviewCenter?.id || undefined,
                         },
                     });

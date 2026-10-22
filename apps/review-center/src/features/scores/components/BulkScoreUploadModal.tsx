@@ -11,8 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import { toast } from "sonner";
-import { StandardNavTabs } from "@/components/custom/tabs";
 import {
   Upload,
   Download,
@@ -317,59 +326,63 @@ export function BulkScoreUploadModal({
         </DialogHeader>
 
         {/* Tab Selection */}
-        <StandardNavTabs
-          tabs={[
-            { id: "file", label: "Option 1: Upload CSV / Excel File", icon: Upload },
-            { id: "paste", label: "Option 2: Copy-Paste from Sheets", icon: Clipboard },
-          ]}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-9 p-1 bg-muted/60 rounded-xl">
+            <TabsTrigger value="file" className="text-xs font-semibold gap-1.5 rounded-lg">
+              <Upload className="size-3.5" />
+              <span>Option 1: Upload CSV / Excel File</span>
+            </TabsTrigger>
+            <TabsTrigger value="paste" className="text-xs font-semibold gap-1.5 rounded-lg">
+              <Clipboard className="size-3.5" />
+              <span>Option 2: Copy-Paste from Sheets</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Option 1: File Upload Tab */}
-        {activeTab === "file" && (
-          <div className="space-y-3 py-2">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.txt"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <div className="p-3 rounded-full bg-primary/10 text-primary">
-                <Upload className="size-6" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">
-                  {fileName ? fileName : "Click to select or drag & drop CSV file"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pre-filled template ensures 100% match with enrolled candidates
-                </p>
+          {/* Option 1: File Upload Tab */}
+          <TabsContent value="file" className="mt-3">
+            <div className="space-y-3 py-1">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <div className="p-3 rounded-full bg-primary/10 text-primary">
+                  <Upload className="size-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    {fileName ? fileName : "Click to select or drag & drop CSV file"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Pre-filled template ensures 100% match with enrolled candidates
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* Option 2: Paste Tab */}
-        {activeTab === "paste" && (
-          <div className="space-y-2 py-2">
-            <Label className="text-xs font-bold text-muted-foreground">
-              Paste student scores directly from Excel or Google Sheets (Tab or Comma separated):
-            </Label>
-            <textarea
-              rows={4}
-              value={pasteContent}
-              onChange={handlePasteChange}
-              placeholder="e.g.&#10;2024-0012	Maria Clara	maria.santos@email.com	88&#10;2024-0013	Juan Dela Cruz	juan.delacruz@email.com	92"
-              className="w-full text-xs font-mono p-3 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        )}
+          {/* Option 2: Paste Tab */}
+          <TabsContent value="paste" className="mt-3">
+            <div className="space-y-2 py-1">
+              <Label className="text-xs font-bold text-muted-foreground">
+                Paste student scores directly from Excel or Google Sheets (Tab or Comma separated):
+              </Label>
+              <Textarea
+                rows={4}
+                value={pasteContent}
+                onChange={handlePasteChange}
+                placeholder="e.g.&#10;2024-0012	Maria Clara	maria.santos@email.com	88&#10;2024-0013	Juan Dela Cruz	juan.delacruz@email.com	92"
+                className="w-full text-xs font-mono p-3 bg-muted/30 border border-border rounded-lg focus-visible:ring-1"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Projected Statistical Banner */}
         {validPresentScores.length > 0 && (
@@ -417,28 +430,28 @@ export function BulkScoreUploadModal({
             </div>
 
             <div className="border border-border rounded-lg max-h-56 overflow-y-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-muted/60 sticky top-0 border-b border-border text-[11px] font-bold text-muted-foreground uppercase">
-                  <tr>
-                    <th className="p-2">Student ID / Email</th>
-                    <th className="p-2">Name</th>
-                    <th className="p-2">Score / Max</th>
-                    <th className="p-2 text-right">Validation</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+              <Table>
+                <TableHeader className="bg-muted/60 sticky top-0 border-b border-border">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="p-2 text-[11px] font-bold text-muted-foreground uppercase">Student ID / Email</TableHead>
+                    <TableHead className="p-2 text-[11px] font-bold text-muted-foreground uppercase">Name</TableHead>
+                    <TableHead className="p-2 text-[11px] font-bold text-muted-foreground uppercase">Score / Max</TableHead>
+                    <TableHead className="p-2 text-[11px] font-bold text-muted-foreground uppercase text-right">Validation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {parsedRows.map((row, idx) => (
-                    <tr
+                    <TableRow
                       key={idx}
                       className={row.isValid ? "hover:bg-muted/20" : "bg-destructive/10"}
                     >
-                      <td className="p-2 font-mono text-[11px]">
+                      <TableCell className="p-2 font-mono text-[11px]">
                         {row.schoolId || row.email || "—"}
-                      </td>
-                      <td className="p-2 font-medium text-foreground">
+                      </TableCell>
+                      <TableCell className="p-2 font-medium text-foreground">
                         {row.name || "—"}
-                      </td>
-                      <td className="p-2">
+                      </TableCell>
+                      <TableCell className="p-2">
                         {row.score !== null ? (
                           <span className="font-bold">
                             {row.score} / {maxScore} (
@@ -447,8 +460,8 @@ export function BulkScoreUploadModal({
                         ) : (
                           <span className="text-destructive font-bold">Missing</span>
                         )}
-                      </td>
-                      <td className="p-2 text-right">
+                      </TableCell>
+                      <TableCell className="p-2 text-right">
                         {row.isValid ? (
                           <span className="inline-flex items-center gap-1 text-green-600 font-bold text-[11px]">
                             <CheckCircle2 className="size-3.5" />
@@ -460,11 +473,11 @@ export function BulkScoreUploadModal({
                             <span>{row.error}</span>
                           </span>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         )}

@@ -40,7 +40,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-3.5 p-4 md:p-6 max-w-5xl mx-auto w-full font-sans bg-background text-foreground animate-in fade-in duration-150">
+    <div className="flex flex-col gap-3.5 w-full flex-1 font-sans bg-background text-foreground animate-in fade-in duration-150 pb-12">
       {/* Header Toolbar */}
       <NotificationsHeader
         unreadCount={unreadCount}

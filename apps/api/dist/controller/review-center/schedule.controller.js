@@ -8,7 +8,7 @@ export const getMyReviewSchedules = asyncHandler(async (req, res) => {
     const companyName = user?.companyName;
     const reviewCenterId = user?.reviewCenterId;
     const { schoolYear } = req.query;
-    const schedules = await scheduleService.getReviewCenterSchedules(companyName, reviewCenterId, schoolYear);
+    const schedules = await scheduleService.getReviewCenterSchedules(companyName, reviewCenterId, schoolYear, user);
     return new ApiResponse(200, { schedules }, "Review schedules retrieved successfully").send(res);
 });
 export const createMyReviewSchedule = asyncHandler(async (req, res) => {

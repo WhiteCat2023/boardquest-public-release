@@ -3,15 +3,16 @@ import useRoleFlags from "@/hooks/useRoleFlags";
 import { useReviewSchedules } from "../api/useCalendar";
 import type { ReviewSchedule } from "../types/types";
 import {
-  CalendarHeader,
   ReviewCalendarView,
   SetReviewScheduleModal,
 } from "../components";
 
+const EMPTY_SCHEDULES: ReviewSchedule[] = [];
+
 export default function CalendarManagement() {
   const { canManageSchedules } = useRoleFlags();
-  const { data: rawSchedules = [], isLoading: isSchedulesLoading } = useReviewSchedules();
-  const schedules = Array.isArray(rawSchedules) ? rawSchedules : [];
+  const { data: rawSchedules, isLoading: isSchedulesLoading } = useReviewSchedules();
+  const schedules = Array.isArray(rawSchedules) ? rawSchedules : EMPTY_SCHEDULES;
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,13 +31,7 @@ export default function CalendarManagement() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
-      {/* ── Page Header ── */}
-      <CalendarHeader
-        onAddSchedule={handleOpenAddSchedule}
-        canManage={canManageSchedules}
-      />
-
+    <div className="flex flex-col p-3 sm:p-4 w-full flex-1 min-h-0 h-full font-sans bg-background text-foreground">
       {/* Interactive Monthly Calendar & Schedule View */}
       <ReviewCalendarView
         schedules={schedules}

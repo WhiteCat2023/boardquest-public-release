@@ -26,6 +26,8 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Kbd } from "@/components/ui/kbd";
 
 export type SearchCategory = "all" | "component" | "page" | "action";
 
@@ -84,11 +86,11 @@ const REVIEW_CENTER_SEARCH_ITEMS: SearchItem[] = [
   },
   {
     id: "page-schedules",
-    title: "Evaluation Schedules",
+    title: "Calendar",
     description: "Interactive calendar with diagnostic drills, lecture dates, and mock board exam timelines",
     category: "page",
-    pageName: "Evaluation Schedules",
-    path: "/schedules",
+    pageName: "Calendar",
+    path: "/calendar",
     icon: Calendar,
     keywords: ["schedules", "calendar", "events", "mock board", "diagnostic", "drills", "timeline", "dates"],
   },
@@ -106,11 +108,11 @@ const REVIEW_CENTER_SEARCH_ITEMS: SearchItem[] = [
   // ── COMPONENTS & SECTIONS ──
   {
     id: "comp-evaluation-calendar",
-    title: "Evaluation Schedules Calendar View",
+    title: "Calendar View",
     description: "Month, week, and list view of upcoming review drills, mock exams, and academic milestones",
     category: "component",
-    pageName: "Evaluation Schedules",
-    path: "/schedules",
+    pageName: "Calendar",
+    path: "/calendar",
     icon: Calendar,
     keywords: ["calendar", "monthly view", "drills", "mock exams", "schedule grid"],
   },
@@ -181,8 +183,8 @@ const REVIEW_CENTER_SEARCH_ITEMS: SearchItem[] = [
     title: "Schedule Review Drill / Mock Exam",
     description: "Add a new diagnostic exam, lecture session, or pre-board drill date to the calendar",
     category: "action",
-    pageName: "Evaluation Schedules",
-    path: "/schedules",
+    pageName: "Calendar",
+    path: "/calendar",
     icon: CalendarPlus,
     keywords: ["create schedule", "add event", "mock board date", "diagnostic drill", "add exam"],
   },
@@ -328,21 +330,21 @@ export function SystemSearchBar() {
     switch (category) {
       case "component":
         return (
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+          <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20">
             Component
-          </span>
+          </Badge>
         );
       case "page":
         return (
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <Badge variant="success" className="px-1.5 py-0 text-[10px] font-semibold">
             Page
-          </span>
+          </Badge>
         );
       case "action":
         return (
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+          <Badge variant="warning" className="px-1.5 py-0 text-[10px] font-semibold">
             Action
-          </span>
+          </Badge>
         );
     }
   };
@@ -361,9 +363,9 @@ export function SystemSearchBar() {
           <span className="hidden sm:inline">Search components...</span>
           <span className="sm:hidden">Search...</span>
         </span>
-        <kbd className="ml-auto pointer-events-none hidden sm:inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-border/80 bg-background px-1 font-mono text-[9px] font-medium text-muted-foreground/80 group-hover:text-foreground transition-colors">
+        <Kbd className="ml-auto pointer-events-none hidden sm:inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-border/80 bg-background px-1 font-mono text-[9px] font-medium text-muted-foreground/80 group-hover:text-foreground transition-colors">
           <span className="text-[10px]">⌘</span>K
-        </kbd>
+        </Kbd>
       </button>
 
       {/* ── Search Modal Dialog ── */}
@@ -397,9 +399,9 @@ export function SystemSearchBar() {
                 <X className="size-3.5" />
               </button>
             )}
-            <kbd className="hidden sm:inline-flex h-5 items-center rounded border border-border bg-muted/60 px-1.5 font-mono text-[10px] text-muted-foreground">
+            <Kbd className="hidden sm:inline-flex h-5 items-center rounded border border-border bg-muted/60 px-1.5 font-mono text-[10px] text-muted-foreground">
               ESC
-            </kbd>
+            </Kbd>
           </div>
 
           {/* Category Tabs */}
@@ -532,16 +534,16 @@ export function SystemSearchBar() {
           <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/40 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2 sm:gap-4">
               <span className="flex items-center gap-1">
-                <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↑</kbd>
-                <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↓</kbd>
+                <Kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↑</Kbd>
+                <Kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↓</Kbd>
                 <span className="hidden sm:inline">to navigate</span>
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↵</kbd>
+                <Kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[9px] font-mono">↵</Kbd>
                 <span className="hidden sm:inline">to select</span>
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">ESC</kbd>
+                <Kbd className="px-1 py-0.5 rounded bg-background border border-border text-[9px] font-mono">ESC</Kbd>
                 <span className="hidden sm:inline">to close</span>
               </span>
             </div>

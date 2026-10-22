@@ -29,9 +29,9 @@ export function EmptyDashboardState() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="rounded-xl font-bold gap-2">
-            <Link to="/schedules">
+            <Link to="/calendar">
               <Calendar className="size-3.5" />
-              <span>Evaluation Schedules</span>
+              <span>Academic Calendar</span>
             </Link>
           </Button>
         </div>

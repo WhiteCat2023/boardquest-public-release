@@ -173,7 +173,7 @@ export function SchoolYearsPage() {
   const totalCompleted = allCandidatesList.filter((c) => c.status === "COMPLETED").length;
 
   return (
-    <div className="space-y-6 max-w-7xl w-full mx-auto font-sans">
+    <div className="w-full flex-1 flex flex-col space-y-6 font-sans pb-12 animate-in fade-in duration-200">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

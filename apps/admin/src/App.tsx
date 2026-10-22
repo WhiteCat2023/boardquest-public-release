@@ -500,7 +500,8 @@ function App() {
                     />
                   }
                 >
-                  <Route path="settings" element={<Settings />} />
+                  <Route path="system-settings" element={<Settings />} />
+                  <Route path="settings" element={<Navigate to="/system-settings" replace />} />
                 </Route>
 
                 <Route path="profile-settings" element={<ProfileSettings />} />

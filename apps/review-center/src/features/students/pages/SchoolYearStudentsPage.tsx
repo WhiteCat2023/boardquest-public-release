@@ -18,7 +18,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyHeader,
+} from "@/components/ui/empty";
 import {
   Select,
   SelectContent,
@@ -180,7 +196,7 @@ export function SchoolYearStudentsPage() {
     selectedStatus !== "ALL";
 
   return (
-    <div className="space-y-5 max-w-7xl w-full mx-auto font-sans">
+    <div className="w-full flex-1 flex flex-col space-y-5 font-sans pb-12 animate-in fade-in duration-200">
       {/* ── 1. Top Navigation & Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
         <div className="flex items-center gap-3 min-w-0">
@@ -274,22 +290,22 @@ export function SchoolYearStudentsPage() {
             <span className="text-xs">Loading students...</span>
           </div>
         ) : candidates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
-            <div className="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+          <Empty className="py-16">
+            <EmptyMedia variant="icon" className="size-14 rounded-2xl bg-primary/10 text-primary border border-primary/20">
               <Users className="size-7" />
-            </div>
-            <div className="max-w-md space-y-1">
-              <h3 className="text-base font-bold text-foreground">
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle className="text-base font-bold text-foreground">
                 {isFiltered
                   ? "No Students Match Filters"
                   : `No Students in S.Y. ${schoolYear} Yet`}
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              </EmptyTitle>
+              <EmptyDescription className="text-xs text-muted-foreground leading-relaxed">
                 {isFiltered
                   ? "Try changing your search term or status filter."
                   : "Add students individually or bulk paste multiple students at once."}
-              </p>
-            </div>
+              </EmptyDescription>
+            </EmptyHeader>
 
             {!isFiltered && (
               <div className="flex items-center gap-2 pt-2">
@@ -305,19 +321,19 @@ export function SchoolYearStudentsPage() {
                 </Button>
               </div>
             )}
-          </div>
+          </Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  <th className="px-4 py-3">Student</th>
-                  <th className="px-4 py-3">Student ID</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow className="border-b border-border hover:bg-transparent">
+                  <TableHead className="px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Student</TableHead>
+                  <TableHead className="px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Student ID</TableHead>
+                  <TableHead className="px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {candidates.map((cand) => {
                   const initials = cand.name
                     .split(" ")
@@ -327,12 +343,12 @@ export function SchoolYearStudentsPage() {
                     .toUpperCase();
 
                   return (
-                    <tr
+                    <TableRow
                       key={cand.id}
                       className="hover:bg-muted/20 transition-colors group"
                     >
                       {/* Student Info */}
-                      <td className="px-4 py-3 min-w-[200px]">
+                      <TableCell className="px-4 py-3 min-w-[200px]">
                         <button
                           type="button"
                           onClick={() => setScoreCandidateId(cand.id)}
@@ -353,60 +369,66 @@ export function SchoolYearStudentsPage() {
                             </span>
                           </div>
                         </button>
-                      </td>
+                      </TableCell>
 
                       {/* Student ID */}
-                      <td className="px-4 py-3 font-mono text-[11.5px] text-foreground font-semibold">
+                      <TableCell className="px-4 py-3 font-mono text-[11.5px] text-foreground font-semibold">
                         {cand.schoolId || "—"}
-                      </td>
+                      </TableCell>
 
                       {/* Status */}
-                      <td className="px-4 py-3">
+                      <TableCell className="px-4 py-3">
                         {cand.status === "COMPLETED" ? (
-                          <span className="text-[10px] font-bold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+                          <Badge variant="muted" className="text-[10px] font-bold px-2 py-0.5">
                             Completed
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          <Badge variant="success" className="text-[10px] font-bold gap-1 px-2 py-0.5">
                             <CheckCircle2 size={10} /> Enrolled
-                          </span>
+                          </Badge>
                         )}
-                      </td>
+                      </TableCell>
 
                       {/* Actions */}
-                      <td className="px-4 py-3 text-right">
+                      <TableCell className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() => setScoreCandidateId(cand.id)}
-                            className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                            className="size-7 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                             title="View Scores & Grades"
                           >
                             <GraduationCap size={14} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() => handleOpenEditSingle(cand)}
-                            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            className="size-7 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                             title="Edit Student"
                           >
                             <Edit3 size={13} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() => handleOpenDelete(cand)}
-                            className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                            className="size-7 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                             title="Delete Student"
                           >
                             <Trash2 size={13} />
-                          </button>
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </Card>

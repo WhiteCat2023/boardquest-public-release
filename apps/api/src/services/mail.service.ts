@@ -1411,4 +1411,389 @@ export async function sendAdvisorOutreachEmail({
   }
 }
 
+export interface SendCalendarEventInvitationMailOptions {
+  toEmail: string;
+  recipientName?: string;
+  eventTitle: string;
+  category?: string;
+  startDate: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  link?: string;
+  description?: string;
+  organizerName?: string;
+}
+
+export async function sendCalendarEventInvitationEmail({
+  toEmail,
+  recipientName,
+  eventTitle,
+  category = "Events",
+  startDate,
+  endDate,
+  startTime,
+  endTime,
+  location,
+  link,
+  description,
+  organizerName,
+}: SendCalendarEventInvitationMailOptions) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
+  const calendarUrl = `${frontendUrl}/calendar-management`;
+
+  const dateRangeDisplay =
+    endDate && endDate !== startDate
+      ? `${startDate} - ${endDate}`
+      : startDate;
+
+  const timeDisplay =
+    startTime && endTime
+      ? `${startTime} - ${endTime}`
+      : startTime || "Scheduled";
+
+  const subject = `Event Invitation: ${eventTitle} (${startDate})`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${eventTitle}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="540" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+          
+          <!-- Top Accent Bar -->
+          <tr>
+            <td style="height: 6px; background-color: #a60b0b;"></td>
+          </tr>
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding: 32px 30px 16px 30px; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 800; letter-spacing: 3px; color: #111827; margin-top: 4px;">
+                BOARDQUEST CALENDAR
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 30px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #fee2e2; border-radius: 20px; font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                ${category}
+              </div>
+
+              <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 800; color: #111827; line-height: 1.3;">
+                ${eventTitle}
+              </h2>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Hello${recipientName ? ` <strong>${recipientName}</strong>` : ""}, you have been included as a participant in the schedule for <strong>${eventTitle}</strong>${organizerName ? ` organized by <strong>${organizerName}</strong>` : ""}.
+              </p>
+
+              <!-- Event Details Card -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; border: 1px solid #f3f4f6;">
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280; width: 100px;"><strong>📅 Date:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; font-weight: 600; color: #111827;">${dateRangeDisplay}</td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>⏰ Time:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; font-weight: 600; color: #111827;">${timeDisplay}</td>
+                </tr>
+                ${location ? `
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>📍 Location:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #111827;">${location}</td>
+                </tr>` : ""}
+                ${link ? `
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>🔗 Link:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px;"><a href="${link.startsWith("http") ? link : `https://${link}`}" target="_blank" style="color: #a60b0b; text-decoration: underline; word-break: break-all;">${link}</a></td>
+                </tr>` : ""}
+                ${description ? `
+                <tr>
+                  <td style="font-size: 13px; color: #6b7280; vertical-align: top;"><strong>📝 Details:</strong></td>
+                  <td style="font-size: 13px; color: #374151; line-height: 1.5;">${description}</td>
+                </tr>` : ""}
+              </table>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 24px auto;">
+                <tr>
+                  <td align="center" style="background-color: #a60b0b; border-radius: 12px;">
+                    <a href="${calendarUrl}" target="_blank" style="display: inline-block; padding: 13px 28px; font-size: 13px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">
+                      View in Calendar &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0 0; font-size: 12px; color: #9ca3af; text-align: center;">
+                You will automatically receive an automated reminder 1 day before the start and end of this event.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 30px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Academic System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.log(`\n==================================================`);
+    console.log(`📧 [CALENDAR EVENT INVITATION EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail} (${recipientName || "Attendee"})`);
+    console.log(`📅 Event: ${eventTitle} (${category})`);
+    console.log(`🗓️ Date: ${dateRangeDisplay} | ⏰ Time: ${timeDisplay}`);
+    if (location) console.log(`📍 Location: ${location}`);
+    if (link) console.log(`🔗 Link: ${link}`);
+    if (organizerName) console.log(`👤 Organizer: ${organizerName}`);
+    console.log(`==================================================\n`);
+    return { id: "simulated-calendar-invite-id" };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send calendar invite to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Calendar event invitation sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending calendar invite to ${toEmail}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+export interface SendCalendarEventReminderMailOptions {
+  toEmail: string;
+  recipientName?: string;
+  eventTitle: string;
+  reminderType: "START" | "END";
+  targetDate: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  link?: string;
+  description?: string;
+}
+
+export async function sendCalendarEventReminderEmail({
+  toEmail,
+  recipientName,
+  eventTitle,
+  reminderType,
+  targetDate,
+  startTime,
+  endTime,
+  location,
+  link,
+  description,
+}: SendCalendarEventReminderMailOptions) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
+  const calendarUrl = `${frontendUrl}/calendar-management`;
+
+  const isStart = reminderType === "START";
+  const headline = isStart
+    ? "Event Starts Tomorrow"
+    : "Event Concludes Tomorrow";
+
+  const bannerColor = isStart ? "#2563eb" : "#d97706";
+  const badgeBg = isStart ? "#dbeafe" : "#fef3c7";
+  const badgeText = isStart ? "#1e40af" : "#92400e";
+
+  const timeDisplay =
+    isStart && startTime
+      ? startTime
+      : !isStart && endTime
+      ? endTime
+      : startTime || "Scheduled";
+
+  const subject = isStart
+    ? `Reminder: "${eventTitle}" starts tomorrow (${targetDate})`
+    : `Reminder: "${eventTitle}" concludes tomorrow (${targetDate})`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="540" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+          
+          <!-- Top Accent Bar -->
+          <tr>
+            <td style="height: 6px; background-color: ${bannerColor};"></td>
+          </tr>
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding: 32px 30px 16px 30px; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1;">
+                <span style="color: #111827;">B</span><span style="color: #a60b0b;">Q</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 800; letter-spacing: 3px; color: #111827; margin-top: 4px;">
+                BOARDQUEST EVENT REMINDER
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 30px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: ${badgeBg}; border-radius: 20px; font-size: 11px; font-weight: 700; color: ${badgeText}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                ${headline}
+              </div>
+
+              <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 800; color: #111827; line-height: 1.3;">
+                ${eventTitle}
+              </h2>
+
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Hello${recipientName ? ` <strong>${recipientName}</strong>` : ""}, this is a 24-hour reminder that <strong>${eventTitle}</strong> is scheduled to ${isStart ? "commence" : "conclude"} tomorrow on <strong>${targetDate}</strong>.
+              </p>
+
+              <!-- Reminder Details Card -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; border: 1px solid #f3f4f6;">
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280; width: 110px;"><strong>📅 ${isStart ? "Start Date" : "End Date"}:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; font-weight: 600; color: #111827;">${targetDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>⏰ Time:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; font-weight: 600; color: #111827;">${timeDisplay}</td>
+                </tr>
+                ${location ? `
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>📍 Location:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #111827;">${location}</td>
+                </tr>` : ""}
+                ${link ? `
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 13px; color: #6b7280;"><strong>🔗 Link:</strong></td>
+                  <td style="padding-bottom: 10px; font-size: 13px;"><a href="${link.startsWith("http") ? link : `https://${link}`}" target="_blank" style="color: #a60b0b; text-decoration: underline; word-break: break-all;">${link}</a></td>
+                </tr>` : ""}
+                ${description ? `
+                <tr>
+                  <td style="font-size: 13px; color: #6b7280; vertical-align: top;"><strong>📝 Details:</strong></td>
+                  <td style="font-size: 13px; color: #374151; line-height: 1.5;">${description}</td>
+                </tr>` : ""}
+              </table>
+
+              <!-- CTA Button -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 24px auto;">
+                <tr>
+                  <td align="center" style="background-color: #a60b0b; border-radius: 12px;">
+                    <a href="${calendarUrl}" target="_blank" style="display: inline-block; padding: 13px 28px; font-size: 13px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">
+                      Open Event in Calendar &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 18px 30px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center; font-size: 11px; color: #9ca3af;">
+              &copy; ${new Date().getFullYear()} BoardQuest Academic System. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.log(`\n==================================================`);
+    console.log(`📧 [CALENDAR EVENT 1-DAY REMINDER EMAIL SIMULATION]`);
+    console.log(`📬 To: ${toEmail} (${recipientName || "Attendee"})`);
+    console.log(`🔔 Type: ${reminderType} (${headline})`);
+    console.log(`📅 Event: ${eventTitle}`);
+    console.log(`🗓️ Target Date: ${targetDate} | ⏰ Time: ${timeDisplay}`);
+    if (location) console.log(`📍 Location: ${location}`);
+    if (link) console.log(`🔗 Link: ${link}`);
+    console.log(`==================================================\n`);
+    return { id: "simulated-calendar-reminder-id" };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [toEmail],
+      subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error(
+        `[MailService Error] Failed to send reminder email to ${toEmail}:`,
+        error,
+      );
+      return null;
+    }
+
+    console.log(
+      `[MailService] Calendar event reminder sent to ${toEmail} (ID: ${data?.id})`,
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `[MailService Error] Exception sending reminder email to ${toEmail}:`,
+      error,
+    );
+    return null;
+  }
+}
+
+
 

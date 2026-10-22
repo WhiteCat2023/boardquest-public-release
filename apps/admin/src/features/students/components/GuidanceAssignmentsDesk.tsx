@@ -17,6 +17,7 @@ import { showFeedback } from "@/components/modal";
 import { DataTablePagination } from "@/components/custom/pagination";
 import { SecondaryNavTabs } from "@/components/custom/tabs";
 import EmailStudentModal from "./EmailStudentModal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -134,11 +135,43 @@ export function GuidanceAssignmentsDesk() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
-                  Loading guidance assignments desk...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 6 }).map((_, idx) => (
+                <TableRow key={idx} className="hover:bg-transparent border-b border-border">
+                  <TableCell className="py-2.5 px-4">
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton className="h-7 w-7 rounded-full shrink-0" />
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <Skeleton className="h-3.5 w-32 rounded" />
+                        <Skeleton className="h-2.5 w-40 rounded" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell py-2.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="size-6 rounded-full" />
+                      <Skeleton className="h-3 w-24 rounded" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell py-2.5 px-3">
+                    <div className="flex flex-col gap-1">
+                      <Skeleton className="h-3.5 w-28 rounded" />
+                      <Skeleton className="h-2.5 w-36 rounded" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell py-2.5 px-3">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell py-2.5 px-3">
+                    <Skeleton className="h-3 w-20 rounded" />
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Skeleton className="h-7 w-16 rounded-lg" />
+                      <Skeleton className="size-7 rounded-lg" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-xs text-destructive">
