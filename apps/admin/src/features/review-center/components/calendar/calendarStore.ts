@@ -9,6 +9,7 @@ export const DEFAULT_CALENDAR_CATEGORIES: CategoryFilterItem[] = [
   { id: "Reminder", label: "Reminder", color: "#0ea5e9", checked: true },
   { id: "Holidays", label: "Academic Breaks & Holidays", color: "#10b981", checked: true },
   { id: "Board Review", label: "Review & Mock Programs", color: "#6366f1", checked: true },
+  { id: "Game Deadline", label: "Game Deadline", color: "#e11d48", checked: true },
 ];
 
 export interface CalendarStoreState {
@@ -252,8 +253,14 @@ export function useFilteredCalendarEvents(): CalendarEvent[] {
 
   return allEvents.filter((event) => {
     // 1. Attendee / Author visibility filter:
-    // Non-superadmins only see events where they are an attendee OR the author/creator
-    if (currentRole && currentRole !== "SUPERADMIN" && !event.isSchedule) {
+    // Non-superadmins only see events where they are an attendee OR the author/creator.
+    // Game Deadline events are institutional deadlines and visible to all roles (including Teachers).
+    if (
+      currentRole &&
+      currentRole !== "SUPERADMIN" &&
+      !event.isSchedule &&
+      event.category !== "Game Deadline"
+    ) {
       const isAuthor =
         (currentUserId && event.authorId && String(event.authorId).trim().toLowerCase() === currentUserId) ||
         (currentUserEmail && event.authorEmail && String(event.authorEmail).trim().toLowerCase() === currentUserEmail) ||

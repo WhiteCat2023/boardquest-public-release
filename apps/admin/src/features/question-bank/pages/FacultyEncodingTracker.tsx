@@ -12,6 +12,7 @@ import {
 import { DataTablePagination } from "@/components/custom/pagination";
 import { StandardNavTabs, type NavTabItem } from "@/components/custom/tabs";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw,
   ClipboardCheck,
@@ -343,23 +344,47 @@ export default function FacultyEncodingTracker() {
   return (
     <div className="flex flex-col gap-4 p-3 sm:p-4 md:p-5 w-full font-sans bg-background text-foreground">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-border/60 pb-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 mt-0.5">
             <ClipboardCheck className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
-              Encoding Tracker
-            </h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
+                Encoding Tracker
+              </h1>
+              <span className="px-2 py-0.5 rounded-full bg-muted text-[11px] font-bold text-foreground border border-border">
+                {schoolYear}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               Monitor teacher question authoring quotas, submission rates, and
               deadlines across all subjects.
             </p>
+            {/* Overall completion bar */}
+            {kpis && (
+              <div className="mt-2.5 flex items-center gap-2.5 max-w-sm">
+                <Progress
+                  value={kpis.overallCompletionRate}
+                  className={`h-1.5 flex-1 ${
+                    kpis.overallCompletionRate >= 100
+                      ? "[&>div]:bg-emerald-500"
+                      : kpis.overdueCount > 0
+                        ? "[&>div]:bg-rose-500"
+                        : "[&>div]:bg-primary"
+                  }`}
+                />
+                <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap shrink-0">
+                  {kpis.totalEncodedQuestions.toLocaleString()} / {kpis.totalTargetQuestions.toLocaleString()} questions
+                  <span className="ml-1 font-bold text-foreground">({kpis.overallCompletionRate}%)</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -391,9 +416,6 @@ export default function FacultyEncodingTracker() {
               <span className="text-foreground font-bold">
                 {subjectAggregatedItems.length}
               </span>
-            </span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-muted text-[11px] font-bold text-foreground border border-border">
-              {schoolYear}
             </span>
           </div>
         }

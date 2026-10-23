@@ -80,10 +80,18 @@ export const getCalendarEventById = asyncHandler(async (req: AuthenticatedReques
 });
 
 export const createCalendarEvent = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { title, startDate } = req.body;
+  const { title, startDate, category } = req.body;
 
   if (!title || !startDate) {
     throw new ApiError(400, "Title and start date are required.");
+  }
+
+  const role = String(req.user?.role || "").toUpperCase();
+  if (category === "Game Deadline" && role !== "SUPERADMIN" && role !== "DEAN" && role !== "TEAMLEAD") {
+    throw new ApiError(
+      403,
+      "Access Denied: Only Superadmin, Dean, and Teamlead can set schedules with the Game Deadline category."
+    );
   }
 
   const user = req.user;
@@ -115,13 +123,24 @@ export const updateCalendarEvent = asyncHandler(async (req: AuthenticatedRequest
   const userEmail = String(req.user?.email || "").toLowerCase();
   const userName = String(req.user?.name || "").toLowerCase();
 
+  const isStaff = role === "SUPERADMIN" || role === "DEAN" || role === "TEAMLEAD";
+  const isGameDeadline = event.category === "Game Deadline" || req.body.category === "Game Deadline";
+
+  if (isGameDeadline && !isStaff) {
+    throw new ApiError(
+      403,
+      "Access Denied: Only Superadmin, Dean, and Teamlead can modify schedules with the Game Deadline category."
+    );
+  }
+
   const isAuthor =
     (event.authorId && String(event.authorId) === userId) ||
     (event.authorEmail && String(event.authorEmail).toLowerCase() === userEmail) ||
     (event.authorName && String(event.authorName).toLowerCase() === userName) ||
     (event.createdBy && String(event.createdBy) === userId);
 
-  if (!isAuthor && role !== "SUPERADMIN") {
+  // For Game Deadline, any staff member (Superadmin, Dean, Teamlead) can update it
+  if (!isGameDeadline && !isAuthor && role !== "SUPERADMIN") {
     throw new ApiError(
       403,
       "Access Denied: Only the author of this calendar event can modify it."
@@ -144,13 +163,23 @@ export const deleteCalendarEvent = asyncHandler(async (req: AuthenticatedRequest
   const userEmail = String(req.user?.email || "").toLowerCase();
   const userName = String(req.user?.name || "").toLowerCase();
 
+  const isStaff = role === "SUPERADMIN" || role === "DEAN" || role === "TEAMLEAD";
+  const isGameDeadline = event.category === "Game Deadline";
+
+  if (isGameDeadline && !isStaff) {
+    throw new ApiError(
+      403,
+      "Access Denied: Only Superadmin, Dean, and Teamlead can delete Game Deadline schedules."
+    );
+  }
+
   const isAuthor =
     (event.authorId && String(event.authorId) === userId) ||
     (event.authorEmail && String(event.authorEmail).toLowerCase() === userEmail) ||
     (event.authorName && String(event.authorName).toLowerCase() === userName) ||
     (event.createdBy && String(event.createdBy) === userId);
 
-  if (!isAuthor && role !== "SUPERADMIN") {
+  if (!isGameDeadline && !isAuthor && role !== "SUPERADMIN") {
     throw new ApiError(
       403,
       "Access Denied: Only the author of this calendar event can delete it."

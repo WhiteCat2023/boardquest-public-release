@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { showFeedback } from "@/components/modal";
 import useAuth from "@/hooks/useAuth";
+import { useRoleFlags } from "@/hooks/useRoleFlags";
 import type { CalendarEvent } from "./types";
 import { CATEGORY_COLORS, getEventColor, getActiveColorHex } from "./types";
 
@@ -107,6 +108,12 @@ export function CalendarEventDetailsPopover({
 
     return false;
   }, [isAuthorProp, event, currentUser]);
+
+  const { isStaff, isSuperAdmin } = useRoleFlags();
+  const isGameDeadline = event?.category === "Game Deadline";
+  const canEditOrDelete = isGameDeadline
+    ? isStaff && canManage
+    : (isAuthor || isSuperAdmin) && canManage;
 
   // Dynamic positioning rectangle for Radix PopoverAnchor
   const activeRect = useMemo(() => {
@@ -268,8 +275,8 @@ export function CalendarEventDetailsPopover({
           </div>
 
           <div className="flex items-center gap-0.5">
-            {/* Options visible ONLY to the author of that calendar or event */}
-            {isAuthor && canManage && (
+            {/* Options visible ONLY to authorized staff / author */}
+            {canEditOrDelete && (
               <>
                 {/* Delete button */}
                 <button
@@ -355,7 +362,7 @@ export function CalendarEventDetailsPopover({
         </div>
 
         {/* Delete confirmation banner */}
-        {isAuthor && canManage && showDeleteConfirm && (
+        {canEditOrDelete && showDeleteConfirm && (
           <div className="px-3 py-1.5 bg-destructive/10 border-b border-destructive/20 flex items-center justify-between gap-2 text-xs text-destructive animate-in fade-in duration-100">
             <span className="font-medium text-[10.5px]">Delete event?</span>
             <div className="flex items-center gap-1.5 shrink-0">

@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, AlertTriangle, Users2 } from "lucide-react";
 import type { SubjectTrackItem } from "../../types/encodingTracker.types";
 import { useUpsertSubjectQuotaMutation } from "../../api/useEncodingTracker";
 import { showFeedback } from "@/components/modal";
@@ -34,6 +37,7 @@ export function SetSubjectQuotaModal({
   const [totalQuota, setTotalQuota] = useState<number>(100);
   const [deadline, setDeadline] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [allowOverQuota, setAllowOverQuota] = useState<boolean>(false);
 
   const upsertMutation = useUpsertSubjectQuotaMutation();
 
@@ -49,6 +53,7 @@ export function SetSubjectQuotaModal({
           ? new Date(subject.earliestDeadline).toISOString().split("T")[0]
           : "",
       );
+      setAllowOverQuota(subject.allowOverQuota ?? false);
       setNotes("");
     }
   }, [subject, minAllowedQuota, handlerCount]);
@@ -82,6 +87,7 @@ export function SetSubjectQuotaModal({
         deadline: deadline ? new Date(deadline).toISOString() : null,
         notes: notes.trim() || undefined,
         schoolYear: subject.schoolYear,
+        allowOverQuota,
       });
 
       showFeedback.success(
@@ -224,6 +230,80 @@ export function SetSubjectQuotaModal({
                   />
                 </div>
               </div>
+
+              {/* Allow Over Quota toggle */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/60">
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Allow Over Quota</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Teachers can upload beyond their assigned limit
+                  </p>
+                </div>
+                <Switch
+                  checked={allowOverQuota}
+                  onCheckedChange={setAllowOverQuota}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              {/* Distribution Preview */}
+              {subject.assignedTeachers.length > 0 && totalQuota >= handlerCount && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Users2 className="w-3.5 h-3.5 text-muted-foreground" />
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Distribution Preview
+                    </p>
+                    <span className="text-[10px] text-muted-foreground">— ~{Math.floor(totalQuota / handlerCount)} per handler</span>
+                  </div>
+                  <div className="space-y-2 max-h-36 overflow-y-auto pr-0.5">
+                    {subject.assignedTeachers.map((t) => {
+                      const share = Math.floor(totalQuota / handlerCount);
+                      const encoded = t.encodedCount;
+                      const pct = Math.min(100, Math.round((encoded / Math.max(1, share)) * 100));
+                      const initials = t.teacher.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+                      return (
+                        <div key={t.teacher.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-muted/30 border border-border/50">
+                          <Avatar className="size-6 border border-border shrink-0">
+                            <AvatarImage src={t.teacher.avatarUrl || undefined} />
+                            <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[11px] font-semibold text-foreground truncate">
+                                {t.teacher.name}
+                              </span>
+                              <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+                                {encoded} / {share} enc.
+                              </span>
+                            </div>
+                            <Progress
+                              value={pct}
+                              className={`h-1 ${
+                                pct >= 100
+                                  ? "[&>div]:bg-emerald-500"
+                                  : t.isPastDeadline
+                                    ? "[&>div]:bg-rose-500"
+                                    : "[&>div]:bg-primary/70"
+                              }`}
+                            />
+                          </div>
+                          <span className="text-[10px] font-bold text-muted-foreground shrink-0 w-8 text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
 

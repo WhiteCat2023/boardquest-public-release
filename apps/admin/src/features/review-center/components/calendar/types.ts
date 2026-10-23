@@ -348,6 +348,12 @@ export function getActiveColorHex(
   }
   const cat = (category || "").toLowerCase();
   if (
+    cat.includes("deadline") ||
+    cat.includes("game")
+  ) {
+    return "#e11d48"; // rose
+  }
+  if (
     cat.includes("brainstorm") ||
     cat.includes("event") ||
     cat.includes("board review")
@@ -400,6 +406,12 @@ export function getEventColor(
   }
 
   const cat = (category || "").toLowerCase();
+  if (
+    cat.includes("deadline") ||
+    cat.includes("game")
+  ) {
+    return CATEGORY_COLORS.rose;
+  }
   if (
     cat.includes("brainstorm") ||
     cat.includes("event") ||

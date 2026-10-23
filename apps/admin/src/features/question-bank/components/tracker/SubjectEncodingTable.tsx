@@ -17,11 +17,19 @@ import {
   UserPlus,
   CalendarPlus,
   FileCheck,
+  MoreHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DataTablePagination } from "@/components/custom/pagination";
 import { ColumnHeaderFilter } from "@/components/custom/table";
 import { getCategoryIcon } from "../IconPicker";
@@ -52,7 +60,10 @@ function getStatusBadge(status: EncodingStatus) {
     case "OVERDUE":
       return (
         <Badge className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-500/30 gap-1 text-[11px] font-medium">
-          <AlertTriangle className="w-3 h-3" />
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+          </span>
           Overdue
         </Badge>
       );
@@ -443,7 +454,7 @@ export function SubjectEncodingTable({
           <div className="flex items-center gap-2">
             <Layers className="w-3.5 h-3.5 text-primary" />
             <span className="font-semibold text-foreground">
-              Aggregated Subject Health
+              Subject Quota Overview
             </span>
             <span>•</span>
             <span>{items.length} Subjects</span>
@@ -531,10 +542,24 @@ export function SubjectEncodingTable({
                     <tr
                       className={`hover:bg-muted/40 transition-colors group ${
                         isExpanded ? "bg-muted/20" : ""
+                      } ${
+                        item.status === "OVERDUE"
+                          ? "bg-rose-500/[0.03] hover:bg-rose-500/[0.06]"
+                          : ""
                       }`}
                     >
-                      {/* Accordion Expand Button */}
-                      <td className="py-3.5 pl-4 pr-1 text-center align-middle">
+                      {/* Accordion Expand Button — colored left stripe by status */}
+                      <td
+                        className={`py-3.5 pl-3 pr-1 text-center align-middle border-l-[3px] transition-colors ${
+                          item.status === "OVERDUE"
+                            ? "border-rose-500"
+                            : item.status === "COMPLETED"
+                              ? "border-emerald-500"
+                              : item.status === "IN_PROGRESS"
+                                ? "border-amber-400"
+                                : "border-transparent"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => toggleExpand(item.id)}
@@ -651,22 +676,22 @@ export function SubjectEncodingTable({
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span
                             title="Approved Questions"
-                            className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px] border border-emerald-500/20"
+                            className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px] border border-emerald-500/20 whitespace-nowrap"
                           >
-                            {item.breakdown.approved} Appr
+                            {item.breakdown.approved} Approved
                           </span>
                           <span
                             title="Pending Review"
-                            className="px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold text-[10px] border border-sky-500/20"
+                            className="px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold text-[10px] border border-sky-500/20 whitespace-nowrap"
                           >
-                            {item.breakdown.pendingReview} Rev
+                            {item.breakdown.pendingReview} In Review
                           </span>
                           {item.breakdown.pendingRevision > 0 && (
                             <span
                               title="Needs Revision"
-                              className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-[10px] border border-amber-500/20"
+                              className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-[10px] border border-amber-500/20 whitespace-nowrap"
                             >
-                              {item.breakdown.pendingRevision} Fix
+                              {item.breakdown.pendingRevision} Needs Fix
                             </span>
                           )}
                         </div>
@@ -685,53 +710,54 @@ export function SubjectEncodingTable({
                         </div>
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions — collapsed into ⋮ dropdown */}
                       <td className="py-3.5 px-4 text-right align-middle whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onSetSubjectQuotaClick?.(item)}
-                            className="h-7 text-xs px-2.5 gap-1.5 font-semibold border-border hover:bg-primary/10 hover:text-primary cursor-pointer shadow-2xs"
-                            title={`Set Authoring Quota for ${item.subject.name}`}
-                          >
-                            <Sliders className="w-3.5 h-3.5" />
-                            <span>Set Quota</span>
-                          </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                              title="Subject actions"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 font-sans text-xs">
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-xs font-medium"
+                              onClick={() => onSetSubjectQuotaClick?.(item)}
+                            >
+                              <Sliders className="w-3.5 h-3.5 text-primary" />
+                              Set Quota
+                            </DropdownMenuItem>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onNudgeSubjectClick?.(item)}
-                            disabled={
-                              item.status === "COMPLETED" ||
-                              item.teacherCount === 0
-                            }
-                            className="h-7 text-xs px-2.5 gap-1.5 font-semibold text-amber-600 border-amber-300 dark:border-amber-900/60 hover:bg-amber-500/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                            title={
-                              item.teacherCount === 0
-                                ? "No handlers assigned to this subject"
-                                : item.status === "COMPLETED"
-                                  ? "Quota already completed"
-                                  : `Nudge Handlers for ${item.subject.name}`
-                            }
-                          >
-                            <Bell className="w-3.5 h-3.5" />
-                            <span>Nudge</span>
-                          </Button>
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-xs font-medium text-amber-600 focus:text-amber-600"
+                              onClick={() => onNudgeSubjectClick?.(item)}
+                              disabled={
+                                item.status === "COMPLETED" ||
+                                item.teacherCount === 0
+                              }
+                            >
+                              <Bell className="w-3.5 h-3.5" />
+                              Nudge Handlers
+                              {item.teacherCount === 0 && (
+                                <span className="ml-auto text-[10px] text-muted-foreground">No handlers</span>
+                              )}
+                            </DropdownMenuItem>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(`/subject-management/${item.id}`)
-                            }
-                            className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="View Subject Details"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-xs font-medium"
+                              onClick={() => navigate(`/subject-management/${item.id}`)}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                              View Subject Details
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
 

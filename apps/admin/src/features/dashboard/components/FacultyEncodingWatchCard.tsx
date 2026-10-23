@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Hourglass,
   Clock,
+  CalendarClock,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -130,10 +131,23 @@ export function FacultyEncodingWatchCard({
               .join("")
               .toUpperCase();
 
+            // Days until deadline
+            const daysLeft = item.deadline
+              ? Math.ceil(
+                  (new Date(item.deadline).getTime() - Date.now()) /
+                    (1000 * 60 * 60 * 24),
+                )
+              : null;
+            const noQuotaSet = item.targetCount === 0;
+
             return (
               <div
                 key={item.id}
-                className="p-2.5 rounded-xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col gap-2"
+                className={`p-2.5 rounded-xl border transition-colors flex flex-col gap-2 ${
+                  isOverdue
+                    ? "border-rose-500/30 bg-rose-500/[0.03] hover:bg-rose-500/[0.06]"
+                    : "border-border/70 bg-muted/20 hover:bg-muted/40"
+                }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -153,7 +167,23 @@ export function FacultyEncodingWatchCard({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                    {/* Days-to-deadline chip */}
+                    {daysLeft !== null && (
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-[9.5px] font-bold px-1.5 py-0.5 rounded-md border ${
+                          daysLeft <= 0
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            : daysLeft <= 3
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                              : "bg-muted text-muted-foreground border-border/60"
+                        }`}
+                      >
+                        <CalendarClock size={9} />
+                        {daysLeft <= 0 ? "Past due" : `${daysLeft}d left`}
+                      </span>
+                    )}
+
                     <Badge
                       variant="outline"
                       className={`text-[9.5px] font-bold px-1.5 py-0 rounded-md ${
@@ -179,7 +209,7 @@ export function FacultyEncodingWatchCard({
                       )}
                     </Badge>
 
-                    {onNudgeClick && (
+                    {onNudgeClick && !noQuotaSet && (
                       <Button
                         size="icon"
                         variant="ghost"

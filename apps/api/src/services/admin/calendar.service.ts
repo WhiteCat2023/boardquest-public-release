@@ -343,6 +343,9 @@ export function isUserEventAttendeeOrAuthor(
   const role = String(user.role || "").toUpperCase();
   if (role === "SUPERADMIN") return true;
 
+  // Game Deadline events are visible to all authenticated roles in the admin (including Teachers)
+  if (event?.category === "Game Deadline") return true;
+
   const userId = String(user.id || "").trim();
   const userEmail = String(user.email || "").trim().toLowerCase();
   const userName = String(user.name || "").trim().toLowerCase();
@@ -436,6 +439,27 @@ export async function getCalendarEventById(id: string) {
 }
 
 export async function createCalendarEvent(data: CreateCalendarEventInput) {
+  // If category is Game Deadline, check if one already exists.
+  // If one already exists, update the existing Game Deadline instead of creating a duplicate.
+  if (data.category === "Game Deadline") {
+    try {
+      const existingRes: any = await (prisma as any).$runCommandRaw({
+        find: CALENDAR_EVENTS_COLLECTION,
+        filter: { category: "Game Deadline" },
+        limit: 1,
+      });
+      const existingDoc = existingRes?.cursor?.firstBatch?.[0];
+      if (existingDoc) {
+        const existingId =
+          existingDoc._id?.$oid ||
+          (typeof existingDoc._id === "string" ? existingDoc._id : existingDoc._id?.toString?.() || existingDoc.id);
+        return await updateCalendarEvent(existingId, data);
+      }
+    } catch (checkErr) {
+      console.warn("[CalendarService] Error checking existing Game Deadline:", checkErr);
+    }
+  }
+
   const now = new Date();
   const startDateStr = data.startDate || now.toISOString().split("T")[0];
   const endDateStr = data.endDate || startDateStr;
@@ -490,6 +514,27 @@ export async function createCalendarEvent(data: CreateCalendarEventInput) {
   notifyAttendeesOfCalendarEvent(createdEvent, "INVITATION").catch((err) => {
     console.warn("[CalendarService] Error notifying attendees of new event:", err);
   });
+
+  // If Game Deadline, alert all roles in the admin (Superadmin, Dean, Teamlead, Teacher)
+  if (createdEvent.category === "Game Deadline") {
+    createNotification({
+      recipientRole: "ALL",
+      title: "Game Deadline Scheduled",
+      message: `A new Game Deadline has been scheduled for ${createdEvent.startDate}${createdEvent.startTime ? ` at ${createdEvent.startTime}` : ""} by ${createdEvent.authorName || "Administration"}.`,
+      type: "SYSTEM_UPDATE",
+      link: "/calendar-management",
+      metadata: {
+        eventId: createdEvent.id,
+        eventTitle: createdEvent.title,
+        startDate: createdEvent.startDate,
+        endDate: createdEvent.endDate,
+        category: "Game Deadline",
+        updatedBy: createdEvent.authorName,
+      },
+    }).catch((err) => {
+      console.warn("[CalendarService] Error alerting admin roles for Game Deadline:", err);
+    });
+  }
 
   return createdEvent;
 }
@@ -600,6 +645,28 @@ export async function updateCalendarEvent(
         console.warn("[CalendarService] Error notifying newly added attendees:", err);
       });
     }
+  }
+
+  // If Game Deadline, alert all roles in the admin that the deadline has changed
+  if (result.category === "Game Deadline" || existing.category === "Game Deadline") {
+    const authorName = result.authorName || data.authorName || "Administration";
+    createNotification({
+      recipientRole: "ALL",
+      title: "Game Deadline Updated",
+      message: `The Game Deadline has been updated to ${result.startDate}${result.startTime ? ` at ${result.startTime}` : ""} by ${authorName}.`,
+      type: "SYSTEM_UPDATE",
+      link: "/calendar-management",
+      metadata: {
+        eventId: result.id,
+        eventTitle: result.title,
+        startDate: result.startDate,
+        endDate: result.endDate,
+        category: "Game Deadline",
+        updatedBy: authorName,
+      },
+    }).catch((err) => {
+      console.warn("[CalendarService] Error alerting admin roles for Game Deadline update:", err);
+    });
   }
 
   return result;

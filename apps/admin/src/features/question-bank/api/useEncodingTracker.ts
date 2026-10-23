@@ -46,6 +46,7 @@ export interface UpsertSubjectQuotaPayload {
   deadline?: string | null;
   notes?: string;
   schoolYear?: string;
+  allowOverQuota?: boolean;
 }
 
 export function useEncodingTrackerOverview(filters?: TrackerFilters) {

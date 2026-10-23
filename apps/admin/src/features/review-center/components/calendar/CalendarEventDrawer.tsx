@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Check,
   Tag,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Sheet,
@@ -21,6 +22,16 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +48,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { useRoleFlags } from "@/hooks/useRoleFlags";
+import { useCalendarStore } from "./calendarStore";
 import type { CalendarEvent, CalendarEventAttachment } from "./types";
 import { COLOR_SWATCHES, getActiveColorHex } from "./types";
 import {
@@ -56,12 +69,13 @@ interface CalendarEventDrawerProps {
   canManage?: boolean;
 }
 
-const CATEGORY_OPTIONS = [
+const BASE_CATEGORY_OPTIONS = [
   { value: "Events", label: "Events", color: "purple" },
   { value: "Tasks", label: "Tasks", color: "orange" },
   { value: "Reminder", label: "Reminder", color: "blue" },
   { value: "Holidays", label: "Academic Breaks & Holidays", color: "green" },
   { value: "Board Review", label: "Review & Mock Programs", color: "teal" },
+  { value: "Game Deadline", label: "Game Deadline", color: "rose" },
 ];
 
 const CONFERENCE_TYPE_OPTIONS = [
@@ -131,6 +145,8 @@ export function CalendarEventDrawer({
   canManage = true,
 }: CalendarEventDrawerProps) {
   const isEditing = Boolean(initialEvent?.id);
+  const { isStaff } = useRoleFlags();
+  const { customEvents } = useCalendarStore();
 
   // Form State
   const [title, setTitle] = useState("");
@@ -152,6 +168,34 @@ export function CalendarEventDrawer({
   const [attachments, setAttachments] = useState<CalendarEventAttachment[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Existing Game Deadline conflict prompt state
+  const [showExistingConflictModal, setShowExistingConflictModal] = useState(false);
+  const [targetDeadlineId, setTargetDeadlineId] = useState<string | null>(null);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
+
+  // Find if an existing Game Deadline event already exists (excluding the event currently being edited)
+  const existingGameDeadline = React.useMemo(() => {
+    return customEvents.find(
+      (e) =>
+        e.category === "Game Deadline" &&
+        e.id !== initialEvent?.id
+    );
+  }, [customEvents, initialEvent?.id]);
+
+  // Restrict Game Deadline category selection to SuperAdmin, Dean, and TeamLead only
+  const categoryOptions = React.useMemo(() => {
+    return BASE_CATEGORY_OPTIONS.filter((opt) => {
+      if (opt.value === "Game Deadline") {
+        return isStaff;
+      }
+      return true;
+    });
+  }, [isStaff]);
+
+  // Game Deadline is read-only for Teachers and other non-staff roles
+  const isGameDeadline = category === "Game Deadline" || initialEvent?.category === "Game Deadline";
+  const canUserManage = canManage && (!isGameDeadline || isStaff);
 
   // Ensure current startTime and endTime are in the options list so Radix Select can always match and select them
   const availableTimeOptions = React.useMemo(() => {
@@ -176,6 +220,7 @@ export function CalendarEventDrawer({
     "Academic Breaks & Holidays": "green",
     "Board Review": "teal",
     "Review & Mock Programs": "teal",
+    "Game Deadline": "rose",
   };
 
   // Helper date formatter
@@ -199,6 +244,9 @@ export function CalendarEventDrawer({
     if (isOpen) {
       setErrorMsg(null);
       setShowDeleteConfirm(false);
+      setShowExistingConflictModal(false);
+      setTargetDeadlineId(null);
+      setPendingSubmit(false);
       setNewLabelInput("");
 
       if (initialEvent) {
@@ -285,7 +333,35 @@ export function CalendarEventDrawer({
   }, [isOpen, initialEvent, defaultDate, defaultTime]);
 
   const handleCategoryChange = (newCat: string) => {
+    if (newCat === "Game Deadline") {
+      if (!isStaff) return;
+      if (existingGameDeadline && !targetDeadlineId) {
+        setShowExistingConflictModal(true);
+        return;
+      }
+    }
     setCategory(newCat);
+  };
+
+  const handleConfirmChangeCurrentDeadline = () => {
+    if (existingGameDeadline) {
+      setCategory("Game Deadline");
+      setTargetDeadlineId(existingGameDeadline.id);
+      setShowExistingConflictModal(false);
+
+      if (pendingSubmit) {
+        setPendingSubmit(false);
+        executeSave(existingGameDeadline.id, "Game Deadline");
+      }
+    }
+  };
+
+  const handleCancelConflict = () => {
+    setShowExistingConflictModal(false);
+    setPendingSubmit(false);
+    if (category === "Game Deadline" && !targetDeadlineId) {
+      setCategory("Events");
+    }
   };
 
   const handleAddLabel = (customText?: string) => {
@@ -323,19 +399,8 @@ export function CalendarEventDrawer({
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-
-    if (!title.trim()) {
-      setErrorMsg("Please enter an event name.");
-      return;
-    }
-    if (!startDate) {
-      setErrorMsg("Please select a start date.");
-      return;
-    }
-
+  const executeSave = (saveId?: string, overrideCategory?: string) => {
+    const activeCategory = overrideCategory || category;
     const attendeeObjs = attendees.map((att) => ({
       name: att.name,
       email: att.email,
@@ -347,10 +412,10 @@ export function CalendarEventDrawer({
     }));
 
     onSave({
-      id: initialEvent?.id,
+      id: saveId,
       title: title.trim(),
-      category,
-      colorKey: colorKey || undefined,
+      category: activeCategory,
+      colorKey: colorKey || (activeCategory === "Game Deadline" ? "rose" : undefined),
       labels: labels.filter(Boolean),
       startDate,
       endDate: endDate || startDate,
@@ -370,6 +435,40 @@ export function CalendarEventDrawer({
     });
 
     onClose();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    if (!canUserManage) {
+      setErrorMsg("You do not have permission to modify this schedule.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setErrorMsg("Please enter an event name.");
+      return;
+    }
+    if (!startDate) {
+      setErrorMsg("Please select a start date.");
+      return;
+    }
+
+    if (category === "Game Deadline") {
+      if (!isStaff) {
+        setErrorMsg("Only Superadmin, Dean, and Teamlead can set a Game Deadline schedule.");
+        return;
+      }
+
+      if (existingGameDeadline && !targetDeadlineId && existingGameDeadline.id !== initialEvent?.id) {
+        setPendingSubmit(true);
+        setShowExistingConflictModal(true);
+        return;
+      }
+    }
+
+    executeSave(targetDeadlineId || initialEvent?.id);
   };
 
   return (
@@ -420,7 +519,7 @@ export function CalendarEventDrawer({
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter here"
                 className="h-9 rounded-xl text-xs bg-background border-border/80 focus-visible:ring-1 focus-visible:ring-primary/30"
-                disabled={!canManage}
+                disabled={!canUserManage}
                 autoFocus
               />
             </div>
@@ -436,7 +535,7 @@ export function CalendarEventDrawer({
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      disabled={!canManage}
+                      disabled={!canUserManage}
                       className="w-full h-9 px-3 rounded-xl border border-border/80 bg-background text-xs flex items-center justify-between hover:bg-muted/40 transition-colors cursor-pointer text-foreground text-left"
                     >
                       <span className={startDate ? "text-foreground font-medium" : "text-muted-foreground"}>
@@ -472,7 +571,7 @@ export function CalendarEventDrawer({
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      disabled={!canManage}
+                      disabled={!canUserManage}
                       className="w-full h-9 px-3 rounded-xl border border-border/80 bg-background text-xs flex items-center justify-between hover:bg-muted/40 transition-colors cursor-pointer text-foreground text-left"
                     >
                       <span className={endDate ? "text-foreground font-medium" : "text-muted-foreground"}>
@@ -504,7 +603,7 @@ export function CalendarEventDrawer({
                   <Clock size={12} className="text-muted-foreground" />
                   <span>Start Time</span>
                 </label>
-                <Select value={startTime} onValueChange={setStartTime} disabled={!canManage}>
+                <Select value={startTime} onValueChange={setStartTime} disabled={!canUserManage}>
                   <SelectTrigger className="w-full h-9 rounded-xl border-border/80 bg-background text-xs font-normal">
                     <SelectValue placeholder="Start Time" />
                   </SelectTrigger>
@@ -530,7 +629,7 @@ export function CalendarEventDrawer({
                   <Clock size={12} className="text-muted-foreground" />
                   <span>End Time</span>
                 </label>
-                <Select value={endTime} onValueChange={setEndTime} disabled={!canManage}>
+                <Select value={endTime} onValueChange={setEndTime} disabled={!canUserManage}>
                   <SelectTrigger className="w-full h-9 rounded-xl border-border/80 bg-background text-xs font-normal">
                     <SelectValue placeholder="End Time" />
                   </SelectTrigger>
@@ -562,7 +661,7 @@ export function CalendarEventDrawer({
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Choose Location"
                   className="h-9 rounded-xl text-xs bg-background border-border/80 pl-8"
-                  disabled={!canManage}
+                  disabled={!canUserManage}
                 />
                 <MapPin
                   size={14}
@@ -575,7 +674,7 @@ export function CalendarEventDrawer({
             <CalendarAttendeeSelect
               attendees={attendees}
               onChange={setAttendees}
-              canManage={canManage}
+              canManage={canUserManage}
             />
 
             {/* Link */}
@@ -589,7 +688,7 @@ export function CalendarEventDrawer({
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="Enter Link"
                   className="h-9 rounded-xl text-xs bg-background border-border/80 pl-8"
-                  disabled={!canManage}
+                  disabled={!canUserManage}
                 />
                 <LinkIcon
                   size={13}
@@ -616,13 +715,13 @@ export function CalendarEventDrawer({
                   <Select
                     value={category}
                     onValueChange={handleCategoryChange}
-                    disabled={!canManage}
+                    disabled={!canUserManage}
                   >
                     <SelectTrigger className="w-full h-9 rounded-xl border-border/80 bg-background text-xs font-normal">
                       <SelectValue placeholder="Choose Category Type" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl font-sans text-xs">
-                      {CATEGORY_OPTIONS.map((opt) => (
+                      {categoryOptions.map((opt) => (
                         <SelectItem
                           key={opt.value}
                           value={opt.value}
@@ -640,7 +739,7 @@ export function CalendarEventDrawer({
                   colorKey={colorKey}
                   labels={labels}
                   category={category}
-                  disabled={!canManage}
+                  disabled={!canUserManage}
                   onChangeColor={(newColor) => setColorKey(newColor)}
                   onChangeLabels={(newLabels) => setLabels(newLabels)}
                 />
@@ -660,7 +759,7 @@ export function CalendarEventDrawer({
                       }}
                     />
                     <span>{labels[0]}</span>
-                    {canManage && (
+                    {canUserManage && (
                       <button
                         type="button"
                         onClick={() => setLabels([])}
@@ -684,7 +783,7 @@ export function CalendarEventDrawer({
               <Select
                 value={conferenceType}
                 onValueChange={setConferenceType}
-                disabled={!canManage}
+                disabled={!canUserManage}
               >
                 <SelectTrigger className="w-full h-9 rounded-xl border-border/80 bg-background text-xs font-normal">
                   <SelectValue placeholder="Choose Conference Type" />
@@ -710,7 +809,7 @@ export function CalendarEventDrawer({
                 placeholder="Write Here..."
                 rows={3}
                 className="rounded-xl text-xs bg-background border-border/80 resize-none focus-visible:ring-1 focus-visible:ring-primary/30"
-                disabled={!canManage}
+                disabled={!canUserManage}
               />
             </div>
 
@@ -739,7 +838,7 @@ export function CalendarEventDrawer({
                   placeholder="Add instructions, review tips, or solution hints..."
                   rows={2}
                   className="rounded-xl text-xs bg-background border-border/80 resize-none"
-                  disabled={!canManage}
+                  disabled={!canUserManage}
                 />
               </div>
             )}
@@ -783,7 +882,7 @@ export function CalendarEventDrawer({
             )}
 
             {/* Action Row: 📎 Add Attachment & + Add Solution */}
-            {canManage && (
+            {canUserManage && (
               <div className="flex items-center gap-4 pt-1">
                 <input
                   ref={fileInputRef}
@@ -851,7 +950,7 @@ export function CalendarEventDrawer({
 
           {/* Drawer Sticky Footer */}
           <div className="border-t border-border/70 p-4 bg-card/95 backdrop-blur-xs flex items-center gap-2.5 shrink-0">
-            {canManage && (
+            {canUserManage && (
               <Button
                 type="submit"
                 className="flex-1 h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-xs cursor-pointer"
@@ -860,7 +959,7 @@ export function CalendarEventDrawer({
               </Button>
             )}
 
-            {isEditing && canManage ? (
+            {isEditing && canUserManage ? (
               <Button
                 type="button"
                 variant="outline"
@@ -883,6 +982,55 @@ export function CalendarEventDrawer({
           </div>
         </form>
       </SheetContent>
+
+      {/* Existing Game Deadline Conflict Prompt */}
+      <AlertDialog
+        open={showExistingConflictModal}
+        onOpenChange={(open) => {
+          if (!open) handleCancelConflict();
+        }}
+      >
+        <AlertDialogContent className="max-w-md rounded-2xl p-5">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2.5 text-rose-600 mb-1">
+              <div className="size-8 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                <AlertTriangle size={18} />
+              </div>
+              <AlertDialogTitle className="text-sm font-bold text-foreground">
+                Existing Game Deadline Found
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+              There is already an existing Game Deadline scheduled:{" "}
+              <strong className="text-foreground font-semibold">
+                &ldquo;{existingGameDeadline?.title}&rdquo;
+              </strong>{" "}
+              on{" "}
+              <strong className="text-foreground font-semibold">
+                {existingGameDeadline?.startDate}
+                {existingGameDeadline?.startTime
+                  ? ` at ${existingGameDeadline.startTime}`
+                  : ""}
+              </strong>
+              . Only one Game Deadline can be active at a time. Do you want to change the current one?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel
+              onClick={handleCancelConflict}
+              className="h-8 text-xs rounded-xl cursor-pointer"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmChangeCurrentDeadline}
+              className="h-8 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
+            >
+              Change Current One
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

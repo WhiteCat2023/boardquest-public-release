@@ -187,7 +187,11 @@ export function ReviewCalendarView({
           {
             onSuccess: () => {
               updateCustomEvent(updatePayload as CalendarEvent);
-              showFeedback.success(`Updated event "${data.title}"`);
+              showFeedback.success(
+                data.category === "Game Deadline"
+                  ? `Updated Game Deadline "${data.title}". All admin roles have been alerted.`
+                  : `Updated event "${data.title}"`
+              );
             },
             onError: (err: any) => {
               showFeedback.error(
@@ -217,7 +221,7 @@ export function ReviewCalendarView({
         conferenceType: data.conferenceType || "Online",
         description: data.description || "",
         status: data.status || "UPCOMING",
-        colorKey: data.colorKey || "purple",
+        colorKey: data.colorKey || (data.category === "Game Deadline" ? "rose" : "purple"),
         labels: data.labels || [],
         attendees: data.attendees || [],
         attachments: data.attachments || [],
@@ -259,7 +263,9 @@ export function ReviewCalendarView({
               addCustomEvent(saved as CalendarEvent);
             }
             showFeedback.success(
-              `Created event "${saved?.title || eventPayload.title}"`
+              eventPayload.category === "Game Deadline"
+                ? `Created Game Deadline "${saved?.title || eventPayload.title}". All admin roles have been alerted.`
+                : `Created event "${saved?.title || eventPayload.title}"`
             );
           },
           onError: (err: any) => {
