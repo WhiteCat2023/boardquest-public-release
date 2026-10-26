@@ -85,8 +85,8 @@ export const teamLeadNavItem: NavItemProps[] = [
     sideBarCategoryName: "SYSTEM & USER",
     content: [
       {
-        title: "System Settings",
-        path: "/system-settings",
+        title: "Settings",
+        path: "/settings",
         icon: "Settings",
       },
     ],

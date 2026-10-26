@@ -24,6 +24,10 @@ import {
   useCalendarStore,
   CalendarSidebar,
 } from "@/features/review-center/components/calendar";
+import {
+  useSystemSettingsStore,
+  SystemSettingsSidebar,
+} from "@/features/system-settings";
 import { NavUser } from "./nav-user";
 
 type LucideIconName = keyof typeof LucideIcons;
@@ -315,6 +319,26 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
   const { showCalendarSubSidebar, setShowCalendarSubSidebar } = useCalendarStore();
   const isShowingCalendarSubSidebar = isCalendarRoute && showCalendarSubSidebar;
 
+  const isSystemSettingsRoute =
+    location.pathname === "/system-settings" ||
+    location.pathname.startsWith("/system-settings");
+
+  const {
+    settings,
+    showSystemSettingsSubSidebar,
+    setShowSystemSettingsSubSidebar,
+    initTheme,
+  } = useSystemSettingsStore();
+  const isShowingSystemSettingsSubSidebar =
+    isSystemSettingsRoute && showSystemSettingsSubSidebar;
+
+  const currentLogo = settings.logoUrl || boardQuestIcon;
+  const currentSystemName = settings.systemName || "BoardQuest";
+
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
+
   return (
     <UISidebar
       collapsible="icon"
@@ -326,13 +350,13 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
           className="flex items-center gap-2 px-1 py-1 rounded-lg hover:opacity-90 transition-opacity group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
         >
           <img
-            src={boardQuestIcon}
-            alt="BoardQuest"
+            src={currentLogo}
+            alt={currentSystemName}
             className="size-7 object-contain shrink-0 group-data-[collapsible=icon]:size-6 group-data-[collapsible=icon]:mx-auto"
           />
           <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground leading-tight">
-              BoardQuest
+              {currentSystemName}
             </span>
             <span className="text-[10px] font-medium text-muted-foreground leading-tight">
               {portalTitle}
@@ -357,6 +381,24 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
               title="Academic Calendar"
             >
               <LucideIcons.Calendar size={16} />
+            </button>
+          </div>
+        </>
+      ) : isShowingSystemSettingsSubSidebar ? (
+        <>
+          <SidebarContent className="px-2.5 py-2 overflow-y-auto group-data-[collapsible=icon]:hidden">
+            <SystemSettingsSidebar
+              onBack={() => setShowSystemSettingsSubSidebar(false)}
+            />
+          </SidebarContent>
+          <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSystemSettingsSubSidebar(true)}
+              className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 cursor-pointer"
+              title="System Settings"
+            >
+              <LucideIcons.Sliders size={16} />
             </button>
           </div>
         </>
@@ -436,10 +478,10 @@ function Sidebar({ navItem, logout: logoutProp }: SidebarContentProps) {
           accountPath="/profile-settings"
           notificationsPath="/notifications"
           settingsPath={
-            ["SUPERADMIN", "DEAN", "TEAMLEAD"].includes(
+            ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"].includes(
               (currentUserRole || "").toUpperCase(),
             )
-              ? "/system-settings"
+              ? "/settings"
               : undefined
           }
         />

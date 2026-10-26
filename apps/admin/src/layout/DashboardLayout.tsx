@@ -5,7 +5,7 @@ import { adminNavItem } from "../utils/menu-list/adminSiderbarMenuList";
 import { teacherNavItem } from "../utils/menu-list/teacherSidebarMenulist";
 import { teamLeadNavItem } from "../utils/menu-list/teamLeadSidebarMenuList";
 import { superAdminNavItem } from "../utils/menu-list/superAdminSidebarMenuList";
-import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import HeaderBreadcrumb from "../components/custom/breadcrumb/HeaderBreadcrumb";
 import { NotificationDropdown } from "@/features/notifications";
 import { SystemSearchBar } from "../components/custom/search/SystemSearchBar";

@@ -76,7 +76,11 @@ function PageFallback() {
   );
 }
 
+import { useSystemThemeSync } from "@/hooks/useSystemThemeSync";
+
 function App() {
+  useSystemThemeSync();
+
   return (
     <TooltipProvider delayDuration={0}>
       <Suspense fallback={<PageFallback />}>

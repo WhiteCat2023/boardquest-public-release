@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import { RequireAuth, PersistentSession, RedirectIfAuthenticated } from "@/features/auth";
 import DashboardLayout from "./layout/DashboardLayout";
 import { GlobalModalContainer } from "@/components/modal";
 import { UserRole } from "@/types/question";
+import { useSystemSettingsStore } from "@/features/system-settings";
 
 // Lazy-loaded page components for optimal bundle splitting
 const LoginPage = lazy(() =>
@@ -137,6 +138,9 @@ const Settings = lazy(() =>
 const ProfileSettings = lazy(() =>
   import("@/features/settings").then((m) => ({ default: m.ProfileSettings })),
 );
+const SystemSettingsPage = lazy(() =>
+  import("@/features/system-settings").then((m) => ({ default: m.SystemSettingsPage })),
+);
 
 const Missing = lazy(() =>
   import("@/features/misc").then((m) => ({ default: m.Missing })),
@@ -154,6 +158,10 @@ function PageFallback() {
 }
 
 function App() {
+  useEffect(() => {
+    useSystemSettingsStore.getState().initTheme();
+  }, []);
+
   return (
     <>
       <Suspense fallback={<PageFallback />}>
@@ -488,6 +496,20 @@ function App() {
 
 
 
+                {/* System Settings - Restricted to SuperAdmin and Dean */}
+                <Route
+                  element={
+                    <RequireAuth
+                      allowedRoles={[
+                        UserRole.SUPERADMIN,
+                        UserRole.DEAN,
+                      ]}
+                    />
+                  }
+                >
+                  <Route path="system-settings" element={<SystemSettingsPage />} />
+                </Route>
+
                 <Route
                   element={
                     <RequireAuth
@@ -500,8 +522,7 @@ function App() {
                     />
                   }
                 >
-                  <Route path="system-settings" element={<Settings />} />
-                  <Route path="settings" element={<Navigate to="/system-settings" replace />} />
+                  <Route path="settings" element={<Settings />} />
                 </Route>
 
                 <Route path="profile-settings" element={<ProfileSettings />} />

@@ -102,10 +102,6 @@ export function SubjectOverviewSection() {
   const categoriesList = Array.isArray(dbCategories) ? dbCategories : [];
 
   const subjectCount = categoriesList.length;
-  const title =
-    subjectCount > 0
-      ? `${subjectCount} Licensure Examination ${subjectCount === 1 ? "Subject" : "Subjects"} Overview`
-      : "Licensure Examination Subjects Overview";
 
   const description =
     subjectCount > 0
@@ -207,24 +203,17 @@ export function SubjectOverviewSection() {
         <div>
           <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
             <BarChart3 className="text-primary size-4 sm:size-5" />
-            {title}
+            Subjects Overview
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {description}
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Badge
-            variant="outline"
-            className="text-[11px] font-semibold border-border bg-muted/40 text-muted-foreground px-2.5 py-1 flex items-center gap-1.5"
-          >
-            <BookOpen className="size-3.5 text-primary" />
-            <span>Pool: <strong className="text-foreground">{totalQuestions}</strong> Qs</span>
-          </Badge>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
             <Target className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>PRC Benchmark: <strong>{PASSING_THRESHOLD}%</strong></span>
+            <span>
+              PRC Benchmark: <strong>{PASSING_THRESHOLD}%</strong>
+            </span>
           </div>
         </div>
       </div>
@@ -232,8 +221,13 @@ export function SubjectOverviewSection() {
       {sourceSubjects.length === 0 && !isLoading ? (
         <div className="py-8 px-4 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
           <BookOpen className="size-8 text-muted-foreground/50 stroke-[1.5]" />
-          <p className="text-xs font-semibold text-foreground">No Licensure Subjects Registered</p>
-          <p className="text-[11px] text-muted-foreground">Add subjects in Curriculum Management to begin tracking board exam domain performance.</p>
+          <p className="text-xs font-semibold text-foreground">
+            No Licensure Subjects Registered
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Add subjects in Curriculum Management to begin tracking board exam
+            domain performance.
+          </p>
         </div>
       ) : isLoading ? (
         <div className="p-4 space-y-4">
@@ -243,7 +237,10 @@ export function SubjectOverviewSection() {
       ) : (
         <div className="flex flex-col gap-3">
           {/* Responsive SVG Bar Graph */}
-          <div ref={containerRef} className="w-full overflow-x-auto scrollbar-none pb-1">
+          <div
+            ref={containerRef}
+            className="w-full overflow-x-auto scrollbar-none pb-1"
+          >
             <div className="w-full">
               <svg
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -252,13 +249,25 @@ export function SubjectOverviewSection() {
               >
                 <defs>
                   {/* Passing Bar Gradient (>= 75%) */}
-                  <linearGradient id="subjEmeraldGrad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient
+                    id="subjEmeraldGrad"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
                     <stop offset="0%" stopColor="#10b981" />
                     <stop offset="100%" stopColor="#059669" />
                   </linearGradient>
 
                   {/* Moderate Bar Gradient (55% - 74%) */}
-                  <linearGradient id="subjAmberGrad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient
+                    id="subjAmberGrad"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
                     <stop offset="0%" stopColor="#f59e0b" />
                     <stop offset="100%" stopColor="#d97706" />
                   </linearGradient>
@@ -295,8 +304,8 @@ export function SubjectOverviewSection() {
                           isSmallMobile
                             ? "text-[8px]"
                             : isMobile
-                            ? "text-[9px]"
-                            : "text-[10px]"
+                              ? "text-[9px]"
+                              : "text-[10px]"
                         } ${
                           is75
                             ? "fill-emerald-600 dark:fill-emerald-400 font-black"
@@ -312,7 +321,9 @@ export function SubjectOverviewSection() {
                 {/* 75% PRC Licensure Target Line Pill */}
                 <g
                   transform={`translate(${
-                    svgWidth - rightMargin - (isSmallMobile ? 58 : isMobile ? 74 : 104)
+                    svgWidth -
+                    rightMargin -
+                    (isSmallMobile ? 58 : isMobile ? 74 : 104)
                   }, ${benchmarkY - (isMobile ? 7.5 : 9)})`}
                 >
                   <rect
@@ -327,19 +338,31 @@ export function SubjectOverviewSection() {
                     y={isMobile ? 10.5 : 12.5}
                     textAnchor="middle"
                     className={`font-black uppercase tracking-wider fill-emerald-600 dark:fill-emerald-400 ${
-                      isSmallMobile ? "text-[7.5px]" : isMobile ? "text-[8px]" : "text-[9px]"
+                      isSmallMobile
+                        ? "text-[7.5px]"
+                        : isMobile
+                          ? "text-[8px]"
+                          : "text-[9px]"
                     }`}
                   >
-                    {isSmallMobile ? "75% PRC" : isMobile ? "PRC 75%" : "PRC 75% Target"}
+                    {isSmallMobile
+                      ? "75% PRC"
+                      : isMobile
+                        ? "PRC 75%"
+                        : "PRC 75% Target"}
                   </text>
                 </g>
 
                 {/* Vertical Bars for Each Subject */}
                 {subjectsToDisplay.map((subj, idx) => {
-                  const barX = leftMargin + idx * colWidth + (colWidth - barWidth) / 2;
+                  const barX =
+                    leftMargin + idx * colWidth + (colWidth - barWidth) / 2;
                   const isHovered = hoveredBarIndex === idx;
 
-                  const barH = Math.max(6, (subj.proficiency / 100) * plotHeight);
+                  const barH = Math.max(
+                    6,
+                    (subj.proficiency / 100) * plotHeight,
+                  );
                   const barY = chartBottom - barH;
                   const isPassing = subj.proficiency >= PASSING_THRESHOLD;
                   const isModerate = subj.proficiency >= 55 && !isPassing;
@@ -347,14 +370,14 @@ export function SubjectOverviewSection() {
                   const fillGradient = isPassing
                     ? "url(#subjEmeraldGrad)"
                     : isModerate
-                    ? "url(#subjAmberGrad)"
-                    : "url(#subjRoseGrad)";
+                      ? "url(#subjAmberGrad)"
+                      : "url(#subjRoseGrad)";
 
                   const textValueColor = isPassing
                     ? "fill-emerald-600 dark:fill-emerald-400"
                     : isModerate
-                    ? "fill-amber-600 dark:fill-amber-400"
-                    : "fill-rose-600 dark:fill-rose-400";
+                      ? "fill-amber-600 dark:fill-amber-400"
+                      : "fill-rose-600 dark:fill-rose-400";
 
                   return (
                     <g
@@ -393,7 +416,9 @@ export function SubjectOverviewSection() {
                         rx={isMobile ? 4 : 6}
                         fill={fillGradient}
                         className={`transition-transform origin-bottom duration-200 filter drop-shadow-xs ${
-                          isHovered ? "opacity-95" : "opacity-90 hover:opacity-100"
+                          isHovered
+                            ? "opacity-95"
+                            : "opacity-90 hover:opacity-100"
                         }`}
                       />
 
@@ -406,8 +431,8 @@ export function SubjectOverviewSection() {
                           isSmallMobile
                             ? "text-[8.5px]"
                             : isMobile
-                            ? "text-[9.5px]"
-                            : "text-[11px]"
+                              ? "text-[9.5px]"
+                              : "text-[11px]"
                         } ${textValueColor}`}
                       >
                         {subj.proficiency}%
@@ -422,13 +447,17 @@ export function SubjectOverviewSection() {
                           isSmallMobile
                             ? "text-[8px]"
                             : isMobile
-                            ? "text-[8.5px]"
-                            : "text-[9.5px]"
+                              ? "text-[8.5px]"
+                              : "text-[9.5px]"
                         } ${
-                          isHovered ? "fill-primary font-black" : "fill-muted-foreground"
+                          isHovered
+                            ? "fill-primary font-black"
+                            : "fill-muted-foreground"
                         }`}
                       >
-                        {isSmallMobile ? (subj.code.split("-")[0] || subj.code) : subj.code}
+                        {isSmallMobile
+                          ? subj.code.split("-")[0] || subj.code
+                          : subj.code}
                       </text>
 
                       {/* Subject Name (X-Axis) */}
@@ -440,17 +469,19 @@ export function SubjectOverviewSection() {
                           isSmallMobile
                             ? "text-[8px]"
                             : isMobile
-                            ? "text-[9px]"
-                            : "text-[10.5px]"
+                              ? "text-[9px]"
+                              : "text-[10.5px]"
                         } ${
-                          isHovered ? "fill-primary font-black" : "fill-foreground"
+                          isHovered
+                            ? "fill-primary font-black"
+                            : "fill-foreground"
                         }`}
                       >
                         {isSmallMobile
                           ? getSubjectCompactName(subj.name)
                           : isMobile
-                          ? getSubjectShortName(subj.name)
-                          : subj.shortName}
+                            ? getSubjectShortName(subj.name)
+                            : subj.shortName}
                       </text>
 
                       {/* Question Count (X-Axis) */}
@@ -490,7 +521,7 @@ export function SubjectOverviewSection() {
             </div>
 
             {/* Dynamic Detail Callout for Hovered Item */}
-            <div className="text-[10.5px] sm:text-[11px] font-semibold text-muted-foreground w-full sm:w-auto">
+            {/* <div className="text-[10.5px] sm:text-[11px] font-semibold text-muted-foreground w-full sm:w-auto">
               {hoveredBarIndex !== null && subjectsToDisplay[hoveredBarIndex] ? (
                 <div
                   onClick={() => {
@@ -526,7 +557,7 @@ export function SubjectOverviewSection() {
                   <span>Click to view curriculum</span>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       )}

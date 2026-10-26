@@ -53,25 +53,7 @@ export function FacultyEncodingWatchCard({
           <div>
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               Faculty Quota Watchlist
-              {overdueCount > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-[10px] font-bold px-1.5 py-0"
-                >
-                  {overdueCount} Overdue
-                </Badge>
-              ) : rawItems.length > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[10px] font-bold px-1.5 py-0"
-                >
-                  {rawItems.length} Incomplete
-                </Badge>
-              ) : null}
             </h2>
-            <p className="text-[10px] text-muted-foreground">
-              Teachers with pending or overdue question authoring
-            </p>
           </div>
         </div>
 

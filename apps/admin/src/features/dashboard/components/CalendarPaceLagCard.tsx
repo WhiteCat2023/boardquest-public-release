@@ -142,29 +142,7 @@ export function CalendarPaceLagCard({
           <div>
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               Milestone Pacing Alerts
-              {behindCount > 0 ? (
-                <Badge
-                  variant="outline"
-                  className={
-                    criticalCount > 0
-                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-[10px] font-bold px-1.5 py-0"
-                      : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 text-[10px] font-bold px-1.5 py-0"
-                  }
-                >
-                  {criticalCount > 0 ? `${criticalCount} Critical` : `${behindCount} Behind`}
-                </Badge>
-              ) : onTrackCount > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-1.5 py-0"
-                >
-                  {onTrackCount} On Track
-                </Badge>
-              ) : null}
             </h2>
-            <p className="text-[10px] text-muted-foreground">
-              Monitor student pacing against review calendar & syllabus targets
-            </p>
           </div>
         </div>
 

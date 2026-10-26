@@ -7,7 +7,13 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/components/ui": ["../../packages/ui/src"],
+      "@/components/ui/*": ["../../packages/ui/src/*"],
+      "@/*": ["./src/*"],
+      "@repo/ui": ["../../packages/ui/src"],
+      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "ui": ["../../packages/ui/src"],
+      "ui/*": ["../../packages/ui/src/*"]
     },
 
 

@@ -108,18 +108,7 @@ export function InactiveStudentsWatchCard({
           <div>
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               Dormant Students
-              {dormantCount > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-[10px] font-bold px-1.5 py-0"
-                >
-                  {dormantCount} Inactive
-                </Badge>
-              ) : null}
             </h2>
-            <p className="text-[10px] text-muted-foreground">
-              Students with no recent drill attempts or review activity
-            </p>
           </div>
         </div>
 

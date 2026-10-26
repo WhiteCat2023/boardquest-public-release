@@ -190,6 +190,7 @@ function SidebarItem({
 
 import { CalendarSidebar } from "@/features/schedules/components/calendar/CalendarSidebar";
 import { useCalendarStore } from "@/features/schedules/components/calendar/calendarStore";
+import { useSystemThemeSync } from "@/hooks/useSystemThemeSync";
 
 export function Sidebar({
   navItems = reviewCenterNavItem,
@@ -198,6 +199,7 @@ export function Sidebar({
   const items = navItem || navItems;
   const location = useLocation();
   const { user, logout } = useReviewCenterAuth();
+  const { logo, systemName } = useSystemThemeSync();
 
   const isCalendarRoute =
     location.pathname === "/calendar" ||
@@ -208,6 +210,9 @@ export function Sidebar({
   const { showCalendarSubSidebar, setShowCalendarSubSidebar } =
     useCalendarStore();
   const isShowingCalendarSubSidebar = isCalendarRoute && showCalendarSubSidebar;
+
+  const currentLogo = logo || boardQuestLogo;
+  const currentTitle = systemName || "BoardQuest";
 
   return (
     <UISidebar
@@ -221,13 +226,13 @@ export function Sidebar({
           className="flex items-center gap-2 px-1 py-1 rounded-lg hover:opacity-90 transition-opacity group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
         >
           <img
-            src={boardQuestLogo}
-            alt="BoardQuest"
+            src={currentLogo}
+            alt={currentTitle}
             className="size-7 object-contain shrink-0 group-data-[collapsible=icon]:size-6 group-data-[collapsible=icon]:mx-auto"
           />
           <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground leading-tight">
-              BoardQuest
+              {currentTitle}
             </span>
             <span className="text-[10px] font-medium text-muted-foreground leading-tight">
               Review Center Portal

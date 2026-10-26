@@ -67,36 +67,30 @@ export default function UserManagement() {
     });
   };
 
+  const tabContent = [
+    {
+      id: "internal",
+      label: "Internal Users",
+      icon: Shield,
+      badgeCount: internalCount,
+    },
+    {
+      id: "external",
+      label: "External Users",
+      icon: Building2,
+      badgeCount: externalCount,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-6 w-full min-h-full font-sans bg-background text-foreground">
       <UserHeader canAddUser={canAddUser} activeTab={activeTab} />
 
       {/* Standardized Navigation Tabs: Internal Users vs External Users */}
       <StandardNavTabs
-        tabs={[
-          {
-            id: "internal",
-            label: "Internal Users",
-            icon: Shield,
-            badgeCount: internalCount,
-          },
-          {
-            id: "external",
-            label: "External Users",
-            icon: Building2,
-            badgeCount: externalCount,
-          },
-        ]}
+        tabs={tabContent}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as "internal" | "external")}
-        rightContent={
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <span>
-              Total {activeTab === "external" ? "External" : "Internal"} Users:
-            </span>
-            <span className="text-foreground font-bold">{totalUsers}</span>
-          </div>
-        }
       />
 
       {/* Search & Filters Bar */}

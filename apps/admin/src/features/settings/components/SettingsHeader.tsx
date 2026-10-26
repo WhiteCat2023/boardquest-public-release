@@ -6,7 +6,7 @@ export default function SettingsHeader() {
       <div>
         <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
           <SettingsIcon className="text-primary size-5" />
-          System Settings
+          Settings
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Manage application themes, notification preferences, and display

@@ -769,3 +769,18 @@ model StudentWarningSummary {
   @@map("StudentWarningSummaries")
 }
 
+model SystemSettings {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  systemName              String   @default("BoardQuest")
+  institutionSubtitle     String   @default("SWU PHINMA")
+  logoUrl                 String?
+  adminThemeId            String   @default("maroon-heritage")
+  adminCustomColor        String?
+  reviewCenterThemeId     String   @default("monochrome-zinc")
+  reviewCenterCustomColor String?
+  updatedAt               DateTime @updatedAt
+  updatedBy               String?
+
+  @@map("SystemSettings")
+}
+

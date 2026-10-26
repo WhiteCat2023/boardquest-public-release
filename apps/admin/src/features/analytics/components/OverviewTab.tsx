@@ -1,4 +1,5 @@
 import { ShieldCheck, TrendingUp, Target, BookOpen, Sparkles, TrendingDown, ArrowRight, Clock, Flame } from "lucide-react";
+import { KpiCard } from "@/components/custom/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { StudentAnalyticsResult } from "../types/types";
@@ -22,57 +23,34 @@ export function OverviewTab({ report }: OverviewTabProps) {
     <div className="flex flex-col gap-3.5 sm:gap-4 animate-in fade-in duration-150 min-w-0">
       {/* Standard Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        {/* Readiness Score */}
-        <Card className="border-border/70 shadow-2xs rounded-xl bg-card p-2.5 sm:p-3 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">Board Readiness</span>
-            <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
-          </div>
-          <div className="mt-1 sm:mt-1.5 flex items-baseline justify-between gap-1 flex-wrap">
-            <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">{readinessScore}%</span>
-            <span className="text-[8px] sm:text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">High</span>
-          </div>
-        </Card>
-
-        {/* Exams count */}
-        <Card className="border-border/70 shadow-2xs rounded-xl bg-card p-2.5 sm:p-3 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">Exams Taken</span>
-            <TrendingUp size={16} className="text-muted-foreground/70 shrink-0" />
-          </div>
-          <div className="mt-1 sm:mt-1.5 flex items-baseline justify-between gap-1 flex-wrap">
-            <span className="text-lg sm:text-xl font-black text-foreground">{examsCount}</span>
-            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-semibold shrink-0">Completed</span>
-          </div>
-        </Card>
-
-        {/* Average Score */}
-        <Card className="border-border/70 shadow-2xs rounded-xl bg-card p-2.5 sm:p-3 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">Average Score</span>
-            <TrendingUp size={16} className={`shrink-0 ${avgScore >= 75 ? "text-emerald-500" : "text-amber-500"}`} />
-          </div>
-          <div className="mt-1 sm:mt-1.5 flex items-baseline justify-between gap-1 flex-wrap">
-            <span className="text-lg sm:text-xl font-black text-foreground">{avgScore}%</span>
-            <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${avgScore >= 75 ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
-              {avgScore >= 75 ? "Target Met" : "In Progress"}
-            </span>
-          </div>
-        </Card>
-
-        {/* Accuracy */}
-        <Card className="border-border/70 shadow-2xs rounded-xl bg-card p-2.5 sm:p-3 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">Avg Accuracy</span>
-            <Target size={16} className={`shrink-0 ${avgAccuracy >= 75 ? "text-emerald-500" : "text-amber-500"}`} />
-          </div>
-          <div className="mt-1 sm:mt-1.5 flex items-baseline justify-between gap-1 flex-wrap">
-            <span className="text-lg sm:text-xl font-black text-foreground">{avgAccuracy}%</span>
-            <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${avgAccuracy >= 75 ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
-              {avgAccuracy >= 75 ? "Optimal" : "Review"}
-            </span>
-          </div>
-        </Card>
+        <KpiCard
+          icon={ShieldCheck}
+          title="Board Readiness"
+          value={`${readinessScore}%`}
+          subtitle={readinessScore >= 75 ? "High readiness level" : readinessScore >= 60 ? "Moderate level" : "Needs improvement"}
+          accentColor="emerald"
+        />
+        <KpiCard
+          icon={TrendingUp}
+          title="Exams Taken"
+          value={examsCount}
+          subtitle="Completed mock exams"
+          accentColor="default"
+        />
+        <KpiCard
+          icon={TrendingUp}
+          title="Average Score"
+          value={`${avgScore}%`}
+          subtitle={avgScore >= 75 ? "Target met" : "In progress"}
+          accentColor={avgScore >= 75 ? "emerald" : "amber"}
+        />
+        <KpiCard
+          icon={Target}
+          title="Avg Accuracy"
+          value={`${avgAccuracy}%`}
+          subtitle={avgAccuracy >= 75 ? "Optimal accuracy" : "Needs review"}
+          accentColor={avgAccuracy >= 75 ? "emerald" : "amber"}
+        />
       </div>
 
       {/* AI Insights & Mastery Split Grid */}

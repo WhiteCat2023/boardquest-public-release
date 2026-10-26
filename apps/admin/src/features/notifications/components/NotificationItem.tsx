@@ -125,9 +125,9 @@ export default function NotificationCard({
   return (
     <div
       onClick={handleClick}
-      className={`group relative p-2.5 px-3.5 transition-all duration-150 flex items-start gap-3 cursor-pointer font-sans ${
+      className={`group relative p-2.5 px-3.5 transition-colors duration-150 flex items-start gap-3 cursor-pointer font-sans ${
         notification.isRead
-          ? "bg-card hover:bg-accent/40 text-muted-foreground"
+          ? "bg-card hover:bg-muted/60 text-muted-foreground"
           : "bg-primary/5 hover:bg-primary/10 text-foreground font-medium"
       }`}
     >
@@ -140,8 +140,8 @@ export default function NotificationCard({
       <div className="flex-1 min-w-0 pr-6">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span
-            className={`text-xs font-bold ${
-              notification.isRead ? "text-foreground/90" : "text-foreground"
+            className={`text-xs font-bold transition-colors ${
+              notification.isRead ? "text-foreground/90 group-hover:text-foreground" : "text-foreground"
             }`}
           >
             {notification.title}
@@ -162,7 +162,7 @@ export default function NotificationCard({
           )}
         </div>
 
-        <p className="text-[11.5px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+        <p className="text-[11.5px] text-muted-foreground group-hover:text-foreground/85 leading-snug mt-0.5 line-clamp-2 transition-colors">
           {notification.message}
         </p>
 

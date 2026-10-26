@@ -11,6 +11,7 @@ import guidanceRoutes from "../admin/guidance.routes.js";
 import notificationRoutes from "../admin/notification.routes.js";
 import uploadRoutes from "../admin/upload.routes.js";
 import gameRoutes from "../admin/game_module/game.routes.js";
+import systemSettingsRoutes from "../admin/systemSettings.routes.js";
 import rcAuthRoutes from "../review-center/auth.routes.js";
 import rcScheduleRoutes from "../review-center/schedule.routes.js";
 import rcCandidateRoutes from "../review-center/candidate.routes.js";
@@ -33,6 +34,7 @@ v1Router.use("/guidance", guidanceRoutes);
 v1Router.use("/notifications", notificationRoutes);
 v1Router.use("/upload", uploadRoutes);
 v1Router.use("/game", gameRoutes);
+v1Router.use("/system-settings", systemSettingsRoutes);
 
 // ── Review Center Routes (v1) ──
 v1Router.use("/review-center-app/auth", rcAuthRoutes);

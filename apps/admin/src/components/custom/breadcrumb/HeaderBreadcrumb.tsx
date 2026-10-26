@@ -44,7 +44,7 @@ const formatSegment = (segment: string) => {
     segment.toLowerCase() === "settings" ||
     segment.toLowerCase() === "system-settings"
   ) {
-    return "System Settings";
+    return "Settings";
   }
   return segment
     .split("-")

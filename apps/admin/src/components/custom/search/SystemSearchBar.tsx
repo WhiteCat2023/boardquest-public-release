@@ -347,14 +347,14 @@ const SYSTEM_SEARCH_ITEMS: SearchItem[] = [
   },
   {
     id: "page-settings",
-    title: "System Settings",
+    title: "Settings",
     description: "Configure institutional branding, term dates, and portal defaults",
     category: "page",
-    pageName: "System Settings",
-    path: "/system-settings",
+    pageName: "Settings",
+    path: "/settings",
     icon: Settings,
     keywords: ["settings", "system settings", "configuration", "preferences"],
-    roles: ["SUPERADMIN", "DEAN", "TEAMLEAD"],
+    roles: ["SUPERADMIN", "DEAN", "TEAMLEAD", "TEACHER"],
   },
   {
     id: "page-profile-settings",

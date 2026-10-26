@@ -86,18 +86,10 @@ export function EncodingTrackerFilters({
             Reset
           </Button>
         )}
-
-        {/* Summary chip */}
-        {incompleteCount > 0 && (
-          <span className="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/50 border border-border/60 px-2.5 py-1 rounded-full">
-            <TrendingUp className="w-3 h-3 text-amber-500" />
-            {incompleteCount} incomplete
-          </span>
-        )}
       </div>
 
       {/* Bulk Nudge action */}
-      <div className="flex items-center gap-2 shrink-0">
+
         <Button
           variant="outline"
           size="sm"
@@ -110,7 +102,7 @@ export function EncodingTrackerFilters({
           <Bell className={`w-3.5 h-3.5 ${incompleteCount > 0 ? "animate-[wiggle_1s_ease-in-out_infinite]" : ""}`} />
           Nudge Incomplete ({incompleteCount})
         </Button>
-      </div>
+
     </div>
   );
 }

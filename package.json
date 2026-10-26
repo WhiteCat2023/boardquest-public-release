@@ -25,6 +25,7 @@
     "build:api": "pnpm --filter=./apps/api build",
     "build:admin": "pnpm --filter=./apps/admin build",
     "build:review-center": "pnpm --filter=./apps/review-center build",
+    "ui:add": "pnpm dlx shadcn@latest add -c packages/ui",
 
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
